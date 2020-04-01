@@ -1,6 +1,8 @@
 package com.xiaohongshu.db.hercules.core.assembly;
 
 import com.xiaohongshu.db.hercules.core.DataSource;
+import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
+import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -10,48 +12,54 @@ import org.apache.hadoop.mapreduce.OutputFormat;
  * 子类必须向{@link AssemblySupplierFactory}中注册自己的类
  */
 public abstract class BaseAssemblySupplier {
-    private GenericOptions options;
+    protected GenericOptions options;
 
-    protected Class<? extends InputFormat> inputFormatClass;
-    protected Class<? extends OutputFormat> outputFormatClass;
+    protected Class<? extends HerculesInputFormat> inputFormatClass;
+    protected Class<? extends HerculesOutputFormat> outputFormatClass;
     protected BaseSchemaFetcher schemaFetcher;
-    protected MRJobContext jobContext;
-
-    abstract public DataSource getDataSource();
+    protected MRJobContext jobContextAsSource;
+    protected MRJobContext jobContextAsTarget;
 
     public BaseAssemblySupplier(GenericOptions options) {
         this.options = options;
         initialize();
-        setInputFormatClass();
-        setOutputFormatClass();
-        setSchemaFetcher();
-        setJobContext();
+        inputFormatClass = setInputFormatClass();
+        outputFormatClass = setOutputFormatClass();
+        schemaFetcher = setSchemaFetcher();
+        jobContextAsSource = setJobContextAsSource();
+        jobContextAsTarget = setJobContextAsTarget();
     }
 
     protected void initialize() {
     }
 
-    public Class<? extends InputFormat> getInputFormatClass() {
+    public Class<? extends HerculesInputFormat> getInputFormatClass() {
         return inputFormatClass;
     }
 
-    abstract protected void setInputFormatClass();
+    abstract protected Class<? extends HerculesInputFormat> setInputFormatClass();
 
-    public Class<? extends OutputFormat> getOutputFormatClass() {
+    public Class<? extends HerculesOutputFormat> getOutputFormatClass() {
         return outputFormatClass;
     }
 
-    abstract protected void setOutputFormatClass();
+    abstract protected Class<? extends HerculesOutputFormat> setOutputFormatClass();
 
     public BaseSchemaFetcher getSchemaFetcher() {
         return schemaFetcher;
     }
 
-    abstract protected void setSchemaFetcher();
+    abstract protected BaseSchemaFetcher setSchemaFetcher();
 
-    public MRJobContext getJobContext() {
-        return jobContext;
+    public MRJobContext getJobContextAsSource() {
+        return jobContextAsSource;
     }
 
-    abstract protected void setJobContext();
+    abstract protected MRJobContext setJobContextAsSource();
+
+    public MRJobContext getJobContextAsTarget() {
+        return jobContextAsTarget;
+    }
+
+    abstract protected MRJobContext setJobContextAsTarget();
 }

@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.schema.manager;
 
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.rdbms.common.options.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.input.options.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import lombok.NonNull;
@@ -17,7 +18,7 @@ public class RDBMSManager {
 
     private static final Log LOG = LogFactory.getLog(RDBMSManager.class);
 
-    private GenericOptions options;
+    protected GenericOptions options;
 
     public RDBMSManager(GenericOptions options) {
         this.options = options;
@@ -29,7 +30,13 @@ public class RDBMSManager {
      * @return
      */
     protected String getDriverString() {
-        return options.getString(RDBMSInputOptionsConf.DRIVER, null);
+        String driverString = options.getString(RDBMSOptionsConf.DRIVER, null);
+        if (driverString == null) {
+            throw new UnsupportedOperationException(String.format("Please use '--%s' to specify the jdbc driver class.",
+                    RDBMSOptionsConf.DRIVER));
+        } else {
+            return driverString;
+        }
     }
 
     public Connection getConnection() throws SQLException {
@@ -132,7 +139,7 @@ public class RDBMSManager {
                 LOG.debug("Using fetchSize for next query: " + fetchSize);
                 statement.setFetchSize(fetchSize);
             }
-            LOG.info("Executing SQL statement: " + sql);
+            LOG.debug("Executing SQL statement: " + sql);
             return resultSetToList(statement.executeQuery(), seq, resultSetGetter);
         } finally {
             if (statement != null) {

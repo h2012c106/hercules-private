@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.utils.command;
 
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class CommandResult {
   private int code;
@@ -25,12 +25,12 @@ public class CommandResult {
     return error;
   }
 
-  @Override
-  public String toString() {
-    return new ToStringBuilder(this)
-        .append("code", code)
-        .append("data", data)
-        .append("error", error)
-        .toString();
-  }
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("code", code)
+                .append("data", data)
+                .append("error", error)
+                .toString();
+    }
 }

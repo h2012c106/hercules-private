@@ -7,6 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class DoubleSplitter extends BaseSplitter<BigDecimal> {
+    public DoubleSplitter(ResultSet minMaxCountResult) throws SQLException {
+        super(minMaxCountResult);
+    }
+
     @Override
     public ResultSetGetter<BigDecimal> getResultSetGetter() {
         return new ResultSetGetter<BigDecimal>() {

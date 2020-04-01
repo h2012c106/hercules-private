@@ -3,6 +3,9 @@ package com.xiaohongshu.db.hercules.core.assembly;
 import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.mysql.MysqlAssemblySupplier;
+import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
+import com.xiaohongshu.db.hercules.tidb.TiDBAssemblySupplier;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -15,6 +18,9 @@ public class AssemblySupplierFactory {
     static {
         //注册
         // register(aaa, xxx.class)
+        register(DataSource.RDBMS, RDBMSAssemblySupplier.class);
+        register(DataSource.MySQL, MysqlAssemblySupplier.class);
+        register(DataSource.TiDB, TiDBAssemblySupplier.class);
     }
 
     private static void register(DataSource dataSource, Class<? extends BaseAssemblySupplier> assemblySupplierClass) {

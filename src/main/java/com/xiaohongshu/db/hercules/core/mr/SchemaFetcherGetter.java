@@ -1,4 +1,8 @@
 package com.xiaohongshu.db.hercules.core.mr;
 
-public interface SchemaFetcherGetter {
+import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
+
+public interface SchemaFetcherGetter<T extends BaseSchemaFetcher> {
+    public T getSchemaFetcher(GenericOptions options);
 }

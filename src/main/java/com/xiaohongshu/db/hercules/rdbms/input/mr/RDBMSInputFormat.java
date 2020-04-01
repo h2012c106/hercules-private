@@ -2,8 +2,10 @@ package com.xiaohongshu.db.hercules.rdbms.input.mr;
 
 import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exceptions.SchemaException;
+import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
+import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.options.GenericOptions;
 import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import com.xiaohongshu.db.hercules.rdbms.input.mr.splitter.*;
@@ -15,34 +17,37 @@ import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.List;
 
-public abstract class RDBMSInputFormat extends InputFormat<NullWritable, HerculesWritable> {
+public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
     public static final String AVERAGE_MAP_ROW_NUM = "hercules.average.map.row.num";
 
-    abstract protected List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits, String splitBy,
-                                                  RDBMSSchemaFetcher schemaFetcher, BaseSplitter splitter,
-                                                  BigDecimal maxSampleRow) throws SQLException;
+    @Override
+    public RDBMSSchemaFetcher innerGetSchemaFetcher(GenericOptions options) {
+        return SchemaFetcherFactory.getSchemaFetcher(options, RDBMSSchemaFetcher.class);
+    }
 
-    protected BaseSplitter getSplitter(DataType dataType, int sqlDataType, boolean hexString) {
+    protected BaseSplitter getSplitter(ResultSet minMaxCountResult,
+                                       DataType dataType, int sqlDataType, boolean hexString) throws SQLException {
         switch (dataType) {
             case INTEGER:
-                return new IntegerSplitter();
+                return new IntegerSplitter(minMaxCountResult);
             case DOUBLE:
-                return new DoubleSplitter();
+                return new DoubleSplitter(minMaxCountResult);
             case BOOLEAN:
-                return new BooleanSplitter();
+                return new BooleanSplitter(minMaxCountResult);
             case DATE:
-                return new DateSplitter();
+                return new DateSplitter(minMaxCountResult);
             case STRING:
                 boolean nvarchar;
                 switch (sqlDataType) {
@@ -54,17 +59,21 @@ public abstract class RDBMSInputFormat extends InputFormat<NullWritable, Hercule
                         nvarchar = false;
                 }
                 if (hexString) {
-                    return new HexTextSplitter(nvarchar);
+                    return new HexTextSplitter(minMaxCountResult, nvarchar);
                 } else {
-                    return new TextSplitter(nvarchar);
+                    return new TextSplitter(minMaxCountResult, nvarchar);
                 }
             default:
                 throw new UnsupportedOperationException("Unsupported data type to split: " + dataType.name());
         }
     }
 
-    protected String addNullCondition(String query, String splitBy, boolean isNull) {
-        return SqlUtils.addWhere(query, String.format("%s IS %s NULL", splitBy, isNull ? "" : "NOT"));
+    private SplitGetter getSplitGetter(GenericOptions options) {
+        if (options.getBoolean(RDBMSInputOptionsConf.BALANCE_SPLIT, true)) {
+            return new RDBMSBalanceSplitGetter();
+        } else {
+            return new RDBMSFastSplitterGetter();
+        }
     }
 
     @Override
@@ -74,20 +83,26 @@ public abstract class RDBMSInputFormat extends InputFormat<NullWritable, Hercule
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(configuration);
 
-        RDBMSSchemaFetcher schemaFetcher = SchemaFetcherFactory.getSchemaFetcher(options.getSourceOptions(),
-                RDBMSSchemaFetcher.class);
+        RDBMSSchemaFetcher schemaFetcher = getSchemaFetcher(options.getSourceOptions());
         RDBMSManager manager = schemaFetcher.getManager();
 
         // 检查split-by列在不在列集里
-        String splitBy = options.getSourceOptions().getString(RDBMSInputOptionsConf.SPLIT_BY,
-                schemaFetcher.getPrimaryKey());
-        if (splitBy == null || !schemaFetcher.getColumnNameList().contains(splitBy)) {
-            throw new SchemaException(String.format("Unknown split-by column [%s] in columns: %s",
-                    splitBy, schemaFetcher.getColumnNameList().toString()));
+        String splitBy;
+        try {
+            splitBy = options.getSourceOptions().getString(RDBMSInputOptionsConf.SPLIT_BY, null);
+            if (splitBy == null) {
+                splitBy = schemaFetcher.getPrimaryKey();
+            }
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
+        if (splitBy == null) {
+            throw new SchemaException(String.format("Cannot get the split-by column automatically, " +
+                    "please use '--%s' to specify.", RDBMSInputOptionsConf.SPLIT_BY));
         }
 
         // 如果只有一个split，那下面的不用做了
-        int numSplits = options.getCommonOptions().getInteger(CommonOptionsConf.COLUMN_MAP,
+        int numSplits = options.getCommonOptions().getInteger(CommonOptionsConf.NUM_MAPPER,
                 CommonOptionsConf.DEFAULT_NUM_MAPPER);
         if (numSplits == 1) {
             LOG.warn("Map set to 1, only use 1 map.");
@@ -106,7 +121,7 @@ public abstract class RDBMSInputFormat extends InputFormat<NullWritable, Hercule
                     SqlUtils.makeItem("MIN", splitBy),
                     SqlUtils.makeItem("MAX", splitBy),
                     SqlUtils.makeItem("COUNT", 1));
-            minMaxCountSql = addNullCondition(minMaxCountSql, splitBy, false);
+            minMaxCountSql = SqlUtils.addNullCondition(minMaxCountSql, splitBy, false);
             LOG.info("The min+max+count not null sql is: " + minMaxCountSql);
 
             minMaxCountResult = minMaxCountStatement.executeQuery(minMaxCountSql);
@@ -124,10 +139,10 @@ public abstract class RDBMSInputFormat extends InputFormat<NullWritable, Hercule
             }
 
             BaseSplitter splitter = getSplitter(
+                    minMaxCountResult,
                     schemaFetcher.getColumnTypeMap().get(splitBy),
                     sqlDataType,
-                    options.getSourceOptions().getBoolean(RDBMSInputOptionsConf.SPLIT_BY_HEX_STRING,
-                            false)
+                    options.getSourceOptions().getBoolean(RDBMSInputOptionsConf.SPLIT_BY_HEX_STRING, false)
             );
 
             // 如果没有不null的行，那么直接返回一个split
@@ -140,7 +155,7 @@ public abstract class RDBMSInputFormat extends InputFormat<NullWritable, Hercule
 
             String nullSql = SqlUtils.replaceSelectItem(schemaFetcher.getQuerySql(),
                     SqlUtils.makeItem("COUNT", 1));
-            nullSql = addNullCondition(nullSql, splitBy, true);
+            nullSql = SqlUtils.addNullCondition(nullSql, splitBy, true);
             LOG.info("The count null sql is: " + nullSql);
 
             long nullRowNum = manager.executeSelect(nullSql, 1, ResultSetGetter.LONG_GETTER).get(0);
@@ -149,7 +164,8 @@ public abstract class RDBMSInputFormat extends InputFormat<NullWritable, Hercule
             BigDecimal maxSampleRow = options.getSourceOptions()
                     .getDecimal(RDBMSInputOptionsConf.BALANCE_SPLIT_SAMPLE_MAX_ROW, null);
 
-            List<InputSplit> res = getSplits(minMaxCountResult, numSplits, splitBy, schemaFetcher, splitter, maxSampleRow);
+            List<InputSplit> res = getSplitGetter(options.getSourceOptions())
+                    .getSplits(minMaxCountResult, numSplits, splitBy, schemaFetcher, splitter, maxSampleRow);
 
             if (nullRowNum > 0) {
                 res.addAll(BaseSplitter.generateNullSplit(splitBy));
@@ -190,8 +206,12 @@ public abstract class RDBMSInputFormat extends InputFormat<NullWritable, Hercule
     }
 
     @Override
-    public RecordReader<NullWritable, HerculesWritable> createRecordReader(InputSplit split, TaskAttemptContext context)
-            throws IOException, InterruptedException {
-        return new RDBMSRecordReader();
+    public HerculesRecordReader<?, RDBMSSchemaFetcher> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+        Configuration configuration = context.getConfiguration();
+
+        WrappingOptions options = new WrappingOptions();
+        options.fromConfiguration(configuration);
+
+        return new RDBMSRecordReader(getSchemaFetcher(options.getSourceOptions()));
     }
 }

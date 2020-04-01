@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
-import com.xiaohongshu.db.hercules.core.utils.command.OverflowUtils;
+import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.math.BigDecimal;

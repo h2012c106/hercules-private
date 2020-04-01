@@ -1,4 +1,55 @@
 package com.xiaohongshu.db.hercules.mysql.schema.manager;
 
-public class MysqlManager {
+import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.mysql.input.options.MysqlInputOptionsConf;
+import com.xiaohongshu.db.hercules.mysql.output.options.MysqlOutputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.input.options.RDBMSInputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
+
+public class MysqlManager extends RDBMSManager {
+
+    private static final Log LOG = LogFactory.getLog(MysqlManager.class);
+
+    private static final String ALLOW_ZERO_DATE_SQL = "set session sql_mode='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,ALLOW_INVALID_DATES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';";
+
+    public MysqlManager(GenericOptions options) {
+        super(options);
+    }
+
+    @Override
+    public Connection getConnection() throws SQLException {
+        Connection res;
+        if (options.getInteger(MysqlInputOptionsConf.FETCH_SIZE, null) == null) {
+            res = super.getConnection();
+        } else {
+            Properties properties = new Properties();
+            properties.put("useCursorFetch", "true");
+            res = getConnection(properties);
+        }
+        if (options.getBoolean(MysqlOutputOptionsConf.ALLOW_ZERO_DATE, false)) {
+            LOG.warn("To allow the zero timestamp, execute sql: " + ALLOW_ZERO_DATE_SQL);
+            Statement statement = null;
+            try {
+                statement = res.createStatement();
+                statement.execute(ALLOW_ZERO_DATE_SQL);
+            } finally {
+                if (statement != null) {
+                    statement.close();
+                }
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public String getRandomFunc() {
+        return options.getString(RDBMSInputOptionsConf.RANDOM_FUNC_NAME, MysqlInputOptionsConf.DEFAULT_RANDOM_FUNC_NAME);
+    }
 }

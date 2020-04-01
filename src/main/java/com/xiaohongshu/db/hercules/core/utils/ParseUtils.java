@@ -4,6 +4,8 @@ import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,6 +19,8 @@ import java.util.regex.Pattern;
  */
 public final class ParseUtils {
 
+    private static final Log LOG = LogFactory.getLog(ParseUtils.class);
+
     /**
      * 根据xxx->yyy获得xxx与yyy的枚举值
      *
@@ -24,7 +28,7 @@ public final class ParseUtils {
      * @return 一个长度为2的array，#0为source，#1为target
      */
     public static DataSource[] getDataSources(String arg) {
-        String regex = "(.+?)::(.+?)";
+        String regex = "^(.+?)::(.+?)$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(arg);
         if (matcher.find()) {
@@ -88,14 +92,17 @@ public final class ParseUtils {
         }
 
         // 再检查one
+        if (one == null) {
+            return;
+        }
         Set<String> hasParam = new HashSet<>();
-        for (String neededOnlyOnceParam : one == null ? new ArrayList<String>(0) : one) {
+        for (String neededOnlyOnceParam : one) {
             if (options.hasProperty(neededOnlyOnceParam)) {
                 hasParam.add(neededOnlyOnceParam);
             }
         }
         if (hasParam.size() < 1) {
-            throw new ParseException(String.format("%s need at least one param dependency: %s", paramName, one.toString()));
+            throw new ParseException(String.format("%s need at least one param dependency: %s", paramName, one));
         } else if (hasParam.size() > 1) {
             throw new ParseException(String.format("%s can only depend on at most one param dependency: %s", paramName, hasParam.toString()));
         }

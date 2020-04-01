@@ -4,6 +4,9 @@ import org.apache.hadoop.mapreduce.lib.db.DataDrivenDBInputFormat;
 
 public class RDBMSInputSplit extends DataDrivenDBInputFormat.DataDrivenDBInputSplit {
 
+    public RDBMSInputSplit() {
+    }
+
     public RDBMSInputSplit(String lower, String upper) {
         super(lower, upper);
     }

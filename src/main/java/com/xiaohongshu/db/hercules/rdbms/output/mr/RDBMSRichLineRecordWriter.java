@@ -2,6 +2,8 @@ package com.xiaohongshu.db.hercules.rdbms.output.mr;
 
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
+import com.xiaohongshu.db.hercules.rdbms.output.ExportType;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -11,17 +13,18 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
-public class RDBMSInlineRecordWriter extends RDBMSRecordWriter {
+public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
 
-    private static final Log LOG = LogFactory.getLog(RDBMSInlineRecordWriter.class);
+    private static final Log LOG = LogFactory.getLog(RDBMSRichLineRecordWriter.class);
 
-    public RDBMSInlineRecordWriter(TaskAttemptContext context) throws SQLException, ClassNotFoundException {
-        super(context);
+    public RDBMSRichLineRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSSchemaFetcher schemaFetcher)
+            throws SQLException, ClassNotFoundException {
+        super(context, tableName, exportType, schemaFetcher);
     }
 
     @Override
     protected PreparedStatement getPreparedStatement(List<HerculesWritable> recordList, Connection connection) throws Exception {
-        String sql = statementGetter.get(tableName, columnNames, recordList.size());
+        String sql = statementGetter.getExportSql(tableName, columnNames, recordList.size());
         LOG.debug("Batch export sql is: " + sql);
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         // 因为有很多行问号，所以下标值需要在循环间继承

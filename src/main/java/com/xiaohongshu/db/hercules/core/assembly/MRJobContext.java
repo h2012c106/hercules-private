@@ -1,11 +1,13 @@
 package com.xiaohongshu.db.hercules.core.assembly;
 
+import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+
 public interface MRJobContext {
     public void configureInput();
 
     public void configureOutput();
 
-    public void preRun();
+    public void preRun(GenericOptions options);
 
-    public void postRun();
+    public void postRun(GenericOptions options);
 }

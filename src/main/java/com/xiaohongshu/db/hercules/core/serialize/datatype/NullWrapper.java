@@ -10,6 +10,8 @@ public class NullWrapper extends BaseWrapper<String> {
 
     private final static DataType DATA_TYPE = DataType.NULL;
 
+    public final static NullWrapper INSTANCE = new NullWrapper();
+
     public NullWrapper() {
         super("", DATA_TYPE, 0);
     }

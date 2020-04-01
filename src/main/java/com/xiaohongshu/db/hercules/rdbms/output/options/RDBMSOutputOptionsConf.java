@@ -12,7 +12,6 @@ public class RDBMSOutputOptionsConf extends RDBMSOptionsConf {
 
     public static final String EXPORT_TYPE = "export-type";
     public static final String UPDATE_KEY = "update-key";
-    public static final String BATCH = "batch";
 
     /**
      * 未经配置应当仅支持向staging table insert，其他操作一概不允许，staging table只是一个源数据的数据库形态，不应有任何改动
@@ -23,6 +22,15 @@ public class RDBMSOutputOptionsConf extends RDBMSOptionsConf {
     public static final String STAGING_TABLE = "staging-table";
     public static final String CLOSE_FORCE_INSERT_STAGING = "close-force-insert-staging";
     public static final String PRE_MIGRATE_SQL = "pre-migrate-sql";
+
+    public static final String BATCH = "batch";
+    public static final String RECORD_PER_STATEMENT = "record-per-statement";
+    public static final String STATEMENT_PER_COMMIT = "statement-per-commit";
+    public static final String AUTOCOMMIT = "autocommit";
+    public static final String EXECUTE_THREAD_NUM = "execute-thead-num";
+
+    public static final long DEFAULT_RECORD_PER_STATEMENT = 100;
+    public static final int DEFAULT_EXECUTE_THREAD_NUM = 1;
 
     @Override
     protected List<SingleOptionConf> setOptionConf() {
@@ -71,6 +79,30 @@ public class RDBMSOutputOptionsConf extends RDBMSOptionsConf {
                 .description("The sql executed after staging table filled and before migrate staging table to target table, " +
                         "if the sql like 'truncate ...' executed before and outside hercules, " +
                         "there will be plenty of meaningless time to endure the empty target table.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(RECORD_PER_STATEMENT)
+                .needArg(true)
+                .description("The record num each statement executed.")
+                .defaultStringValue(Long.toString(DEFAULT_RECORD_PER_STATEMENT))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(STATEMENT_PER_COMMIT)
+                .needArg(true)
+                .description("The statement num each commit committed.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(AUTOCOMMIT)
+                .needArg(false)
+                .description(String.format("Whether need autocommit. Considering the performance, " +
+                        "strongly recommended to close it unless the database does't support commit. " +
+                        "This param will neutralize the '--%s' param.", STATEMENT_PER_COMMIT))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(EXECUTE_THREAD_NUM)
+                .needArg(true)
+                .description("The thread num when executing update statement.")
+                .defaultStringValue(Integer.toString(DEFAULT_EXECUTE_THREAD_NUM))
                 .build());
         return tmpList;
     }

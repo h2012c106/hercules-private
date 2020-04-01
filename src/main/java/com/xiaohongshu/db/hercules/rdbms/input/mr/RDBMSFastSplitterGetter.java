@@ -9,13 +9,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-public class RDBMSFastInputFormat extends RDBMSInputFormat {
+public class RDBMSFastSplitterGetter implements SplitGetter {
 
     @Override
-    protected List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits, String splitBy,
+    public List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits, String splitBy,
                                          RDBMSSchemaFetcher schemaFetcher, BaseSplitter splitter,
                                          BigDecimal maxSampleRow)
             throws SQLException {
-        return splitter.getFastSplitPoint(splitBy, minMaxCountResult, numSplits);
+        return splitter.getFastSplitPoint(splitBy, numSplits);
     }
 }

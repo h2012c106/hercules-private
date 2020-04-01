@@ -97,7 +97,7 @@ public final class SqlUtils {
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(e.getMessage());
             if (matcher.find()) {
-                return matcher.group(1);
+                return "0000-00-00 00:00:00";
             } else {
                 throw e;
             }
@@ -125,5 +125,9 @@ public final class SqlUtils {
                 throw e;
             }
         }
+    }
+
+    public static String addNullCondition(String query, String column, boolean isNull) {
+        return SqlUtils.addWhere(query, String.format("%s IS %s NULL", column, isNull ? "" : "NOT"));
     }
 }

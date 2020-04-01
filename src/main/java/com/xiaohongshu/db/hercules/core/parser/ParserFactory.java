@@ -3,6 +3,10 @@ package com.xiaohongshu.db.hercules.core.parser;
 import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
+import com.xiaohongshu.db.hercules.mysql.input.parser.MysqlInputParser;
+import com.xiaohongshu.db.hercules.mysql.output.parser.MysqlOutputParser;
+import com.xiaohongshu.db.hercules.rdbms.input.parser.RDBMSInputParser;
+import com.xiaohongshu.db.hercules.rdbms.output.parser.RDBMSOutputParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,11 +19,15 @@ public class ParserFactory {
     static {
         // 类似这么注册
         // register(new xxx());
+        register(DataSource.RDBMS, DataSourceRole.SOURCE, new RDBMSInputParser());
+        register(DataSource.RDBMS, DataSourceRole.TARGET, new RDBMSOutputParser());
+        register(DataSource.MySQL, DataSourceRole.SOURCE, new MysqlInputParser());
+        register(DataSource.MySQL, DataSourceRole.TARGET, new MysqlOutputParser());
+        register(DataSource.TiDB, DataSourceRole.SOURCE, new MysqlInputParser());
+        register(DataSource.TiDB, DataSourceRole.TARGET, new MysqlOutputParser());
     }
 
-    private static void register(BaseDataSourceParser instance) {
-        DataSource dataSource = instance.getDataSource();
-        DataSourceRole dataSourceRole = instance.getDataSourceRole();
+    private static void register(DataSource dataSource, DataSourceRole dataSourceRole, BaseDataSourceParser instance) {
         if (registerCenter.containsKey(dataSource)) {
             Map<DataSourceRole, BaseDataSourceParser> dataSourceRoleBaseDataSourceParserMap = registerCenter.get(dataSource);
             // 不允许在同一串key上重复注册，防止写组件的时候无脑复制粘贴导致注册的时候张冠李戴

@@ -2,7 +2,10 @@ package com.xiaohongshu.db.hercules.core.assembly;
 
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
 
-public class DefaultMRJobContext implements MRJobContext {
+public class NullMRJobContext implements MRJobContext {
+
+    public static final MRJobContext INSTANCE=new NullMRJobContext();
+
     @Override
     public void configureInput() {
 

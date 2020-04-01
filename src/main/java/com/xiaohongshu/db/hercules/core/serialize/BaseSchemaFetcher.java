@@ -18,7 +18,7 @@ public abstract class BaseSchemaFetcher<T> {
 
     private GenericOptions options;
     private List<String> columnNameList;
-    private Map<String, DataType> columnTypeMap;
+    private StingyMap<String, DataType> columnTypeMap;
 
     public BaseSchemaFetcher(GenericOptions options) {
         this.options = options;
@@ -53,11 +53,12 @@ public abstract class BaseSchemaFetcher<T> {
      *
      * @return
      */
-    abstract protected Map<String, DataType> innerGetColumnTypeMap();
+    abstract protected StingyMap<String, DataType> innerGetColumnTypeMap();
 
-    public final Map<String, DataType> getColumnTypeMap() {
+    public final StingyMap<String, DataType> getColumnTypeMap() {
         if (columnTypeMap == null) {
             columnTypeMap = innerGetColumnTypeMap();
+            LOG.info("The column type map is: " + columnTypeMap.toString());
         }
         return columnTypeMap;
     }

@@ -7,6 +7,8 @@ import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exceptions.SchemaException;
 import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
  * 大小写敏感
  */
 public class SchemaChecker {
+
+    private static final Log LOG = LogFactory.getLog(SchemaChecker.class);
 
     private BaseSchemaFetcher sourceSchemaFetcher;
     private BaseSchemaFetcher targetSchemaFetcher;
@@ -70,27 +74,44 @@ public class SchemaChecker {
      */
     private void validateColumns(List<String> convertedSourceColumnNameList, BiMap<String, String> columnMap) {
         Set<String> tmpSet;
-        if (!options.getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN, false)) {
-            // 检查源数据源多列
-            tmpSet = new HashSet<>(convertedSourceColumnNameList);
-            tmpSet.removeAll((List<String>) targetSchemaFetcher.getColumnNameList());
-            if (tmpSet.size() > 0) {
+        // 检查源数据源多列
+        tmpSet = new HashSet<>(convertedSourceColumnNameList);
+        tmpSet.removeAll((List<String>) targetSchemaFetcher.getColumnNameList());
+        if (tmpSet.size() > 0) {
+            Map<String, String> inversedColumnMap = columnMap.inverse();
+            Set<String> tmpTmpSet = tmpSet.stream()
+                    .map(columnName -> inversedColumnMap.getOrDefault(columnName, columnName))
+                    .collect(Collectors.toSet());
+            if (!options.getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN, false)) {
                 // 需要把多的列名根据转换规则转回去，不然显示的是转换后的如果变动较大会造成看日志的人迷惑
-                Map<String, String> inversedColumnMap = columnMap.inverse();
-                throw new SchemaException("Source data source has more columns: " + tmpSet
-                        .stream()
-                        .map(columnName -> inversedColumnMap.getOrDefault(columnName, columnName))
-                        .collect(Collectors.toSet())
-                );
+                throw new SchemaException(String.format("Source data source has more columns: %s, " +
+                                "if want to ignore, please use '--%s'",
+                        tmpTmpSet, CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN
+                ));
+            } else {
+                LOG.warn(String.format("Source data source has more columns: %s", tmpTmpSet));
             }
         }
-        if (!options.getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN, false)) {
-            // 检查目标数据源多列
-            tmpSet = new HashSet<>((List<String>) targetSchemaFetcher.getColumnNameList());
-            tmpSet.removeAll(convertedSourceColumnNameList);
-            if (tmpSet.size() > 0) {
-                throw new SchemaException("Source data source has more columns: " + tmpSet);
+
+        // 检查目标数据源多列
+        tmpSet = new HashSet<>((List<String>) targetSchemaFetcher.getColumnNameList());
+        tmpSet.removeAll(convertedSourceColumnNameList);
+        if (tmpSet.size() > 0) {
+            if (!options.getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN, false)) {
+                throw new SchemaException(String.format("Target data source has more columns: %s, " +
+                        "if want to ignore, please use '--%s'", tmpSet, CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN));
+            } else {
+                LOG.warn(String.format("Target data source has more columns: %s", tmpSet));
             }
+        }
+
+        // 检查两侧交集，至少得有一列才合理
+        tmpSet = new HashSet<>((List<String>) targetSchemaFetcher.getColumnNameList());
+        tmpSet.retainAll(convertedSourceColumnNameList);
+        if (tmpSet.size() == 0) {
+            throw new SchemaException("Not column is in the intersection, meaningless!");
+        } else {
+            LOG.info("The public columns is: " + tmpSet);
         }
     }
 

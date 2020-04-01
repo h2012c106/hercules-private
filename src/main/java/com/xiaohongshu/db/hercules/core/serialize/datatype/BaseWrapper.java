@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
 import lombok.NonNull;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -62,4 +63,11 @@ public abstract class BaseWrapper<T> {
     abstract public String asString();
 
     abstract public byte[] asBytes();
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("value", value)
+                .toString();
+    }
 }

@@ -11,9 +11,11 @@ public class TextSplitter extends BaseSplitter<String> {
     private boolean nVarchar;
     private String commonPrefix;
 
-    public TextSplitter(boolean nVarchar) {
+    public TextSplitter(ResultSet minMaxCountResult, boolean nVarchar) throws SQLException {
+        super(minMaxCountResult);
         this.nVarchar = nVarchar;
     }
+
 
     @Override
     public ResultSetGetter<String> getResultSetGetter() {

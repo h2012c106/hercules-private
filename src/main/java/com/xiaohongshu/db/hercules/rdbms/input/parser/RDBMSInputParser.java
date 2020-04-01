@@ -11,10 +11,6 @@ import com.xiaohongshu.db.hercules.rdbms.common.options.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.input.options.RDBMSInputOptionsConf;
 
 public class RDBMSInputParser extends BaseDataSourceParser {
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.RDBMS;
-    }
 
     @Override
     public DataSourceRole getDataSourceRole() {

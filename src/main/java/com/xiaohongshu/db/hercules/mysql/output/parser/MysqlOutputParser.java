@@ -1,4 +1,15 @@
 package com.xiaohongshu.db.hercules.mysql.output.parser;
 
-public class MysqlOutputParser {
+import com.xiaohongshu.db.hercules.core.DataSource;
+import com.xiaohongshu.db.hercules.core.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.mysql.output.options.MysqlOutputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.output.parser.RDBMSOutputParser;
+
+public class MysqlOutputParser extends RDBMSOutputParser {
+
+    @Override
+    protected BaseDataSourceOptionsConf getOptionsConf() {
+        return new MysqlOutputOptionsConf();
+    }
 }

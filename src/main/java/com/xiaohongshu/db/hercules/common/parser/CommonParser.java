@@ -10,11 +10,6 @@ import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 public class CommonParser extends BaseParser<CommonOptionsConf> {
 
     @Override
-    public DataSource getDataSource() {
-        return null;
-    }
-
-    @Override
     public DataSourceRole getDataSourceRole() {
         return null;
     }

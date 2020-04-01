@@ -1,13 +1,15 @@
 package com.xiaohongshu.db.hercules.rdbms.input.mr.splitter;
 
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * TODO 大小写问题怎么解决
  */
 public class HexTextSplitter extends TextSplitter {
-    public HexTextSplitter(boolean nVarchar) {
-        super(nVarchar);
+    public HexTextSplitter(ResultSet minMaxCountResult, boolean nVarchar) throws SQLException {
+        super(minMaxCountResult, nVarchar);
         throw new UnsupportedOperationException("Not support hex text split yet, " +
                 "need figure out how to deal with case sensitive.");
     }

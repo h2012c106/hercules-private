@@ -1,12 +1,13 @@
 package com.xiaohongshu.db.hercules.rdbms.output.mr.statement;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
-public class UpsertStatementGetter implements StatementGetter {
+public class UpsertStatementGetter extends StatementGetter {
     @Override
-    public String get(String tableName, String[] columnNames, int numRows) {
+    public String getExportSql(String tableName, String[] columnNames, int numRows) {
+        columnNames = filterNullColumns(columnNames);
+
         boolean first;
         StringBuilder sb = new StringBuilder();
         sb.append("INSERT IGNORE INTO ");
@@ -53,7 +54,19 @@ public class UpsertStatementGetter implements StatementGetter {
     }
 
     @Override
-    public String get(String tableName, String[] columnNames, String[] updateKeys) {
+    public String getExportSql(String tableName, String[] columnNames, String[] updateKeys) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getMigrateSql(String tableName, String stagingTableName, String[] columnNames) {
+        return String.format("INSERT INTO `%s` SELECT * FROM `%s` ON DUPLICATE KEY UPDATE %s",
+                tableName,
+                stagingTableName,
+                Arrays.stream(columnNames)
+                        .map(columnName
+                                -> String.format("`%s` = VALUES(`%s`)", columnName, columnName))
+                        .collect(Collectors.joining(", "))
+        );
     }
 }

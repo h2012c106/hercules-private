@@ -1,13 +1,15 @@
 package com.xiaohongshu.db.hercules.rdbms.output.mr.statement;
 
-public class UpdateStatementGetter implements StatementGetter {
+public class UpdateStatementGetter extends StatementGetter {
     @Override
-    public String get(String tableName, String[] columnNames, int numRows) {
+    public String getExportSql(String tableName, String[] columnNames, int numRows) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String get(String tableName, String[] columnNames, String[] updateKeys) {
+    public String getExportSql(String tableName, String[] columnNames, String[] updateKeys) {
+        columnNames = filterNullColumns(columnNames);
+
         StringBuilder sb = new StringBuilder();
         sb.append("UPDATE `").append(tableName).append("` SET ");
 
@@ -34,5 +36,10 @@ public class UpdateStatementGetter implements StatementGetter {
         }
         sb.append(";");
         return sb.toString();
+    }
+
+    @Override
+    public String getMigrateSql(String tableName, String stagingTableName, String[] columnNames) {
+        throw new UnsupportedOperationException();
     }
 }

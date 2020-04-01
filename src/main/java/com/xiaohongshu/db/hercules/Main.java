@@ -6,20 +6,25 @@ import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplierFactory;
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
-import com.xiaohongshu.db.hercules.core.exceptions.MapReduceException;
-import com.xiaohongshu.db.hercules.core.mrjob.MRJob;
+import com.xiaohongshu.db.hercules.core.mr.MRJob;
 import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
-import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import com.xiaohongshu.db.hercules.core.parser.ParserFactory;
 import com.xiaohongshu.db.hercules.core.serialize.SchemaChecker;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.util.Arrays;
 
 public class Main {
+
+    private static final Log LOG = LogFactory.getLog(Main.class);
+
     public static void main(String[] args) {
         // 获得例如xxx->yyy的参数
         String dataFlowOption = args[0];
@@ -38,6 +43,8 @@ public class Main {
         WrappingOptions wrappingOptions = new WrappingOptions(sourceParser.parse(args),
                 targetParser.parse(args),
                 commonParer.parse(args));
+
+        LOG.debug("Options: " + wrappingOptions);
 
         // 处理log-level
         Logger.getRootLogger().setLevel(
@@ -58,10 +65,15 @@ public class Main {
         checker.validate();
 
         MRJob job = new MRJob(sourceAssemblySupplier, targetAssemblySupplier, wrappingOptions);
+
+        int ret;
         try {
             job.run(args);
+            ret = 0;
         } catch (Exception e) {
-            throw new MapReduceException(e);
+            LOG.error(ExceptionUtils.getStackTrace(e));
+            ret = 1;
         }
+        System.exit(ret);
     }
 }

@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.rdbms.schema;
+package com.xiaohongshu.db.hercules.core.serialize;
 
 import java.util.HashMap;
 

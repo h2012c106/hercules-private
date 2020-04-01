@@ -1,18 +1,16 @@
 package com.xiaohongshu.db.hercules.rdbms.output.mr.statement;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Collectors;
-
-public abstract class InsertPatternStatementGetter implements StatementGetter {
+public abstract class InsertPatternStatementGetter extends StatementGetter {
 
     abstract protected String getMethod();
 
     @Override
-    public String get(String tableName, String[] columnNames, int numRows) {
+    public String getExportSql(String tableName, String[] columnNames, int numRows) {
+        columnNames = filterNullColumns(columnNames);
+
         boolean first;
         StringBuilder sb = new StringBuilder();
-        sb.append(getMethod()).append(" IGNORE INTO ");
+        sb.append(getMethod()).append(" INTO ");
         sb.append("`").append(tableName).append("`");
         sb.append("(");
         first = true;
@@ -44,7 +42,12 @@ public abstract class InsertPatternStatementGetter implements StatementGetter {
     }
 
     @Override
-    public String get(String tableName, String[] columnNames, String[] updateKeys) {
+    public String getExportSql(String tableName, String[] columnNames, String[] updateKeys) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getMigrateSql(String tableName, String stagingTableName, String[] columnNames) {
+        return String.format("%s INTO `%s` SELECT * FROM `%s`", getMethod(), tableName, stagingTableName);
     }
 }

@@ -13,6 +13,10 @@ import java.util.regex.Pattern;
 
 public class DateSplitter extends BaseSplitter<Date> {
 
+    public DateSplitter(ResultSet minMaxCountResult) throws SQLException {
+        super(minMaxCountResult);
+    }
+
     @Override
     public ResultSetGetter<Date> getResultSetGetter() {
         return new ResultSetGetter<Date>() {

@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
-import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
 import com.xiaohongshu.db.hercules.core.options.BaseOptionsConf;
@@ -8,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.options.GenericOptions;
 import com.xiaohongshu.db.hercules.core.options.SingleOptionConf;
 import org.apache.commons.cli.*;
 
+import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -19,8 +19,6 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
 
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";
-
-    abstract public DataSource getDataSource();
 
     abstract public DataSourceRole getDataSourceRole();
 
@@ -67,16 +65,15 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
         String prefix = getOptionsPrefix();
         Options options = new Options();
         for (SingleOptionConf optionConf : getOptionsConf().getOptionsMap().values()) {
-            Option.Builder optionBuilder = Option
-                    .builder()
-                    .longOpt(prefix + optionConf.getName())
-                    .desc(optionConf.getDescription())
-                    .hasArg(optionConf.isNeedArg());
+            Option option = new Option(null,
+                    prefix + optionConf.getName(),
+                    optionConf.isNeedArg(),
+                    optionConf.getDescription());
             // 不需要arg的参数必然不是必须出现的参数
             if (optionConf.isNeedArg() && optionConf.isNecessary()) {
-                optionBuilder.required();
+                option.setRequired(true);
             }
-            options.addOption(optionBuilder.build());
+            options.addOption(option);
         }
         return options;
     }
@@ -129,7 +126,7 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
      */
     public final GenericOptions parse(String[] args) {
         // 解析
-        CommandLineParser cliParser = new PosixParser();
+        CommandLineParser cliParser = new IgnorableParser(true);
         CommandLine cli;
         try {
             cli = cliParser.parse(this.getCliOptions(), args);
@@ -148,5 +145,22 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
         }
 
         return options;
+    }
+
+    static private class IgnorableParser extends GnuParser {
+        private boolean ignoreUnrecognizedOption;
+
+        public IgnorableParser(final boolean ignoreUnrecognizedOption) {
+            this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
+        }
+
+        @Override
+        protected void processOption(final String arg, final ListIterator iter) throws org.apache.commons.cli.ParseException {
+            boolean hasOption = getOptions().hasOption(arg);
+
+            if (hasOption || !ignoreUnrecognizedOption) {
+                super.processOption(arg, iter);
+            }
+        }
     }
 }

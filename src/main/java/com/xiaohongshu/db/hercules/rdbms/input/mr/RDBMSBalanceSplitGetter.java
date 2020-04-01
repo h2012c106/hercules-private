@@ -15,9 +15,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-public class RDBMSBalanceInputFormat extends RDBMSInputFormat {
+public class RDBMSBalanceSplitGetter implements SplitGetter {
 
-    private static final Log LOG = LogFactory.getLog(RDBMSBalanceInputFormat.class);
+    private static final Log LOG = LogFactory.getLog(RDBMSBalanceSplitGetter.class);
 
     private static final BigDecimal MIN_MEANINGFUL_SAMPLE_NUM = BigDecimal.valueOf(30);
     private static final BigDecimal FULL_NUM_CONSIDERED_AS_SMALL = BigDecimal.valueOf(100);
@@ -52,9 +52,12 @@ public class RDBMSBalanceInputFormat extends RDBMSInputFormat {
                 - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory())
                 .divide(BigDecimal.TEN, BigDecimal.ROUND_DOWN);
         // 取内存允许量(十分之一)以及当前大小的较小值
-        return sampleSize
-                .min(availableMemoryByte.divide(BigDecimal.valueOf(singleByteSize), 8, BigDecimal.ROUND_UP))
-                .min(maxSampleRow);
+        BigDecimal res = sampleSize
+                .min(availableMemoryByte.divide(BigDecimal.valueOf(singleByteSize), 8, BigDecimal.ROUND_UP));
+        if (maxSampleRow != null) {
+            res = res.min(maxSampleRow);
+        }
+        return res;
     }
 
     private BigDecimal calculateSampleRatio(BigDecimal sampleSize, BigDecimal fullSize) {
@@ -86,7 +89,7 @@ public class RDBMSBalanceInputFormat extends RDBMSInputFormat {
         rawSql = SqlUtils.replaceSelectItem(rawSql, SqlUtils.makeItem(splitBy));
         rawSql = SqlUtils.addWhere(rawSql, String.format("%s < %s",
                 manager.getRandomFunc(), sampleRatio.toPlainString()));
-        rawSql = addNullCondition(rawSql, splitBy, false);
+        rawSql = SqlUtils.addNullCondition(rawSql, splitBy, false);
         LOG.info("The sampling sql is: " + rawSql);
         List sampledResult = manager.executeSelect(rawSql, 1, splitter.getResultSetGetter());
         LOG.info("The sampled size is: " + sampledResult.size());
@@ -94,15 +97,15 @@ public class RDBMSBalanceInputFormat extends RDBMSInputFormat {
     }
 
     @Override
-    protected List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits, String splitBy,
-                                         RDBMSSchemaFetcher schemaFetcher, BaseSplitter splitter,
-                                         BigDecimal maxSampleRow)
+    public List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits, String splitBy,
+                                      RDBMSSchemaFetcher schemaFetcher, BaseSplitter splitter,
+                                      BigDecimal maxSampleRow)
             throws SQLException {
         BigDecimal nullRowCount = BigDecimal.valueOf(minMaxCountResult.getLong(3));
         BigDecimal sampleVariance = splitter.getVariance(sample(schemaFetcher, splitBy,
                 MIN_MEANINGFUL_SAMPLE_NUM, nullRowCount, splitter, maxSampleRow));
 
-        BigDecimal allowableError = splitter.getGap(minMaxCountResult).divide(BigDecimal.valueOf(numSplits).pow(2),
+        BigDecimal allowableError = splitter.getGap().divide(BigDecimal.valueOf(numSplits).pow(2),
                 8, BigDecimal.ROUND_UP);
         BigDecimal sampleSize = Z.pow(2)
                 .multiply(sampleVariance)
@@ -110,7 +113,6 @@ public class RDBMSBalanceInputFormat extends RDBMSInputFormat {
                 .max(MIN_MEANINGFUL_SAMPLE_NUM);
 
         return splitter.getBalanceSplitPoint(splitBy,
-                minMaxCountResult,
                 sample(schemaFetcher, splitBy, sampleSize, nullRowCount, splitter, maxSampleRow),
                 numSplits);
     }

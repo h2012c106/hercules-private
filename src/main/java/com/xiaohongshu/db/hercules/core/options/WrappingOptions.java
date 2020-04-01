@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.options;
 
 import com.xiaohongshu.db.hercules.core.parser.OptionsType;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.conf.Configuration;
 
 public class WrappingOptions {
@@ -42,5 +43,14 @@ public class WrappingOptions {
         sourceOptions.fromConfiguration(configuration, OptionsType.SOURCE);
         targetOptions.fromConfiguration(configuration, OptionsType.TARGET);
         commonOptions.fromConfiguration(configuration, OptionsType.COMMON);
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("sourceOptions", sourceOptions)
+                .append("targetOptions", targetOptions)
+                .append("commonOptions", commonOptions)
+                .toString();
     }
 }

@@ -20,7 +20,7 @@ public final class GenericOptions {
 
     private HashMap<String, String> properties;
 
-    private static final String DEFAULT_ARRAY_DELIMITER = "#o#";
+    private static final String ARRAY_DELIMITER = "#o#";
 
     public GenericOptions() {
         properties = new HashMap<>();
@@ -31,7 +31,7 @@ public final class GenericOptions {
     }
 
     public void set(String key, String[] value) {
-        properties.put(key, String.join(DEFAULT_ARRAY_DELIMITER, value));
+        properties.put(key, String.join(ARRAY_DELIMITER, value));
     }
 
     public boolean hasProperty(String key) {
@@ -100,7 +100,7 @@ public final class GenericOptions {
         return innerGet(key, defaultValue, new StringConverter<String[]>() {
             @Override
             public String[] convert(String sourceString) {
-                return sourceString.split(DEFAULT_ARRAY_DELIMITER);
+                return sourceString.split(ARRAY_DELIMITER);
             }
         });
     }
@@ -175,5 +175,10 @@ public final class GenericOptions {
          * @return
          */
         T convert(String sourceString);
+    }
+
+    @Override
+    public String toString() {
+        return properties.toString();
     }
 }

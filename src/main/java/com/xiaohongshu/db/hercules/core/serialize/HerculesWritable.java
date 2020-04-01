@@ -1,12 +1,12 @@
 package com.xiaohongshu.db.hercules.core.serialize;
 
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.io.Writable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +17,8 @@ public class HerculesWritable implements Writable {
      * 列值列表，按照上游列顺序。
      * 用列值列表+[目标列名-列表下标]map来做比[目标列名-列值]map+列映射map读写总效率大约高5%，前者set快，后者get快
      */
-    private List<BaseWrapper> columnValueList;
+    private BaseWrapper[] columnValueList;
+    private int tmpSize = 0;
 
     /**
      * 下游列名到{@link #columnValueList}下标的映射
@@ -31,8 +32,8 @@ public class HerculesWritable implements Writable {
     }
 
     public HerculesWritable(int columnNum) {
-        columnValueList = new ArrayList<>(columnNum);
-        byteSize =0;
+        columnValueList = new BaseWrapper[columnNum];
+        byteSize = 0;
     }
 
     /**
@@ -58,13 +59,13 @@ public class HerculesWritable implements Writable {
     }
 
     public void append(BaseWrapper column) {
-        columnValueList.add(column);
+        columnValueList[tmpSize++] = column;
         byteSize += column.getByteSize();
     }
 
     public BaseWrapper get(String columnName) {
         if (targetColumnNameToColumnValueListSeqMap.containsKey(columnName)) {
-            return columnValueList.get(targetColumnNameToColumnValueListSeqMap.get(columnName));
+            return columnValueList[targetColumnNameToColumnValueListSeqMap.get(columnName)];
         } else {
             return null;
         }
@@ -74,7 +75,7 @@ public class HerculesWritable implements Writable {
         if (seq == null) {
             return null;
         } else {
-            return columnValueList.get(seq);
+            return columnValueList[seq];
         }
     }
 
@@ -90,5 +91,12 @@ public class HerculesWritable implements Writable {
     @Override
     public void readFields(DataInput in) throws IOException {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("columnValueList", columnValueList)
+                .toString();
     }
 }

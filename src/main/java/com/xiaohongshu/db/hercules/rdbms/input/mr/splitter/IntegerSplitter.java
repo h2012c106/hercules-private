@@ -8,6 +8,10 @@ import java.sql.SQLException;
 
 public class IntegerSplitter extends BaseSplitter<Long> {
 
+    public IntegerSplitter(ResultSet minMaxCountResult) throws SQLException {
+        super(minMaxCountResult);
+    }
+
     @Override
     public ResultSetGetter<Long> getResultSetGetter() {
         return new ResultSetGetter<Long>() {

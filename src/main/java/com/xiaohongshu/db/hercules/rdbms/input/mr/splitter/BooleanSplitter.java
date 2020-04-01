@@ -9,6 +9,10 @@ import java.sql.SQLException;
 
 public class BooleanSplitter extends BaseSplitter<Boolean> {
 
+    public BooleanSplitter(ResultSet minMaxCountResult) throws SQLException {
+        super(minMaxCountResult);
+    }
+
     @Override
     public ResultSetGetter<Boolean> getResultSetGetter() {
         return new ResultSetGetter<Boolean>() {

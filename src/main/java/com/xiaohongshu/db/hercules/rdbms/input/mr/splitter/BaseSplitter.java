@@ -18,6 +18,18 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
 
     private static final Log LOG = LogFactory.getLog(BaseSplitter.class);
 
+    private T minVal;
+    private T maxVal;
+    private long totalSize;
+
+    public BaseSplitter(ResultSet minMaxCountResult) throws SQLException {
+        minVal = getResult(minMaxCountResult, 1);
+        maxVal = getResult(minMaxCountResult, 2);
+        totalSize = minMaxCountResult.getLong(3);
+
+        setCommonPrefix(minVal, maxVal);
+    }
+
     abstract public ResultSetGetter<T> getResultSetGetter();
 
     /**
@@ -47,15 +59,16 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
         return new ArrayList<>(tempSet);
     }
 
-    public BigDecimal getGap(ResultSet minMaxCountResult) throws SQLException {
-        T minVal = getResult(minMaxCountResult, 1);
-        T maxVal = getResult(minMaxCountResult, 2);
-
+    public BigDecimal getGap() {
         return convertToDecimal(maxVal).subtract(convertToDecimal(minVal));
     }
 
 
     public BigDecimal getVariance(List<T> sampledResult) {
+        if (sampledResult.size() == 0) {
+            sampledResult.add(minVal);
+            sampledResult.add(maxVal);
+        }
         List<BigDecimal> convertedList = sampledResult.stream()
                 .map(this::convertToDecimal)
                 .collect(Collectors.toList());
@@ -72,15 +85,10 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
         return molecule.divide(size.subtract(BigDecimal.ONE), 8, BigDecimal.ROUND_UP);
     }
 
-    public List<InputSplit> getBalanceSplitPoint(String splitBy, ResultSet minMaxCountResult,
-                                                 List<T> sampledResult, int numSplits)
-            throws SQLException {
+    public List<InputSplit> getBalanceSplitPoint(String splitBy, List<T> sampledResult, int numSplits) {
         // 千万不可去重，去重了数据分布就不一致了
         sampledResult = sampledResult.stream().sorted().collect(Collectors.toList());
 
-        T minVal = getResult(minMaxCountResult, 1);
-        T maxVal = getResult(minMaxCountResult, 2);
-        long totalSize = minMaxCountResult.getLong(3);
         LOG.info(String.format("The sampling size is: %d, actual sample ratio is: %f",
                 sampledResult.size(),
                 ((double) sampledResult.size()) / ((double) totalSize)));
@@ -158,12 +166,7 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
     protected void setCommonPrefix(T minVal, T maxVal) {
     }
 
-    public List<InputSplit> getFastSplitPoint(String splitBy, ResultSet minMaxCountResult, int numSplits)
-            throws SQLException {
-        T minVal = getResult(minMaxCountResult, 1);
-        T maxVal = getResult(minMaxCountResult, 2);
-
-        setCommonPrefix(minVal, maxVal);
+    public List<InputSplit> getFastSplitPoint(String splitBy, int numSplits) {
 
         List<BigDecimal> splits = new ArrayList<BigDecimal>();
 

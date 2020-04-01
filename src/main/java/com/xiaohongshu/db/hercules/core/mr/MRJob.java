@@ -1,10 +1,10 @@
-package com.xiaohongshu.db.hercules.core.mrjob;
+package com.xiaohongshu.db.hercules.core.mr;
 
 import com.cloudera.sqoop.config.ConfigurationHelper;
 import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.exceptions.MapReduceException;
-import com.xiaohongshu.db.hercules.core.mrjob.mapper.HerculesMapper;
+import com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper;
 import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandExecutor;
@@ -154,13 +154,15 @@ public class MRJob {
 
         options.toConfiguration(configuration);
 
-        Job job = new Job(configuration, "Hercules-Job");
+
+
+        Job job = new Job(configuration);
         job.setJarByClass(MRJob.class);
 
-        sourceAssemblySupplier.getJobContext().configureInput();
+        sourceAssemblySupplier.getJobContextAsSource().configureInput();
         job.setInputFormatClass(sourceAssemblySupplier.getInputFormatClass());
 
-        targetAssemblySupplier.getJobContext().configureOutput();
+        targetAssemblySupplier.getJobContextAsSource().configureOutput();
         job.setOutputFormatClass(targetAssemblySupplier.getOutputFormatClass());
 
         job.setMapperClass(HerculesMapper.class);
@@ -175,8 +177,8 @@ public class MRJob {
 
         configureMRJob(job.getConfiguration());
 
-        sourceAssemblySupplier.getJobContext().preRun();
-        targetAssemblySupplier.getJobContext().preRun();
+        sourceAssemblySupplier.getJobContextAsSource().preRun(options.getSourceOptions());
+        targetAssemblySupplier.getJobContextAsTarget().preRun(options.getTargetOptions());
 
         PerfCounters perfCounters = new PerfCounters();
         perfCounters.startClock();
@@ -200,7 +202,7 @@ public class MRJob {
             throw new MapReduceException("The map reduce job failed.");
         }
 
-        sourceAssemblySupplier.getJobContext().postRun();
-        targetAssemblySupplier.getJobContext().postRun();
+        sourceAssemblySupplier.getJobContextAsSource().postRun(options.getSourceOptions());
+        targetAssemblySupplier.getJobContextAsTarget().postRun(options.getTargetOptions());
     }
 }

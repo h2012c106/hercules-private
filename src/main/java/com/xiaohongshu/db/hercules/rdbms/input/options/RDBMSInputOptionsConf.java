@@ -41,6 +41,11 @@ public class RDBMSInputOptionsConf extends RDBMSOptionsConf {
                 .listDelimiter(COLUMN_DELIMITER)
                 .build());
         tmpList.add(SingleOptionConf.builder()
+                .name(QUERY)
+                .needArg(true)
+                .description("The query sql used on source database.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
                 .name(SPLIT_BY)
                 .needArg(true)
                 .description("The column that splitting map will depend on. " +
@@ -49,7 +54,7 @@ public class RDBMSInputOptionsConf extends RDBMSOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(RANDOM_FUNC_NAME)
                 .needArg(true)
-                .description("The random function used at balance mode sampling.")
+                .description("The random function for temp database, [0, 1], allow any database-supported expression.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(SPLIT_BY_HEX_STRING)
