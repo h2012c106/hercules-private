@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.mr.output;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.util.concurrent.RateLimiter;
 import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exceptions.MapReduceException;
 import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
@@ -17,6 +18,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +40,8 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
     protected S schemaFetcher;
 
     protected List<String> sourceColumnList;
+
+    protected RateLimiter rateLimiter = null;
 
     protected <X> List<WrapperSetter<T>> makeWrapperSetterList(final BaseSchemaFetcher<X> schemaFetcher, List<String> columnNameList) {
         return columnNameList
@@ -81,6 +85,10 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
         columnNames = filterExtraColumns(targetColumnList, targetSourceColumnSeq).toArray(new String[0]);
 
         LOG.info("The upstream column seq in downstream column order: " + targetSourceColumnSeq);
+
+        if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
+            rateLimiter = RateLimiter.create(options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null));
+        }
     }
 
     private WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
@@ -102,6 +110,24 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
             default:
                 throw new MapReduceException("Unknown data type: " + dataType.name());
         }
+    }
+
+    abstract protected void innerWrite(NullWritable key, HerculesWritable value) throws IOException, InterruptedException;
+
+    /**
+     * 即使下游是攒着批量写也没问题，在写之前一定等够了对应qps的时间，batch写一定避免不了毛刺的qps，但是batch间的qps是一定能保证的
+     *
+     * @param key
+     * @param value
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    @Override
+    public void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
+        if (rateLimiter != null) {
+            rateLimiter.acquire();
+        }
+        innerWrite(key, value);
     }
 
     abstract protected WrapperSetter<T> getIntegerSetter();
