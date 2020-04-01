@@ -35,10 +35,6 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
             throws SQLException, ClassNotFoundException {
         super(context, tableName, exportType, schemaFetcher);
 
-        BaseSchemaFetcher sourceSchemaFetcher = SchemaFetcherFactory.getSchemaFetcher(options.getSourceOptions(),
-                BaseSchemaFetcher.class);
-
-        List<String> sourceColumnList = sourceSchemaFetcher.getColumnNameList();
         updateKeys = options.getTargetOptions().getStringArray(RDBMSOutputOptionsConf.UPDATE_KEY, null);
         JSONObject columnMap = options.getCommonOptions().getJson(CommonOptionsConf.COLUMN_MAP, new JSONObject());
 

@@ -7,7 +7,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @param <T> 判断数据源类型的标准，例如sql为int，内部使用switch...case；mongo为Object，内部使用if...instance of
@@ -32,6 +31,13 @@ public abstract class BaseSchemaFetcher<T> {
 
     abstract protected List<String> innerGetColumnNameList();
 
+    /**
+     * 出于对列名列表一致性的考虑，强烈建议在mapper阶段勿调此方法，使用通过Configuration传来的列名列表，保证全局仅取一次列名列表
+     * 考虑这样一种情况：源端rdbms，在主进程起map job前，[a,b,c,d]，在主进程起map后，map进程初始化schema fetcher前，[a,b,c,d,e]，
+     * 那么schema事实上并不会经过schema checker的核验，列的形态并不安全
+     *
+     * @return
+     */
     public final List<String> getColumnNameList() {
         if (columnNameList == null) {
             columnNameList = innerGetColumnNameList();

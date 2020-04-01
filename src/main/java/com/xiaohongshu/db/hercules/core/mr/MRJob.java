@@ -154,8 +154,6 @@ public class MRJob {
 
         options.toConfiguration(configuration);
 
-
-
         Job job = new Job(configuration);
         job.setJarByClass(MRJob.class);
 

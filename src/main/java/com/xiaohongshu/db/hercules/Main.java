@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplierFactory;
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
+import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
@@ -63,6 +64,12 @@ public class Main {
         SchemaChecker checker = new SchemaChecker(sourceAssemblySupplier.getSchemaFetcher(),
                 targetAssemblySupplier.getSchemaFetcher(), wrappingOptions);
         checker.validate();
+
+        // 将schema fetcher获得的列名列表写死在columns属性中，保证全局统一
+        wrappingOptions.getSourceOptions().set(BaseDataSourceOptionsConf.COLUMN,
+                sourceAssemblySupplier.getSchemaFetcher().getColumnNameList().toArray(new String[0]));
+        wrappingOptions.getTargetOptions().set(BaseDataSourceOptionsConf.COLUMN,
+                targetAssemblySupplier.getSchemaFetcher().getColumnNameList().toArray(new String[0]));
 
         MRJob job = new MRJob(sourceAssemblySupplier, targetAssemblySupplier, wrappingOptions);
 

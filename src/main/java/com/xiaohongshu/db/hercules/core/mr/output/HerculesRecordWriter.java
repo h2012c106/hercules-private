@@ -3,10 +3,10 @@ package com.xiaohongshu.db.hercules.core.mr.output;
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exceptions.MapReduceException;
+import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
@@ -18,6 +18,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,16 +37,14 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
 
     protected S schemaFetcher;
 
+    protected List<String> sourceColumnList;
+
     protected <X> List<WrapperSetter<T>> makeWrapperSetterList(final BaseSchemaFetcher<X> schemaFetcher, List<String> columnNameList) {
         return columnNameList
                 .stream()
                 .map(columnName -> getWrapperSetter(schemaFetcher.getColumnTypeMap().get(columnName))
                 )
                 .collect(Collectors.toList());
-    }
-
-    private <X> List<WrapperSetter<T>> makeWrapperSetterList(final BaseSchemaFetcher<X> schemaFetcher) {
-        return makeWrapperSetterList(schemaFetcher, schemaFetcher.getColumnNameList());
     }
 
     protected List<String> filterExtraColumns(List<String> columnNameList, List<Integer> sourceColumnSeqList) {
@@ -67,16 +66,17 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
 
         this.schemaFetcher = schemaFetcher;
 
-        wrapperSetterList = makeWrapperSetterList(schemaFetcher);
+        columnNames = options.getTargetOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null);
 
-        BaseSchemaFetcher targetSchemaFetcher = schemaFetcher;
-
-        List<String> targetColumnList = targetSchemaFetcher.getColumnNameList();
+        sourceColumnList = Arrays.asList(options.getSourceOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+        List<String> targetColumnList = Arrays.asList(columnNames);
         JSONObject columnMap = options.getCommonOptions().getJson(CommonOptionsConf.COLUMN_MAP, new JSONObject());
+
+        wrapperSetterList = makeWrapperSetterList(schemaFetcher, targetColumnList);
 
         // 过滤上游没有的列，数据库会以default插入
         // 第一步，生成目标列list的各个列对应的源列的下标，若是目标表多的列，值为null
-        targetSourceColumnSeq = SchemaUtils.mapColumnSeq(columnMap);
+        targetSourceColumnSeq = SchemaUtils.mapColumnSeq(sourceColumnList, targetColumnList, columnMap);
         // 根据带null的targetSourceColumnSeq将对应列的name置null
         columnNames = filterExtraColumns(targetColumnList, targetSourceColumnSeq).toArray(new String[0]);
 
