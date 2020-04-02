@@ -20,6 +20,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @param <T> 数据源读入时用于表示一行的数据结构，详情可见{@link WrapperGetter}
+ * @param <S>
+ */
 public abstract class HerculesRecordReader<T, S extends BaseSchemaFetcher>
         extends RecordReader<NullWritable, HerculesWritable> {
 

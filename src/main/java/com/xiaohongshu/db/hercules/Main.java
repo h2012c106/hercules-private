@@ -65,6 +65,8 @@ public class Main {
                 targetAssemblySupplier.getSchemaFetcher(), wrappingOptions);
         checker.validate();
 
+        // 以下为部分配置项的特殊逻辑，暂时放在主线程，TODO 放在一个看上去更美观的地方
+
         // 将schema fetcher获得的列名列表写死在columns属性中，保证全局只获得一次
         wrappingOptions.getSourceOptions().set(BaseDataSourceOptionsConf.COLUMN,
                 sourceAssemblySupplier.getSchemaFetcher().getColumnNameList().toArray(new String[0]));
@@ -77,6 +79,8 @@ public class Main {
             double numMapper = wrappingOptions.getCommonOptions().getDouble(CommonOptionsConf.NUM_MAPPER, null);
             wrappingOptions.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQps / numMapper);
         }
+
+        // 以上为部分配置项的特殊逻辑，暂时放在主线程，TODO 放在一个看上去更美观的地方
 
         MRJob job = new MRJob(sourceAssemblySupplier, targetAssemblySupplier, wrappingOptions);
 

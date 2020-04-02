@@ -24,6 +24,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @param <T> 数据源写出时用于表示一行的数据结构，详情可见{@link WrapperSetter}
+ * @param <S>
+ */
 public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> extends RecordWriter<NullWritable, HerculesWritable> {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordWriter.class);
