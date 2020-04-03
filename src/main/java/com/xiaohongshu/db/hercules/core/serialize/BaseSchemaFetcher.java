@@ -52,7 +52,7 @@ public abstract class BaseSchemaFetcher<T> {
      * @param standard
      * @return
      */
-    abstract protected DataType convertType(T standard);
+    abstract public DataType convertType(T standard);
 
     /**
      * 获得每列的类型，配合{@link #convertType}使用

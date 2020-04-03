@@ -126,7 +126,7 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
      */
     public final GenericOptions parse(String[] args) {
         // 解析
-        CommandLineParser cliParser = new IgnorableParser(true);
+        CommandLineParser cliParser = new IgnorableParser(getOptionsPrefix());
         CommandLine cli;
         try {
             cli = cliParser.parse(this.getCliOptions(), args);
@@ -148,17 +148,15 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
     }
 
     static private class IgnorableParser extends GnuParser {
-        private boolean ignoreUnrecognizedOption;
+        private String prefix;
 
-        public IgnorableParser(final boolean ignoreUnrecognizedOption) {
-            this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
+        public IgnorableParser(String prefix) {
+            this.prefix = prefix;
         }
 
         @Override
         protected void processOption(final String arg, final ListIterator iter) throws org.apache.commons.cli.ParseException {
-            boolean hasOption = getOptions().hasOption(arg);
-
-            if (hasOption || !ignoreUnrecognizedOption) {
+            if (arg.startsWith(prefix)) {
                 super.processOption(arg, iter);
             }
         }

@@ -73,13 +73,6 @@ public class Main {
         wrappingOptions.getTargetOptions().set(BaseDataSourceOptionsConf.COLUMN,
                 targetAssemblySupplier.getSchemaFetcher().getColumnNameList().toArray(new String[0]));
 
-        // 换算各个mapper实际的qps
-        if (wrappingOptions.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
-            double maxWriteQps = wrappingOptions.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
-            double numMapper = wrappingOptions.getCommonOptions().getDouble(CommonOptionsConf.NUM_MAPPER, null);
-            wrappingOptions.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQps / numMapper);
-        }
-
         // 以上为部分配置项的特殊逻辑，暂时放在主线程，TODO 放在一个看上去更美观的地方
 
         MRJob job = new MRJob(sourceAssemblySupplier, targetAssemblySupplier, wrappingOptions);

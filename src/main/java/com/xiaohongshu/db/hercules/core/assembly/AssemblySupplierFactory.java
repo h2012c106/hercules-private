@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.core.assembly;
 
+import com.xiaohongshu.db.hercules.clickhouse.ClickhouseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
@@ -21,6 +22,7 @@ public class AssemblySupplierFactory {
         register(DataSource.RDBMS, RDBMSAssemblySupplier.class);
         register(DataSource.MySQL, MysqlAssemblySupplier.class);
         register(DataSource.TiDB, TiDBAssemblySupplier.class);
+        register(DataSource.Clickhouse, ClickhouseAssemblySupplier.class);
     }
 
     private static void register(DataSource dataSource, Class<? extends BaseAssemblySupplier> assemblySupplierClass) {
