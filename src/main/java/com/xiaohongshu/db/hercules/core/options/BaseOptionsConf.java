@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
  */
 public abstract class BaseOptionsConf {
 
+    public static final String HELP = "help";
+
     protected Map<String, SingleOptionConf> optionConfMap = new HashMap<>();
 
     public BaseOptionsConf() {

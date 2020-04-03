@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.clickhouse.output.parser;
 
 import com.xiaohongshu.db.hercules.clickhouse.output.options.ClickhouseOutputOptionsConf;
+import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
@@ -9,6 +10,12 @@ import com.xiaohongshu.db.hercules.rdbms.output.options.RDBMSOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.output.parser.RDBMSOutputParser;
 
 public class ClickhouseOutputParser extends RDBMSOutputParser {
+
+    @Override
+    public DataSource getDataSource() {
+        return DataSource.Clickhouse;
+    }
+
     @Override
     protected BaseDataSourceOptionsConf getOptionsConf() {
         return new ClickhouseOutputOptionsConf();

@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.common.parser;
 
 import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
@@ -10,6 +11,11 @@ public class CommonParser extends BaseParser<CommonOptionsConf> {
 
     @Override
     public DataSourceRole getDataSourceRole() {
+        return null;
+    }
+
+    @Override
+    public DataSource getDataSource() {
         return null;
     }
 

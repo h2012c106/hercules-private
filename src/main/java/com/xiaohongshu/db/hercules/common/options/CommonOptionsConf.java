@@ -70,6 +70,11 @@ public class CommonOptionsConf extends BaseOptionsConf {
                         "will automatically divide the '--%s' value to adapt the multi-map situation, " +
                         "it's unnecessary to calculate it according to different '--%s' value.", COLUMN_MAP, COLUMN_MAP))
                 .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(HELP)
+                .needArg(false)
+                .description("")
+                .build());
         return tmpList;
     }
 }

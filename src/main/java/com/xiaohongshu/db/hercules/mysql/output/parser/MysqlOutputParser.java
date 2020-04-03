@@ -9,6 +9,11 @@ import com.xiaohongshu.db.hercules.rdbms.output.parser.RDBMSOutputParser;
 public class MysqlOutputParser extends RDBMSOutputParser {
 
     @Override
+    public DataSource getDataSource() {
+        return DataSource.MySQL;
+    }
+
+    @Override
     protected BaseDataSourceOptionsConf getOptionsConf() {
         return new MysqlOutputOptionsConf();
     }

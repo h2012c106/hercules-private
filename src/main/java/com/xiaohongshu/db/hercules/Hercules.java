@@ -14,19 +14,35 @@ import com.xiaohongshu.db.hercules.core.parser.BaseParser;
 import com.xiaohongshu.db.hercules.core.parser.ParserFactory;
 import com.xiaohongshu.db.hercules.core.serialize.SchemaChecker;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import lombok.SneakyThrows;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
+import java.io.FileReader;
 import java.util.Arrays;
 
-public class Main {
+public class Hercules {
 
-    private static final Log LOG = LogFactory.getLog(Main.class);
+    private static final Log LOG = LogFactory.getLog(Hercules.class);
+
+    private static final String CONFIG_FILE = "hercules.properties";
+
+    @SneakyThrows
+    private static void printVersionInfo() {
+        PropertiesConfiguration configuration = new PropertiesConfiguration();
+        configuration.read(new FileReader(Hercules.class.getClassLoader().getResource(CONFIG_FILE).getPath()));
+        String version = configuration.getString("hercules.version");
+        String buildTime = configuration.getString("hercules.build.time");
+        LOG.info(String.format("Current HERCULES version is [%s], built at [%s]", version, buildTime));
+    }
 
     public static void main(String[] args) {
+        printVersionInfo();
+
         // 获得例如xxx->yyy的参数
         String dataFlowOption = args[0];
         args = Arrays.copyOfRange(args, 1, args.length);
@@ -55,6 +71,11 @@ public class Main {
                         )
                 )
         );
+
+        // 需要打help，则不运行导数行为
+        if (commonParer.isHelp() || sourceParser.isHelp() || targetParser.isHelp()) {
+            System.exit(0);
+        }
 
         BaseAssemblySupplier sourceAssemblySupplier
                 = AssemblySupplierFactory.getAssemblySupplier(sourceDataSource, wrappingOptions.getSourceOptions());

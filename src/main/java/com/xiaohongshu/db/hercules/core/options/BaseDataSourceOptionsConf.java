@@ -14,7 +14,6 @@ public class BaseDataSourceOptionsConf extends BaseOptionsConf {
 
     public static final String COLUMN = "column";
 
-
     private final static String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
     private final static String DEFAULT_TIME_FORMAT = "HH:mm:ss";
     private final static String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
@@ -49,6 +48,11 @@ public class BaseDataSourceOptionsConf extends BaseOptionsConf {
                 .description(String.format("The table column name list, delimited by %s.", COLUMN_DELIMITER))
                 .list(true)
                 .listDelimiter(COLUMN_DELIMITER)
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(HELP)
+                .needArg(false)
+                .description("")
                 .build());
         return tmpList;
     }
