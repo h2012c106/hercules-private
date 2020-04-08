@@ -87,7 +87,7 @@ public final class GenericOptions {
         });
     }
 
-    public Boolean getBoolean(String key, Boolean defaultValue) {
+    public Boolean getBoolean(String key, boolean defaultValue) {
         return innerGet(key, defaultValue, new StringConverter<Boolean>() {
             @Override
             public Boolean convert(String sourceString) {

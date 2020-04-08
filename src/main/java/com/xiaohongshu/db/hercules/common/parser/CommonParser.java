@@ -15,6 +15,11 @@ public class CommonParser extends BaseParser<CommonOptionsConf> {
     }
 
     @Override
+    public DataSource getDataSource() {
+        return null;
+    }
+
+    @Override
     protected CommonOptionsConf getOptionsConf() {
         return new CommonOptionsConf();
     }
@@ -23,6 +28,11 @@ public class CommonParser extends BaseParser<CommonOptionsConf> {
     protected void validateOptions(GenericOptions options) {
         Integer numMapper = options.getInteger(CommonOptionsConf.NUM_MAPPER, CommonOptionsConf.DEFAULT_NUM_MAPPER);
         ParseUtils.assertTrue(numMapper > 0, "Illegal num mapper: " + numMapper);
+
+        if (options.hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
+            ParseUtils.assertTrue(options.getDouble(CommonOptionsConf.MAX_WRITE_QPS, null) > 0,
+                    "Illegal max write qps: " + numMapper);
+        }
 
         // parse一下看看是不是json
         options.getJson(CommonOptionsConf.COLUMN_MAP, null);

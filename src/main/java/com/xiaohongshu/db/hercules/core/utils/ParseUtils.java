@@ -21,6 +21,8 @@ public final class ParseUtils {
 
     private static final Log LOG = LogFactory.getLog(ParseUtils.class);
 
+    private static final String DATA_SOURCE_SEPARATOR = "::";
+
     /**
      * 根据xxx->yyy获得xxx与yyy的枚举值
      *
@@ -28,7 +30,7 @@ public final class ParseUtils {
      * @return 一个长度为2的array，#0为source，#1为target
      */
     public static DataSource[] getDataSources(String arg) {
-        String regex = "^(.+?)::(.+?)$";
+        String regex = String.format("^(.+?)%s(.+?)$", DATA_SOURCE_SEPARATOR);
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(arg);
         if (matcher.find()) {
@@ -39,7 +41,7 @@ public final class ParseUtils {
                     DataSource.valueOfIgnoreCase(targetStr)
             };
         } else {
-            throw new ParseException("Wrong definitive format, should be like 'xxx->yyy'");
+            throw new ParseException(String.format("Wrong definitive format, should be like 'xxx%syyy'", DATA_SOURCE_SEPARATOR));
         }
     }
 

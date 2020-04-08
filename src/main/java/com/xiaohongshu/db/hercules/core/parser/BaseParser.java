@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
+import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
 import com.xiaohongshu.db.hercules.core.options.BaseOptionsConf;
@@ -20,8 +21,11 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";
 
+    private boolean help;
+
     abstract public DataSourceRole getDataSourceRole();
 
+    abstract public DataSource getDataSource();
 
     /**
      * 获得一个{@link BaseOptionsConf}子类对象用于{@link #getCliOptions()}、
@@ -118,6 +122,43 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
      */
     abstract protected void validateOptions(GenericOptions options);
 
+    private void help(Options cliOptions) {
+        String helpHeader;
+        OptionsType type = getRole();
+        switch (type) {
+            case SOURCE:
+                helpHeader = String.format("Datasource [%s]'s param as source:\n" +
+                                "(if datasource name doesn't match the actual one, relax, " +
+                                "just because they share the same param parser, definitely not a bug)\n\n",
+                        getDataSource().name());
+                break;
+            case TARGET:
+                helpHeader = String.format("Datasource [%s]'s param as target:\n" +
+                                "(if datasource name doesn't match the actual one, relax, " +
+                                "just because they share the same param parser, definitely not a bug)\n\n",
+                        getDataSource().name());
+                break;
+            case COMMON:
+                helpHeader = "Common param:\n\n";
+                break;
+            default:
+                throw new RuntimeException("Unknown option type: " + type);
+        }
+        HelpFormatter helpFormatter = new HelpFormatter();
+        helpFormatter.printHelp(String.format("%s USAGE: ", type.name()), helpHeader, cliOptions, "", true);
+    }
+
+    private void help(GenericOptions options, Options cliOptions) {
+        help = options.getBoolean(BaseOptionsConf.HELP, false);
+        if (help) {
+            help(cliOptions);
+        }
+    }
+
+    public boolean isHelp() {
+        return help;
+    }
+
     /**
      * 根据读入的命令行参数输出options对象
      *
@@ -126,16 +167,25 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
      */
     public final GenericOptions parse(String[] args) {
         // 解析
-        CommandLineParser cliParser = new IgnorableParser(true);
+        CommandLineParser cliParser;
+        if (getRole() == OptionsType.COMMON) {
+            cliParser = new IgnorableParser(getOptionsPrefix(), true);
+        } else {
+            cliParser = new IgnorableParser(getOptionsPrefix(), false);
+        }
         CommandLine cli;
+        Options cliOptions = this.getCliOptions();
         try {
-            cli = cliParser.parse(this.getCliOptions(), args);
+            cli = cliParser.parse(cliOptions, args);
         } catch (Exception e) {
+            help(cliOptions);
             throw new ParseException(e);
         }
 
         // 塞options
         GenericOptions options = parseCommandLine(cli);
+
+        help(options, cliOptions);
 
         // validate
         try {
@@ -148,18 +198,24 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
     }
 
     static private class IgnorableParser extends GnuParser {
-        private boolean ignoreUnrecognizedOption;
+        private String prefix;
+        private boolean ignore;
 
-        public IgnorableParser(final boolean ignoreUnrecognizedOption) {
-            this.ignoreUnrecognizedOption = ignoreUnrecognizedOption;
+        public IgnorableParser(String prefix, boolean ignore) {
+            this.prefix = prefix;
+            this.ignore = ignore;
         }
 
         @Override
-        protected void processOption(final String arg, final ListIterator iter) throws org.apache.commons.cli.ParseException {
+        protected void processOption(final String arg, final ListIterator<String> iter)
+                throws org.apache.commons.cli.ParseException {
             boolean hasOption = getOptions().hasOption(arg);
-
-            if (hasOption || !ignoreUnrecognizedOption) {
+            if (hasOption) {
                 super.processOption(arg, iter);
+            } else {
+                if (!ignore && arg.startsWith(String.format("--%s", prefix))) {
+                    super.processOption(arg, iter);
+                }
             }
         }
     }

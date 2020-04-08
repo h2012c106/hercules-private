@@ -205,7 +205,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     }
 
     @Override
-    public void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
+    public void innerWrite(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
         recordList.add(value);
         if (recordList.size() >= recordPerStatement) {
             execUpdate();

@@ -18,6 +18,7 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String ALLOW_SOURCE_MORE_COLUMN = "allow-source-more-column";
     public static final String ALLOW_TARGET_MORE_COLUMN = "allow-target-more-column";
     public static final String COLUMN_MAP = "column-map";
+    public static final String MAX_WRITE_QPS = "max-write-qps";
 
     public static final int DEFAULT_NUM_MAPPER = 4;
     public static final Level DEFAULT_LOG_LEVEL = Level.INFO;
@@ -61,6 +62,18 @@ public class CommonOptionsConf extends BaseOptionsConf {
                         "key is for source and value is for target. " +
                         "It will convert to a BiMap, make sure that either key or value cannot be duplicate.")
                 .defaultStringValue(DEFAULT_COLUMN_MAP.toJSONString())
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(MAX_WRITE_QPS)
+                .needArg(true)
+                .description(String.format("The OVERALL write qps limit applied to target data source, " +
+                        "will automatically divide the '--%s' value to adapt the multi-map situation, " +
+                        "it's unnecessary to calculate it according to different '--%s' value.", COLUMN_MAP, COLUMN_MAP))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(HELP)
+                .needArg(false)
+                .description("")
                 .build());
         return tmpList;
     }

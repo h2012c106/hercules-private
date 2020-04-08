@@ -22,6 +22,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class RDBMSSchemaFetcher extends BaseSchemaFetcher<Integer> {
 
@@ -42,6 +43,8 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<Integer> {
      * 因为对下游而言，事实上split-by以及update-key并不需要包含在columnNameList里，但是同样需要类型信息
      */
     private StingyMap<String, DataType> columnTypeMap;
+
+    private StingyMap<String, Integer> columnSqlTypeMap;
 
     private void initQuerySql() {
         if (getOptions().hasProperty(RDBMSInputOptionsConf.QUERY)) {
@@ -75,7 +78,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<Integer> {
 
     private void initMetaData() {
         columnNameList = new ArrayList<>();
-        columnTypeMap = new StingyMap<>();
+        columnSqlTypeMap = new StingyMap<>();
         ResultSet resultSet = null;
         Statement statement = null;
         String[] configuredColumnNameList = getOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null);
@@ -106,14 +109,14 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<Integer> {
                 if (getOptions().hasProperty(RDBMSInputOptionsConf.QUERY)) {
                     colName = configuredColumnNameList[i - 1];
                     columnNameList.add(colName);
-                    columnTypeMap.put(colName, convertType(type));
+                    columnSqlTypeMap.put(colName, type);
                 } else {
                     // 这里如果有column配置的名字尽量去用，不然会导致明明用户输入了小写，但是从这里出去变成了大写，这对column map影响很大
                     if (configuredColumnNameList != null) {
                         colName = configuredColumnNameList[i - 1];
                     }
                     columnNameList.add(colName);
-                    columnTypeMap.put(colName, convertType(type));
+                    columnSqlTypeMap.put(colName, type);
                 }
             }
         } catch (SQLException e) {
@@ -162,7 +165,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<Integer> {
                     type = YEAR_TYPE;
                 }
 
-                columnTypeMap.put(colName, convertType(type));
+                columnSqlTypeMap.put(colName, type);
             }
         } catch (SQLException e) {
             throw new SchemaException(e);
@@ -184,7 +187,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<Integer> {
         }
     }
 
-    protected RDBMSManager setManager(){
+    protected RDBMSManager setManager() {
         return new RDBMSManager(getOptions());
     }
 
@@ -225,7 +228,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<Integer> {
     }
 
     @Override
-    protected DataType convertType(Integer standard) {
+    public DataType convertType(Integer standard) {
         switch (standard) {
             case Types.NULL:
                 return DataType.NULL;
@@ -268,7 +271,15 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<Integer> {
 
     @Override
     protected StingyMap<String, DataType> innerGetColumnTypeMap() {
+        columnTypeMap = new StingyMap<>();
+        for(Map.Entry<String,Integer> entry:columnSqlTypeMap.entrySet()){
+            columnTypeMap.put(entry.getKey(),convertType(entry.getValue()));
+        }
         return columnTypeMap;
+    }
+
+    public StingyMap<String, Integer> getColumnSqlTypeMap() {
+        return columnSqlTypeMap;
     }
 
     public String getQuerySql() {

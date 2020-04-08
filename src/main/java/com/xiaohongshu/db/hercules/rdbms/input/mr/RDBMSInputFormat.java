@@ -68,7 +68,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
         }
     }
 
-    private SplitGetter getSplitGetter(GenericOptions options) {
+    protected SplitGetter getSplitGetter(GenericOptions options) {
         if (options.getBoolean(RDBMSInputOptionsConf.BALANCE_SPLIT, true)) {
             return new RDBMSBalanceSplitGetter();
         } else {
@@ -77,7 +77,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
     }
 
     @Override
-    public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
+    public List<InputSplit> innerGetSplits(JobContext context) throws IOException, InterruptedException {
         Configuration configuration = context.getConfiguration();
 
         WrappingOptions options = new WrappingOptions();
@@ -169,6 +169,25 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
 
             if (nullRowNum > 0) {
                 res.addAll(BaseSplitter.generateNullSplit(splitBy));
+            }
+
+            // timestamp型的split by列如果带0000-00-00 00:00:00出去的split会变成0002-11-30 00:00:00
+            int splitBySqlType = schemaFetcher.getColumnSqlTypeMap().get(splitBy);
+            if (splitBySqlType == Types.TIMESTAMP || splitBySqlType == Types.TIMESTAMP_WITH_TIMEZONE) {
+                String zeroDateSql = SqlUtils.replaceSelectItem(schemaFetcher.getQuerySql(),
+                        SqlUtils.makeItem("COUNT", 1));
+                String zeroDateCondition = String.format("`%s` = '0000-00-00 00:00:00'", splitBy);
+                zeroDateSql = SqlUtils.addWhere(zeroDateSql, zeroDateCondition);
+                LOG.warn("The TIMESTAMP splitBy sql type may cause data-missing, check '0000-00-00 00:00:00' existence sql: " + zeroDateSql);
+                long zeroDateNum = manager.executeSelect(zeroDateSql, 1, ResultSetGetter.LONG_GETTER).get(0);
+                if (zeroDateNum > 0) {
+                    LOG.warn("Zero date row num: " + nullRowNum);
+                    // 如果存在，那么加一个split，思路同null，查一把再加而不是无脑加的考量在于，
+                    // 如果有qps限制而无谓地加一个有可能为空的map，那么会有大量的qps额度被浪费
+                    res.add(new RDBMSInputSplit(zeroDateCondition, zeroDateCondition));
+                } else {
+                    LOG.info("Zero date row num: " + nullRowNum);
+                }
             }
 
             configuration.setLong(AVERAGE_MAP_ROW_NUM, (notNullRowNum + nullRowNum) / numSplits);
