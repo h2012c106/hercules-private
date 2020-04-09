@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.output.parser;
 
 import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.options.GenericOptions;
@@ -15,6 +16,11 @@ public class RDBMSOutputParser extends BaseDataSourceParser {
     @Override
     public DataSourceRole getDataSourceRole() {
         return DataSourceRole.TARGET;
+    }
+
+    @Override
+    public DataSource getDataSource() {
+        return DataSource.RDBMS;
     }
 
     @Override

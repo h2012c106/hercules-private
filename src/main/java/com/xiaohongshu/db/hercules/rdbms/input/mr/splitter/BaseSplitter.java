@@ -228,7 +228,7 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
         return splits;
     }
 
-    private List<InputSplit> generateInputSplitList(String columnName, List<T> splitPoints) {
+    public List<InputSplit> generateInputSplitList(String columnName, List<T> splitPoints) {
         String lowClausePrefix = columnName + " >= ";
         String highClausePrefix = columnName + " < ";
         String endClausePrefix = columnName + " <= ";

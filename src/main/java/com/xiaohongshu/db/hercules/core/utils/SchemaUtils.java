@@ -18,19 +18,6 @@ public final class SchemaUtils {
      * @param columnMap
      * @return
      */
-    public static List<Integer> mapColumnSeq(JSONObject columnMap) {
-        List<String> sourceColumnList = SchemaFetcherPair.get(DataSourceRole.SOURCE).getColumnNameList();
-        List<String> targetColumnList = SchemaFetcherPair.get(DataSourceRole.TARGET).getColumnNameList();
-
-        return mapColumnSeq(sourceColumnList, targetColumnList, columnMap);
-    }
-
-    /**
-     * 获得目标列列表在源列表的下标，若目标列表多列，值为null
-     *
-     * @param columnMap
-     * @return
-     */
     public static List<Integer> mapColumnSeq(List<String> sourceColumnList,
                                              List<String> targetColumnList,
                                              JSONObject columnMap) {

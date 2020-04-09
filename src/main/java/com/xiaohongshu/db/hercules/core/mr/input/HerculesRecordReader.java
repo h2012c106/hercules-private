@@ -1,11 +1,10 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exceptions.MapReduceException;
+import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherPair;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import lombok.NonNull;
@@ -17,9 +16,14 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @param <T> 数据源读入时用于表示一行的数据结构，详情可见{@link WrapperGetter}
+ * @param <S>
+ */
 public abstract class HerculesRecordReader<T, S extends BaseSchemaFetcher>
         extends RecordReader<NullWritable, HerculesWritable> {
 
@@ -34,6 +38,8 @@ public abstract class HerculesRecordReader<T, S extends BaseSchemaFetcher>
 
     protected S schemaFetcher;
 
+    protected String[] columnNames;
+
     public HerculesRecordReader(S schemaFetcher) {
         this.schemaFetcher = schemaFetcher;
     }
@@ -42,8 +48,7 @@ public abstract class HerculesRecordReader<T, S extends BaseSchemaFetcher>
             throws IOException, InterruptedException;
 
     private <X> List<WrapperGetter<T>> makeWrapperGetterList(final BaseSchemaFetcher<X> schemaFetcher) {
-        return schemaFetcher.getColumnNameList()
-                .stream()
+        return Arrays.stream(columnNames)
                 .map(columnName -> getWrapperGetter(schemaFetcher.getColumnTypeMap().get(columnName))
                 )
                 .collect(Collectors.toList());
@@ -53,6 +58,8 @@ public abstract class HerculesRecordReader<T, S extends BaseSchemaFetcher>
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
+
+        columnNames = options.getSourceOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null);
 
         wrapperGetterList = makeWrapperGetterList(schemaFetcher);
 

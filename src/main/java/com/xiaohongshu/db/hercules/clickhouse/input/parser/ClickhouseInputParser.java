@@ -1,19 +1,19 @@
-package com.xiaohongshu.db.hercules.mysql.input.parser;
+package com.xiaohongshu.db.hercules.clickhouse.input.parser;
 
+import com.xiaohongshu.db.hercules.clickhouse.input.options.ClickhouseInputOptionsConf;
 import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
-import com.xiaohongshu.db.hercules.mysql.input.options.MysqlInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.input.parser.RDBMSInputParser;
 
-public class MysqlInputParser extends RDBMSInputParser {
+public class ClickhouseInputParser extends RDBMSInputParser {
 
     @Override
     public DataSource getDataSource() {
-        return DataSource.MySQL;
+        return DataSource.Clickhouse;
     }
 
     @Override
     protected BaseDataSourceOptionsConf getOptionsConf() {
-        return new MysqlInputOptionsConf();
+        return new ClickhouseInputOptionsConf();
     }
 }

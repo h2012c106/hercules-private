@@ -27,7 +27,7 @@ public class RDBMSOutputOptionsConf extends RDBMSOptionsConf {
     public static final String RECORD_PER_STATEMENT = "record-per-statement";
     public static final String STATEMENT_PER_COMMIT = "statement-per-commit";
     public static final String AUTOCOMMIT = "autocommit";
-    public static final String EXECUTE_THREAD_NUM = "execute-thead-num";
+    public static final String EXECUTE_THREAD_NUM = "execute-thread-num";
 
     public static final long DEFAULT_RECORD_PER_STATEMENT = 100;
     public static final int DEFAULT_EXECUTE_THREAD_NUM = 1;

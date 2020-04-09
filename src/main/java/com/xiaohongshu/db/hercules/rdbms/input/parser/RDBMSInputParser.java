@@ -18,6 +18,11 @@ public class RDBMSInputParser extends BaseDataSourceParser {
     }
 
     @Override
+    public DataSource getDataSource() {
+        return DataSource.RDBMS;
+    }
+
+    @Override
     protected BaseDataSourceOptionsConf getOptionsConf() {
         return new RDBMSInputOptionsConf();
     }
