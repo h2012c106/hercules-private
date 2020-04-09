@@ -7,6 +7,7 @@ import com.alibaba.druid.sql.ast.expr.SQLIntegerExpr;
 import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
+import com.google.common.collect.Lists;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -93,14 +94,17 @@ public final class SqlUtils {
         try {
             return resultSet.getString(seq);
         } catch (SQLException e) {
-            String regex = "^Value '(.+)' can not be represented as java.sql.Timestamp$";
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(e.getMessage());
-            if (matcher.find()) {
-                return "0000-00-00 00:00:00";
-            } else {
-                throw e;
+            List<String> regexList = Lists.newArrayList(
+                    "^Value '(.+)' can not be represented as java.sql.Timestamp$"
+            );
+            for (String regex : regexList) {
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(e.getMessage());
+                if (matcher.find()) {
+                    return "0000-00-00 00:00:00";
+                }
             }
+            throw e;
         }
     }
 
