@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
-import com.xiaohongshu.db.hercules.core.exceptions.SerializeException;
+import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

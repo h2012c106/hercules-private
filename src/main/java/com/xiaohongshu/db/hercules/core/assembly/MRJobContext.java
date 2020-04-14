@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.assembly;
 
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 
 public interface MRJobContext {
     public void configureInput();

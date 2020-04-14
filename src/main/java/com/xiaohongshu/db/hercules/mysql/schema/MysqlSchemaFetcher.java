@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.mysql.schema;
 
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.mysql.schema.manager.MysqlManager;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;

@@ -1,9 +1,9 @@
 package com.xiaohongshu.db.hercules.core.mr.mapper;
 
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
-import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
-import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
+import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import org.apache.commons.logging.Log;

@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
-import com.xiaohongshu.db.hercules.core.exceptions.SerializeException;
+import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;

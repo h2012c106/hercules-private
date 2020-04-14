@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.rdbms.schema.manager;
 
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
-import com.xiaohongshu.db.hercules.rdbms.common.options.RDBMSOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.input.options.RDBMSInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import lombok.NonNull;
 import org.apache.commons.lang3.exception.ExceptionUtils;

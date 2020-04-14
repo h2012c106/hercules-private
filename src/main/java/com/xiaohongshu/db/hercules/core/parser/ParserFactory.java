@@ -1,14 +1,14 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
-import com.xiaohongshu.db.hercules.clickhouse.input.parser.ClickhouseInputParser;
-import com.xiaohongshu.db.hercules.clickhouse.output.parser.ClickhouseOutputParser;
+import com.xiaohongshu.db.hercules.clickhouse.parser.ClickhouseInputParser;
+import com.xiaohongshu.db.hercules.clickhouse.parser.ClickhouseOutputParser;
 import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
-import com.xiaohongshu.db.hercules.mysql.input.parser.MysqlInputParser;
-import com.xiaohongshu.db.hercules.mysql.output.parser.MysqlOutputParser;
-import com.xiaohongshu.db.hercules.rdbms.input.parser.RDBMSInputParser;
-import com.xiaohongshu.db.hercules.rdbms.output.parser.RDBMSOutputParser;
+import com.xiaohongshu.db.hercules.core.exception.ParseException;
+import com.xiaohongshu.db.hercules.mysql.parser.MysqlInputParser;
+import com.xiaohongshu.db.hercules.mysql.parser.MysqlOutputParser;
+import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSInputParser;
+import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSOutputParser;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.core.mr.output;
 
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.SchemaFetcherGetter;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherPair;

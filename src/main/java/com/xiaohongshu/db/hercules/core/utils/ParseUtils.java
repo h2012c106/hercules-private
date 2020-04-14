@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
 import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.exception.ParseException;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

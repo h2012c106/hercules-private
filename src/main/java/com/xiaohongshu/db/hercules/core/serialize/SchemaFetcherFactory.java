@@ -1,8 +1,7 @@
 package com.xiaohongshu.db.hercules.core.serialize;
 
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.exceptions.SchemaException;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.exception.SchemaException;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

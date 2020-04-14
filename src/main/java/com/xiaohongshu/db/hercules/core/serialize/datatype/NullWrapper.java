@@ -1,7 +1,5 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
-import lombok.NonNull;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;

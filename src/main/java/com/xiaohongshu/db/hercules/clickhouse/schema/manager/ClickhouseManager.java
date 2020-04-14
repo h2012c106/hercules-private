@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.clickhouse.schema.manager;
 
-import com.xiaohongshu.db.hercules.clickhouse.input.options.ClickhouseInputOptionsConf;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
-import com.xiaohongshu.db.hercules.rdbms.input.options.RDBMSInputOptionsConf;
+import com.xiaohongshu.db.hercules.clickhouse.option.ClickhouseInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 
 public class ClickhouseManager extends RDBMSManager {
