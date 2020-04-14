@@ -3,10 +3,10 @@ package com.xiaohongshu.db.hercules.core.serialize;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.exceptions.SchemaException;
-import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.exception.SchemaException;
+import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

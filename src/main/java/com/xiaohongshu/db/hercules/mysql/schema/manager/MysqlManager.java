@@ -1,9 +1,9 @@
 package com.xiaohongshu.db.hercules.mysql.schema.manager;
 
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
-import com.xiaohongshu.db.hercules.mysql.input.options.MysqlInputOptionsConf;
-import com.xiaohongshu.db.hercules.mysql.output.options.MysqlOutputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.input.options.RDBMSInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.mysql.option.MysqlInputOptionsConf;
+import com.xiaohongshu.db.hercules.mysql.option.MysqlOutputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

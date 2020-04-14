@@ -1,13 +1,13 @@
 package com.xiaohongshu.db.hercules.clickhouse;
 
-import com.xiaohongshu.db.hercules.clickhouse.input.mr.ClickhouseInputFormat;
-import com.xiaohongshu.db.hercules.clickhouse.output.mr.ClickhouseOutputFormat;
-import com.xiaohongshu.db.hercules.clickhouse.output.mr.ClickhouseOutputMRContext;
+import com.xiaohongshu.db.hercules.clickhouse.mr.ClickhouseInputFormat;
+import com.xiaohongshu.db.hercules.clickhouse.mr.ClickhouseOutputFormat;
+import com.xiaohongshu.db.hercules.clickhouse.mr.ClickhouseOutputMRContext;
 import com.xiaohongshu.db.hercules.clickhouse.schema.ClickhouseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;

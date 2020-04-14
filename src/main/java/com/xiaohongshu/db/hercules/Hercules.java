@@ -1,14 +1,14 @@
 package com.xiaohongshu.db.hercules;
 
-import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.common.parser.CommonParser;
 import com.xiaohongshu.db.hercules.core.DataSource;
 import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplierFactory;
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
-import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
-import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
 import com.xiaohongshu.db.hercules.core.parser.ParserFactory;
@@ -43,23 +43,24 @@ public class Hercules {
     public static void main(String[] args) {
         printVersionInfo();
 
-        // 获得例如xxx->yyy的参数
+        // 获得 dataFlow 参数，模式为 SOURCE_TYPE::TARGET_TYPE
+        // e.g., MYSQL::TIDB，表示 mysql 导入 tidb
         String dataFlowOption = args[0];
         args = Arrays.copyOfRange(args, 1, args.length);
 
-        //获得DataSource类型
+        // 获得DataSource类型
         DataSource[] dataSources = ParseUtils.getDataSources(dataFlowOption);
         DataSource sourceDataSource = dataSources[0];
         DataSource targetDataSource = dataSources[1];
 
         // 获得target、source、common对应的parser
-        BaseParser commonParer = new CommonParser();
+        BaseParser commonParser = new CommonParser();
         BaseDataSourceParser sourceParser = ParserFactory.getParser(sourceDataSource, DataSourceRole.SOURCE);
         BaseDataSourceParser targetParser = ParserFactory.getParser(targetDataSource, DataSourceRole.TARGET);
 
         WrappingOptions wrappingOptions = new WrappingOptions(sourceParser.parse(args),
                 targetParser.parse(args),
-                commonParer.parse(args));
+                commonParser.parse(args));
 
         LOG.debug("Options: " + wrappingOptions);
 
@@ -73,7 +74,7 @@ public class Hercules {
         );
 
         // 需要打help，则不运行导数行为
-        if (commonParer.isHelp() || sourceParser.isHelp() || targetParser.isHelp()) {
+        if (commonParser.isHelp() || sourceParser.isHelp() || targetParser.isHelp()) {
             System.exit(0);
         }
 

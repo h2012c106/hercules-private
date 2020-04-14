@@ -5,18 +5,13 @@ import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
 import com.xiaohongshu.db.hercules.core.assembly.NullMRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
-import com.xiaohongshu.db.hercules.rdbms.input.mr.RDBMSBalanceSplitGetter;
-import com.xiaohongshu.db.hercules.rdbms.input.mr.RDBMSFastSplitterGetter;
-import com.xiaohongshu.db.hercules.rdbms.input.mr.RDBMSInputFormat;
-import com.xiaohongshu.db.hercules.rdbms.input.options.RDBMSInputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.output.mr.RDBMSOutputFormat;
-import com.xiaohongshu.db.hercules.rdbms.output.mr.RDBMSOutputMRJobContext;
+import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
+import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputFormat;
+import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputMRJobContext;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.OutputFormat;
 
 public class RDBMSAssemblySupplier extends BaseAssemblySupplier {
     public RDBMSAssemblySupplier(GenericOptions options) {

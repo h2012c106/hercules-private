@@ -2,8 +2,8 @@ package com.xiaohongshu.db.hercules.core.assembly;
 
 import com.xiaohongshu.db.hercules.clickhouse.ClickhouseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.exception.ParseException;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.mysql.MysqlAssemblySupplier;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
 import com.xiaohongshu.db.hercules.tidb.TiDBAssemblySupplier;

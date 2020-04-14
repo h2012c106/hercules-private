@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
-import com.xiaohongshu.db.hercules.core.exceptions.SerializeException;
+import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 

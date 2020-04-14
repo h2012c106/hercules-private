@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.core.serialize;
 
 import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.options.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

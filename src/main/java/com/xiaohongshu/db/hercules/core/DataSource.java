@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core;
 
-import com.xiaohongshu.db.hercules.core.exceptions.ParseException;
+import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import org.apache.commons.lang3.StringUtils;
 
 public enum DataSource {

@@ -2,10 +2,10 @@ package com.xiaohongshu.db.hercules.core.mr.output;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.util.concurrent.RateLimiter;
-import com.xiaohongshu.db.hercules.common.options.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.exceptions.MapReduceException;
-import com.xiaohongshu.db.hercules.core.options.BaseDataSourceOptionsConf;
-import com.xiaohongshu.db.hercules.core.options.WrappingOptions;
+import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;

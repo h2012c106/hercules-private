@@ -1,8 +1,6 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherPair;
 
 import java.util.ArrayList;
 import java.util.HashMap;
