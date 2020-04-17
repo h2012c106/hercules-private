@@ -24,6 +24,7 @@ import org.apache.log4j.Logger;
 
 import java.io.FileReader;
 import java.util.Arrays;
+import java.util.List;
 
 public class Hercules {
 
@@ -90,10 +91,11 @@ public class Hercules {
         // 以下为部分配置项的特殊逻辑，暂时放在主线程，TODO 放在一个看上去更美观的地方
 
         // 将schema fetcher获得的列名列表写死在columns属性中，保证全局只获得一次
+        // 强转是必须的，因为list的String会被擦除
         wrappingOptions.getSourceOptions().set(BaseDataSourceOptionsConf.COLUMN,
-                sourceAssemblySupplier.getSchemaFetcher().getColumnNameList().toArray(new String[0]));
+                ((List<String>)sourceAssemblySupplier.getSchemaFetcher().getColumnNameList()).toArray(new String[0]));
         wrappingOptions.getTargetOptions().set(BaseDataSourceOptionsConf.COLUMN,
-                targetAssemblySupplier.getSchemaFetcher().getColumnNameList().toArray(new String[0]));
+                ((List<String>)targetAssemblySupplier.getSchemaFetcher().getColumnNameList()).toArray(new String[0]));
 
         // 以上为部分配置项的特殊逻辑，暂时放在主线程，TODO 放在一个看上去更美观的地方
 
