@@ -1,11 +1,19 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import lombok.NonNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @param <T> 底层用于存储数据的真正数据类型
@@ -16,12 +24,15 @@ public abstract class BaseWrapper<T> {
      */
     private T value;
     private DataType type;
-    private int byteSize;
+    /**
+     * 保证原子性
+     */
+    private AtomicLong byteSize;
 
-    public BaseWrapper(@NonNull T value, DataType type, int byteSize) {
+    public BaseWrapper(@NonNull T value, DataType type, long byteSize) {
         this.value = value;
         this.type = type;
-        this.byteSize = byteSize;
+        this.byteSize = new AtomicLong(byteSize);
     }
 
     protected T getValue() {
@@ -40,12 +51,16 @@ public abstract class BaseWrapper<T> {
         this.type = type;
     }
 
-    public int getByteSize() {
-        return byteSize;
+    public long getByteSize() {
+        return byteSize.longValue();
     }
 
-    public void setByteSize(int byteSize) {
-        this.byteSize = byteSize;
+    public void setByteSize(long byteSize) {
+        this.byteSize = new AtomicLong(byteSize);
+    }
+
+    protected void addByteSize(long additionalByteSize) {
+        this.byteSize.addAndGet(additionalByteSize);
     }
 
     abstract public Long asLong();
@@ -63,6 +78,43 @@ public abstract class BaseWrapper<T> {
     abstract public String asString();
 
     abstract public byte[] asBytes();
+
+    abstract public JSON asJson();
+
+    /**
+     * 下游数据源对类型不敏感（无类型），无法提前知道这一列的类型时，直接调这个，返回raw的value。
+     * <p>
+     * 为什么有泛型T还要返回Object（或者这个方法存在的意义，为什么不直接{@link #getValue()}？
+     * 普通类型当然用T即可（且美观），但是wrap类型list或map返回一个BaseWrapper的List没有任何意义，
+     * 他们应当返回内部元素asDefault后的List或Map。
+     *
+     * @return
+     */
+    public Object asDefault() {
+        return getValue();
+    }
+
+    public static JSON parseJson(String s) {
+        Object res = JSON.parse(s);
+        if (res instanceof JSONArray) {
+            return (JSONArray) res;
+        } else if (res instanceof JSONObject) {
+            return (JSONObject) res;
+        } else {
+            throw new SerializeException("Unknown json parse result class: " + res.getClass().getCanonicalName());
+        }
+    }
+
+    public static DataType isJsonStrListOrMap(String s) {
+        Object res = JSON.parse(s);
+        if (res instanceof JSONArray) {
+            return DataType.LIST;
+        } else if (res instanceof JSONObject) {
+            return DataType.MAP;
+        } else {
+            throw new SerializeException("Unknown json parse result class: " + res.getClass().getCanonicalName());
+        }
+    }
 
     @Override
     public String toString() {

@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
@@ -15,7 +17,7 @@ public class StringWrapper extends BaseWrapper<String> {
 
     private final static String DEFAULT_ENCODE = "UTF-8";
 
-    private String encode;
+    private String encode = null;
 
     public StringWrapper(byte[] value) {
         this(value, DEFAULT_ENCODE);
@@ -30,7 +32,7 @@ public class StringWrapper extends BaseWrapper<String> {
             throw new SerializeException(e);
         }
         setValue(strValue);
-        setByteSize(strValue.length());
+        setByteSize(value.length);
         this.encode = encode;
     }
 
@@ -85,5 +87,10 @@ public class StringWrapper extends BaseWrapper<String> {
         } catch (UnsupportedEncodingException e) {
             throw new SerializeException(e);
         }
+    }
+
+    @Override
+    public JSON asJson() {
+        return parseJson(getValue());
     }
 }

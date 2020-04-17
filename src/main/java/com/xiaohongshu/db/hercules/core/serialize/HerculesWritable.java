@@ -1,85 +1,84 @@
 package com.xiaohongshu.db.hercules.core.serialize;
 
+import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.datatype.MapWrapper;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.io.Writable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
+/**
+ * 内部由Map存储，摈弃Array。在10亿行数据下，Map的写比List慢300秒，读比List慢100秒。
+ * 10亿行的整体传输时间至少要半天，400秒的差额一定程度上是可以忽略不计的，至少如果出现瓶颈，不太可能是这个改动导致的。
+ */
 public class HerculesWritable implements Writable {
 
-    /**
-     * 列值列表，按照上游列顺序。
-     * 用列值列表+[目标列名-列表下标]map来做比[目标列名-列值]map+列映射map读写总效率大约高5%，前者set快，后者get快
-     */
-    private BaseWrapper[] columnValueList;
-    private int tmpSize = 0;
+    private MapWrapper row;
 
-    /**
-     * 下游列名到{@link #columnValueList}下标的映射
-     */
-    private static Map<String, Integer> targetColumnNameToColumnValueListSeqMap;
+    private long byteSize;
 
-    private int byteSize;
+    private static JSONObject columnNameMap;
+
+    public static void setColumnNameMap(JSONObject columnNameMap) {
+        HerculesWritable.columnNameMap = columnNameMap;
+    }
+
+    private static boolean sourceOneLevel;
+    private static boolean targetOneLevel;
+
+    public static void setSourceOneLevel(boolean sourceOneLevel) {
+        HerculesWritable.sourceOneLevel = sourceOneLevel;
+    }
+
+    public static void setTargetOneLevel(boolean targetOneLevel) {
+        HerculesWritable.targetOneLevel = targetOneLevel;
+    }
 
     public HerculesWritable() {
         this(1);
     }
 
     public HerculesWritable(int columnNum) {
-        columnValueList = new BaseWrapper[columnNum];
+        row = new MapWrapper(columnNum);
         byteSize = 0;
     }
 
-    /**
-     * @param columnNameMap        上下游列名映射，key上游名，value下游名
-     * @param sourceColumnNameList 上游列顺序
-     */
-    public static void setTargetColumnNameToColumnValueListSeqMap(Map<String, String> columnNameMap,
-                                                                  List<String> sourceColumnNameList) {
-        if (targetColumnNameToColumnValueListSeqMap == null) {
-            synchronized (HerculesWritable.class) {
-                if (targetColumnNameToColumnValueListSeqMap == null) {
-                    int initialSize = (int) ((float) sourceColumnNameList.size() / 0.75F + 1.0F);
-                    targetColumnNameToColumnValueListSeqMap = new HashMap<>(initialSize);
-                    for (int i = 0; i < sourceColumnNameList.size(); ++i) {
-                        String sourceColumnName = sourceColumnNameList.get(i);
-                        String targetColumnName = columnNameMap.getOrDefault(sourceColumnName, sourceColumnName);
-                        // 可以确定targetColumnName是没有重复的
-                        targetColumnNameToColumnValueListSeqMap.put(targetColumnName, i);
-                    }
-                }
-            }
-        }
+    private String mapColumnName(String columnName) {
+        return (String) columnNameMap.getOrDefault(columnName, columnName);
     }
 
-    public void append(BaseWrapper column) {
-        columnValueList[tmpSize++] = column;
+    public void put(String columnName, BaseWrapper column) {
+        // 把上游列名映成下游列名
+        columnName = mapColumnName(columnName);
+        row.put(columnName, column, sourceOneLevel);
         byteSize += column.getByteSize();
     }
 
     public BaseWrapper get(String columnName) {
-        if (targetColumnNameToColumnValueListSeqMap.containsKey(columnName)) {
-            return columnValueList[targetColumnNameToColumnValueListSeqMap.get(columnName)];
-        } else {
-            return null;
-        }
+        return row.get(columnName, targetOneLevel);
     }
 
-    public BaseWrapper get(Integer seq) {
-        if (seq == null) {
-            return null;
-        } else {
-            return columnValueList[seq];
-        }
+    /**
+     * 把一行的数据根据某个List列展成一/多行
+     *
+     * @param splitBaseColumn
+     * @return
+     */
+    public List<HerculesWritable> split(List<String> splitBaseColumn) {
+        splitBaseColumn = splitBaseColumn.stream().map(this::mapColumnName).collect(Collectors.toList());
+        return null;
     }
 
-    public int getByteSize() {
+    public MapWrapper getRow() {
+        return row;
+    }
+
+    public long getByteSize() {
         return byteSize;
     }
 
@@ -96,7 +95,7 @@ public class HerculesWritable implements Writable {
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .append("columnValueList", columnValueList)
+                .append("row", row)
                 .toString();
     }
 }

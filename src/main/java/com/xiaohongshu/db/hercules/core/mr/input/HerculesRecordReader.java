@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
+import com.alibaba.fastjson.JSONObject;
+import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
@@ -41,6 +43,7 @@ public abstract class HerculesRecordReader<T, S extends BaseSchemaFetcher>
     protected String[] columnNames;
 
     public HerculesRecordReader(S schemaFetcher) {
+        HerculesWritable.setSourceOneLevel(isColumnNameOneLevel());
         this.schemaFetcher = schemaFetcher;
     }
 
@@ -49,8 +52,7 @@ public abstract class HerculesRecordReader<T, S extends BaseSchemaFetcher>
 
     private <X> List<WrapperGetter<T>> makeWrapperGetterList(final BaseSchemaFetcher<X> schemaFetcher) {
         return Arrays.stream(columnNames)
-                .map(columnName -> getWrapperGetter(schemaFetcher.getColumnTypeMap().get(columnName))
-                )
+                .map(columnName -> getWrapperGetter(schemaFetcher.getColumnTypeMap().get(columnName)))
                 .collect(Collectors.toList());
     }
 
@@ -100,4 +102,6 @@ public abstract class HerculesRecordReader<T, S extends BaseSchemaFetcher>
     abstract protected WrapperGetter<T> getBytesGetter();
 
     abstract protected WrapperGetter<T> getNullGetter();
+
+    abstract protected boolean isColumnNameOneLevel();
 }

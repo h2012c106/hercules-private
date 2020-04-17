@@ -1,5 +1,8 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
@@ -51,6 +54,11 @@ public class NullWrapper extends BaseWrapper<String> {
 
     @Override
     public byte[] asBytes() {
+        return null;
+    }
+
+    @Override
+    public JSON asJson() {
         return null;
     }
 }

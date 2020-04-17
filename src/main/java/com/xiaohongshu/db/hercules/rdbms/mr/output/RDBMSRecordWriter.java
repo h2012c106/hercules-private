@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
+import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -25,13 +26,17 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedStatement, RDBMSSchemaFetcher> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordWriter.class);
+
+    private static final boolean COLUMN_NAME_ONE_LEVEL = true;
 
     private boolean closed = false;
     private Long recordPerStatement;
@@ -46,9 +51,13 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     final private List<Exception> exceptionList = new ArrayList<Exception>();
     private AtomicBoolean threadPoolClosed = new AtomicBoolean(false);
 
-    private List<HerculesWritable> recordList;
+    /**
+     * 键为列mask，上游有可能送来残缺的信息（各种缺列），对不同方式缺列的record做归并
+     */
+    private Map<Integer, List<HerculesWritable>> recordListMap;
+    private Map<ColumnRowKey, String> sqlCache;
 
-    abstract protected PreparedStatement getPreparedStatement(List<HerculesWritable> recordList, Connection connection)
+    abstract protected PreparedStatement getPreparedStatement(WorkerMission mission, Connection connection)
             throws Exception;
 
     private void generateThreadPool(final RDBMSSchemaFetcher schemaFetcher) throws SQLException, ClassNotFoundException {
@@ -109,7 +118,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
                                 recordNum += mission.getHerculesWritableList().size();
                                 PreparedStatement preparedStatement = null;
                                 try {
-                                    preparedStatement = getPreparedStatement(mission.getHerculesWritableList(), connection);
+                                    preparedStatement = getPreparedStatement(mission, connection);
                                     mission.clearHerculesWritableList();
                                     preparedStatement.executeBatch();
                                     ++tmpStatementPerCommit;
@@ -166,16 +175,22 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         recordPerStatement = options.getTargetOptions().getLong(RDBMSOutputOptionsConf.RECORD_PER_STATEMENT,
                 RDBMSOutputOptionsConf.DEFAULT_RECORD_PER_STATEMENT);
 
-        recordList = new ArrayList<>(recordPerStatement.intValue());
+        recordListMap = new HashMap<>();
+        sqlCache = new HashMap<>();
 
         generateThreadPool(schemaFetcher);
+    }
+
+    @Override
+    protected boolean isColumnNameOneLevel() {
+        return COLUMN_NAME_ONE_LEVEL;
     }
 
     private void closeThreadPool() throws InterruptedException {
         if (!threadPoolClosed.getAndSet(true)) {
             // 起了多少个线程就发多少个停止命令，在worker逻辑中已经保证了错误不会导致不再take，且threadPoolClosed保证此逻辑只会走一次
             for (int i = 0; i < threadNum; ++i) {
-                missionQueue.put(new WorkerMission(null, true));
+                missionQueue.put(new WorkerMission(null, true, null));
             }
             threadPool.shutdown();
             threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
@@ -190,7 +205,16 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         }
     }
 
-    private void execUpdate() throws IOException, InterruptedException {
+    abstract protected String makeSql(String columnMask, Integer rowNum);
+
+    private String getSql(Integer columnMask, Integer rowNum) {
+        ColumnRowKey key = new ColumnRowKey(columnMask, rowNum);
+        return sqlCache.computeIfAbsent(key, k -> makeSql(uncompressColumnMask(k.getColumnMaskHex()), k.getRowNum()));
+    }
+
+    abstract protected boolean singleRowPerSql();
+
+    private void execUpdate(Integer columnMask, List<HerculesWritable> recordList) throws IOException, InterruptedException {
         // 先检查有没有抛错
         checkException();
 
@@ -200,15 +224,49 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
 
         List<HerculesWritable> copiedRecordList = new ArrayList<HerculesWritable>(recordList);
         recordList.clear();
+
+        // 如果是一sql只插一条数据，那么row num永远为1，与record size无关
+        String sql = getSql(columnMask, singleRowPerSql() ? 1 : recordList.size());
         // 阻塞塞任务
-        missionQueue.put(new WorkerMission(copiedRecordList, false));
+        missionQueue.put(new WorkerMission(copiedRecordList, false, sql));
+    }
+
+    private Integer compressColumnMask(String mask) {
+        return Integer.parseInt(mask, 2);
+    }
+
+    private String uncompressColumnMask(Integer maskInt) {
+        // 注意补齐左边的0
+        String res = Integer.toBinaryString(maskInt);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < (columnNames.length - res.length()); ++i) {
+            sb.append("0");
+        }
+        return sb.append(res).toString();
+    }
+
+    /**
+     * 返回目标数据源需要的列是否在{@link HerculesWritable}内，每一位由0/1表示，转成10进制压缩
+     *
+     * @param value
+     * @return
+     */
+    private Integer getWritableColumnMaskHex(HerculesWritable value) {
+        StringBuilder sb = new StringBuilder();
+        for (String columnName : columnNames) {
+            sb.append(value.getRow().containsColumn(columnName, COLUMN_NAME_ONE_LEVEL) ? "1" : "0");
+        }
+        return compressColumnMask(sb.toString());
     }
 
     @Override
     public void innerWrite(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
-        recordList.add(value);
-        if (recordList.size() >= recordPerStatement) {
-            execUpdate();
+        Integer columnMask = getWritableColumnMaskHex(value);
+        List<HerculesWritable> tmpRecordList = recordListMap.computeIfAbsent(columnMask,
+                k -> new ArrayList<>(recordPerStatement.intValue()));
+        tmpRecordList.add(value);
+        if (tmpRecordList.size() >= recordPerStatement) {
+            execUpdate(columnMask, tmpRecordList);
         }
     }
 
@@ -221,8 +279,13 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
 
         checkException();
 
-        if (recordList.size() > 0) {
-            execUpdate();
+        // 把没凑满的缓存内容全部flush掉
+        for (Map.Entry<Integer, List<HerculesWritable>> entry : recordListMap.entrySet()) {
+            Integer columnMask = entry.getKey();
+            List<HerculesWritable> tmpRecordList = entry.getValue();
+            if (tmpRecordList.size() > 0) {
+                execUpdate(columnMask, tmpRecordList);
+            }
         }
 
         closeThreadPool();
@@ -323,10 +386,12 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     public static class WorkerMission {
         private List<HerculesWritable> herculesWritableList;
         private boolean close;
+        private String sql;
 
-        public WorkerMission(List<HerculesWritable> herculesWritableList, boolean close) {
+        public WorkerMission(List<HerculesWritable> herculesWritableList, boolean close, String sql) {
             this.herculesWritableList = herculesWritableList;
             this.close = close;
+            this.sql = sql;
         }
 
         public void clearHerculesWritableList() {
@@ -348,9 +413,17 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         public void setClose(boolean close) {
             this.close = close;
         }
+
+        public String getSql() {
+            return sql;
+        }
+
+        public void setSql(String sql) {
+            this.sql = sql;
+        }
     }
 
-    abstract public static class TransactionManager {
+    abstract private static class TransactionManager {
         public static final TransactionManager NORMAL = new TransactionManager() {
             @Override
             void commit(Connection connection) throws SQLException {
@@ -375,5 +448,40 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         abstract void commit(Connection connection) throws SQLException;
 
         abstract void rollback(Connection connection) throws SQLException;
+    }
+
+    /**
+     * 用于唯一标示n列(排列组合)m行的一条sql
+     */
+    protected static class ColumnRowKey {
+        private Integer columnMaskHex;
+        private Integer rowNum;
+
+        public ColumnRowKey(Integer columnMaskHex, Integer rowNum) {
+            this.columnMaskHex = columnMaskHex;
+            this.rowNum = rowNum;
+        }
+
+        public Integer getColumnMaskHex() {
+            return columnMaskHex;
+        }
+
+        public Integer getRowNum() {
+            return rowNum;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ColumnRowKey that = (ColumnRowKey) o;
+            return Objects.equal(columnMaskHex, that.columnMaskHex) &&
+                    Objects.equal(rowNum, that.rowNum);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(columnMaskHex, rowNum);
+        }
     }
 }

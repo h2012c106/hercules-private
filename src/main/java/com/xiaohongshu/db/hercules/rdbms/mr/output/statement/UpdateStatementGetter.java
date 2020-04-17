@@ -2,13 +2,13 @@ package com.xiaohongshu.db.hercules.rdbms.mr.output.statement;
 
 public class UpdateStatementGetter extends StatementGetter {
     @Override
-    public String getExportSql(String tableName, String[] columnNames, int numRows) {
+    public String getExportSql(String tableName, String[] columnNames, String columnMask, int numRows) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getExportSql(String tableName, String[] columnNames, String[] updateKeys) {
-        columnNames = filterNullColumns(columnNames);
+    public String getExportSql(String tableName, String[] columnNames, String columnMask, String[] updateKeys) {
+        columnNames = filterNullColumns(columnNames,columnMask);
 
         StringBuilder sb = new StringBuilder();
         sb.append("UPDATE `").append(tableName).append("` SET ");

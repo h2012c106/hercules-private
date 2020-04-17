@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import org.apache.commons.logging.Log;
@@ -17,37 +18,41 @@ public class RDBMSBatchRecordWriter extends RDBMSRecordWriter {
 
     private static final Log LOG = LogFactory.getLog(RDBMSBatchRecordWriter.class);
 
-    private String updateSql;
-
     public RDBMSBatchRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSSchemaFetcher schemaFetcher)
             throws SQLException, ClassNotFoundException {
         super(context, tableName, exportType, schemaFetcher);
-
-        // batch每次只有一行问号，每个prepared sql都一样
-        updateSql = statementGetter.getExportSql(tableName, columnNames, 1);
-
-        LOG.info("Update sql is: " + updateSql);
     }
 
     @Override
-    protected PreparedStatement getPreparedStatement(List<HerculesWritable> recordList, Connection connection)
+    protected String makeSql(String columnMask, Integer rowNum) {
+        return statementGetter.getExportSql(tableName, columnNames, columnMask, 1);
+    }
+
+    @Override
+    protected boolean singleRowPerSql() {
+        return true;
+    }
+
+    @Override
+    protected PreparedStatement getPreparedStatement(WorkerMission mission, Connection connection)
             throws Exception {
-        PreparedStatement preparedStatement = connection.prepareStatement(updateSql);
+        List<HerculesWritable> recordList = mission.getHerculesWritableList();
+        String sql = mission.getSql();
+
+        LOG.info("Update sql is: " + sql);
+        PreparedStatement preparedStatement = connection.prepareStatement(sql);
         for (HerculesWritable record : recordList) {
             // 排去null的下标
             int meaningfulSeq = 0;
             for (int i = 0; i < columnNames.length; ++i) {
-                String columnName = columnNames[i];
-
-                if (columnName == null) {
+                BaseWrapper columnValue = record.get(columnNames[i]);
+                // 如果没有这列值，则meaningfulSeq不加
+                if (columnValue == null) {
                     continue;
                 }
-
-                // 源数据源中该列的下标，即HerculesWritable中的下标
-                int sourceSeq = targetSourceColumnSeq.get(i);
                 WrapperSetter<PreparedStatement> setter = wrapperSetterList.get(i);
                 // meaningfulSeq + 1为prepared statement里问号的下标
-                setter.set(record.get(sourceSeq), preparedStatement, null, ++meaningfulSeq);
+                setter.set(columnValue, preparedStatement, null, ++meaningfulSeq);
             }
             preparedStatement.addBatch();
         }

@@ -39,7 +39,6 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
      * 上游没有的列，这里会置null
      */
     protected String[] columnNames;
-    protected List<Integer> targetSourceColumnSeq;
 
     protected S schemaFetcher;
 
@@ -50,25 +49,13 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
     protected <X> List<WrapperSetter<T>> makeWrapperSetterList(final BaseSchemaFetcher<X> schemaFetcher, List<String> columnNameList) {
         return columnNameList
                 .stream()
-                .map(columnName -> getWrapperSetter(schemaFetcher.getColumnTypeMap().get(columnName))
-                )
+                .map(columnName -> getWrapperSetter(schemaFetcher.getColumnTypeMap().get(columnName)))
                 .collect(Collectors.toList());
     }
 
-    protected List<String> filterExtraColumns(List<String> columnNameList, List<Integer> sourceColumnSeqList) {
-        // columnNameList与sourceColumnSeqList一定长度相等
-        List<String> res = new ArrayList<>(columnNameList.size());
-        for (int i = 0; i < columnNameList.size(); ++i) {
-            if (sourceColumnSeqList.get(i) != null) {
-                res.add(columnNameList.get(i));
-            } else {
-                res.add(null);
-            }
-        }
-        return res;
-    }
-
     public HerculesRecordWriter(TaskAttemptContext context, S schemaFetcher) {
+        HerculesWritable.setTargetOneLevel(isColumnNameOneLevel());
+
         options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
 
@@ -76,19 +63,7 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
 
         columnNames = options.getTargetOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null);
 
-        sourceColumnList = Arrays.asList(options.getSourceOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-        List<String> targetColumnList = Arrays.asList(columnNames);
-        JSONObject columnMap = options.getCommonOptions().getJson(CommonOptionsConf.COLUMN_MAP, new JSONObject());
-
-        wrapperSetterList = makeWrapperSetterList(schemaFetcher, targetColumnList);
-
-        // 过滤上游没有的列，数据库会以default插入
-        // 第一步，生成目标列list的各个列对应的源列的下标，若是目标表多的列，值为null
-        targetSourceColumnSeq = SchemaUtils.mapColumnSeq(sourceColumnList, targetColumnList, columnMap);
-        // 根据带null的targetSourceColumnSeq将对应列的name置null
-        columnNames = filterExtraColumns(targetColumnList, targetSourceColumnSeq).toArray(new String[0]);
-
-        LOG.info("The upstream column seq in downstream column order: " + targetSourceColumnSeq);
+        wrapperSetterList = makeWrapperSetterList(schemaFetcher, Arrays.asList(columnNames));
 
         if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
             rateLimiter = RateLimiter.create(options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null));
@@ -147,5 +122,7 @@ public abstract class HerculesRecordWriter<T, S extends BaseSchemaFetcher> exten
     abstract protected WrapperSetter<T> getBytesSetter();
 
     abstract protected WrapperSetter<T> getNullSetter();
+
+    abstract protected boolean isColumnNameOneLevel();
 
 }

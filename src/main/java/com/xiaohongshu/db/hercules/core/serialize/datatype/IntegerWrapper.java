@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
+import com.alibaba.fastjson.JSON;
+import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
@@ -78,5 +80,10 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
     @Override
     public byte[] asBytes() {
         return getValue().toByteArray();
+    }
+
+    @Override
+    public JSON asJson() {
+        throw new SerializeException("Unsupported to convert number to json.");
     }
 }

@@ -1,10 +1,13 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
+import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Date;
 
 public class BytesWrapper extends BaseWrapper<byte[]> {
@@ -32,13 +35,31 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
         this.encode = encode;
     }
 
+    public BytesWrapper(byte[] value, String encode) {
+        this(value);
+        this.encode = encode;
+    }
+
     public BytesWrapper(byte[] value) {
         super(value, DATA_TYPE, value.length);
     }
 
     @Override
     public Long asLong() {
-        throw new SerializeException("Unsupported to convert bytes to long.");
+        byte[] bytes = getValue();
+        if (bytes.length == 4) {
+            return (long) (bytes[3] & 0xFF |
+                    (bytes[2] & 0xFF) << 8 |
+                    (bytes[1] & 0xFF) << 16 |
+                    (bytes[0] & 0xFF) << 24);
+        } else if (bytes.length == 8) {
+            ByteBuffer buffer = ByteBuffer.allocate(8);
+            buffer.put(bytes, 0, bytes.length);
+            buffer.flip();
+            return buffer.getLong();
+        } else {
+            throw new SerializeException("Unable to convert bytes to long: " + Arrays.toString(bytes));
+        }
     }
 
     @Override
@@ -79,5 +100,10 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
     @Override
     public byte[] asBytes() {
         return getValue();
+    }
+
+    @Override
+    public JSON asJson() {
+        return parseJson(asString());
     }
 }

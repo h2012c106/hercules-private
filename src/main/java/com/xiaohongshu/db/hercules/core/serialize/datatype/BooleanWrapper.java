@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
+import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 
 import java.math.BigDecimal;
@@ -60,5 +61,10 @@ public class BooleanWrapper extends BaseWrapper<Boolean> {
     @Override
     public byte[] asBytes() {
         return getValue() ? new byte[]{0x01} : new byte[]{0x00};
+    }
+
+    @Override
+    public JSON asJson() {
+        throw new SerializeException("Unsupported to convert boolean to json.");
     }
 }

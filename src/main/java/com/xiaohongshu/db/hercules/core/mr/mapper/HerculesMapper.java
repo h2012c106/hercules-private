@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.core.mr.mapper;
 
+import com.alibaba.fastjson.JSONObject;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -42,6 +43,9 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
         // 注册时间格式
         DateUtils.setFormats(options.getSourceOptions(), options.getTargetOptions());
+
+        // 注册columnMap
+        HerculesWritable.setColumnNameMap(options.getCommonOptions().getJson(CommonOptionsConf.COLUMN_MAP, new JSONObject()));
     }
 
     @Override

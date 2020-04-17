@@ -5,8 +5,8 @@ import java.util.stream.Collectors;
 
 public class UpsertStatementGetter extends StatementGetter {
     @Override
-    public String getExportSql(String tableName, String[] columnNames, int numRows) {
-        columnNames = filterNullColumns(columnNames);
+    public String getExportSql(String tableName, String[] columnNames, String columnMask, int numRows) {
+        columnNames = filterNullColumns(columnNames, columnMask);
 
         boolean first;
         StringBuilder sb = new StringBuilder();
@@ -54,7 +54,7 @@ public class UpsertStatementGetter extends StatementGetter {
     }
 
     @Override
-    public String getExportSql(String tableName, String[] columnNames, String[] updateKeys) {
+    public String getExportSql(String tableName, String[] columnNames, String columnMask, String[] updateKeys) {
         throw new UnsupportedOperationException();
     }
 

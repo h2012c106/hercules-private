@@ -28,6 +28,8 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordReader.class);
 
+    private static final boolean COLUMN_NAME_ONE_LEVEL = true;
+
     private Long pos = 0L;
     /**
      * 用于估算进度
@@ -42,6 +44,11 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
 
     public RDBMSRecordReader(RDBMSSchemaFetcher schemaFetcher) {
         super(schemaFetcher);
+    }
+
+    @Override
+    protected boolean isColumnNameOneLevel() {
+        return COLUMN_NAME_ONE_LEVEL;
     }
 
     @Override
@@ -85,10 +92,10 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
 
             ++pos;
 
-            int columnNum = wrapperGetterList.size();
+            int columnNum = columnNames.length;
             value = new HerculesWritable(columnNum);
             for (int i = 0; i < columnNum; ++i) {
-                value.append(wrapperGetterList.get(i).get(resultSet, null, i + 1));
+                value.put(columnNames[i], wrapperGetterList.get(i).get(resultSet, null, i + 1));
             }
 
             return true;

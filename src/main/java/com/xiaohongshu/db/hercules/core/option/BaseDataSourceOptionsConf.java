@@ -19,6 +19,7 @@ public class BaseDataSourceOptionsConf extends BaseOptionsConf {
     private final static String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static final String COLUMN_DELIMITER = ",";
+    public static final String NESTED_COLUMN_NAME_DELIMITER_REGEX="\\.";
 
 
     @Override

@@ -46,7 +46,7 @@
 
     <properties>
         <timestamp>${maven.build.timestamp}</timestamp>
-        <maven.build.timestamp.format>yyyy-MM-dd HH:mm:00</maven.build.timestamp.format>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:00'Z'</maven.build.timestamp.format>
     </properties>
 
     <dependencies>

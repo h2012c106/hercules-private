@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
+import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 
@@ -97,5 +98,10 @@ public class DateWrapper extends BaseWrapper<String> {
     @Override
     public byte[] asBytes() {
         return getValue().getBytes();
+    }
+
+    @Override
+    public JSON asJson() {
+        throw new SerializeException("Unsupported to convert date to json.");
     }
 }
