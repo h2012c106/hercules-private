@@ -6,6 +6,7 @@ import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
@@ -16,6 +17,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -23,6 +25,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -114,22 +117,62 @@ class HBaseRecordReader extends HerculesRecordReader {
 
     @Override
     protected WrapperGetter getIntegerGetter() {
-        return null;
+        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
+            @Override
+            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
+                byte[] res = columnValueMap.firstEntry().getValue();
+                if (res==null) {
+                    return new NullWrapper();
+                } else {
+                    return new IntegerWrapper(Bytes.toInt(res));
+                }
+            }
+        };
     }
 
     @Override
     protected WrapperGetter getDoubleGetter() {
-        return null;
+        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
+            @Override
+            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
+                byte[] res = columnValueMap.firstEntry().getValue();
+                if (res==null) {
+                    return new NullWrapper();
+                } else {
+                    return new DoubleWrapper(Bytes.toDouble(res));
+                }
+            }
+        };
     }
 
     @Override
     protected WrapperGetter getBooleanGetter() {
-        return null;
+        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
+            @Override
+            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
+                byte[] res = columnValueMap.firstEntry().getValue();
+                if (res==null) {
+                    return new NullWrapper();
+                } else {
+                    return new BooleanWrapper(Bytes.toBoolean(res));
+                }
+            }
+        };
     }
 
     @Override
     protected WrapperGetter getStringGetter() {
-        return null;
+        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
+            @Override
+            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
+                byte[] res = columnValueMap.firstEntry().getValue();
+                if (res==null) {
+                    return new NullWrapper();
+                } else {
+                    return new StringWrapper(Bytes.toString(res));
+                }
+            }
+        };
     }
 
     @Override
@@ -139,12 +182,27 @@ class HBaseRecordReader extends HerculesRecordReader {
 
     @Override
     protected WrapperGetter getBytesGetter() {
-        return null;
+        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
+            @Override
+            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
+                byte[] res = columnValueMap.firstEntry().getValue();
+                if (res==null) {
+                    return new NullWrapper();
+                } else {
+                    return new BytesWrapper(res);
+                }
+            }
+        };
     }
 
     @Override
     protected WrapperGetter getNullGetter() {
-        return null;
+        return new WrapperGetter<ResultSet>() {
+            @Override
+            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
+                return NullWrapper.INSTANCE;
+            }
+        };
     }
 
     @Override
