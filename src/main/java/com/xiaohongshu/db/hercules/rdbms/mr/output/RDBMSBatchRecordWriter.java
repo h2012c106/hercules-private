@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -18,14 +19,14 @@ public class RDBMSBatchRecordWriter extends RDBMSRecordWriter {
 
     private static final Log LOG = LogFactory.getLog(RDBMSBatchRecordWriter.class);
 
-    public RDBMSBatchRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSSchemaFetcher schemaFetcher)
+    public RDBMSBatchRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSManager manager)
             throws SQLException, ClassNotFoundException {
-        super(context, tableName, exportType, schemaFetcher);
+        super(context, tableName, exportType, manager);
     }
 
     @Override
     protected String makeSql(String columnMask, Integer rowNum) {
-        return statementGetter.getExportSql(tableName, columnNames, columnMask, 1);
+        return statementGetter.getExportSql(tableName, columnNameList, columnMask, 1);
     }
 
     @Override
@@ -44,8 +45,8 @@ public class RDBMSBatchRecordWriter extends RDBMSRecordWriter {
         for (HerculesWritable record : recordList) {
             // 排去null的下标
             int meaningfulSeq = 0;
-            for (int i = 0; i < columnNames.length; ++i) {
-                BaseWrapper columnValue = record.get(columnNames[i]);
+            for (int i = 0; i < columnNameList.size(); ++i) {
+                BaseWrapper columnValue = record.get(columnNameList.get(i));
                 // 如果没有这列值，则meaningfulSeq不加
                 if (columnValue == null) {
                     continue;

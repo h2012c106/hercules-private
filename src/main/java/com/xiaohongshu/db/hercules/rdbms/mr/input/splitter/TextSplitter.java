@@ -153,7 +153,7 @@ public class TextSplitter extends BaseSplitter<String> {
     }
 
     @Override
-    protected String[] quote() {
-        return nVarchar ? new String[]{"N'", "'"} : new String[]{"'", "'"};
+    protected Enclosing quote() {
+        return new Enclosing(nVarchar ? "N'" : "'", "'");
     }
 }

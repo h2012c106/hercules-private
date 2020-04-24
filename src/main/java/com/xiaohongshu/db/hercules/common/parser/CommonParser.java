@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.common.parser;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;

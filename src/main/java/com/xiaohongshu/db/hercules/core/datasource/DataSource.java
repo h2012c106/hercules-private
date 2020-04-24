@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.core;
+package com.xiaohongshu.db.hercules.core.datasource;
 
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import org.apache.commons.lang3.StringUtils;

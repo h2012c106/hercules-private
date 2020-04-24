@@ -1,20 +1,22 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output.statement;
 
+import java.util.List;
+
 public class UpdateStatementGetter extends StatementGetter {
     @Override
-    public String getExportSql(String tableName, String[] columnNames, String columnMask, int numRows) {
+    public String getExportSql(String tableName, List<String> columnNameList, String columnMask, int numRows) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getExportSql(String tableName, String[] columnNames, String columnMask, String[] updateKeys) {
-        columnNames = filterNullColumns(columnNames,columnMask);
+    public String getExportSql(String tableName, List<String> columnNameList, String columnMask, List<String> updateKeyList) {
+        columnNameList = filterNullColumns(columnNameList,columnMask);
 
         StringBuilder sb = new StringBuilder();
         sb.append("UPDATE `").append(tableName).append("` SET ");
 
         boolean first = true;
-        for (String col : columnNames) {
+        for (String col : columnNameList) {
             if (!first) {
                 sb.append(", ");
             }
@@ -26,7 +28,7 @@ public class UpdateStatementGetter extends StatementGetter {
 
         sb.append(" WHERE ");
         first = true;
-        for (String updateKey : updateKeys) {
+        for (String updateKey : updateKeyList) {
             if (first) {
                 first = false;
             } else {
@@ -39,7 +41,7 @@ public class UpdateStatementGetter extends StatementGetter {
     }
 
     @Override
-    public String getMigrateSql(String tableName, String stagingTableName, String[] columnNames) {
+    public String getMigrateSql(String tableName, String stagingTableName, List<String> columnNameList) {
         throw new UnsupportedOperationException();
     }
 }

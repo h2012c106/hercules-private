@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.core;
+package com.xiaohongshu.db.hercules.core.datasource;
 
 public enum DataSourceRole {
     SOURCE,

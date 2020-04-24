@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.rdbms.parser;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;
@@ -42,11 +42,6 @@ public class RDBMSInputParser extends BaseDataSourceParser {
                 Lists.newArrayList(RDBMSOptionsConf.TABLE),
                 null);
         ParseUtils.validateDependency(options,
-                RDBMSInputOptionsConf.QUERY,
-                null,
-                Lists.newArrayList(BaseDataSourceOptionsConf.COLUMN),
-                null);
-        ParseUtils.validateDependency(options,
                 RDBMSInputOptionsConf.BALANCE_SPLIT_SAMPLE_MAX_ROW,
                 null,
                 Lists.newArrayList(RDBMSInputOptionsConf.BALANCE_SPLIT),
@@ -59,11 +54,21 @@ public class RDBMSInputParser extends BaseDataSourceParser {
 
         Integer splitMaxRow = options.getInteger(RDBMSInputOptionsConf.BALANCE_SPLIT_SAMPLE_MAX_ROW,
                 null);
-        ParseUtils.assertTrue(splitMaxRow == null || splitMaxRow > 0,
-                "Illegal balance split max row num: " + splitMaxRow);
+        if (splitMaxRow != null) {
+            ParseUtils.assertTrue(splitMaxRow > 0,
+                    "Illegal balance split max row num: " + splitMaxRow);
+        }
 
         Integer fetchSize = options.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
-        ParseUtils.assertTrue(fetchSize != null && fetchSize > 0,
-                "Illegal fetch size value: " + fetchSize);
+        if (fetchSize != null) {
+            ParseUtils.assertTrue(fetchSize > 0,
+                    "Illegal fetch size value: " + fetchSize);
+        }
+
+        String splitBy = options.getString(RDBMSInputOptionsConf.SPLIT_BY, null);
+        if (splitBy != null) {
+            ParseUtils.assertTrue(!splitBy.contains(","),
+                    "Unsupported to use multiple split-by key.");
+        }
     }
 }

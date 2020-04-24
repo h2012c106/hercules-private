@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.rdbms.parser;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;

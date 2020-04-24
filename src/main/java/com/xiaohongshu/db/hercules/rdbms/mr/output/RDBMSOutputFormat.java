@@ -2,29 +2,28 @@ package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerInitializer;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-public class RDBMSOutputFormat extends HerculesOutputFormat<RDBMSSchemaFetcher> {
+public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSManagerInitializer {
     @Override
-    public HerculesRecordWriter<?, RDBMSSchemaFetcher> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+    public RDBMSRecordWriter getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
 
         GenericOptions targetOptions = options.getTargetOptions();
 
-        RDBMSSchemaFetcher schemaFetcher = getSchemaFetcher(targetOptions);
+        RDBMSManager manager = initializeManager(targetOptions);
 
         try {
             String tableName = targetOptions.getString(RDBMSOptionsConf.TABLE, null);
@@ -38,12 +37,12 @@ public class RDBMSOutputFormat extends HerculesOutputFormat<RDBMSSchemaFetcher> 
             }
 
             if (ExportType.valueOfIgnoreCase(targetOptions.getString(RDBMSOutputOptionsConf.EXPORT_TYPE, null)).isUpdate()) {
-                return new RDBMSUpdateRecordWriter(context, tableName, exportType, schemaFetcher);
+                return new RDBMSUpdateRecordWriter(context, tableName, exportType, manager);
             }
             if (targetOptions.getBoolean(RDBMSOutputOptionsConf.BATCH, false)) {
-                return new RDBMSBatchRecordWriter(context, tableName, exportType, schemaFetcher);
+                return new RDBMSBatchRecordWriter(context, tableName, exportType, manager);
             } else {
-                return new RDBMSRichLineRecordWriter(context, tableName, exportType, schemaFetcher);
+                return new RDBMSRichLineRecordWriter(context, tableName, exportType, manager);
             }
         } catch (Exception e) {
             throw new IOException(e);
@@ -75,7 +74,7 @@ public class RDBMSOutputFormat extends HerculesOutputFormat<RDBMSSchemaFetcher> 
     }
 
     @Override
-    public RDBMSSchemaFetcher innerGetSchemaFetcher(GenericOptions options) {
-        return SchemaFetcherFactory.getSchemaFetcher(options, RDBMSSchemaFetcher.class);
+    public RDBMSManager initializeManager(GenericOptions options) {
+        return new RDBMSManager(options);
     }
 }

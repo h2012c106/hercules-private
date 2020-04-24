@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.tidb.mr;
 
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlOutputMRJobContext;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
@@ -8,7 +9,6 @@ import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFactory;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,6 +16,8 @@ import org.apache.commons.logging.LogFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
 
 public class TiDBOutputMRJobContext extends MysqlOutputMRJobContext {
 
@@ -25,11 +27,10 @@ public class TiDBOutputMRJobContext extends MysqlOutputMRJobContext {
     public void postRun(GenericOptions options) {
         if (options.hasProperty(RDBMSOutputOptionsConf.STAGING_TABLE)) {
             String stagingTable = options.getString(RDBMSOutputOptionsConf.STAGING_TABLE, null);
-            RDBMSSchemaFetcher schemaFetcher = getSchemaFetcher(options);
             Connection connection = null;
             Statement statement = null;
             try {
-                connection = schemaFetcher.getManager().getConnection();
+                connection = initializeManager(options).getConnection();
                 connection.setAutoCommit(true);
                 statement = connection.createStatement();
 
@@ -54,9 +55,8 @@ public class TiDBOutputMRJobContext extends MysqlOutputMRJobContext {
                         null));
                 StatementGetter statementGetter = StatementGetterFactory.get(exportType);
 
-                String migrateSql = statementGetter.getMigrateSql(targetTable,
-                        stagingTable,
-                        schemaFetcher.getColumnNameList().toArray(new String[0]));
+                List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+                String migrateSql = statementGetter.getMigrateSql(targetTable, stagingTable, columnNameList);
                 String deleteSql = String.format("DELETE FROM `%s`", stagingTable);
 
                 LOG.info("Migrate sql: " + migrateSql);

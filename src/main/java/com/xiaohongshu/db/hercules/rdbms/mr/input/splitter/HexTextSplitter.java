@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input.splitter;
 
+import com.google.common.annotations.Beta;
+
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -7,6 +9,7 @@ import java.sql.SQLException;
 /**
  * TODO 大小写问题怎么解决
  */
+@Beta
 public class HexTextSplitter extends TextSplitter {
     public HexTextSplitter(ResultSet minMaxCountResult, boolean nVarchar) throws SQLException {
         super(minMaxCountResult, nVarchar);

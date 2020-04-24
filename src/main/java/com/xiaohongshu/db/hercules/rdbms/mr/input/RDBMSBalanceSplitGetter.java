@@ -3,7 +3,6 @@ package com.xiaohongshu.db.hercules.rdbms.mr.input;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.BaseSplitter;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
@@ -14,6 +13,7 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 public class RDBMSBalanceSplitGetter implements SplitGetter {
 
@@ -24,10 +24,10 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
     // 置信水平99%
     private static final BigDecimal Z = BigDecimal.valueOf(2.58);
 
-    private BigDecimal getActualSampleSize(BigDecimal sampleSize, String splitBy, RDBMSSchemaFetcher schemaFetcher,
+    private BigDecimal getActualSampleSize(BigDecimal sampleSize, String splitBy, Map<String, DataType> columnTypeMap,
                                            BigDecimal maxSampleRow) {
         int singleByteSize;
-        DataType dataType = schemaFetcher.getColumnTypeMap().get(splitBy);
+        DataType dataType = columnTypeMap.get(splitBy);
         switch (dataType) {
             case INTEGER:
             case DOUBLE:
@@ -77,33 +77,32 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
         return sampleSize.divide(fullSize, 9, BigDecimal.ROUND_UP).min(BigDecimal.ONE);
     }
 
-    private List sample(RDBMSSchemaFetcher schemaFetcher, String splitBy,
+    private List sample(RDBMSManager manager, String splitBy,
                         BigDecimal sampleSize, BigDecimal fullSize, BaseSplitter splitter,
-                        BigDecimal maxSampleRow) throws SQLException {
-        RDBMSManager manager = schemaFetcher.getManager();
-
-        sampleSize = getActualSampleSize(sampleSize, splitBy, schemaFetcher, maxSampleRow);
+                        BigDecimal maxSampleRow, Map<String, DataType> columnTypeMap,
+                        String baseSql) throws SQLException {
+        sampleSize = getActualSampleSize(sampleSize, splitBy, columnTypeMap, maxSampleRow);
         BigDecimal sampleRatio = calculateSampleRatio(sampleSize, fullSize);
 
-        String rawSql = schemaFetcher.getQuerySql();
-        rawSql = SqlUtils.replaceSelectItem(rawSql, SqlUtils.makeItem(splitBy));
+        String rawSql = baseSql;
+        rawSql = SqlUtils.replaceSelectItem(rawSql, splitBy);
         rawSql = SqlUtils.addWhere(rawSql, String.format("%s < %s",
                 manager.getRandomFunc(), sampleRatio.toPlainString()));
         rawSql = SqlUtils.addNullCondition(rawSql, splitBy, false);
         LOG.info("The sampling sql is: " + rawSql);
         List sampledResult = manager.executeSelect(rawSql, 1, splitter.getResultSetGetter());
-        LOG.info("The sampled size is: " + sampledResult.size());
+        LOG.info(String.format("Intended sampled size vs Actual sampled size: %s vs %d",
+                sampleSize.toPlainString(), sampledResult.size()));
         return sampledResult;
     }
 
     @Override
     public List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits, String splitBy,
-                                      RDBMSSchemaFetcher schemaFetcher, BaseSplitter splitter,
-                                      BigDecimal maxSampleRow)
-            throws SQLException {
+                                      Map<String, DataType> columnTypeMap, String baseSql, BaseSplitter splitter,
+                                      BigDecimal maxSampleRow, RDBMSManager manager) throws SQLException {
         BigDecimal nullRowCount = BigDecimal.valueOf(minMaxCountResult.getLong(3));
-        BigDecimal sampleVariance = splitter.getVariance(sample(schemaFetcher, splitBy,
-                MIN_MEANINGFUL_SAMPLE_NUM, nullRowCount, splitter, maxSampleRow));
+        BigDecimal sampleVariance = splitter.getVariance(sample(manager, splitBy,
+                MIN_MEANINGFUL_SAMPLE_NUM, nullRowCount, splitter, maxSampleRow, columnTypeMap, baseSql));
 
         BigDecimal allowableError = splitter.getGap().divide(BigDecimal.valueOf(numSplits).pow(2),
                 8, BigDecimal.ROUND_UP);
@@ -113,7 +112,7 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
                 .max(MIN_MEANINGFUL_SAMPLE_NUM);
 
         return splitter.getBalanceSplitPoint(splitBy,
-                sample(schemaFetcher, splitBy, sampleSize, nullRowCount, splitter, maxSampleRow),
+                sample(manager, splitBy, sampleSize, nullRowCount, splitter, maxSampleRow, columnTypeMap, baseSql),
                 numSplits);
     }
 }

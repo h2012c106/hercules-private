@@ -6,14 +6,16 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.*;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerInitializer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -26,19 +28,40 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.List;
 
-public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
+public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter> implements RDBMSManagerInitializer {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
     public static final String AVERAGE_MAP_ROW_NUM = "hercules.average.map.row.num";
 
-    @Override
-    public RDBMSSchemaFetcher innerGetSchemaFetcher(GenericOptions options) {
-        return SchemaFetcherFactory.getSchemaFetcher(options, RDBMSSchemaFetcher.class);
+    private RDBMSManager manager;
+    private String baseSql;
+    private RDBMSSchemaFetcher schemaFetcher;
+
+    /**
+     * rdbms使用{@link StingyMap}，不允许（不可能）拿到未被fetch到类型的列。
+     */
+    private StingyMap<String, DataType> columnTypeMap;
+
+    protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options,
+                                      RDBMSDataTypeConverter converter,
+                                      RDBMSManager manager){
+        return new RDBMSSchemaFetcher(options, converter, manager);
     }
 
-    protected BaseSplitter getSplitter(ResultSet minMaxCountResult,
-                                       DataType dataType, int sqlDataType, boolean hexString) throws SQLException {
+    @Override
+    protected void initializeContext(GenericOptions sourceOptions) {
+        super.initializeContext(sourceOptions);
+
+        manager = initializeManager(sourceOptions);
+        schemaFetcher = initializeSchemaFetcher(sourceOptions, converter, manager);
+        baseSql = SqlUtils.makeBaseQuery(sourceOptions);
+
+        columnTypeMap = new StingyMap<>(super.columnTypeMap);
+    }
+
+    private BaseSplitter getSplitter(ResultSet minMaxCountResult,
+                                     DataType dataType, int sqlDataType, boolean hexString) throws SQLException {
         switch (dataType) {
             case INTEGER:
                 return new IntegerSplitter(minMaxCountResult);
@@ -83,8 +106,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(configuration);
 
-        RDBMSSchemaFetcher schemaFetcher = getSchemaFetcher(options.getSourceOptions());
-        RDBMSManager manager = schemaFetcher.getManager();
+        initializeContext(options.getSourceOptions());
 
         // 检查split-by列在不在列集里
         String splitBy;
@@ -117,7 +139,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
 
             minMaxCountStatement = connection.createStatement();
 
-            String minMaxCountSql = SqlUtils.replaceSelectItem(schemaFetcher.getQuerySql(),
+            String minMaxCountSql = SqlUtils.replaceSelectItem(baseSql,
                     SqlUtils.makeItem("MIN", splitBy),
                     SqlUtils.makeItem("MAX", splitBy),
                     SqlUtils.makeItem("COUNT", 1));
@@ -140,7 +162,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
 
             BaseSplitter splitter = getSplitter(
                     minMaxCountResult,
-                    schemaFetcher.getColumnTypeMap().get(splitBy),
+                    columnTypeMap.get(splitBy),
                     sqlDataType,
                     options.getSourceOptions().getBoolean(RDBMSInputOptionsConf.SPLIT_BY_HEX_STRING, false)
             );
@@ -153,7 +175,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
                 return BaseSplitter.generateNullSplit(splitBy);
             }
 
-            String nullSql = SqlUtils.replaceSelectItem(schemaFetcher.getQuerySql(),
+            String nullSql = SqlUtils.replaceSelectItem(baseSql,
                     SqlUtils.makeItem("COUNT", 1));
             nullSql = SqlUtils.addNullCondition(nullSql, splitBy, true);
             LOG.info("The count null sql is: " + nullSql);
@@ -165,16 +187,16 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
                     .getDecimal(RDBMSInputOptionsConf.BALANCE_SPLIT_SAMPLE_MAX_ROW, null);
 
             List<InputSplit> res = getSplitGetter(options.getSourceOptions())
-                    .getSplits(minMaxCountResult, numSplits, splitBy, schemaFetcher, splitter, maxSampleRow);
+                    .getSplits(minMaxCountResult, numSplits, splitBy, columnTypeMap, baseSql, splitter, maxSampleRow, manager);
 
             if (nullRowNum > 0) {
                 res.addAll(BaseSplitter.generateNullSplit(splitBy));
             }
 
             // timestamp型的split by列如果带0000-00-00 00:00:00出去的split会变成0002-11-30 00:00:00
-            int splitBySqlType = schemaFetcher.getColumnSqlTypeMap().get(splitBy);
+            int splitBySqlType = schemaFetcher.getColumnSqlType(baseSql, splitBy);
             if (splitBySqlType == Types.TIMESTAMP || splitBySqlType == Types.TIMESTAMP_WITH_TIMEZONE) {
-                String zeroDateSql = SqlUtils.replaceSelectItem(schemaFetcher.getQuerySql(),
+                String zeroDateSql = SqlUtils.replaceSelectItem(baseSql,
                         SqlUtils.makeItem("COUNT", 1));
                 String zeroDateCondition = String.format("`%s` = '0000-00-00 00:00:00'", splitBy);
                 zeroDateSql = SqlUtils.addWhere(zeroDateSql, zeroDateCondition);
@@ -225,12 +247,25 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSSchemaFetcher> {
     }
 
     @Override
-    public HerculesRecordReader<?, RDBMSSchemaFetcher> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    public HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
+            throws IOException, InterruptedException {
         Configuration configuration = context.getConfiguration();
 
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(configuration);
 
-        return new RDBMSRecordReader(getSchemaFetcher(options.getSourceOptions()));
+        initializeContext(options.getSourceOptions());
+
+        return new RDBMSRecordReader(manager, initializeConverter());
+    }
+
+    @Override
+    public RDBMSManager initializeManager(GenericOptions options) {
+        return new RDBMSManager(options);
+    }
+
+    @Override
+    public RDBMSDataTypeConverter initializeConverter() {
+        return new RDBMSDataTypeConverter();
     }
 }

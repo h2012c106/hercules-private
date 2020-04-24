@@ -1,7 +1,9 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
-import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceGetter;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -16,16 +18,12 @@ import java.util.Map;
  *
  * @param <T> optionsConf类
  */
-public abstract class BaseParser<T extends BaseOptionsConf> {
+public abstract class BaseParser<T extends BaseOptionsConf> implements DataSourceGetter, DataSourceRoleGetter {
 
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";
 
     private boolean help;
-
-    abstract public DataSourceRole getDataSourceRole();
-
-    abstract public DataSource getDataSource();
 
     /**
      * 获得一个{@link BaseOptionsConf}子类对象用于{@link #getCliOptions()}、

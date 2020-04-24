@@ -1,6 +1,10 @@
 package com.xiaohongshu.db.hercules.core.option;
 
+import com.alibaba.fastjson.JSONObject;
+import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -13,14 +17,16 @@ public class BaseDataSourceOptionsConf extends BaseOptionsConf {
     public static final String DATETIME_FORMAT = "datetime-format";
 
     public static final String COLUMN = "column";
+    public static final String COLUMN_TYPE = "column-type";
+
+    public final static JSONObject DEFAULT_COLUMN_TYPE = new JSONObject();
 
     private final static String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
     private final static String DEFAULT_TIME_FORMAT = "HH:mm:ss";
     private final static String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static final String COLUMN_DELIMITER = ",";
-    public static final String NESTED_COLUMN_NAME_DELIMITER_REGEX="\\.";
-
+    public static final String NESTED_COLUMN_NAME_DELIMITER_REGEX = "\\.";
 
     @Override
     protected List<SingleOptionConf> setOptionConf() {
@@ -49,6 +55,12 @@ public class BaseDataSourceOptionsConf extends BaseOptionsConf {
                 .description(String.format("The table column name list, delimited by %s.", COLUMN_DELIMITER))
                 .list(true)
                 .listDelimiter(COLUMN_DELIMITER)
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(COLUMN_TYPE)
+                .needArg(true)
+                .description(String.format("The table column type map, formatted in json, type: %s.", Arrays.toString(DataType.values())))
+                .defaultStringValue(DEFAULT_COLUMN_TYPE.toJSONString())
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(HELP)

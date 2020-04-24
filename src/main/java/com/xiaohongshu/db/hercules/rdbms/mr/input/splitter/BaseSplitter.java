@@ -208,12 +208,13 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
     /**
      * @return #0是左符号，#1是右符号
      */
-    protected String[] quote() {
-        return new String[]{"", ""};
+    protected Enclosing quote() {
+        return new Enclosing("", "");
     }
 
     private String quotedValue(String value) {
-        return quote()[0] + value + quote()[1];
+        Enclosing enclosing=quote();
+        return enclosing.getLeft() + value + enclosing.getRight();
     }
 
     static public List<InputSplit> generateNullSplit(String columnName) {
@@ -256,6 +257,24 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
         }
 
         return splits;
+    }
+
+    public static class Enclosing{
+        private String left;
+        private String right;
+
+        public Enclosing(String left, String right) {
+            this.left = left;
+            this.right = right;
+        }
+
+        public String getLeft() {
+            return left;
+        }
+
+        public String getRight() {
+            return right;
+        }
     }
 
 }

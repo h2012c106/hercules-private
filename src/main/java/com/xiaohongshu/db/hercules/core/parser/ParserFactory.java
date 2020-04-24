@@ -2,8 +2,8 @@ package com.xiaohongshu.db.hercules.core.parser;
 
 import com.xiaohongshu.db.hercules.clickhouse.parser.ClickhouseInputParser;
 import com.xiaohongshu.db.hercules.clickhouse.parser.ClickhouseOutputParser;
-import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlInputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlOutputParser;
@@ -13,9 +13,9 @@ import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSOutputParser;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ParserFactory {
+public final class ParserFactory {
 
-    private static Map<DataSource, Map<DataSourceRole, BaseDataSourceParser>> registerCenter
+    private static final Map<DataSource, Map<DataSourceRole, BaseDataSourceParser>> REGISTER_CENTER
             = new HashMap<DataSource, Map<DataSourceRole, BaseDataSourceParser>>(DataSource.values().length);
 
     static {
@@ -32,8 +32,8 @@ public class ParserFactory {
     }
 
     private static void register(DataSource dataSource, DataSourceRole dataSourceRole, BaseDataSourceParser instance) {
-        if (registerCenter.containsKey(dataSource)) {
-            Map<DataSourceRole, BaseDataSourceParser> dataSourceRoleBaseDataSourceParserMap = registerCenter.get(dataSource);
+        if (REGISTER_CENTER.containsKey(dataSource)) {
+            Map<DataSourceRole, BaseDataSourceParser> dataSourceRoleBaseDataSourceParserMap = REGISTER_CENTER.get(dataSource);
             // 不允许在同一串key上重复注册，防止写组件的时候无脑复制粘贴导致注册的时候张冠李戴
             if (dataSourceRoleBaseDataSourceParserMap.containsKey(dataSourceRole)) {
                 throw new RuntimeException(String.format("Duplicate parser register of %s as %s role",
@@ -46,13 +46,13 @@ public class ParserFactory {
             Map<DataSourceRole, BaseDataSourceParser> dataSourceRoleBaseDataSourceParserMap
                     = new HashMap<DataSourceRole, BaseDataSourceParser>(2);
             dataSourceRoleBaseDataSourceParserMap.put(dataSourceRole, instance);
-            registerCenter.put(dataSource, dataSourceRoleBaseDataSourceParserMap);
+            REGISTER_CENTER.put(dataSource, dataSourceRoleBaseDataSourceParserMap);
         }
     }
 
     public static BaseDataSourceParser getParser(DataSource dataSource, DataSourceRole dataSourceRole) {
-        if (registerCenter.containsKey(dataSource)) {
-            Map<DataSourceRole, BaseDataSourceParser> dataSourceRoleBaseDataSourceParserMap = registerCenter.get(dataSource);
+        if (REGISTER_CENTER.containsKey(dataSource)) {
+            Map<DataSourceRole, BaseDataSourceParser> dataSourceRoleBaseDataSourceParserMap = REGISTER_CENTER.get(dataSource);
             if (dataSourceRoleBaseDataSourceParserMap.containsKey(dataSourceRole)) {
                 return dataSourceRoleBaseDataSourceParserMap.get(dataSourceRole);
             } else {

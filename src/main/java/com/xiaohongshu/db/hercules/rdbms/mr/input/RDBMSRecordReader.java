@@ -5,7 +5,7 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -24,11 +24,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSchemaFetcher> {
+public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordReader.class);
-
-    private static final boolean COLUMN_NAME_ONE_LEVEL = true;
 
     private Long pos = 0L;
     /**
@@ -40,15 +38,13 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
     private ResultSet resultSet = null;
     private HerculesWritable value;
 
+    private RDBMSManager manager;
+
     private AtomicBoolean hasClosed = new AtomicBoolean(false);
 
-    public RDBMSRecordReader(RDBMSSchemaFetcher schemaFetcher) {
-        super(schemaFetcher);
-    }
-
-    @Override
-    protected boolean isColumnNameOneLevel() {
-        return COLUMN_NAME_ONE_LEVEL;
+    public RDBMSRecordReader(RDBMSManager manager, RDBMSDataTypeConverter converter) {
+        super(converter);
+        this.manager = manager;
     }
 
     @Override
@@ -57,9 +53,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
 
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
-        RDBMSManager manager = schemaFetcher.getManager();
-
-        String querySql = schemaFetcher.getQuerySql();
+        String querySql = SqlUtils.makeBaseQuery(options.getSourceOptions());
         RDBMSInputSplit rdbmsInputSplit = (RDBMSInputSplit) split;
         String splitBoundary = String.format("%s AND %s", rdbmsInputSplit.getLowerClause(),
                 rdbmsInputSplit.getUpperClause());
@@ -92,10 +86,10 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
 
             ++pos;
 
-            int columnNum = columnNames.length;
+            int columnNum = columnNameList.size();
             value = new HerculesWritable(columnNum);
             for (int i = 0; i < columnNum; ++i) {
-                value.put(columnNames[i], wrapperGetterList.get(i).get(resultSet, null, i + 1));
+                value.put(columnNameList.get(i), wrapperGetterList.get(i).get(resultSet, null, i + 1));
             }
 
             return true;

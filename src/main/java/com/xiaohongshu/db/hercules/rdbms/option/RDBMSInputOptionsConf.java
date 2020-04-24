@@ -76,7 +76,7 @@ public class RDBMSInputOptionsConf extends RDBMSOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(FETCH_SIZE)
                 .needArg(true)
-                .description("The select fetch size.")
+                .description("The select fetch size, if not specified will not use this feature.")
                 .build());
         return tmpList;
     }

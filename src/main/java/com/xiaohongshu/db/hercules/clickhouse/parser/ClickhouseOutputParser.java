@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.clickhouse.parser;
 
 import com.xiaohongshu.db.hercules.clickhouse.option.ClickhouseOutputOptionsConf;
-import com.xiaohongshu.db.hercules.core.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;

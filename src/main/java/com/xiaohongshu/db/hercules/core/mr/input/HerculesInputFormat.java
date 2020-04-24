@@ -1,13 +1,16 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.mr.SchemaFetcherGetter;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterInitializer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherPair;
+import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -19,27 +22,40 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
-public abstract class HerculesInputFormat<S extends BaseSchemaFetcher>
+public abstract class HerculesInputFormat<C extends DataTypeConverter>
         extends InputFormat<NullWritable, HerculesWritable>
-        implements SchemaFetcherGetter<S> {
+        implements DataTypeConverterInitializer<C> {
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
     public HerculesInputFormat() {
     }
 
+    private RDBMSManager manager;
+    private String baseSql;
+    private RDBMSSchemaFetcher schemaFetcher;
+    protected C converter;
+    protected Map<String, DataType> columnTypeMap;
+
+    protected void initializeContext(GenericOptions sourceOptions) {
+        converter = initializeConverter();
+        columnTypeMap = SchemaUtils.convert(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
+    }
+
     abstract protected List<InputSplit> innerGetSplits(JobContext context) throws IOException, InterruptedException;
 
     @Override
     public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
-
-        List<InputSplit> res = innerGetSplits(context);
-
         Configuration configuration = context.getConfiguration();
 
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(configuration);
+
+        initializeContext(options.getSourceOptions());
+
+        List<InputSplit> res = innerGetSplits(context);
 
         // 换算各个mapper实际的qps
         if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
@@ -54,14 +70,18 @@ public abstract class HerculesInputFormat<S extends BaseSchemaFetcher>
     }
 
     @Override
-    abstract public HerculesRecordReader<?, S> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException;
+    public HerculesRecordReader<?, C> createRecordReader(InputSplit split, TaskAttemptContext context)
+            throws IOException, InterruptedException {
+        Configuration configuration = context.getConfiguration();
 
-    abstract protected S innerGetSchemaFetcher(GenericOptions options);
+        WrappingOptions options = new WrappingOptions();
+        options.fromConfiguration(configuration);
 
-    @Override
-    public final S getSchemaFetcher(GenericOptions options) {
-        S res = innerGetSchemaFetcher(options);
-        SchemaFetcherPair.set(res, DataSourceRole.SOURCE);
-        return res;
+        initializeContext(options.getSourceOptions());
+
+        return innerCreateRecordReader(split, context);
     }
+
+    abstract protected HerculesRecordReader<?, C> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
+            throws IOException, InterruptedException;
 }

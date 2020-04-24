@@ -1,15 +1,12 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
-import com.alibaba.fastjson.JSONObject;
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -24,22 +21,21 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
 
     private static final Log LOG = LogFactory.getLog(RDBMSUpdateRecordWriter.class);
 
-    private String[] updateKeys;
-    private List<Integer> updateSourceColumnSeq;
+    private List<String> updateKeyList;
 
     private List<WrapperSetter<PreparedStatement>> updateKeyWrapperSetterList;
 
-    public RDBMSUpdateRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSSchemaFetcher schemaFetcher)
+    public RDBMSUpdateRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSManager manager)
             throws SQLException, ClassNotFoundException {
-        super(context, tableName, exportType, schemaFetcher);
+        super(context, tableName, exportType, manager);
 
-        updateKeys = options.getTargetOptions().getStringArray(RDBMSOutputOptionsConf.UPDATE_KEY, null);
-        updateKeyWrapperSetterList = makeWrapperSetterList(schemaFetcher, Arrays.asList(updateKeys));
+        updateKeyList = Arrays.asList(options.getTargetOptions().getStringArray(RDBMSOutputOptionsConf.UPDATE_KEY, null));
+        updateKeyWrapperSetterList = makeWrapperSetterList(updateKeyList);
     }
 
     @Override
     protected String makeSql(String columnMask, Integer rowNum) {
-        return statementGetter.getExportSql(tableName, columnNames, columnMask, updateKeys);
+        return statementGetter.getExportSql(tableName, columnNameList, columnMask, updateKeyList);
     }
 
     @Override
@@ -58,8 +54,8 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
         for (HerculesWritable record : recordList) {
             // 排去null的下标
             int meaningfulSeq = 0;
-            for (int i = 0; i < columnNames.length; ++i) {
-                BaseWrapper columnValue = record.get(columnNames[i]);
+            for (int i = 0; i < columnNameList.size(); ++i) {
+                BaseWrapper columnValue = record.get(columnNameList.get(i));
                 // 如果没有这列值，则meaningfulSeq不加
                 if (columnValue == null) {
                     continue;
@@ -68,8 +64,8 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
                 // meaningfulSeq + 1为prepared statement里问号的下标
                 setter.set(columnValue, preparedStatement, null, ++meaningfulSeq);
             }
-            for (int i = 0; i < updateKeys.length; ++i) {
-                String columnName = updateKeys[i];
+            for (int i = 0; i < updateKeyList.size(); ++i) {
+                String columnName = updateKeyList.get(i);
                 BaseWrapper columnValue = record.get(columnName);
                 // record内必须要有update的列值
                 if (columnValue == null) {

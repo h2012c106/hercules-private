@@ -4,16 +4,16 @@ import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
-import com.xiaohongshu.db.hercules.core.mr.SchemaFetcherGetter;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFactory;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerInitializer;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,10 +21,11 @@ import org.apache.commons.logging.LogFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RDBMSOutputMRJobContext implements MRJobContext, SchemaFetcherGetter<RDBMSSchemaFetcher> {
+public class RDBMSOutputMRJobContext implements MRJobContext, RDBMSManagerInitializer {
 
     private static final Log LOG = LogFactory.getLog(RDBMSOutputMRJobContext.class);
 
@@ -42,12 +43,11 @@ public class RDBMSOutputMRJobContext implements MRJobContext, SchemaFetcherGette
     public void preRun(GenericOptions options) {
         if (options.hasProperty(RDBMSOutputOptionsConf.STAGING_TABLE)) {
             String stagingTable = options.getString(RDBMSOutputOptionsConf.STAGING_TABLE, null);
-            RDBMSSchemaFetcher schemaFetcher = getSchemaFetcher(options);
             String sql = String.format("SELECT COUNT(1) FROM %s;", stagingTable);
             LOG.info("Execute sql to staging table: " + sql);
             long stagingColumnNum;
             try {
-                stagingColumnNum = schemaFetcher.getManager()
+                stagingColumnNum = initializeManager(options)
                         .executeSelect(sql, 1, ResultSetGetter.LONG_GETTER).get(0);
             } catch (SQLException e) {
                 throw new SchemaException(e);
@@ -71,11 +71,10 @@ public class RDBMSOutputMRJobContext implements MRJobContext, SchemaFetcherGette
     public void postRun(GenericOptions options) {
         if (options.hasProperty(RDBMSOutputOptionsConf.STAGING_TABLE)) {
             String stagingTable = options.getString(RDBMSOutputOptionsConf.STAGING_TABLE, null);
-            RDBMSSchemaFetcher schemaFetcher = getSchemaFetcher(options);
             Connection connection = null;
             Statement statement = null;
             try {
-                connection = schemaFetcher.getManager().getConnection();
+                connection = initializeManager(options).getConnection();
                 connection.setAutoCommit(true);
                 statement = connection.createStatement();
 
@@ -97,9 +96,8 @@ public class RDBMSOutputMRJobContext implements MRJobContext, SchemaFetcherGette
                         null));
                 StatementGetter statementGetter = StatementGetterFactory.get(exportType);
 
-                String migrateSql = statementGetter.getMigrateSql(targetTable,
-                        stagingTable,
-                        schemaFetcher.getColumnNameList().toArray(new String[0]));
+                List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+                String migrateSql = statementGetter.getMigrateSql(targetTable, stagingTable, columnNameList);
                 String deleteSql = String.format("DELETE FROM `%s`", stagingTable);
 
                 LOG.info("Migrate sql: " + migrateSql);
@@ -139,7 +137,7 @@ public class RDBMSOutputMRJobContext implements MRJobContext, SchemaFetcherGette
     }
 
     @Override
-    public RDBMSSchemaFetcher getSchemaFetcher(GenericOptions options) {
-        return SchemaFetcherFactory.getSchemaFetcher(options, RDBMSSchemaFetcher.class);
+    public RDBMSManager initializeManager(GenericOptions options) {
+        return new RDBMSManager(options);
     }
 }

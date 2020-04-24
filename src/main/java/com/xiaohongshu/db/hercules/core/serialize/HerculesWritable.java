@@ -28,12 +28,7 @@ public class HerculesWritable implements Writable {
         HerculesWritable.columnNameMap = columnNameMap;
     }
 
-    private static boolean sourceOneLevel;
     private static boolean targetOneLevel;
-
-    public static void setSourceOneLevel(boolean sourceOneLevel) {
-        HerculesWritable.sourceOneLevel = sourceOneLevel;
-    }
 
     public static void setTargetOneLevel(boolean targetOneLevel) {
         HerculesWritable.targetOneLevel = targetOneLevel;
@@ -55,7 +50,8 @@ public class HerculesWritable implements Writable {
     public void put(String columnName, BaseWrapper column) {
         // 把上游列名映成下游列名
         columnName = mapColumnName(columnName);
-        row.put(columnName, column, sourceOneLevel);
+        // 已经是下游列名了，自然按照下游是否存在嵌套列来判断
+        row.put(columnName, column, targetOneLevel);
         byteSize += column.getByteSize();
     }
 

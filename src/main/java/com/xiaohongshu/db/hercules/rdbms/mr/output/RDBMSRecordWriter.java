@@ -16,7 +16,6 @@ import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
@@ -32,7 +31,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedStatement, RDBMSSchemaFetcher> {
+abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedStatement> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordWriter.class);
 
@@ -54,16 +53,13 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     /**
      * 键为列mask，上游有可能送来残缺的信息（各种缺列），对不同方式缺列的record做归并
      */
-    private Map<Integer, List<HerculesWritable>> recordListMap;
+    private Map<String, List<HerculesWritable>> recordListMap;
     private Map<ColumnRowKey, String> sqlCache;
 
     abstract protected PreparedStatement getPreparedStatement(WorkerMission mission, Connection connection)
             throws Exception;
 
-    private void generateThreadPool(final RDBMSSchemaFetcher schemaFetcher) throws SQLException, ClassNotFoundException {
-        final GenericOptions options = schemaFetcher.getOptions();
-        final RDBMSManager manager = schemaFetcher.getManager();
-
+    private void generateThreadPool(final GenericOptions options, final RDBMSManager manager) throws SQLException, ClassNotFoundException {
         threadNum = options.getInteger(RDBMSOutputOptionsConf.EXECUTE_THREAD_NUM,
                 RDBMSOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM);
 
@@ -165,9 +161,9 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         }
     }
 
-    public RDBMSRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSSchemaFetcher schemaFetcher)
+    public RDBMSRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSManager manager)
             throws SQLException, ClassNotFoundException {
-        super(context, schemaFetcher);
+        super(context);
 
         this.tableName = tableName;
         statementGetter = StatementGetterFactory.get(exportType);
@@ -178,7 +174,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         recordListMap = new HashMap<>();
         sqlCache = new HashMap<>();
 
-        generateThreadPool(schemaFetcher);
+        generateThreadPool(options.getTargetOptions(), manager);
     }
 
     @Override
@@ -207,14 +203,14 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
 
     abstract protected String makeSql(String columnMask, Integer rowNum);
 
-    private String getSql(Integer columnMask, Integer rowNum) {
+    private String getSql(String columnMask, Integer rowNum) {
         ColumnRowKey key = new ColumnRowKey(columnMask, rowNum);
-        return sqlCache.computeIfAbsent(key, k -> makeSql(uncompressColumnMask(k.getColumnMaskHex()), k.getRowNum()));
+        return sqlCache.computeIfAbsent(key, k -> makeSql(k.getColumnMask(), k.getRowNum()));
     }
 
     abstract protected boolean singleRowPerSql();
 
-    private void execUpdate(Integer columnMask, List<HerculesWritable> recordList) throws IOException, InterruptedException {
+    private void execUpdate(String columnMask, List<HerculesWritable> recordList) throws IOException, InterruptedException {
         // 先检查有没有抛错
         checkException();
 
@@ -226,23 +222,9 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         recordList.clear();
 
         // 如果是一sql只插一条数据，那么row num永远为1，与record size无关
-        String sql = getSql(columnMask, singleRowPerSql() ? 1 : recordList.size());
+        String sql = getSql(columnMask, singleRowPerSql() ? 1 : copiedRecordList.size());
         // 阻塞塞任务
         missionQueue.put(new WorkerMission(copiedRecordList, false, sql));
-    }
-
-    private Integer compressColumnMask(String mask) {
-        return Integer.parseInt(mask, 2);
-    }
-
-    private String uncompressColumnMask(Integer maskInt) {
-        // 注意补齐左边的0
-        String res = Integer.toBinaryString(maskInt);
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < (columnNames.length - res.length()); ++i) {
-            sb.append("0");
-        }
-        return sb.append(res).toString();
     }
 
     /**
@@ -251,23 +233,28 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
      * @param value
      * @return
      */
-    private Integer getWritableColumnMaskHex(HerculesWritable value) {
+    private String getWritableColumnMask(HerculesWritable value) {
         StringBuilder sb = new StringBuilder();
-        for (String columnName : columnNames) {
+        for (String columnName : columnNameList) {
             sb.append(value.getRow().containsColumn(columnName, COLUMN_NAME_ONE_LEVEL) ? "1" : "0");
         }
-        return compressColumnMask(sb.toString());
+        return sb.toString();
     }
 
     @Override
-    public void innerWrite(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
-        Integer columnMask = getWritableColumnMaskHex(value);
+    public void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
+        String columnMask = getWritableColumnMask(value);
         List<HerculesWritable> tmpRecordList = recordListMap.computeIfAbsent(columnMask,
                 k -> new ArrayList<>(recordPerStatement.intValue()));
         tmpRecordList.add(value);
         if (tmpRecordList.size() >= recordPerStatement) {
             execUpdate(columnMask, tmpRecordList);
         }
+    }
+
+    @Override
+    protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -280,8 +267,8 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         checkException();
 
         // 把没凑满的缓存内容全部flush掉
-        for (Map.Entry<Integer, List<HerculesWritable>> entry : recordListMap.entrySet()) {
-            Integer columnMask = entry.getKey();
+        for (Map.Entry<String, List<HerculesWritable>> entry : recordListMap.entrySet()) {
+            String columnMask = entry.getKey();
             List<HerculesWritable> tmpRecordList = entry.getValue();
             if (tmpRecordList.size() > 0) {
                 execUpdate(columnMask, tmpRecordList);
@@ -454,16 +441,16 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
      * 用于唯一标示n列(排列组合)m行的一条sql
      */
     protected static class ColumnRowKey {
-        private Integer columnMaskHex;
+        private String columnMask;
         private Integer rowNum;
 
-        public ColumnRowKey(Integer columnMaskHex, Integer rowNum) {
-            this.columnMaskHex = columnMaskHex;
+        public ColumnRowKey(String columnMask, Integer rowNum) {
+            this.columnMask = columnMask;
             this.rowNum = rowNum;
         }
 
-        public Integer getColumnMaskHex() {
-            return columnMaskHex;
+        public String getColumnMask() {
+            return columnMask;
         }
 
         public Integer getRowNum() {
@@ -475,13 +462,13 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             ColumnRowKey that = (ColumnRowKey) o;
-            return Objects.equal(columnMaskHex, that.columnMaskHex) &&
+            return Objects.equal(columnMask, that.columnMask) &&
                     Objects.equal(rowNum, that.rowNum);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(columnMaskHex, rowNum);
+            return Objects.hashCode(columnMask, rowNum);
         }
     }
 }
