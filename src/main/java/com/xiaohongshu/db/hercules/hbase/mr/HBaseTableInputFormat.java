@@ -99,7 +99,7 @@ class HBaseRecordReader extends HerculesRecordReader {
 
 
     private RecordReader<ImmutableBytesWritable, Result> result;
-    protected List<WrapperGetter<Result>> wrapperGetterList;
+    protected List<WrapperGetter<NavigableMap<Long, byte[]>>> wrapperGetterList;
 
     public HBaseRecordReader(RecordReader result, DataTypeConverter converter) {
 
@@ -157,6 +157,7 @@ class HBaseRecordReader extends HerculesRecordReader {
         return NullWritable.get();
     }
 
+    @SneakyThrows
     @Override
     public Object getCurrentValue() throws IOException, InterruptedException {
 
@@ -169,15 +170,16 @@ class HBaseRecordReader extends HerculesRecordReader {
         HerculesWritable value = new HerculesWritable(columnNum);
         for (byte[] family : map.keySet()) {
 
+
             NavigableMap<byte[], NavigableMap<Long, byte[]>> familyMap = map.get(family);//列簇作为key获取其中的列相关数据
 
-            for (byte[] column : familyMap.keySet()) {                              //根据列名循坏
-                System.out.println(new String(family) + "：" + new String(column));
-                NavigableMap<Long, byte[]> valuesMap = familyMap.get(column);
+            for(int i=0;i<columnNum;i++){
 
-                for (Map.Entry<Long, byte[]> s : valuesMap.entrySet()) {                //获取列对应的不同版本数据，默认最新的一个
-//                    value.put(column, wrapperGetterList.get(i).set(s.getValue()));
-                    System.out.println(s.getKey() + "   " + new String(s.getValue(), "utf-8"));
+                String columnName = (String) columnNameList.get(i);
+                NavigableMap<Long, byte[]> columnValueMap = familyMap.get(columnName.getBytes());
+
+                for (Map.Entry<Long, byte[]> s : columnValueMap.entrySet()) {                //获取列对应的不同版本数据，默认最新的一个
+                    value.put(columnName, wrapperGetterList.get(i).get(columnValueMap, columnName, 0));
                 }
             }
         }
