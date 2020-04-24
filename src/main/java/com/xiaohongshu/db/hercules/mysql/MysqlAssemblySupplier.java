@@ -4,6 +4,7 @@ import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.hbase2.HbaseOutputFormat;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlInputFormat;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlOutputFormat;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlOutputMRJobContext;

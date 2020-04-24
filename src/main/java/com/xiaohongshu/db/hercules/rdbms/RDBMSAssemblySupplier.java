@@ -8,6 +8,7 @@ import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterInitializer;
+import com.xiaohongshu.db.hercules.hbase2.HbaseOutputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputMRJobContext;

@@ -8,6 +8,7 @@ public enum DataSource {
     MySQL,
     TiDB,
     Clickhouse,
+    HBase,
     HDFSTextFile;
 
     public static DataSource valueOfIgnoreCase(String value) {

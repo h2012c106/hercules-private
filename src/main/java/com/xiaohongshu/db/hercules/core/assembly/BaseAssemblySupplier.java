@@ -4,6 +4,7 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
+import com.xiaohongshu.db.hercules.hbase2.HbaseOutputFormat;
 
 /**
  * 子类必须向{@link AssemblySupplierFactory}中注册自己的类

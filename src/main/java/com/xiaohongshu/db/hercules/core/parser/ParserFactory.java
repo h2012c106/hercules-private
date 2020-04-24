@@ -5,6 +5,8 @@ import com.xiaohongshu.db.hercules.clickhouse.parser.ClickhouseOutputParser;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
+import com.xiaohongshu.db.hercules.hbase2.parser.HbaseInputParser;
+import com.xiaohongshu.db.hercules.hbase2.parser.HbaseOutputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlInputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlOutputParser;
 import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSInputParser;
@@ -29,6 +31,8 @@ public final class ParserFactory {
         register(DataSource.TiDB, DataSourceRole.TARGET, new MysqlOutputParser());
         register(DataSource.Clickhouse, DataSourceRole.SOURCE, new ClickhouseInputParser());
         register(DataSource.Clickhouse, DataSourceRole.TARGET, new ClickhouseOutputParser());
+        register(DataSource.HBase, DataSourceRole.SOURCE, new HbaseInputParser());
+        register(DataSource.HBase, DataSourceRole.TARGET, new HbaseOutputParser());
     }
 
     private static void register(DataSource dataSource, DataSourceRole dataSourceRole, BaseDataSourceParser instance) {
