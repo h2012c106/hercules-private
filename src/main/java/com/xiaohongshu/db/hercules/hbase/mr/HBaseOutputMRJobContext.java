@@ -18,7 +18,7 @@ public class HBaseOutputMRJobContext implements MRJobContext, HBaseManagerInitia
 
     @Override
     public void preRun(GenericOptions options) {
-
+        
     }
 
     @Override

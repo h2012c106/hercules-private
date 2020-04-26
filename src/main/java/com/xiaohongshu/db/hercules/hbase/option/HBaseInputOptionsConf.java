@@ -8,17 +8,13 @@ import java.util.List;
 
 public class HBaseInputOptionsConf extends HBaseOptionsConf {
 
+
+    public static String KEEP_ROW_KEY_COL = "hbase.mapreduce.keeprowkeycol";
+    public static String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
+
+
     /** Job parameter that specifies the input table. */
     public static final String INPUT_TABLE = "hbase.mapreduce.inputtable";
-    /**
-     * If specified, use start keys of this table to split.
-     * This is useful when you are preparing data for bulkload.
-     */
-    private static final String SPLIT_TABLE = "hbase.mapreduce.splittable";
-    /** Base-64 encoded scanner. All other SCAN_ confs are ignored if this is specified.
-     * See {@link TableMapReduceUtil#convertScanToString(Scan)} for more details.
-     */
-    public static final String SCAN = "hbase.mapreduce.scan";
     /** Scan start row */
     public static final String SCAN_ROW_START = "hbase.mapreduce.scan.row.start";
     /** Scan stop row */
@@ -60,16 +56,6 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("Job parameter that specifies the input table.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(SPLIT_TABLE)
-                .needArg(true)
-                .description("This is useful when you are preparing data for bulkload.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(SCAN)
-                .needArg(true)
-                .description("Base-64 encoded scanner. All other SCAN_ confs are ignored if this is specified.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_ROW_START)
@@ -130,12 +116,10 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(SHUFFLE_MAPS)
-                .needArg(true)
                 .description("Specify if we have to shuffle the map tasks.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(MAPREDUCE_INPUT_AUTOBALANCE)
-                .needArg(true)
                 .description("Specify if we enable auto-balance to set number of mappers in M/R jobs.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
@@ -148,6 +132,17 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
                 .name(NUM_MAPPERS_PER_REGION)
                 .needArg(true)
                 .description("Specify if we have to shuffle the map tasks.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(KEEP_ROW_KEY_COL)
+                .necessary(true)
+                .defaultStringValue("0")
+                .description("Specify whether pass the rowkey to the recordWriter.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(ROW_KEY_COL_NAME)
+                .needArg(true)
+                .description("Specify the name of the row key col passed to the recordWriter.")
                 .build());
         return tmpList;
     }

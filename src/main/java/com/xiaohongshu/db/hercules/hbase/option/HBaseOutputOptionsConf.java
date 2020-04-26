@@ -18,7 +18,8 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
     public static final int DEFAULT_PUT_BATCH_SIZE = 100;
 
     // the column specified to be the row key of PUT or DELETE operations
-    public static final String ROW_KEY_COL = "hbase.mapreduce.column.rowkeycol";
+    // 当上游也是HBase的时候，此设置共享。
+    public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
 
     @Override
     protected List<SingleOptionConf> setOptionConf() {
@@ -46,7 +47,7 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
                 .description("The put batch size for each batch put.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(ROW_KEY_COL)
+                .name(ROW_KEY_COL_NAME)
                 .needArg(true)
                 .necessary(true)
                 .description("The column specified to be the row key of PUT or DELETE operations")

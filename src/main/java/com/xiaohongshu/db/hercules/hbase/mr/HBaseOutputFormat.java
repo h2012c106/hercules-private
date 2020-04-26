@@ -56,19 +56,7 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
     // setup conf according to targetOptions
     private void setConf(){
         // TODO 完成conf的设置
-        conf.set(HBaseOutputOptionsConf.COLUMN_FAMILY,
-                targetOptions.getString(HBaseOutputOptionsConf.COLUMN_FAMILY,null));
-
-        conf.setInt(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM,
-                targetOptions.getInteger(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM));
-
-        conf.setInt(HBaseOutputOptionsConf.PUT_BATCH_SIZE,
-                targetOptions.getInteger(HBaseOutputOptionsConf.PUT_BATCH_SIZE,HBaseOutputOptionsConf.DEFAULT_PUT_BATCH_SIZE));
-
-        conf.set(HBaseOutputOptionsConf.OUTPU_TABLE, targetOptions.getString(HBaseOutputOptionsConf.OUTPU_TABLE,null));
-
-        conf.set(HBaseOutputOptionsConf.ROW_KEY_COL, targetOptions.getString(HBaseOutputOptionsConf.ROW_KEY_COL,null));
-
+        manager.setTargetConf(conf, targetOptions, manager);
     }
 
     @Override
@@ -114,7 +102,7 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         Configuration conf = manager.getConf();
         conn = manager.getConnection();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
-        rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL);
+        rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL_NAME);
 
         // 目前相关的变量统一从 Configuration conf 中拿取
         putBatchSize = conf.getLong(HBaseOutputOptionsConf.PUT_BATCH_SIZE, HBaseOutputOptionsConf.DEFAULT_PUT_BATCH_SIZE);

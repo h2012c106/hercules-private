@@ -69,7 +69,7 @@ public abstract class HerculesRecordReader<T, C extends DataTypeConverter>
         myInitialize(split, context);
     }
 
-    private WrapperGetter<T> getWrapperGetter(@NonNull DataType dataType) {
+    protected WrapperGetter<T> getWrapperGetter(@NonNull DataType dataType) {
         switch (dataType) {
             case INTEGER:
                 return getIntegerGetter();
