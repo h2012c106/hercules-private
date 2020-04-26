@@ -202,7 +202,6 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = result.getCurrentValue().getMap();
 
-        HerculesWritable res = new HerculesWritable();
         int columnNum = columnNameList.size();
         HerculesWritable value = new HerculesWritable(columnNum);
 

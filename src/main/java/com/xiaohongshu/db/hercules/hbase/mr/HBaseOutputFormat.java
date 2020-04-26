@@ -274,7 +274,7 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     public Put generatePut(HerculesWritable record) throws Exception {
 
         // TODO 更新row_key, row key 来自上游，可能存储在value里面, 暂时不支持 compositeRowKeyCol
-        Put put = new Put(rowKeyCol.getBytes());
+        Put put = new Put(record.get(rowKeyCol).asBytes());
         BaseWrapper wrapper;
         if(columnNameList.size()==0){
             for(Map.Entry colVal: record.getRow().entrySet()){
@@ -302,6 +302,10 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     }
 
     public void constructPut(Put put, BaseWrapper wrapper, String qualifier) throws Exception {
+        if(qualifier==rowKeyCol){
+            // if the qualifier is the row key col, dont put it the the Put object
+            return;
+        }
         // 优先从columnTypeMap中获取对应的DataType，如果为null，则从wrapper中获取。
         DataType dt = (DataType) columnTypeMap.get(qualifier);
         if(dt==null){
