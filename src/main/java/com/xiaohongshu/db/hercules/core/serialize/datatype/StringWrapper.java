@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
@@ -71,7 +70,7 @@ public class StringWrapper extends BaseWrapper<String> {
 
     @Override
     public Date asDate() {
-        return DateUtils.stringToDate(getValue(),DateUtils.getSourceDateFormat()).getValue();
+        return DateUtils.stringToDate(getValue(), DateUtils.getSourceDateFormat()).getValue();
     }
 
     @Override

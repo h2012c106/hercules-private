@@ -106,6 +106,10 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper>> {
         }
     }
 
+    public Set<Map.Entry<String, BaseWrapper>> entrySet() {
+        return getValue().entrySet();
+    }
+
     private boolean oneLevelContainsColumn(String columnName) {
         return getValue().containsKey(columnName);
     }
