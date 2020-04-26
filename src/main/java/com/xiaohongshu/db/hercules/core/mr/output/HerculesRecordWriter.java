@@ -64,7 +64,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         }
     }
 
-    private WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
+    protected WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
         switch (dataType) {
             case INTEGER:
                 return getIntegerSetter();

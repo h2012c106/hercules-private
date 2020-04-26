@@ -11,7 +11,6 @@ import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFactory;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -284,13 +283,14 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     protected WrapperSetter<PreparedStatement> getIntegerSetter() {
         return new WrapperSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
+            public byte[] set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
                 Long res = wrapper.asLong();
                 if (res == null) {
                     row.setNull(seq, Types.BIGINT);
                 } else {
                     row.setLong(seq, res);
                 }
+                return new byte[0];
             }
         };
     }
@@ -299,13 +299,14 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     protected WrapperSetter<PreparedStatement> getDoubleSetter() {
         return new WrapperSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
+            public byte[] set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
                 BigDecimal res = wrapper.asBigDecimal();
                 if (res == null) {
                     row.setNull(seq, Types.NUMERIC);
                 } else {
                     row.setBigDecimal(seq, res);
                 }
+                return new byte[0];
             }
         };
     }
@@ -314,13 +315,14 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     protected WrapperSetter<PreparedStatement> getBooleanSetter() {
         return new WrapperSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
+            public byte[] set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
                 Boolean res = wrapper.asBoolean();
                 if (res == null) {
                     row.setNull(seq, Types.BOOLEAN);
                 } else {
                     row.setBoolean(seq, res);
                 }
+                return new byte[0];
             }
         };
     }
@@ -329,13 +331,14 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     protected WrapperSetter<PreparedStatement> getStringSetter() {
         return new WrapperSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
+            public byte[] set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
                 String res = wrapper.asString();
                 if (res == null) {
                     row.setNull(seq, Types.VARCHAR);
                 } else {
                     row.setString(seq, res);
                 }
+                return new byte[0];
             }
         };
     }
@@ -349,13 +352,14 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     protected WrapperSetter<PreparedStatement> getBytesSetter() {
         return new WrapperSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
+            public byte[] set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
                 byte[] res = wrapper.asBytes();
                 if (res == null) {
                     row.setNull(seq, Types.LONGVARBINARY);
                 } else {
                     row.setBytes(seq, res);
                 }
+                return res;
             }
         };
     }
@@ -364,8 +368,9 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     protected WrapperSetter<PreparedStatement> getNullSetter() {
         return new WrapperSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
+            public byte[] set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
                 row.setNull(seq, Types.NULL);
+                return new byte[0];
             }
         };
     }

@@ -8,10 +8,12 @@ import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSRecordWriter;
+import lombok.NonNull;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,13 +22,12 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
 import java.io.IOException;
-import java.sql.PreparedStatement;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,6 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
         targetOptions = options.getTargetOptions();
         manager = initializeManager(targetOptions);
         conf = manager.getConf();
-        setConf();
         String tableName = targetOptions.getString(HBaseOutputOptionsConf.OUTPU_TABLE, null);
         return new HBaseRecordWriter(manager, tableName, context);
     }
@@ -134,14 +134,6 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         recordList.clear();
         // 阻塞塞任务
         missionQueue.put(new HBaseRecordWriter.WorkerMission(copiedRecordList, false));
-    }
-
-    @Override
-    public void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
-        recordList.add(value);
-        if (recordList.size() >= putBatchSize) {
-            execUpdate();
-        }
     }
 
     @Override
@@ -278,7 +270,7 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     }
 
 
-    public List<Put> generatePutList(List<HerculesWritable> herculesWritableList){
+    public List<Put> generatePutList(List<HerculesWritable> herculesWritableList) throws Exception {
 
         List<Put> putList = new ArrayList<>();
         for(HerculesWritable record: herculesWritableList){
@@ -287,64 +279,131 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         return putList;
     }
 
-    public Put generatePut(HerculesWritable record){
+    /**
+     * @param record
+     * 根据是否提供不为空的columnNameList来生成PUT
+     */
+    public Put generatePut(HerculesWritable record) throws Exception {
 
         // TODO 更新row_key, row key 来自上游，可能存储在value里面, 暂时不支持 compositeRowKeyCol
         Put put = new Put(rowKeyCol.getBytes());
+        BaseWrapper wrapper;
+        if(columnNameList.size()==0){
+            for(Map.Entry colVal: record.getRow().entrySet()){
+                String qualifier = (String) colVal.getKey();
+                wrapper = (BaseWrapper) colVal.getValue();
+                constructPut(put, wrapper, qualifier);
+            }
+        }else{
+            // 如果存在 columnNameList， 则以 columnNameList 为准构建PUT。
+            for (int i = 0; i < columnNameList.size(); ++i) {
+                String qualifier = (String) columnNameList.get(i);
+                if(qualifier == rowKeyCol){
+                    continue;
+                }
+                wrapper = record.get(qualifier);
+                // 如果没有这列值，则meaningfulSeq不加
+                if (wrapper == null) {
+                    continue;
+                }
+                constructPut(put, wrapper, qualifier);
+            }
 
-        for (int i = 0; i < columnNameList.size(); ++i) {
-            String qualifier = (String) columnNameList.get(i);
-            if(qualifier == rowKeyCol){
-                continue;
-            }
-            BaseWrapper columnValue = record.get(qualifier);
-            // 如果没有这列值，则meaningfulSeq不加
-            if (columnValue == null) {
-                continue;
-            }
-            put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), columnValue.asBytes());
         }
         return put;
+    }
+
+    public void constructPut(Put put, BaseWrapper wrapper, String qualifier) throws Exception {
+        // 优先从columnTypeMap中获取对应的DataType，如果为null，则从wrapper中获取。
+        DataType dt = (DataType) columnTypeMap.get(qualifier);
+        if(dt==null){
+            dt = wrapper.getType();
+        }
+        WrapperSetter wrapperSetter = getWrapperSetter(dt);
+        byte[] value = wrapperSetter.set(wrapper, null, null, 0);
+        put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
     }
 
     @Override
     protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
 
+        recordList.add(value);
+        if (recordList.size() >= putBatchSize) {
+            execUpdate();
+        }
     }
 
     @Override
     protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
-
+        recordList.add(value);
+        if (recordList.size() >= putBatchSize) {
+            execUpdate();
+        }
     }
 
     @Override
     protected WrapperSetter getIntegerSetter() {
-        return null;
+        return new WrapperSetter() {
+            @Override
+            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+                BigInteger res = wrapper.asBigInteger();
+                return res.toByteArray();
+            }
+        };
     }
 
     @Override
     protected WrapperSetter getDoubleSetter() {
-        return null;
+        return new WrapperSetter() {
+            @Override
+            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+                Double res = wrapper.asDouble();
+                return Bytes.toBytes(res);
+            }
+        };
     }
 
     @Override
     protected WrapperSetter getBooleanSetter() {
-        return null;
+        return new WrapperSetter() {
+            @Override
+            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+                Boolean res = wrapper.asBoolean();
+                return Bytes.toBytes(res);
+            }
+        };
     }
 
     @Override
     protected WrapperSetter getStringSetter() {
-        return null;
+        return new WrapperSetter() {
+            @Override
+            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+                String res = wrapper.asString();
+                return Bytes.toBytes(res);
+            }
+        };
     }
 
     @Override
     protected WrapperSetter getDateSetter() {
-        return null;
+        return new WrapperSetter() {
+            @Override
+            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+                return wrapper.asBytes();
+            }
+        };
     }
 
     @Override
     protected WrapperSetter getBytesSetter() {
-        return null;
+        return new WrapperSetter() {
+            @Override
+            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+                byte[] res = wrapper.asBytes();
+                return res;
+            }
+        };
     }
 
     @Override

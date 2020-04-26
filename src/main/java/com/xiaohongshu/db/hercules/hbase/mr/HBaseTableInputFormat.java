@@ -227,8 +227,6 @@ class HBaseRecordReader extends HerculesRecordReader {
         int columnNum = columnNameList.size();
         HerculesWritable value = new HerculesWritable(columnNum);
         for (byte[] family : map.keySet()) {
-
-
             NavigableMap<byte[], NavigableMap<Long, byte[]>> familyMap = map.get(family);//列簇作为key获取其中的列相关数据
 
             for(int i=0;i<columnNum;i++){

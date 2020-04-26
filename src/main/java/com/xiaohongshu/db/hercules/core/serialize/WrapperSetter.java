@@ -9,11 +9,11 @@ import lombok.NonNull;
 public interface WrapperSetter<T> {
     /**
      * 在{@param row}就地更改一列内容，无返回值
-     *
-     * @param wrapper
+     *  @param wrapper
      * @param row
      * @param name
      * @param seq
+     * @return
      */
-    public void set(@NonNull BaseWrapper wrapper, T row, String name, int seq) throws Exception;
+    public byte[] set(@NonNull BaseWrapper wrapper, T row, String name, int seq) throws Exception;
 }
