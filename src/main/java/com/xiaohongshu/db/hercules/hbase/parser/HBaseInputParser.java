@@ -5,7 +5,7 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;
-import com.xiaohongshu.db.hercules.hbase2.option.HbaseInputOptionsConf;
+import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 
 public class HBaseInputParser extends BaseDataSourceParser {
 
@@ -21,7 +21,7 @@ public class HBaseInputParser extends BaseDataSourceParser {
 
     @Override
     protected BaseDataSourceOptionsConf getOptionsConf() {
-        return new HbaseInputOptionsConf();
+        return new HBaseInputOptionsConf();
     }
 
     @Override

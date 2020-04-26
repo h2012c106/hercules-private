@@ -12,6 +12,7 @@ import com.xiaohongshu.db.hercules.hbase.mr.HBaseInputFormat;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseOutputFormat;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseOutputMRJobContext;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
+import com.xiaohongshu.db.hercules.hbase.schema.HBaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 
@@ -34,7 +35,7 @@ public class HBaseAssemblySupplier extends BaseAssemblySupplier
 
     @Override
     protected BaseSchemaFetcher setSchemaFetcher() {
-        return null;
+        return new HBaseSchemaFetcher(options, initializeConverter());
     }
 
     @Override

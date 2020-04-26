@@ -4,6 +4,7 @@ import com.xiaohongshu.db.hercules.clickhouse.ClickhouseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.hbase.HBaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.mysql.MysqlAssemblySupplier;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
 import com.xiaohongshu.db.hercules.tidb.TiDBAssemblySupplier;
@@ -23,6 +24,7 @@ public final class AssemblySupplierFactory {
         register(DataSource.MySQL, MysqlAssemblySupplier.class);
         register(DataSource.TiDB, TiDBAssemblySupplier.class);
         register(DataSource.Clickhouse, ClickhouseAssemblySupplier.class);
+        register(DataSource.HBase, HBaseAssemblySupplier.class);
     }
 
     private static void register(DataSource dataSource, Class<? extends BaseAssemblySupplier> assemblySupplierClass) {
