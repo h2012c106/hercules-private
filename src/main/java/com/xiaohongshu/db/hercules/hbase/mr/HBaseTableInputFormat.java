@@ -63,7 +63,7 @@ public class HBaseTableInputFormat extends TableInputFormat {
     }
 
     @Override
-    public RecordReader createRecordReader(
+    public HerculesRecordReader createRecordReader(
             InputSplit split, TaskAttemptContext context)
             throws IOException {
 

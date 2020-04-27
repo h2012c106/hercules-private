@@ -36,10 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
 
-    private Configuration conf;
     private GenericOptions targetOptions;
     private HBaseManager manager;
-
 
     @Override
     public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
@@ -48,14 +46,15 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
         options.fromConfiguration(context.getConfiguration());
         targetOptions = options.getTargetOptions();
         manager = initializeManager(targetOptions);
-        conf = manager.getConf();
+        Configuration conf = manager.getConf();
+        setConf(conf);
         String tableName = targetOptions.getString(HBaseOutputOptionsConf.OUTPU_TABLE, null);
+        // 传到 recordWriter 的 manager 有设置好了的 conf， 可以直接 createConnection
         return new HBaseRecordWriter(manager, tableName, context);
     }
 
     // setup conf according to targetOptions
-    private void setConf(){
-        // TODO 完成conf的设置
+    private void setConf(Configuration conf){
         manager.setTargetConf(conf, targetOptions, manager);
     }
 
@@ -84,6 +83,7 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     private List<HerculesWritable> recordList;
     private Long putBatchSize;
     private HBaseManager manager;
+    private boolean closed = false;
     private static final Log LOG = LogFactory.getLog(RDBMSRecordWriter.class);
 
     // ThreadPool
@@ -126,6 +126,19 @@ class HBaseRecordWriter extends HerculesRecordWriter {
 
     @Override
     public void close(TaskAttemptContext context) throws IOException, InterruptedException {
+        if (closed) {
+            return;
+        }
+        closed = true;
+        checkException();
+
+        // 如果 recordList里面还有没有flush的内容，则flush一下。
+        if(recordList.size()>0){
+            execUpdate();
+        }
+
+        closeThreadPool();
+        checkException();
         manager.closeConnection();
     }
 
@@ -274,6 +287,10 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     public Put generatePut(HerculesWritable record) throws Exception {
 
         // TODO 更新row_key, row key 来自上游，可能存储在value里面, 暂时不支持 compositeRowKeyCol
+        // 如果没找到row key col对应的值，抛错！说明用户没有定义好，或者某行数据不存在row key col对应的值。
+        if(record.get(rowKeyCol)==null){
+            throw new RuntimeException("Row key col not found in the HerculesWritable object.");
+        }
         Put put = new Put(record.get(rowKeyCol).asBytes());
         BaseWrapper wrapper;
         if(columnNameList.size()==0){

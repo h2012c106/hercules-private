@@ -15,27 +15,25 @@ import java.util.List;
 
 public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter> implements HBaseManagerInitializer {
 
-    private HBaseTableInputFormat hBaseTableInputFormat;
+    private HBaseTableInputFormat hbaseTableInputFormat;
     private HBaseManager manager;
-    private HBaseDataTypeConverter converter;
 
     @Override
     protected void initializeContext(GenericOptions sourceOptions) {
         super.initializeContext(sourceOptions);
 
         manager = initializeManager(sourceOptions);
-        converter = initializeConverter();
-        hBaseTableInputFormat = new HBaseTableInputFormat(manager, converter);
+        hbaseTableInputFormat = new HBaseTableInputFormat(manager, converter);
     }
 
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context) throws IOException, InterruptedException {
-        return hBaseTableInputFormat.getSplits(context);
+        return hbaseTableInputFormat.getSplits(context);
     }
 
     @Override
     protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return null;
+        return hbaseTableInputFormat.createRecordReader(split, context);
     }
 
     @Override
