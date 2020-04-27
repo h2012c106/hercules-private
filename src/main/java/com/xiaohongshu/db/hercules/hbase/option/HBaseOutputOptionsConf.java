@@ -13,10 +13,6 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
     public static final String EXECUTE_THREAD_NUM = "execute-thread-num";
     public static final Integer DEFAULT_EXECUTE_THREAD_NUM = 1;
 
-    // puts batch size
-    public static final String PUT_BATCH_SIZE = "put-batch-size";
-    public static final int DEFAULT_PUT_BATCH_SIZE = 100;
-
     // the column specified to be the row key of PUT or DELETE operations
     // 当上游也是HBase的时候，此设置共享。
     public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
@@ -42,11 +38,6 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
                 .name(EXECUTE_THREAD_NUM)
                 .needArg(true)
                 .description("The thread number for executing Hbase Puts.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(PUT_BATCH_SIZE)
-                .needArg(true)
-                .description("The put batch size for each batch put.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(ROW_KEY_COL_NAME)

@@ -25,8 +25,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
@@ -34,6 +32,9 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
     private GenericOptions targetOptions;
     private HBaseManager manager;
 
+    /**
+     * 配置 conf 并返回 HerculesRecordWriter
+     */
     @Override
     public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
 
@@ -41,16 +42,9 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
         options.fromConfiguration(context.getConfiguration());
         targetOptions = options.getTargetOptions();
         manager = initializeManager(targetOptions);
-        Configuration conf = manager.getConf();
-        setConf(conf);
-        String tableName = targetOptions.getString(HBaseOutputOptionsConf.OUTPU_TABLE, null);
-        // 传到 recordWriter 的 manager 有设置好了的 conf， 可以直接 createConnection
+        HBaseManager.setTargetConf(manager.getConf(), targetOptions);
+        // 传到 recordWriter 的 manager 有设置好了的 conf， 可以通过 manager 获得 Connection
         return new HBaseRecordWriter(manager, context);
-    }
-
-    // setup conf according to targetOptions
-    private void setConf(Configuration conf){
-        HBaseManager.setTargetConf(conf, targetOptions);
     }
 
     @Override
@@ -73,14 +67,14 @@ class HBaseRecordWriter extends HerculesRecordWriter {
 
     private String columnFamily;
     private String rowKeyCol;
-    private List<HerculesWritable> recordList;
-    private Long putBatchSize;
     private HBaseManager manager;
     private static final Log LOG = LogFactory.getLog(HBaseRecordWriter.class);
 
     private BufferedMutator mutator;
 
-
+    /**
+     * 获取 columnFamily，rowKeyCol 并通过 conf
+     */
     public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException {
         super(context);
 
@@ -90,8 +84,6 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL_NAME);
 
         // 目前相关的变量统一从 Configuration conf 中拿取
-        putBatchSize = conf.getLong(HBaseOutputOptionsConf.PUT_BATCH_SIZE, HBaseOutputOptionsConf.DEFAULT_PUT_BATCH_SIZE);
-        recordList = new ArrayList<>(putBatchSize.intValue());
         mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
     }
 
@@ -124,9 +116,6 @@ class HBaseRecordWriter extends HerculesRecordWriter {
             // 如果存在 columnNameList， 则以 columnNameList 为准构建PUT。
             for (int i = 0; i < columnNameList.size(); ++i) {
                 String qualifier = (String) columnNameList.get(i);
-                if(qualifier == rowKeyCol){
-                    continue;
-                }
                 wrapper = record.get(qualifier);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (wrapper == null) {
@@ -138,8 +127,14 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         return put;
     }
 
+    /**
+     * 获取正确的 DataType 和 WrapperSetter，并将数据放入 Put
+     * @param put
+     * @param wrapper
+     * @param qualifier
+     */
     public void constructPut(Put put, BaseWrapper wrapper, String qualifier) throws Exception {
-        if(qualifier==rowKeyCol){
+        if(qualifier == rowKeyCol){
             // if the qualifier is the row key col, dont put it the the Put object
             return;
         }
@@ -153,6 +148,10 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
     }
 
+
+    /**
+     * innerColumnWrite 和 innerMapWrite 一致。因为 hbase 写入是遍历 HerculesWritable 中的 map
+     */
     @Override
     protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
         innerMapWrite(value);
@@ -161,7 +160,6 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     @SneakyThrows
     @Override
     protected void innerMapWrite(HerculesWritable record) {
-        recordList.add(record);
         Put put = generatePut(record);
         mutator.mutate(put);
     }

@@ -36,7 +36,10 @@ public class HBaseManager {
         return conn;
     }
 
-    public void setSourceConf(){
+    /**
+     * 配置最基本的链接数据库的参数，后续还需要通过{@link #setSourceConf}和{@link #setTargetConf}来分别进行详细的配置
+     */
+    public void setBasicConf(){
         // set connection
         conf.set(HBaseOptionsConf.HB_ZK_QUORUM, options.getString(HBaseOptionsConf.HB_ZK_QUORUM,null));
         conf.set(HBaseOptionsConf.HB_ZK_PORT, options.getString(HBaseOptionsConf.HB_ZK_PORT,"2182"));
@@ -48,10 +51,16 @@ public class HBaseManager {
             return conf;
         }
         conf = new Configuration();
-        setSourceConf();
+        setBasicConf();
         return conf;
     }
 
+    /**
+     * 通过表名和创建好的Connection来获取regionList
+     * @param tn 表名
+     * @return
+     * @throws IOException
+     */
     public List<RegionInfo> getRegionInfo(String tn) throws IOException {
         Admin admin = conn.getAdmin();
         List<RegionInfo> rsInfo = admin.getRegions(TableName.valueOf(tn));
@@ -59,6 +68,12 @@ public class HBaseManager {
         return rsInfo;
     }
 
+    /**
+     * 通过获得的regionList，返回整个表的startKey和StopKey。默认是整个表全量导出。
+     * @param tn
+     * @return
+     * @throws IOException
+     */
     public List<String> getTableStartStopKeys(String tn) throws IOException {
         List<RegionInfo> rsInfo = getRegionInfo(tn);
         List<String> startStopKeys = new ArrayList<>();
@@ -114,14 +129,23 @@ public class HBaseManager {
         conf.setInt(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM,
                 targetOptions.getInteger(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM));
 
-        conf.setInt(HBaseOutputOptionsConf.PUT_BATCH_SIZE,
-                targetOptions.getInteger(HBaseOutputOptionsConf.PUT_BATCH_SIZE,HBaseOutputOptionsConf.DEFAULT_PUT_BATCH_SIZE));
-
         conf.set(HBaseOutputOptionsConf.OUTPU_TABLE, targetOptions.getString(HBaseOutputOptionsConf.OUTPU_TABLE,null));
-
         conf.set(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, targetOptions.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME,null));
+
+        if(targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,null)!=null){
+            conf.setLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,null));
+        }
+
     }
 
+
+    /**
+     * 通过配置好的conf以及manager来获取BufferedMutator.
+     * @param conf
+     * @param manager
+     * @return
+     * @throws IOException
+     */
     public static BufferedMutator getBufferedMutator(Configuration conf, HBaseManager manager) throws IOException {
         String userTable = conf.get(HBaseOutputOptionsConf.OUTPU_TABLE);
         long writeBufferSize = conf.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE);

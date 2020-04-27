@@ -29,12 +29,12 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
+// 所有的配置都传入 TableInputFormat， 和数据库之间的链接由 TableInputFormat 维护。
 public class HBaseTableInputFormat extends TableInputFormat {
 
     private static final Log LOG = LogFactory.getLog(HBaseTableInputFormat.class);
@@ -59,7 +59,7 @@ public class HBaseTableInputFormat extends TableInputFormat {
     }
 
     /**
-     * An important step to setup database connection（conf and scan）, make sure each conf option is correctly defined
+     * setup好conf和scan，以备TableInputFormat使用
      * @param conf
      */
     @SneakyThrows
@@ -78,6 +78,13 @@ public class HBaseTableInputFormat extends TableInputFormat {
         super.setConf(conf);
     }
 
+    /**
+     * 创建父类的 TableRecordReader,用于构造 HBaseRecordReader
+     * @param split
+     * @param context
+     * @return
+     * @throws IOException
+     */
     @Override
     public HerculesRecordReader createRecordReader(
             InputSplit split, TaskAttemptContext context)
@@ -92,16 +99,17 @@ public class HBaseTableInputFormat extends TableInputFormat {
     }
 }
 
+
 class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>, DataTypeConverter> {
 
     private RecordReader<ImmutableBytesWritable, Result> tableRecordReader;
     private String rowKeyCol = null;
 
     /**
-     * HBaseRecordReader will reuse tableRecordReader to get a Result from Scanner and convert it to HerculesWritable
-     * @param tableRecordReader {@link #RecordReader} created by TableInputFormat
+     * HBaseRecordReader 会基于 tableRecordReader 来获得 Result 并转换成 HerculesWritable，传到下游
+     * @param tableRecordReader {@link #RecordReader} 由 TableInputFormat 创建
      * @param converter
-     * @param rowKeyCol
+     * @param rowKeyCol 用来作为rowKey的一列数据
      */
     public HBaseRecordReader(RecordReader tableRecordReader,  DataTypeConverter converter, String rowKeyCol) {
 
@@ -112,6 +120,9 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
         }
     }
 
+    /**
+     * 传入 split 和 context 的时候直接传入 tableRecordReader，利用 tableRecordReader 来完成读数据。
+     */
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         tableRecordReader.initialize(split, context);
@@ -177,7 +188,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
         };
     }
 
-    // TODO 检查目前的转换能否正常work
+    // TODO 检查目前的转换能否正常work，借鉴自 dataX
     @Override
     protected WrapperGetter getDateGetter() {
         return new WrapperGetter<NavigableMap<Long, byte[]>>() {
@@ -212,14 +223,17 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected WrapperGetter getNullGetter() {
-        return new WrapperGetter<ResultSet>() {
+        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
             @Override
-            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
+            public BaseWrapper get(NavigableMap<Long, byte[]> row, String name, int seq) throws Exception {
                 return NullWrapper.INSTANCE;
             }
         };
     }
 
+    /**
+     * 调用 tableRecordReader.nextKeyValue()，准备好新的一行数据（Result）
+     */
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
         return tableRecordReader.nextKeyValue();
@@ -230,14 +244,19 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
         return NullWritable.get();
     }
 
+
+    /**
+     * 从 tableRecordReader 中获得 NavigableMap， 遍历 map，将所有的数据放入 HerculesWritable 并返回。
+     * @return HerculesWritable
+     */
     @SneakyThrows
     @Override
-    public HerculesWritable getCurrentValue() throws IOException, InterruptedException {
+    public HerculesWritable getCurrentValue(){
 
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = tableRecordReader.getCurrentValue().getMap();
 
         int columnNum = columnNameList.size();
-        HerculesWritable value = new HerculesWritable(columnNum);
+        HerculesWritable record = new HerculesWritable(columnNum);
 
         for (byte[] family : map.keySet()) {
             NavigableMap<byte[], NavigableMap<Long, byte[]>> familyMap = map.get(family);//列簇作为key获取其中的列相关数据
@@ -246,16 +265,16 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
                 String columnName = (String) columnNameList.get(i);
                 // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游
                 if(rowKeyCol!=null){
-                    value.put(rowKeyCol, (BaseWrapper) getWrapperGetter(DataType.STRING));
+                    record.put(rowKeyCol, (BaseWrapper) getWrapperGetter(DataType.STRING));
                 }
                 NavigableMap<Long, byte[]> columnValueMap = familyMap.get(columnName.getBytes());
 
                 for (Map.Entry<Long, byte[]> s : columnValueMap.entrySet()) {                //获取列对应的不同版本数据，默认最新的一个
-                    value.put(columnName, wrapperGetterList.get(i).get(columnValueMap, columnName, 0));
+                    record.put(columnName, wrapperGetterList.get(i).get(columnValueMap, columnName, 0));
                 }
             }
         }
-        return null;
+        return record;
     }
 
     @Override
