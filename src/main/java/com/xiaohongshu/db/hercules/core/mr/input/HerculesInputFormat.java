@@ -33,9 +33,6 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
     public HerculesInputFormat() {
     }
 
-    private RDBMSManager manager;
-    private String baseSql;
-    private RDBMSSchemaFetcher schemaFetcher;
     protected C converter;
     protected Map<String, DataType> columnTypeMap;
 

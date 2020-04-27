@@ -14,11 +14,13 @@ import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSRecordWriter;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -26,6 +28,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -55,7 +58,7 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
 
     // setup conf according to targetOptions
     private void setConf(Configuration conf){
-        manager.setTargetConf(conf, targetOptions, manager);
+        HBaseManager.setTargetConf(conf, targetOptions);
     }
 
     @Override
@@ -83,15 +86,9 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     private List<HerculesWritable> recordList;
     private Long putBatchSize;
     private HBaseManager manager;
-    private boolean closed = false;
     private static final Log LOG = LogFactory.getLog(RDBMSRecordWriter.class);
 
-    // ThreadPool
-    private int threadNum;
-    private ExecutorService threadPool;
-    private AtomicBoolean threadPoolClosed = new AtomicBoolean(false);
-    final private List<Exception> exceptionList = new ArrayList<Exception>();
-    final private BlockingQueue<HBaseRecordWriter.WorkerMission> missionQueue = new SynchronousQueue<HBaseRecordWriter.WorkerMission>();
+    private BufferedMutator mutator;
 
 
     public HBaseRecordWriter(HBaseManager manager, String tableName, TaskAttemptContext context) throws IOException {
@@ -107,177 +104,13 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         // 目前相关的变量统一从 Configuration conf 中拿取
         putBatchSize = conf.getLong(HBaseOutputOptionsConf.PUT_BATCH_SIZE, HBaseOutputOptionsConf.DEFAULT_PUT_BATCH_SIZE);
         recordList = new ArrayList<>(putBatchSize.intValue());
-
-        generateThreadPool(conf);
-    }
-
-    private void execUpdate() throws IOException, InterruptedException {
-        // 先检查有没有抛错
-        checkException();
-
-        if (recordList.size() <= 0) {
-            return;
-        }
-        List<HerculesWritable> copiedRecordList = new ArrayList<HerculesWritable>(recordList);
-        recordList.clear();
-        // 阻塞塞任务
-        missionQueue.put(new HBaseRecordWriter.WorkerMission(copiedRecordList, false));
+        mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
     }
 
     @Override
-    public void close(TaskAttemptContext context) throws IOException, InterruptedException {
-        if (closed) {
-            return;
-        }
-        closed = true;
-        checkException();
-
-        // 如果 recordList里面还有没有flush的内容，则flush一下。
-        if(recordList.size()>0){
-            execUpdate();
-        }
-
-        closeThreadPool();
-        checkException();
+    public void close(TaskAttemptContext context) throws IOException {
+        // TODO Elegantly terminate job
         manager.closeConnection();
-    }
-
-    public void generateThreadPool(Configuration conf) throws IOException {
-
-
-        threadNum = conf.getInt(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM,
-                HBaseOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM);
-        threadPool = new ThreadPoolExecutor(threadNum,
-                threadNum,
-                0L,
-                TimeUnit.MILLISECONDS,
-                new SynchronousQueue<Runnable>(),
-                new ThreadFactoryBuilder().setNameFormat("Hercules-Export-Worker-%d").build(),
-                new ThreadPoolExecutor.AbortPolicy()
-        );
-        for (int i = 0; i < threadNum; ++i) {
-
-            // get one HTable per each thread
-            final HTable t = (HTable) conn.getTable(TableName.valueOf(tableName));
-            threadPool.execute(new Runnable() {
-
-                @Override
-                public void run() {
-
-                    LOG.info(String.format("Thread %s start, connection: %s",
-                            Thread.currentThread().getName(),
-                            t.toString()));
-                    long recordNum = 0L;
-                    long executeNum = 0L;
-                    long commitNum = 0L;
-                    long errorNum = 0L;
-                    while(true){
-                        // 从任务队列里阻塞取
-                        HBaseRecordWriter.WorkerMission mission = null;
-                        try {
-                            mission = missionQueue.take();
-                        } catch (InterruptedException e) {
-                            LOG.warn("Worker's taking mission interrupted: " + ExceptionUtils.getStackTrace(e));
-                            continue;
-                        }
-                        if (mission == null) {
-                            LOG.warn("Null mission");
-                            continue;
-                        }
-
-                        try {
-                            if (mission.getHerculesWritableList() != null && mission.getHerculesWritableList().size() > 0) {
-                                recordNum += mission.getHerculesWritableList().size();
-                                // generate puts and put it to the table
-                                List<Put> putList = generatePutList(mission.getHerculesWritableList());
-                                mission.clearHerculesWritableList();
-                                t.put(putList);
-                                ++executeNum;
-                            }
-                        } catch (Exception e) {
-                            ++errorNum;
-                            exceptionList.add(e);
-                        }
-
-                        if (mission.needClose()) {
-                            break;
-                        }
-                    }
-                    if (t != null) {
-                        try {
-                            t.close();
-                        } catch (IOException ignore) {
-                        }
-                    }
-                    LOG.info(String.format("Thread %s done with %d errors, execute %d records in %d executes / %d commits",
-                            Thread.currentThread().getName(),
-                            errorNum,
-                            recordNum,
-                            executeNum,
-                            commitNum));
-                }
-            });
-        }
-    }
-
-    private void closeThreadPool() throws InterruptedException {
-        if (!threadPoolClosed.getAndSet(true)) {
-            // 起了多少个线程就发多少个停止命令，在worker逻辑中已经保证了错误不会导致不再take，且threadPoolClosed保证此逻辑只会走一次
-            for (int i = 0; i < threadNum; ++i) {
-                missionQueue.put(new HBaseRecordWriter.WorkerMission(null, true));
-            }
-            threadPool.shutdown();
-            threadPool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    private void checkException() throws IOException, InterruptedException {
-        if (exceptionList.size() > 0) {
-            // just for elegance，直接抛也可以(保证线程中的HTable可以调用close()函数)
-            closeThreadPool();
-            throw new IOException(exceptionList.get(0));
-        }
-    }
-
-
-    public static class WorkerMission {
-        private List<HerculesWritable> herculesWritableList;
-        private boolean close;
-
-        public WorkerMission(List<HerculesWritable> herculesWritableList, boolean close) {
-            this.herculesWritableList = herculesWritableList;
-            this.close = close;
-        }
-
-        public void clearHerculesWritableList() {
-            herculesWritableList.clear();
-        }
-
-        public List<HerculesWritable> getHerculesWritableList() {
-            return herculesWritableList;
-        }
-
-        public void setHerculesWritableList(List<HerculesWritable> herculesWritableList) {
-            this.herculesWritableList = herculesWritableList;
-        }
-
-        public boolean needClose() {
-            return close;
-        }
-
-        public void setClose(boolean close) {
-            this.close = close;
-        }
-    }
-
-
-    public List<Put> generatePutList(List<HerculesWritable> herculesWritableList) throws Exception {
-
-        List<Put> putList = new ArrayList<>();
-        for(HerculesWritable record: herculesWritableList){
-            putList.add(generatePut(record));
-        }
-        return putList;
     }
 
     /**
@@ -313,7 +146,6 @@ class HBaseRecordWriter extends HerculesRecordWriter {
                 }
                 constructPut(put, wrapper, qualifier);
             }
-
         }
         return put;
     }
@@ -335,19 +167,15 @@ class HBaseRecordWriter extends HerculesRecordWriter {
 
     @Override
     protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
-
-        recordList.add(value);
-        if (recordList.size() >= putBatchSize) {
-            execUpdate();
-        }
+        innerMapWrite(value);
     }
 
+    @SneakyThrows
     @Override
-    protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
-        recordList.add(value);
-        if (recordList.size() >= putBatchSize) {
-            execUpdate();
-        }
+    protected void innerMapWrite(HerculesWritable record) {
+        recordList.add(record);
+        Put put = generatePut(record);
+        mutator.mutate(put);
     }
 
     @Override

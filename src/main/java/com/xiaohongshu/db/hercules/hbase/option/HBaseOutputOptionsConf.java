@@ -20,6 +20,8 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
     // the column specified to be the row key of PUT or DELETE operations
     // 当上游也是HBase的时候，此设置共享。
     public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
+    public static final String WRITE_BUFFER_SIZE = "hbase.mapreduce.writebuffersize";
+    public static final long DEFAULT_WRITE_BUFFER_SIZE = 8 * 1024 * 1024;
 
     @Override
     protected List<SingleOptionConf> setOptionConf() {
@@ -51,6 +53,11 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("The column specified to be the row key of PUT or DELETE operations")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(WRITE_BUFFER_SIZE)
+                .needArg(true)
+                .description(String.format("The write buffer size, default %d bytes.", DEFAULT_EXECUTE_THREAD_NUM))
                 .build());
         return tmpList;
     }

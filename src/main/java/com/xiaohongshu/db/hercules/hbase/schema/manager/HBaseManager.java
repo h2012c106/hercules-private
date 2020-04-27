@@ -4,14 +4,12 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
+import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.hadoop.hbase.client.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,7 +80,7 @@ public class HBaseManager {
      * @param manager
      * @throws IOException
      */
-    public void setSourceConf(Configuration conf, GenericOptions sourceOptions, HBaseManager manager) throws IOException {
+    public static void setSourceConf(Configuration conf, GenericOptions sourceOptions, HBaseManager manager) throws IOException {
 
         conf.set(HBaseInputOptionsConf.INPUT_TABLE, sourceOptions.getString(HBaseInputOptionsConf.INPUT_TABLE, null));
         // input table name must be specified
@@ -92,7 +90,6 @@ public class HBaseManager {
         conf.setBoolean(HBaseInputOptionsConf.MAPREDUCE_INPUT_AUTOBALANCE, sourceOptions.getBoolean(HBaseInputOptionsConf.MAPREDUCE_INPUT_AUTOBALANCE, true));
         conf.setInt(HBaseInputOptionsConf.NUM_MAPPERS_PER_REGION, sourceOptions.getInteger(HBaseInputOptionsConf.NUM_MAPPERS_PER_REGION, 1));
 
-        conf.setBoolean(HBaseInputOptionsConf.SCAN_CACHEBLOCKS, sourceOptions.getBoolean(HBaseInputOptionsConf.SCAN_CACHEBLOCKS, false));
         conf.set(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, sourceOptions.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, null));
         conf.setInt(HBaseInputOptionsConf.SCAN_CACHEDROWS, sourceOptions.getInteger(HBaseInputOptionsConf.INPUT_TABLE, 500));
 
@@ -109,7 +106,7 @@ public class HBaseManager {
         conf.set(HBaseInputOptionsConf.SCAN_TIMESTAMP, sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMESTAMP, null));
     }
 
-    public void setTargetConf(Configuration conf, GenericOptions targetOptions, HBaseManager manager){
+    public static void setTargetConf(Configuration conf, GenericOptions targetOptions){
 
         conf.set(HBaseOutputOptionsConf.COLUMN_FAMILY,
                 targetOptions.getString(HBaseOutputOptionsConf.COLUMN_FAMILY,null));
@@ -123,5 +120,40 @@ public class HBaseManager {
         conf.set(HBaseOutputOptionsConf.OUTPU_TABLE, targetOptions.getString(HBaseOutputOptionsConf.OUTPU_TABLE,null));
 
         conf.set(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, targetOptions.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME,null));
+    }
+
+    public static BufferedMutator getBufferedMutator(Configuration conf, HBaseManager manager) throws IOException {
+        String userTable = conf.get(HBaseOutputOptionsConf.OUTPU_TABLE);
+        long writeBufferSize = conf.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE);
+        Connection hConnection = manager.getConnection();
+        TableName hTableName = TableName.valueOf(userTable);
+        Admin admin = null;
+        BufferedMutator bufferedMutator = null;
+        try {
+            admin = hConnection.getAdmin();
+            bufferedMutator = hConnection.getBufferedMutator(
+                    new BufferedMutatorParams(hTableName)
+                            .pool(HTable.getDefaultExecutor(conf))
+                            .writeBufferSize(writeBufferSize));
+        } catch (Exception e) {
+            closeAdmin(admin);
+            closeConnection(hConnection);
+            throw new RuntimeException("Failed to create BufferedMutator");
+        }
+        return bufferedMutator;
+    }
+
+    @SneakyThrows
+    public static void closeAdmin(Admin admin){
+        if(null!=admin){
+            admin.close();
+        }
+    }
+
+    @SneakyThrows
+    public static void closeConnection(Connection conn){
+        if(null!=conn){
+            conn.close();
+        }
     }
 }

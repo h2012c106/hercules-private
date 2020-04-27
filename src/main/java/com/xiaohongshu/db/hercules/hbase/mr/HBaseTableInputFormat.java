@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
@@ -12,12 +12,16 @@ import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import lombok.SneakyThrows;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -27,6 +31,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.sql.ResultSet;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
@@ -53,12 +59,23 @@ public class HBaseTableInputFormat extends TableInputFormat {
         super.initialize(context);
     }
 
-    // An important step to setup database connection, make sure each conf option is correctly defined
+    /**
+     * An important step to setup database connection（conf and scan）, make sure each conf option is correctly defined
+     * @param conf
+     */
     @SneakyThrows
     @Override
     public void setConf(Configuration conf) {
 
-        manager.setSourceConf(conf, sourceOptions, manager);
+        HBaseManager.setSourceConf(conf, sourceOptions, manager);
+        // 先调用 createScanFromConfiguration 创建 Scan，可以灵活增加设定（比如 Filter 等）
+        Scan scan = TableInputFormat.createScanFromConfiguration(conf);
+        List<String> columnNameList = Arrays.asList(sourceOptions.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+        // 根据用户给定的 ColumnNameList 对 scan 进行设置（白名单）。
+        for(String col: columnNameList){
+            scan.addColumn(conf.get(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY).getBytes(), col.getBytes());
+        }
+        conf.set(HBaseInputOptionsConf.SCAN, TableMapReduceUtil.convertScanToString(scan));
         super.setConf(conf);
     }
 
@@ -67,10 +84,10 @@ public class HBaseTableInputFormat extends TableInputFormat {
             InputSplit split, TaskAttemptContext context)
             throws IOException {
 
-        RecordReader<ImmutableBytesWritable, Result> result =
+        RecordReader<ImmutableBytesWritable, Result> tableRecordReader =
                 super.createRecordReader(split, context);
 
-        HBaseRecordReader recordReader = new HBaseRecordReader(result, converter, sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null));
+        HBaseRecordReader recordReader = new HBaseRecordReader(tableRecordReader, converter, sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null));
 
         return recordReader;
     }
@@ -78,14 +95,19 @@ public class HBaseTableInputFormat extends TableInputFormat {
 
 class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>, DataTypeConverter> {
 
-
-    private RecordReader<ImmutableBytesWritable, Result> result;
+    private RecordReader<ImmutableBytesWritable, Result> tableRecordReader;
     private String rowKeyCol = null;
 
-    public HBaseRecordReader(RecordReader result, DataTypeConverter converter, String rowKeyCol) {
+    /**
+     * HBaseRecordReader will reuse tableRecordReader to get a Result from Scanner and convert it to HerculesWritable
+     * @param tableRecordReader {@link #RecordReader} created by TableInputFormat
+     * @param converter
+     * @param rowKeyCol
+     */
+    public HBaseRecordReader(RecordReader tableRecordReader,  DataTypeConverter converter, String rowKeyCol) {
 
         super(converter);
-        this.result = result;
+        this.tableRecordReader = tableRecordReader;
         if(rowKeyCol!=null){
             this.rowKeyCol = rowKeyCol;
         }
@@ -93,7 +115,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        result.initialize(split, context);
+        tableRecordReader.initialize(split, context);
     }
 
     @Override
@@ -156,9 +178,22 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
         };
     }
 
+    // TODO 检查目前的转换能否正常work
     @Override
     protected WrapperGetter getDateGetter() {
-        return null;
+        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
+            @Override
+            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
+                byte[] res = columnValueMap.firstEntry().getValue();
+                if (res==null) {
+                    return new NullWrapper();
+                } else {
+                    String dateValue = Bytes.toStringBinary(res);
+                    // 需要设定一个dateformat，即 new String()
+                    return new DateWrapper(DateUtils.parseDate(dateValue, new String()));
+                }
+            }
+        };
     }
 
     @Override
@@ -188,7 +223,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
-        return result.nextKeyValue();
+        return tableRecordReader.nextKeyValue();
     }
 
     @Override
@@ -200,7 +235,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
     @Override
     public HerculesWritable getCurrentValue() throws IOException, InterruptedException {
 
-        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = result.getCurrentValue().getMap();
+        NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = tableRecordReader.getCurrentValue().getMap();
 
         int columnNum = columnNameList.size();
         HerculesWritable value = new HerculesWritable(columnNum);
@@ -231,6 +266,6 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     public void close() throws IOException {
-        result.close();
+        tableRecordReader.close();
     }
 }

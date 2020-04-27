@@ -15,6 +15,10 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
 
     /** Job parameter that specifies the input table. */
     public static final String INPUT_TABLE = "hbase.mapreduce.inputtable";
+    /** Base-64 encoded scanner. All other SCAN_ confs are ignored if this is specified.
+     * See {@link TableMapReduceUtil#convertScanToString(Scan)} for more details.
+     */
+    public static final String SCAN = "hbase.mapreduce.scan";
     /** Scan start row */
     public static final String SCAN_ROW_START = "hbase.mapreduce.scan.row.start";
     /** Scan stop row */
@@ -31,8 +35,6 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
     public static final String SCAN_TIMERANGE_END = "hbase.mapreduce.scan.timerange.end";
     /** The maximum number of version to return. */
     public static final String SCAN_MAXVERSIONS = "hbase.mapreduce.scan.maxversions";
-    /** Set to false to disable server-side caching of blocks for this scan. */
-    public static final String SCAN_CACHEBLOCKS = "hbase.mapreduce.scan.cacheblocks";
     /** The number of rows for caching that will be passed to scanners. */
     public static final String SCAN_CACHEDROWS = "hbase.mapreduce.scan.cachedrows";
     /** Set the maximum number of values to return for each call to next(). */
@@ -60,12 +62,12 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_ROW_START)
                 .needArg(true)
-                .description("Scan start row.")
+                .description("Scan start row, the start row of the table will be taken if it is not explicitly given.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_ROW_STOP)
                 .needArg(true)
-                .description("Scan stop row.")
+                .description("Scan stop row, the stop row of the table will be taken if it is not explicitly given.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_COLUMN_FAMILY)
@@ -98,11 +100,6 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
                 .name(SCAN_MAXVERSIONS)
                 .needArg(true)
                 .description("The maximum number of version to return..")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(SCAN_CACHEBLOCKS)
-                .needArg(true)
-                .description("Set to false to disable server-side caching of blocks for this scan.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_CACHEDROWS)
