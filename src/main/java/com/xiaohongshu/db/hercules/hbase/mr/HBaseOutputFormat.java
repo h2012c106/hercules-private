@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -12,17 +11,12 @@ import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSRecordWriter;
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.BufferedMutator;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -34,8 +28,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
 
@@ -53,7 +45,7 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
         setConf(conf);
         String tableName = targetOptions.getString(HBaseOutputOptionsConf.OUTPU_TABLE, null);
         // 传到 recordWriter 的 manager 有设置好了的 conf， 可以直接 createConnection
-        return new HBaseRecordWriter(manager, tableName, context);
+        return new HBaseRecordWriter(manager, context);
     }
 
     // setup conf according to targetOptions
@@ -79,25 +71,21 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
 
 class HBaseRecordWriter extends HerculesRecordWriter {
 
-    private Connection conn;
     private String columnFamily;
     private String rowKeyCol;
-    private String tableName;
     private List<HerculesWritable> recordList;
     private Long putBatchSize;
     private HBaseManager manager;
-    private static final Log LOG = LogFactory.getLog(RDBMSRecordWriter.class);
+    private static final Log LOG = LogFactory.getLog(HBaseRecordWriter.class);
 
     private BufferedMutator mutator;
 
 
-    public HBaseRecordWriter(HBaseManager manager, String tableName, TaskAttemptContext context) throws IOException {
+    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException {
         super(context);
 
         this.manager = manager;
-        this.tableName = tableName;
         Configuration conf = manager.getConf();
-        conn = manager.getConnection();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
         rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL_NAME);
 
