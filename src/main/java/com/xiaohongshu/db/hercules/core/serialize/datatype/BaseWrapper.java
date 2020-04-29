@@ -9,11 +9,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @param <T> 底层用于存储数据的真正数据类型
@@ -24,15 +20,17 @@ public abstract class BaseWrapper<T> {
      */
     private T value;
     private DataType type;
-    /**
-     * 保证原子性
-     */
-    private AtomicLong byteSize;
+    private long byteSize;
+    private BaseWrapper parent = null;
 
     public BaseWrapper(@NonNull T value, DataType type, long byteSize) {
         this.value = value;
         this.type = type;
-        this.byteSize = new AtomicLong(byteSize);
+        this.byteSize = byteSize;
+    }
+
+    protected void setParent(BaseWrapper parent) {
+        this.parent = parent;
     }
 
     protected T getValue() {
@@ -52,15 +50,24 @@ public abstract class BaseWrapper<T> {
     }
 
     public long getByteSize() {
-        return byteSize.longValue();
+        return byteSize;
+    }
+
+    private void addParentByteSize(long byteSize) {
+        if (parent != null) {
+            parent.addByteSize(byteSize);
+        }
     }
 
     public void setByteSize(long byteSize) {
-        this.byteSize = new AtomicLong(byteSize);
+        addParentByteSize(-1 * this.byteSize);
+        this.byteSize = byteSize;
+        addParentByteSize(byteSize);
     }
 
-    protected void addByteSize(long additionalByteSize) {
-        this.byteSize.addAndGet(additionalByteSize);
+    protected void addByteSize(long byteSize) {
+        this.byteSize += byteSize;
+        addParentByteSize(byteSize);
     }
 
     abstract public Long asLong();

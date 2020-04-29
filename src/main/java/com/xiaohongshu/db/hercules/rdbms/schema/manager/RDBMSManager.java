@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf.*;
+
 public class RDBMSManager {
 
     private static final Log LOG = LogFactory.getLog(RDBMSManager.class);
@@ -53,9 +55,9 @@ public class RDBMSManager {
                     + driverClass);
         }
 
-        String username = options.getString(RDBMSInputOptionsConf.USERNAME, null);
-        String password = options.getString(RDBMSInputOptionsConf.PASSWORD, null);
-        String connectString = options.getString(RDBMSInputOptionsConf.CONNECTION, null);
+        String username = options.getString(USERNAME, null);
+        String password = options.getString(PASSWORD, null);
+        String connectString = options.getString(CONNECTION, null);
 
         if (username == null) {
             connection = DriverManager.getConnection(connectString);
@@ -85,9 +87,9 @@ public class RDBMSManager {
                     + driverClass);
         }
 
-        String username = options.getString(RDBMSInputOptionsConf.USERNAME, null);
-        String password = options.getString(RDBMSInputOptionsConf.PASSWORD, null);
-        String connectString = options.getString(RDBMSInputOptionsConf.CONNECTION, null);
+        String username = options.getString(USERNAME, null);
+        String password = options.getString(PASSWORD, null);
+        String connectString = options.getString(CONNECTION, null);
 
         Properties props = new Properties();
         if (username != null) {

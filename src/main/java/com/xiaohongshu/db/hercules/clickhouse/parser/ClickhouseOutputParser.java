@@ -11,22 +11,12 @@ import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSOutputParser;
 
 public class ClickhouseOutputParser extends RDBMSOutputParser {
 
+    public ClickhouseOutputParser() {
+        super(new ClickhouseOutputOptionsConf());
+    }
+
     @Override
     public DataSource getDataSource() {
         return DataSource.Clickhouse;
-    }
-
-    @Override
-    protected BaseDataSourceOptionsConf getOptionsConf() {
-        return new ClickhouseOutputOptionsConf();
-    }
-
-    @Override
-    protected void validateOptions(GenericOptions options) {
-        super.validateOptions(options);
-
-        ParseUtils.assertTrue(ExportType
-                .valueOfIgnoreCase(options.getString(RDBMSOutputOptionsConf.EXPORT_TYPE, null))
-                .isInsert(), "Clickhouse only support INSERT export type.");
     }
 }

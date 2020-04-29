@@ -7,13 +7,12 @@ import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSInputParser;
 
 public class MysqlInputParser extends RDBMSInputParser {
 
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.MySQL;
+    public MysqlInputParser() {
+        super(new MysqlInputOptionsConf());
     }
 
     @Override
-    protected BaseDataSourceOptionsConf getOptionsConf() {
-        return new MysqlInputOptionsConf();
+    public DataSource getDataSource() {
+        return DataSource.MySQL;
     }
 }

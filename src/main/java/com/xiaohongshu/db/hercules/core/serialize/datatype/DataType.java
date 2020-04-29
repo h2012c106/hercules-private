@@ -15,10 +15,6 @@ public enum DataType {
     BOOLEAN,
     DATE,
     BYTES,
-    /**
-     * 应该仅在出数据时用到这个enum，进时尽可能使用{@link #LIST}和{@link #MAP}
-     */
-    JSON,
     LIST,
     MAP;
 

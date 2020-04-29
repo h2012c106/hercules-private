@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
+import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -14,14 +15,36 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf.BLACK_COLUMN;
 
 public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWritable, NullWritable, HerculesWritable> {
+
     public static final String HERCULES_GROUP_NAME = "Hercules Counters";
     public static final String ESTIMATED_BYTE_SIZE_COUNTER_NAME = "Estimated byte size";
 
     private static final Log LOG = LogFactory.getLog(HerculesMapper.class);
 
+    private Map<String, String> columnMap;
+    private List<String> blackColumnList;
+
     public HerculesMapper() {
+    }
+
+    private HerculesWritable rowTransfer(HerculesWritable value) {
+        // 黑名单处理
+        WritableUtils.filterColumn(value.getRow(), blackColumnList);
+
+        // TODO 列聚合
+
+        // 转换列名
+        WritableUtils.convertColumnName(value, columnMap);
+
+        return value;
     }
 
     @Override
@@ -45,13 +68,21 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         DateUtils.setFormats(options.getSourceOptions(), options.getTargetOptions());
 
         // 注册columnMap
-        HerculesWritable.setColumnNameMap(options.getCommonOptions().getJson(CommonOptionsConf.COLUMN_MAP, new JSONObject()));
+        columnMap = options.getCommonOptions()
+                .getJson(CommonOptionsConf.COLUMN_MAP, new JSONObject())
+                .getInnerMap()
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        entry -> (String) entry.getValue()));
+        blackColumnList = Arrays.asList(options.getSourceOptions().getStringArray(BLACK_COLUMN, null));
     }
 
     @Override
     protected void map(NullWritable key, HerculesWritable value, Context context)
             throws IOException, InterruptedException {
         context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
+        value = rowTransfer(value);
         context.write(key, value);
     }
 }

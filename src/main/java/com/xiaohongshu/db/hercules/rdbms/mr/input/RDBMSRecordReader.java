@@ -4,6 +4,7 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
+import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
@@ -22,6 +23,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> {
@@ -50,6 +52,8 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         Configuration configuration = context.getConfiguration();
+
+        columnTypeMap = new StingyMap<>(super.columnTypeMap);
 
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
@@ -89,7 +93,8 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
             int columnNum = columnNameList.size();
             value = new HerculesWritable(columnNum);
             for (int i = 0; i < columnNum; ++i) {
-                value.put(columnNameList.get(i), wrapperGetterList.get(i).get(resultSet, null, i + 1));
+                String columnName = columnNameList.get(i);
+                value.put(columnName, getWrapperGetter(columnTypeMap.get(columnName)).get(resultSet, null, i + 1));
             }
 
             return true;

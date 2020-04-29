@@ -52,7 +52,7 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter> {
     }
 
     /**
-     * 获得每列的类型，可以配合{@link #initializeConverter()}使用
+     * 获得每列的类型
      *
      * @return
      */

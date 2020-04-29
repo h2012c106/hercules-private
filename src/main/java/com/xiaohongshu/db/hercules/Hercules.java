@@ -8,7 +8,6 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
 import com.xiaohongshu.db.hercules.core.parser.ParserFactory;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
@@ -54,8 +53,8 @@ public class Hercules {
 
         // 获得target、source、common对应的parser
         BaseParser commonParser = new CommonParser();
-        BaseDataSourceParser sourceParser = ParserFactory.getParser(sourceDataSource, DataSourceRole.SOURCE);
-        BaseDataSourceParser targetParser = ParserFactory.getParser(targetDataSource, DataSourceRole.TARGET);
+        BaseParser sourceParser = ParserFactory.getParser(sourceDataSource, DataSourceRole.SOURCE);
+        BaseParser targetParser = ParserFactory.getParser(targetDataSource, DataSourceRole.TARGET);
 
         WrappingOptions wrappingOptions = new WrappingOptions(sourceParser.parse(args),
                 targetParser.parse(args),

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -125,10 +126,38 @@ public final class SchemaNegotiator {
         // 优先使用用户配置的，剩下不够的未知的再去数据源搞
         needTypeColumnNameSet.removeAll(res.keySet());
         Map<String, DataType> datasourceQueriedTypeMap = schemaFetcher.getColumnTypeMap(needTypeColumnNameSet);
+        datasourceQueriedTypeMap = datasourceQueriedTypeMap == null
+                ? new HashMap<>(res.size())
+                : datasourceQueriedTypeMap;
         // 若有相同，配置的覆盖查出来的
         datasourceQueriedTypeMap.putAll(res);
 
         return datasourceQueriedTypeMap;
+    }
+
+    private Map<String, DataType> copyTypeMap(Map<String, DataType> source, Map<String, DataType> target,
+                                              BiMap<String, String> columnMap, DataSourceRole role) {
+        // 被抄袭的
+        Map<String, DataType> tmpSource;
+        // 抄袭的
+        Map<String, DataType> tmpTarget;
+        if (role == DataSourceRole.SOURCE) {
+            columnMap = columnMap.inverse();
+            tmpSource = new HashMap<>(target);
+            tmpTarget = new HashMap<>(source);
+        } else {
+            tmpSource = new HashMap<>(source);
+            tmpTarget = new HashMap<>(target);
+        }
+        final BiMap<String, String> finalColumnMap = columnMap;
+        // 被抄袭的列名先转一下
+        tmpSource = tmpSource.entrySet()
+                .stream()
+                .collect(Collectors.toMap(entry -> finalColumnMap.getOrDefault(entry.getKey(), entry.getKey()),
+                        Map.Entry::getValue));
+        // 抄袭者自己的答案优先
+        tmpSource.putAll(tmpTarget);
+        return tmpSource;
     }
 
     public void negotiate() {
@@ -138,14 +167,16 @@ public final class SchemaNegotiator {
 
         List<String> sourceColumnNameList = getColumnNameList(sourceOptions, sourceSchemaFetcher);
         List<String> targetColumnNameList = getColumnNameList(targetOptions, targetSchemaFetcher);
+        JSONObject columnMap = commonOptions.getJson(CommonOptionsConf.COLUMN_MAP, null);
+        // 源列名->目标列名
+        BiMap<String, String> biColumnMap = HashBiMap.create(columnMap.size());
+        for (String key : columnMap.keySet()) {
+            // 如果存在相同的value则bimap会报错
+            biColumnMap.put(key, columnMap.getString(key));
+        }
 
         if (sourceColumnNameList.size() > 0 && targetColumnNameList.size() > 0) {
-            JSONObject columnMap = commonOptions.getJson(CommonOptionsConf.COLUMN_MAP, null);
-            BiMap<String, String> biColumnMap = HashBiMap.create(columnMap.size());
-            for (String key : columnMap.keySet()) {
-                // 如果存在相同的value则bimap会报错
-                biColumnMap.put(key, columnMap.getString(key));
-            }
+            // 检查上下游多列少列，并取交集
             Set<String> intersectTargetColumnNameSet
                     = validateAndGetIntersection(sourceColumnNameList, targetColumnNameList, biColumnMap);
             // 筛选出公共列并保持原本顺序
@@ -158,6 +189,16 @@ public final class SchemaNegotiator {
                     .collect(Collectors.toList());
         }
 
+        if (commonOptions.getBoolean(CommonOptionsConf.ALLOW_COPY_COLUMN_NAME, false)) {
+            if (sourceColumnNameList.size() == 0 && targetColumnNameList.size() != 0) {
+                LOG.info("The source data source copy the column name list.");
+                sourceColumnNameList = new ArrayList<>(targetColumnNameList);
+            } else if (sourceColumnNameList.size() != 0 && targetColumnNameList.size() == 0) {
+                LOG.info("The target data source copy the column name list.");
+                targetColumnNameList = new ArrayList<>(sourceColumnNameList);
+            }
+        }
+
         LOG.info("The source column name list is: " + sourceColumnNameList);
         LOG.info("The target column name list is: " + targetColumnNameList);
 
@@ -165,6 +206,15 @@ public final class SchemaNegotiator {
                 = getColumnTypeMap(sourceOptions, sourceSchemaFetcher, sourceColumnNameList);
         Map<String, DataType> targetColumnTypeMap
                 = getColumnTypeMap(targetOptions, targetSchemaFetcher, targetColumnNameList);
+
+        if (commonOptions.getBoolean(CommonOptionsConf.ALLOW_COPY_COLUMN_TYPE, false)) {
+            Map<String, DataType> tmpSourceColumnTypeMap = copyTypeMap(sourceColumnTypeMap, targetColumnTypeMap,
+                    biColumnMap, DataSourceRole.SOURCE);
+            Map<String, DataType> tmpTargetColumnTypeMap = copyTypeMap(sourceColumnTypeMap,
+                    targetColumnTypeMap, biColumnMap, DataSourceRole.TARGET);
+            sourceColumnTypeMap = tmpSourceColumnTypeMap;
+            targetColumnTypeMap = tmpTargetColumnTypeMap;
+        }
 
         LOG.info("The source column type map is: " + sourceColumnTypeMap);
         LOG.info("The target column type map is: " + targetColumnTypeMap);

@@ -23,14 +23,11 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
 
     private List<String> updateKeyList;
 
-    private List<WrapperSetter<PreparedStatement>> updateKeyWrapperSetterList;
-
     public RDBMSUpdateRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSManager manager)
-            throws SQLException, ClassNotFoundException {
+            throws Exception {
         super(context, tableName, exportType, manager);
 
         updateKeyList = Arrays.asList(options.getTargetOptions().getStringArray(RDBMSOutputOptionsConf.UPDATE_KEY, null));
-        updateKeyWrapperSetterList = makeWrapperSetterList(updateKeyList);
     }
 
     @Override
@@ -44,23 +41,26 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
     }
 
     @Override
-    protected PreparedStatement getPreparedStatement(WorkerMission mission, Connection connection)
+    protected PreparedStatement getPreparedStatement(RDBMSWorkerMission mission, Connection connection)
             throws Exception {
         List<HerculesWritable> recordList = mission.getHerculesWritableList();
         String sql = mission.getSql();
 
-        LOG.info("Update sql is: " + sql);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Update sql is: " + sql);
+        }
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         for (HerculesWritable record : recordList) {
             // 排去null的下标
             int meaningfulSeq = 0;
             for (int i = 0; i < columnNameList.size(); ++i) {
-                BaseWrapper columnValue = record.get(columnNameList.get(i));
+                String columnName = columnNameList.get(i);
+                BaseWrapper columnValue = record.get(columnName);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (columnValue == null) {
                     continue;
                 }
-                WrapperSetter<PreparedStatement> setter = wrapperSetterList.get(i);
+                WrapperSetter<PreparedStatement> setter = getWrapperSetter(columnTypeMap.get(columnName));
                 // meaningfulSeq + 1为prepared statement里问号的下标
                 setter.set(columnValue, preparedStatement, null, ++meaningfulSeq);
             }
@@ -72,7 +72,7 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
                     throw new MapReduceException(String.format("The update key [%s] should be the subset of source data source columns.", columnName));
                 }
                 // meaningfulSeq得续上
-                updateKeyWrapperSetterList.get(i).set(columnValue, preparedStatement, null, ++meaningfulSeq);
+                getWrapperSetter(columnTypeMap.get(columnName)).set(columnValue, preparedStatement, null, ++meaningfulSeq);
             }
             preparedStatement.addBatch();
         }

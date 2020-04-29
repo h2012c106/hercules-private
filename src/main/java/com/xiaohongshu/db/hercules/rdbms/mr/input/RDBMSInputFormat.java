@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
@@ -44,8 +43,8 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     private StingyMap<String, DataType> columnTypeMap;
 
     protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options,
-                                      RDBMSDataTypeConverter converter,
-                                      RDBMSManager manager){
+                                                         RDBMSDataTypeConverter converter,
+                                                         RDBMSManager manager) {
         return new RDBMSSchemaFetcher(options, converter, manager);
     }
 
@@ -100,13 +99,11 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     }
 
     @Override
-    public List<InputSplit> innerGetSplits(JobContext context) throws IOException, InterruptedException {
+    protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
         Configuration configuration = context.getConfiguration();
 
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(configuration);
-
-        initializeContext(options.getSourceOptions());
 
         // 检查split-by列在不在列集里
         String splitBy;
@@ -124,8 +121,6 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
         }
 
         // 如果只有一个split，那下面的不用做了
-        int numSplits = options.getCommonOptions().getInteger(CommonOptionsConf.NUM_MAPPER,
-                CommonOptionsConf.DEFAULT_NUM_MAPPER);
         if (numSplits == 1) {
             LOG.warn("Map set to 1, only use 1 map.");
             return BaseSplitter.generateAllSplit();
@@ -212,7 +207,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
                 }
             }
 
-            configuration.setLong(AVERAGE_MAP_ROW_NUM, (notNullRowNum + nullRowNum) / numSplits);
+            configuration.setLong(AVERAGE_MAP_ROW_NUM, (notNullRowNum + nullRowNum) / res.size());
 
             LOG.info(String.format("Actually split to %d splits: %s", res.size(), res.toString()));
             return res;
@@ -249,13 +244,6 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     @Override
     public HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
-
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-
-        initializeContext(options.getSourceOptions());
-
         return new RDBMSRecordReader(manager, initializeConverter());
     }
 

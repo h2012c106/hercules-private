@@ -10,6 +10,7 @@ import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import lombok.NonNull;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -18,9 +19,11 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 /**
  * @param <T> 数据源写出时用于表示一行的数据结构，详情可见{@link WrapperSetter}
@@ -29,33 +32,127 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordWriter.class);
 
+    private final AtomicBoolean closed = new AtomicBoolean(false);
+
     protected WrappingOptions options;
-    protected List<WrapperSetter<T>> wrapperSetterList;
+    private Map<DataType, WrapperSetter<T>> wrapperSetterMap;
 
     protected List<String> columnNameList;
     protected Map<String, DataType> columnTypeMap;
 
     protected RateLimiter rateLimiter = null;
+    private double acquireTime = 0;
 
     private boolean emptyColumnNameList;
 
-    protected List<WrapperSetter<T>> makeWrapperSetterList(List<String> columnNameList) {
-        return columnNameList
-                .stream()
-                .map(columnName -> getWrapperSetter(columnTypeMap.get(columnName)))
-                .collect(Collectors.toList());
+    private void setWrapperSetter(Map<DataType, WrapperSetter<T>> wrapperSetterMap,
+                                  DataType dataType, Function<Void, WrapperSetter<T>> setFunction) {
+        try {
+            WrapperSetter<T> tmpWrapper = setFunction.apply(null);
+            if (tmpWrapper != null) {
+                wrapperSetterMap.put(dataType, tmpWrapper);
+            } else {
+                throw new UnsupportedOperationException();
+            }
+        } catch (Exception e) {
+            LOG.warn(String.format("Undefined convert strategy of %s, exception: %s",
+                    dataType.toString(),
+                    ExceptionUtils.getStackTrace(e)));
+        }
+    }
+
+    private void initializeWrapperSetterMap() {
+        wrapperSetterMap = new HashMap<>(DataType.values().length);
+        for (DataType dataType : DataType.values()) {
+            switch (dataType) {
+                case INTEGER:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getIntegerSetter();
+                        }
+                    });
+                    break;
+                case DOUBLE:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getDoubleSetter();
+                        }
+                    });
+                    break;
+                case BOOLEAN:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getBooleanSetter();
+                        }
+                    });
+                    break;
+                case STRING:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getStringSetter();
+                        }
+                    });
+                    break;
+                case DATE:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getDateSetter();
+                        }
+                    });
+                    break;
+                case BYTES:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getBytesSetter();
+                        }
+                    });
+                    break;
+                case NULL:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getNullSetter();
+                        }
+                    });
+                    break;
+                case LIST:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getListSetter();
+                        }
+                    });
+                    break;
+                case MAP:
+                    setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+                        @Override
+                        public WrapperSetter<T> apply(Void aVoid) {
+                            return getMapSetter();
+                        }
+                    });
+                    break;
+                default:
+                    throw new MapReduceException("Unknown data type: " + dataType.name());
+            }
+        }
     }
 
     public HerculesRecordWriter(TaskAttemptContext context) {
-        HerculesWritable.setTargetOneLevel(isColumnNameOneLevel());
-
         options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
+
+        LOG.warn(context.getConfiguration().get("hercules.column.target","sadasdsad"));
 
         columnNameList = Arrays.asList(options.getTargetOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
         columnTypeMap = SchemaUtils.convert(options.getTargetOptions().getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
 
-        wrapperSetterList = makeWrapperSetterList(columnNameList);
+        initializeWrapperSetterMap();
 
         emptyColumnNameList = columnNameList.size() == 0;
 
@@ -64,24 +161,12 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         }
     }
 
-    private WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
-        switch (dataType) {
-            case INTEGER:
-                return getIntegerSetter();
-            case DOUBLE:
-                return getDoubleSetter();
-            case BOOLEAN:
-                return getBooleanSetter();
-            case STRING:
-                return getStringSetter();
-            case DATE:
-                return getDateSetter();
-            case BYTES:
-                return getBytesSetter();
-            case NULL:
-                return getNullSetter();
-            default:
-                throw new MapReduceException("Unknown data type: " + dataType.name());
+    protected final WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
+        WrapperSetter<T> res = wrapperSetterMap.get(dataType);
+        if (res == null) {
+            throw new MapReduceException("Unknown data type: " + dataType.name());
+        } else {
+            return res;
         }
     }
 
@@ -112,14 +197,24 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
      * @throws InterruptedException
      */
     @Override
-    public void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
+    public final void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
         if (rateLimiter != null) {
-            rateLimiter.acquire();
+            acquireTime += rateLimiter.acquire();
         }
         if (emptyColumnNameList) {
             innerMapWrite(value);
         } else {
             innerColumnWrite(value);
+        }
+    }
+
+    abstract protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException;
+
+    @Override
+    public final void close(TaskAttemptContext context) throws IOException, InterruptedException {
+        if (!closed.getAndSet(true)) {
+            innerClose(context);
+            LOG.info(String.format("Spent %.2fs of blocking on qps control.", acquireTime));
         }
     }
 
@@ -137,6 +232,12 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
 
     abstract protected WrapperSetter<T> getNullSetter();
 
-    abstract protected boolean isColumnNameOneLevel();
+    protected WrapperSetter<T> getListSetter() {
+        throw new UnsupportedOperationException();
+    }
+
+    protected WrapperSetter<T> getMapSetter() {
+        throw new UnsupportedOperationException();
+    }
 
 }
