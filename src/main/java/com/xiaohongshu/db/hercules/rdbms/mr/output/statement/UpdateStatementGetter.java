@@ -4,14 +4,12 @@ import java.util.List;
 
 public class UpdateStatementGetter extends StatementGetter {
     @Override
-    public String getExportSql(String tableName, List<String> columnNameList, String columnMask, int numRows) {
+    public String innerGetExportSql(String tableName, List<String> columnNameList, String columnMask, int numRows) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getExportSql(String tableName, List<String> columnNameList, String columnMask, List<String> updateKeyList) {
-        columnNameList = filterNullColumns(columnNameList,columnMask);
-
+    public String innerGetExportSql(String tableName, List<String> columnNameList, String columnMask, List<String> updateKeyList) {
         StringBuilder sb = new StringBuilder();
         sb.append("UPDATE `").append(tableName).append("` SET ");
 
@@ -41,7 +39,7 @@ public class UpdateStatementGetter extends StatementGetter {
     }
 
     @Override
-    public String getMigrateSql(String tableName, String stagingTableName, List<String> columnNameList) {
+    public String innerGetMigrateSql(String tableName, String stagingTableName, List<String> columnNameList) {
         throw new UnsupportedOperationException();
     }
 }

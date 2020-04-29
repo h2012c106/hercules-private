@@ -12,11 +12,11 @@ import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
+import lombok.NonNull;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -24,6 +24,17 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class SqlUtils {
+
+    private static final String COLUMN_NAME_ENCLOSING = "`";
+    private static final Pattern COLUMN_ENCLOSED_PATTERN = Pattern.compile(COLUMN_NAME_ENCLOSING + "\\S+" + COLUMN_NAME_ENCLOSING);
+
+    public static String encloseColumnName(@NonNull String columnName) {
+        if ("*".equals(columnName) || COLUMN_ENCLOSED_PATTERN.matcher(columnName).matches()) {
+            return columnName;
+        } else {
+            return COLUMN_NAME_ENCLOSING + columnName + COLUMN_NAME_ENCLOSING;
+        }
+    }
 
     private static SQLSelectStatement parse(String sql) {
         MySqlStatementParser parser = new MySqlStatementParser(sql);
@@ -42,6 +53,7 @@ public final class SqlUtils {
      * @return
      */
     public static SQLSelectItem makeItem(String columnName) {
+        columnName = encloseColumnName(columnName);
         return new SQLSelectItem(new SQLIdentifierExpr(columnName));
     }
 
@@ -53,6 +65,7 @@ public final class SqlUtils {
      * @return
      */
     public static SQLSelectItem makeItem(String methodName, String columnName) {
+        columnName = encloseColumnName(columnName);
         return new SQLSelectItem(new SQLAggregateExpr(methodName,
                 null,
                 new SQLIdentifierExpr(columnName)));
@@ -71,7 +84,7 @@ public final class SqlUtils {
                 new SQLIntegerExpr(number)));
     }
 
-    private static SQLSelectItem[] convert(String... strs){
+    private static SQLSelectItem[] convert(String... strs) {
         return Arrays.stream(strs).map(SqlUtils::makeItem).toArray(SQLSelectItem[]::new);
     }
 
@@ -163,7 +176,7 @@ public final class SqlUtils {
 
     private static String makeQueryByParts(String tableName, List<String> columnNameList, String condition) {
         return String.format("SELECT %s FROM %s %s",
-                String.join(", ", columnNameList),
+                columnNameList.stream().map(SqlUtils::encloseColumnName).collect(Collectors.joining(", ")),
                 tableName,
                 condition);
     }
@@ -200,7 +213,6 @@ public final class SqlUtils {
             return makeQueryByParts(table, columnNameList, where);
         }
     }
-
 
 
 }
