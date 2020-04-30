@@ -7,7 +7,6 @@ import java.util.List;
 public class HBaseOutputOptionsConf extends HBaseOptionsConf {
 
     public final static String COLUMN_FAMILY = "hbase.mapreduce.column.family";
-    public final static String OUTPU_TABLE = "hbase.mapreduce.outputtable";
 
     // define recordWriter Write thread Num
     public static final String EXECUTE_THREAD_NUM = "execute-thread-num";
@@ -29,7 +28,7 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
                 .description("Column Family to Scan.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(OUTPU_TABLE)
+                .name(TABLE)
                 .needArg(true)
                 .necessary(true)
                 .description("Job parameter that specifies the output table..")

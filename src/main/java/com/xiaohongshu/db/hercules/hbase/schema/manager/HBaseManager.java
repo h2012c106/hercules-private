@@ -97,7 +97,7 @@ public class HBaseManager {
      */
     public static void setSourceConf(Configuration conf, GenericOptions sourceOptions, HBaseManager manager) throws IOException {
 
-        conf.set(HBaseInputOptionsConf.INPUT_TABLE, sourceOptions.getString(HBaseInputOptionsConf.INPUT_TABLE, null));
+        conf.set(HBaseOptionsConf.TABLE, sourceOptions.getString(HBaseOptionsConf.TABLE, null));
         // input table name must be specified
 //        if(conf.get(HbaseInputOptionsConf.INPUT_TABLE)==null){
 //            throw new Exception("Input table name must be specified");
@@ -106,11 +106,11 @@ public class HBaseManager {
         conf.setInt(HBaseInputOptionsConf.NUM_MAPPERS_PER_REGION, sourceOptions.getInteger(HBaseInputOptionsConf.NUM_MAPPERS_PER_REGION, 1));
 
         conf.set(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, sourceOptions.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, null));
-        conf.setInt(HBaseInputOptionsConf.SCAN_CACHEDROWS, sourceOptions.getInteger(HBaseInputOptionsConf.INPUT_TABLE, 500));
+        conf.setInt(HBaseInputOptionsConf.SCAN_CACHEDROWS, sourceOptions.getInteger(HBaseInputOptionsConf.TABLE, 500));
 
 //        conf.set(HBaseInputOptionsConf.MAX_AVERAGE_REGION_SIZE, sourceOptions.getString(HBaseInputOptionsConf.MAX_AVERAGE_REGION_SIZE, null));
         //if starStop key not specified, the start key and the stop key of the table will be collected.
-        List<String> startStopKeys = manager.getTableStartStopKeys(conf.get(HBaseInputOptionsConf.INPUT_TABLE));
+        List<String> startStopKeys = manager.getTableStartStopKeys(conf.get(HBaseInputOptionsConf.TABLE));
         conf.set(HBaseInputOptionsConf.SCAN_ROW_START, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_START, startStopKeys.get(0)));
         conf.set(HBaseInputOptionsConf.SCAN_ROW_STOP, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_STOP, startStopKeys.get(1)));
 
@@ -129,7 +129,7 @@ public class HBaseManager {
         conf.setInt(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM,
                 targetOptions.getInteger(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM));
 
-        conf.set(HBaseOutputOptionsConf.OUTPU_TABLE, targetOptions.getString(HBaseOutputOptionsConf.OUTPU_TABLE,null));
+        conf.set(HBaseOutputOptionsConf.TABLE, targetOptions.getString(HBaseOutputOptionsConf.TABLE,null));
         conf.set(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, targetOptions.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME,null));
 
         if(targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,null)!=null){
@@ -147,7 +147,7 @@ public class HBaseManager {
      * @throws IOException
      */
     public static BufferedMutator getBufferedMutator(Configuration conf, HBaseManager manager) throws IOException {
-        String userTable = conf.get(HBaseOutputOptionsConf.OUTPU_TABLE);
+        String userTable = conf.get(HBaseOutputOptionsConf.TABLE);
         long writeBufferSize = conf.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE);
         Connection hConnection = manager.getConnection();
         TableName hTableName = TableName.valueOf(userTable);

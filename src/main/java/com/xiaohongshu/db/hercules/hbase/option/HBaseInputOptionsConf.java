@@ -12,9 +12,6 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
     public static String KEEP_ROW_KEY_COL = "hbase.mapreduce.keeprowkeycol";
     public static String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
 
-
-    /** Job parameter that specifies the input table. */
-    public static final String INPUT_TABLE = "hbase.mapreduce.inputtable";
     /** Base-64 encoded scanner. All other SCAN_ confs are ignored if this is specified.
      * See {@link TableMapReduceUtil#convertScanToString(Scan)} for more details.
      */
@@ -54,7 +51,7 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
     protected List<SingleOptionConf> setOptionConf() {
         List<SingleOptionConf> tmpList = super.setOptionConf();
         tmpList.add(SingleOptionConf.builder()
-                .name(INPUT_TABLE)
+                .name(TABLE)
                 .needArg(true)
                 .necessary(true)
                 .description("Job parameter that specifies the input table.")
