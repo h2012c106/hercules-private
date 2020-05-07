@@ -39,10 +39,13 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
     @Override
     protected Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet) {
 
-        Class.forName(driverName);
         Map columnTypeMap = new HashMap<String, DataType>();
-        // Establish Hive connection and try to get schema if url is given
         url = getOptions().getString(HBaseOptionsConf.HIVE_URL, "");
+        if(url.equals("")){
+            return columnTypeMap;
+        }
+        Class.forName(driverName);
+        // Establish Hive connection and try to get schema if url is given
         hiveUser = getOptions().getString(HBaseOptionsConf.HIVE_USER, "");
         hivePasswd = getOptions().getString(HBaseOptionsConf.HIVE_PASSWD, "");
         hiveTable = getOptions().getString(HBaseOptionsConf.HIVE_Table, getOptions().getString(HBaseOptionsConf.TABLE, ""));

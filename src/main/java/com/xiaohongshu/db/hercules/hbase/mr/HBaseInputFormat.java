@@ -23,6 +23,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -153,8 +154,6 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
         table = manager.getHtable();
         Scan scan = new Scan();
         scanner = table.getScanner(manager.genScan(scan, hbaseSplit.getStartKey(), hbaseSplit.getEndKey()));
-        LOG.info("scan: startrow: "+scan.getStartRow()+"   endrow: "+scan.getStopRow());
-        LOG.info("tableName:"+table.getName()+" startkey: "+hbaseSplit.getStartKey()+" endkey:  "+hbaseSplit.getEndKey()+" scanner: "+scanner.toString());
     }
 
     @Override
@@ -290,6 +289,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
         int columnNum = columnNameList.size();
         HerculesWritable record = new HerculesWritable(columnNum);
+        // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游
         if(rowKeyCol!=null){
             record.put(rowKeyCol,  new BytesWrapper(value.getRow()));
         }
@@ -297,17 +297,18 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
             NavigableMap<byte[], NavigableMap<Long, byte[]>> familyMap = map.get(family);//列簇作为key获取其中的列相关数据
 
             for(int i=0;i<columnNum;i++){
-                String columnName = (String) columnNameList.get(i);
-                // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游
+                String columnName = columnNameList.get(i);
                 NavigableMap<Long, byte[]> columnValueMap = familyMap.get(columnName.getBytes());
-
+                if(columnValueMap==null){ // 上游没有该行数据，做忽略处理，并且做好log
+                    LOG.info("The Column "+columnName+" has not content in the record, skipping.");
+                    continue;
+                }
                 for (Map.Entry<Long, byte[]> s : columnValueMap.entrySet()) {                //获取列对应的不同版本数据，默认最新的一个
                     record.put(columnName, wrapperGetterList.get(i).get(columnValueMap, columnName, 0));
                 }
             }
         }
         LOG.info("FROM RECORD!: "+record.toString());
-
         return record;
     }
 
@@ -318,7 +319,14 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     public void close() throws IOException {
-        scanner.close();
-        table.close();
+//        if(null!=scanner){
+//            LOG.info("SCANNER");
+//        }
+//        if(null!=table){
+//            LOG.info("TABLENOTNULL");
+//        }
+//        scanner.close();
+//        table.close();
+        manager.closeConnection();
     }
 }

@@ -40,6 +40,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
     private boolean emptyColumnNameList;
 
     protected List<WrapperSetter<T>> makeWrapperSetterList(List<String> columnNameList) {
+//        LOG.info("columnTypeMap"+columnTypeMap.toString()+"###columnNameList:"+columnNameList.toString());
         return columnNameList
                 .stream()
                 .map(columnName -> getWrapperSetter(columnTypeMap.get(columnName)))

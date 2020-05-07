@@ -121,6 +121,7 @@ class HBaseRecordWriter extends HerculesRecordWriter {
                 wrapper = record.get(qualifier);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (wrapper == null) {
+                    LOG.info("No wrapper found for column: "+qualifier);
                     continue;
                 }
                 constructPut(put, wrapper, qualifier);
@@ -147,7 +148,9 @@ class HBaseRecordWriter extends HerculesRecordWriter {
             dt = wrapper.getType();
         }
         WrapperSetter wrapperSetter = getWrapperSetter(dt);
+
         byte[] value = wrapperSetter.set(wrapper, null, null, 0);
+//        byte[] value = getBytesSetter().set(wrapper, null, null, 0);
         put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
     }
 
@@ -174,8 +177,8 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         return new WrapperSetter() {
             @Override
             public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
-                BigInteger res = wrapper.asBigInteger();
-                return res.toByteArray();
+                Long res = wrapper.asLong();
+                return Bytes.toBytes(res);
             }
         };
     }
