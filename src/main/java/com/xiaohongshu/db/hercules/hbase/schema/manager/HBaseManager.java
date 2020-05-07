@@ -10,6 +10,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
+import org.apache.hadoop.hbase.util.Bytes;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -62,9 +65,11 @@ public class HBaseManager {
      * @throws IOException
      */
     public List<RegionInfo> getRegionInfo(String tn) throws IOException {
-        Admin admin = conn.getAdmin();
+
+        Admin admin = getConnection().getAdmin();
         List<RegionInfo> rsInfo = admin.getRegions(TableName.valueOf(tn));
         admin.close();
+//        System.out.println(rsInfo.toString());
         return rsInfo;
     }
 
@@ -79,6 +84,9 @@ public class HBaseManager {
         List<String> startStopKeys = new ArrayList<>();
         startStopKeys.add(new String(rsInfo.get(0).getStartKey()));
         startStopKeys.add(new String(rsInfo.get(1).getEndKey()));
+//        List<String> keys = new ArrayList<String>();
+//        keys.add("00");
+//        keys.add("ff");
         return startStopKeys;
     }
 
@@ -86,6 +94,34 @@ public class HBaseManager {
         if(conn!=null&& !conn.isClosed()){
             conn.close();
         }
+    }
+
+    public Table getHtable() throws IOException {
+        Connection conn = getConnection();
+        System.out.println(options.getString(HBaseInputOptionsConf.TABLE,null));
+        return conn.getTable(TableName.valueOf(options.getString(HBaseInputOptionsConf.TABLE,null)));
+    }
+
+    public Scan genScan(Scan scan, String startKey, String endKey) throws IOException {
+
+        scan.withStartRow(Bytes.toBytes(startKey))
+                .withStopRow(Bytes.toBytes(endKey));
+//        if(null!=options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null)){
+//            scan.addFamily(Bytes.toBytes(options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null)));
+//        }
+//        if(null!=options.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null)
+//                &&null!=options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null)){
+//            scan.setTimeRange(options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null),
+//                    options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null));
+//        }
+        if(null!=options.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, null)){
+            scan.setCaching(options.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, null));
+        }
+        if(null!=options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)){
+            scan.setBatch(options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null));
+        }
+        scan.setCacheBlocks(false);
+        return scan;
     }
 
     /**
@@ -98,6 +134,7 @@ public class HBaseManager {
     public static void setSourceConf(Configuration conf, GenericOptions sourceOptions, HBaseManager manager) throws IOException {
 
         conf.set(HBaseOptionsConf.TABLE, sourceOptions.getString(HBaseOptionsConf.TABLE, null));
+        conf.set(TableInputFormat.INPUT_TABLE, sourceOptions.getString(HBaseOptionsConf.TABLE, null));
         // input table name must be specified
 //        if(conf.get(HbaseInputOptionsConf.INPUT_TABLE)==null){
 //            throw new Exception("Input table name must be specified");
@@ -106,20 +143,28 @@ public class HBaseManager {
         conf.setInt(HBaseInputOptionsConf.NUM_MAPPERS_PER_REGION, sourceOptions.getInteger(HBaseInputOptionsConf.NUM_MAPPERS_PER_REGION, 1));
 
         conf.set(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, sourceOptions.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, null));
-        conf.setInt(HBaseInputOptionsConf.SCAN_CACHEDROWS, sourceOptions.getInteger(HBaseInputOptionsConf.TABLE, 500));
+        conf.setInt(HBaseInputOptionsConf.SCAN_CACHEDROWS, sourceOptions.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, 500));
 
 //        conf.set(HBaseInputOptionsConf.MAX_AVERAGE_REGION_SIZE, sourceOptions.getString(HBaseInputOptionsConf.MAX_AVERAGE_REGION_SIZE, null));
         //if starStop key not specified, the start key and the stop key of the table will be collected.
         List<String> startStopKeys = manager.getTableStartStopKeys(conf.get(HBaseInputOptionsConf.TABLE));
-        conf.set(HBaseInputOptionsConf.SCAN_ROW_START, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_START, startStopKeys.get(0)));
-        conf.set(HBaseInputOptionsConf.SCAN_ROW_STOP, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_STOP, startStopKeys.get(1)));
+//        conf.set(HBaseInputOptionsConf.SCAN_ROW_START, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_START, startStopKeys.get(0)));
+//        conf.set(HBaseInputOptionsConf.SCAN_ROW_STOP, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_STOP, startStopKeys.get(1)));
 
-        // set timestamp for Scan
-        conf.set(HBaseInputOptionsConf.SCAN_TIMERANGE_START,
-                sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null));
-        conf.set(HBaseInputOptionsConf.SCAN_TIMERANGE_END, sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null));
-        conf.set(HBaseInputOptionsConf.SCAN_TIMESTAMP, sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMESTAMP, null));
+        if(null!=sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null)){
+            // set timestamp for Scan
+            conf.set(HBaseInputOptionsConf.SCAN_TIMERANGE_START,
+                    sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null));
+        }
+        if(null!=sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null)){
+            conf.set(HBaseInputOptionsConf.SCAN_TIMERANGE_END, sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null));
+        }
+        if(null!=sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMESTAMP, null)){
+            conf.set(HBaseInputOptionsConf.SCAN_TIMESTAMP, sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMESTAMP, null));
+        }
     }
+
+
 
     public static void setTargetConf(Configuration conf, GenericOptions targetOptions){
 

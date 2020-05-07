@@ -9,7 +9,6 @@ import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.hbase2.HbaseOutputFormat;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 
@@ -24,7 +23,7 @@ public class ClickhouseAssemblySupplier extends RDBMSAssemblySupplier {
     }
 
     @Override
-    protected Class<HbaseOutputFormat> setOutputFormatClass() {
+    protected Class<ClickhouseOutputFormat> setOutputFormatClass() {
         return ClickhouseOutputFormat.class;
     }
 

@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
+import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -54,7 +55,7 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
 
     @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return null;
+        return new NullOutputCommitter();
     }
 
     @Override
@@ -90,6 +91,7 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     @Override
     public void close(TaskAttemptContext context) throws IOException {
         // TODO Elegantly terminate job
+        mutator.flush();
         manager.closeConnection();
     }
 
@@ -124,6 +126,7 @@ class HBaseRecordWriter extends HerculesRecordWriter {
                 constructPut(put, wrapper, qualifier);
             }
         }
+        LOG.info("TO PUT! "+put.toJSON());
         return put;
     }
 
@@ -153,8 +156,10 @@ class HBaseRecordWriter extends HerculesRecordWriter {
      * innerColumnWrite 和 innerMapWrite 一致。因为 hbase 写入是遍历 HerculesWritable 中的 map
      */
     @Override
-    protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
-        innerMapWrite(value);
+    protected void innerColumnWrite(HerculesWritable record) throws IOException, InterruptedException {
+
+        LOG.info("TO RECORD!: "+record.toString());
+        innerMapWrite(record);
     }
 
     @SneakyThrows

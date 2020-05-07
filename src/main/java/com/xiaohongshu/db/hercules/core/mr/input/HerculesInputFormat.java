@@ -69,6 +69,8 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
     @Override
     public HerculesRecordReader<?, C> createRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
+
+        System.out.println("##############\n");
         Configuration configuration = context.getConfiguration();
 
         WrappingOptions options = new WrappingOptions();

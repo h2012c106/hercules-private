@@ -93,14 +93,15 @@ public class HBaseTableInputFormat extends TableInputFormat {
         RecordReader<ImmutableBytesWritable, Result> tableRecordReader =
                 super.createRecordReader(split, context);
 
-        HBaseRecordReader recordReader = new HBaseRecordReader(tableRecordReader, converter, sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null));
+        HBaseRecordReaderBackup recordReader = new HBaseRecordReaderBackup(tableRecordReader,
+                converter, sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null));
 
         return recordReader;
     }
 }
 
 
-class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>, DataTypeConverter> {
+class HBaseRecordReaderBackup extends HerculesRecordReader<NavigableMap<Long, byte[]>, DataTypeConverter> {
 
     private RecordReader<ImmutableBytesWritable, Result> tableRecordReader;
     private String rowKeyCol = null;
@@ -111,7 +112,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
      * @param converter
      * @param rowKeyCol 用来作为rowKey的一列数据
      */
-    public HBaseRecordReader(RecordReader tableRecordReader,  DataTypeConverter converter, String rowKeyCol) {
+    public HBaseRecordReaderBackup(RecordReader tableRecordReader, DataTypeConverter converter, String rowKeyCol) {
 
         super(converter);
         this.tableRecordReader = tableRecordReader;
