@@ -8,6 +8,7 @@ import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import org.apache.hadoop.conf.Configuration;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +21,11 @@ public final class GenericOptions {
 
     private HashMap<String, String> properties;
 
-    private static final String ARRAY_DELIMITER = "#o#";
+    private static final String ARRAY_DELIMITER = "@%HHXHH%@";
+    /**
+     * 空值不会被传到map，需要一个有长度的字符串来表明这是空字符串
+     */
+    private static final String EMPTY_PLACEHOLDER = "@%HHX_HERCULES_EMPTY_PLACEHOLDER_XHH%@";
 
     public GenericOptions() {
         properties = new HashMap<>();
@@ -96,13 +101,20 @@ public final class GenericOptions {
         });
     }
 
-    public String[] getStringArray(String key, String[] defaultValue) {
+    public String[] getStringArray(String key, String[] defaultValue, final boolean trim, final boolean filterEmpty) {
         return innerGet(key, defaultValue, new StringConverter<String[]>() {
             @Override
             public String[] convert(String sourceString) {
-                return sourceString.split(ARRAY_DELIMITER);
+                return Arrays.stream(sourceString.split(ARRAY_DELIMITER))
+                        .map(item -> trim ? item.trim() : item)
+                        .filter(item -> !filterEmpty || item.length() > 0)
+                        .toArray(String[]::new);
             }
         });
+    }
+
+    public String[] getStringArray(String key, String[] defaultValue) {
+        return getStringArray(key, defaultValue, true, true);
     }
 
     public JSONObject getJson(String key, JSONObject defaultValue) {
@@ -130,7 +142,7 @@ public final class GenericOptions {
             String key = entry.getKey();
             String value = entry.getValue();
             key = String.join(CONFIGURATION_DELIMITER, Lists.newArrayList(PREFIX, key, suffix));
-            configuration.set(key, value);
+            configuration.set(key, value.length() == 0 ? EMPTY_PLACEHOLDER : value);
         }
     }
 
@@ -151,7 +163,7 @@ public final class GenericOptions {
             String value = entry.getValue();
             if (key.endsWith(suffix)) {
                 key = key.substring(0, key.length() - (CONFIGURATION_DELIMITER + suffix).length());
-                properties.put(key, value);
+                properties.put(key, EMPTY_PLACEHOLDER.equals(value) ? "" : value);
             }
         }
     }

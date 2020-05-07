@@ -5,9 +5,7 @@ import java.util.stream.Collectors;
 
 public class UpsertStatementGetter extends StatementGetter {
     @Override
-    public String getExportSql(String tableName, List<String> columnNameList, String columnMask, int numRows) {
-        columnNameList = filterNullColumns(columnNameList, columnMask);
-
+    public String innerGetExportSql(String tableName, List<String> columnNameList, String columnMask, int numRows) {
         boolean first;
         StringBuilder sb = new StringBuilder();
         sb.append("INSERT IGNORE INTO ");
@@ -54,12 +52,12 @@ public class UpsertStatementGetter extends StatementGetter {
     }
 
     @Override
-    public String getExportSql(String tableName, List<String> columnNameList, String columnMask, List<String> updateKeyList) {
+    public String innerGetExportSql(String tableName, List<String> columnNameList, String columnMask, List<String> updateKeyList) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getMigrateSql(String tableName, String stagingTableName, List<String> columnNameList) {
+    public String innerGetMigrateSql(String tableName, String stagingTableName, List<String> columnNameList) {
         return String.format("INSERT INTO `%s` SELECT * FROM `%s` ON DUPLICATE KEY UPDATE %s",
                 tableName,
                 stagingTableName,

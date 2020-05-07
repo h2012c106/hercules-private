@@ -3,12 +3,14 @@ package com.xiaohongshu.db.hercules.core.serialize.datatype;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import lombok.NonNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -33,109 +35,34 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper>> {
                 0);
     }
 
-    private void oneLevelPut(String columnName, @NonNull BaseWrapper value) {
+    public void put(String columnName, @NonNull BaseWrapper value) {
+        BaseWrapper prevValue = get(columnName);
+        if (prevValue != null) {
+            addByteSize(-1 * prevValue.getByteSize());
+        }
+        value.setParent(this);
         getValue().put(columnName, value);
         addByteSize(value.getByteSize());
     }
 
-    /**
-     * 允许'xxx.yyy.zz'这样传列名，代表嵌套结构
-     *
-     * @param columnNameListStr
-     * @param value
-     */
-    private void multiLevelPut(String columnNameListStr, @NonNull BaseWrapper value) {
-        List<String> columnNameList
-                = Arrays.asList(columnNameListStr.split(BaseDataSourceOptionsConf.NESTED_COLUMN_NAME_DELIMITER_REGEX));
-        MapWrapper tmpMapWrapper = this;
-        for (int i = 0; i < columnNameList.size() - 1; ++i) {
-            // 当前map加byte size，最后一个map不用加，one level里会加
-            tmpMapWrapper.addByteSize(value.getByteSize());
-
-            String columnName = columnNameList.get(i);
-            BaseWrapper tmpWrapper = tmpMapWrapper.oneLevelGet(columnName);
-            if (tmpWrapper == null) {
-                tmpWrapper = new MapWrapper();
-                tmpMapWrapper.oneLevelPut(columnName, tmpWrapper);
-            }
-            // 如果不是Map类型的直接报错
-            tmpMapWrapper = (MapWrapper) tmpWrapper;
-        }
-        tmpMapWrapper.oneLevelPut(columnNameList.get(columnNameList.size() - 1), value);
-    }
-
-    public void put(String str, @NonNull BaseWrapper value, boolean oneLevel) {
-        if (oneLevel) {
-            oneLevelPut(str, value);
-        } else {
-            multiLevelPut(str, value);
-        }
-    }
-
-    private BaseWrapper oneLevelGet(String columnName) {
+    public BaseWrapper get(String columnName) {
         return getValue().get(columnName);
-    }
-
-    /**
-     * 允许'xxx.yyy.zz'这样传列名，代表嵌套结构
-     *
-     * @param columnNameListStr
-     * @return 有就返回，在任意一层没有就null
-     */
-    private BaseWrapper multiLevelGet(String columnNameListStr) {
-        List<String> columnNameList
-                = Arrays.asList(columnNameListStr.split(BaseDataSourceOptionsConf.NESTED_COLUMN_NAME_DELIMITER_REGEX));
-        MapWrapper tmpMapWrapper = this;
-        for (int i = 0; i < columnNameList.size() - 1; ++i) {
-            String columnName = columnNameList.get(i);
-            BaseWrapper tmpWrapper = tmpMapWrapper.oneLevelGet(columnName);
-            // 如果不包含这列或者这列不是Map，说明不存在
-            if (!(tmpWrapper instanceof MapWrapper)) {
-                return null;
-            }
-            tmpMapWrapper = (MapWrapper) tmpWrapper;
-        }
-        return tmpMapWrapper.oneLevelGet(columnNameList.get(columnNameList.size() - 1));
-    }
-
-    public BaseWrapper get(String str, boolean oneLevel) {
-        if (oneLevel) {
-            return oneLevelGet(str);
-        } else {
-            return multiLevelGet(str);
-        }
     }
 
     public Set<Map.Entry<String, BaseWrapper>> entrySet() {
         return getValue().entrySet();
     }
 
-    private boolean oneLevelContainsColumn(String columnName) {
+    public boolean containsColumn(String columnName) {
         return getValue().containsKey(columnName);
     }
 
-    private boolean multiLevelContainsColumn(String columnNameListStr) {
-        List<String> columnNameList
-                = Arrays.asList(columnNameListStr.split(BaseDataSourceOptionsConf.NESTED_COLUMN_NAME_DELIMITER_REGEX));
-        MapWrapper tmpMapWrapper = this;
-        for (int i = 0; i < columnNameList.size() - 1; ++i) {
-            String columnName = columnNameList.get(i);
-            BaseWrapper tmpWrapper = tmpMapWrapper.oneLevelGet(columnName);
-            // 如果不包含这列或者这列不是Map，说明不存在
-            if (!(tmpWrapper instanceof MapWrapper)) {
-                return false;
-            }
-            tmpMapWrapper = (MapWrapper) tmpWrapper;
+    public BaseWrapper remove(String columnName) {
+        BaseWrapper removedValue = getValue().remove(columnName);
+        if (removedValue != null) {
+            addByteSize(-1 * removedValue.getByteSize());
         }
-        return tmpMapWrapper.oneLevelContainsColumn(columnNameList.get(columnNameList.size() - 1));
-    }
-
-    public boolean containsColumn(String str, boolean oneLevel) {
-        if (oneLevel) {
-            return oneLevelContainsColumn(str);
-        } else {
-            return multiLevelContainsColumn(str);
-        }
+        return removedValue;
     }
 
     @Override

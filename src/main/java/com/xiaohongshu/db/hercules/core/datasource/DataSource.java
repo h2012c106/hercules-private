@@ -9,6 +9,7 @@ public enum DataSource {
     TiDB,
     Clickhouse,
     HBase,
+    MongoDB,
     HDFSTextFile;
 
     public static DataSource valueOfIgnoreCase(String value) {

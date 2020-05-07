@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.core.serialize;
 
-import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.MapWrapper;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -9,10 +8,8 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 内部由Map存储，摈弃Array。在10亿行数据下，Map的写比List慢300秒，读比List慢100秒。
@@ -24,18 +21,6 @@ public class HerculesWritable implements Writable {
 
     private long byteSize;
 
-    private static JSONObject columnNameMap;
-
-    public static void setColumnNameMap(JSONObject columnNameMap) {
-        HerculesWritable.columnNameMap = columnNameMap;
-    }
-
-    private static boolean targetOneLevel;
-
-    public static void setTargetOneLevel(boolean targetOneLevel) {
-        HerculesWritable.targetOneLevel = targetOneLevel;
-    }
-
     public HerculesWritable() {
         this(1);
     }
@@ -45,34 +30,21 @@ public class HerculesWritable implements Writable {
         byteSize = 0;
     }
 
-    private String mapColumnName(String columnName) {
-        return (String) columnNameMap.getOrDefault(columnName, columnName);
+    public HerculesWritable(MapWrapper row) {
+        this.row = row;
+        byteSize = row.getByteSize();
     }
 
     public void put(String columnName, BaseWrapper column) {
-        // 把上游列名映成下游列名
-        columnName = mapColumnName(columnName);
-        // 已经是下游列名了，自然按照下游是否存在嵌套列来判断
-        row.put(columnName, column, targetOneLevel);
+        row.put(columnName, column);
         byteSize += column.getByteSize();
     }
 
     public BaseWrapper get(String columnName) {
-        return row.get(columnName, targetOneLevel);
+        return row.get(columnName);
     }
 
-    /**
-     * TODO 把一行的数据根据某个List列展成一/多行
-     *
-     * @param splitBaseColumn
-     * @return
-     */
-    public List<HerculesWritable> split(List<String> splitBaseColumn) {
-        splitBaseColumn = splitBaseColumn.stream().map(this::mapColumnName).collect(Collectors.toList());
-        return null;
-    }
-
-    public Set<Map.Entry<String,BaseWrapper>> entrySet(){
+    public Set<Map.Entry<String, BaseWrapper>> entrySet() {
         return row.entrySet();
     }
 

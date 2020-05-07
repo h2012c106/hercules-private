@@ -2,7 +2,6 @@ package com.xiaohongshu.db.hercules.core.serialize.datatype;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 
 import java.math.BigDecimal;
@@ -30,12 +29,17 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper>> {
     }
 
     public void add(BaseWrapper item) {
+        item.setParent(this);
         getValue().add(item);
         addByteSize(item.getByteSize());
     }
 
     public BaseWrapper get(int i) {
         return getValue().get(i);
+    }
+
+    public int size() {
+        return getValue().size();
     }
 
     @Override

@@ -7,9 +7,7 @@ public abstract class InsertPatternStatementGetter extends StatementGetter {
     abstract protected String getMethod();
 
     @Override
-    public String getExportSql(String tableName, List<String> columnNameList, String columnMask, int numRows) {
-        columnNameList = filterNullColumns(columnNameList, columnMask);
-
+    public String innerGetExportSql(String tableName, List<String> columnNameList, String columnMask, int numRows) {
         boolean first;
         StringBuilder sb = new StringBuilder();
         sb.append(getMethod()).append(" INTO ");
@@ -44,12 +42,12 @@ public abstract class InsertPatternStatementGetter extends StatementGetter {
     }
 
     @Override
-    public String getExportSql(String tableName, List<String> columnNameList, String columnMask, List<String> updateKeyList) {
+    public String innerGetExportSql(String tableName, List<String> columnNameList, String columnMask, List<String> updateKeyList) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getMigrateSql(String tableName, String stagingTableName, List<String> columnNameList) {
+    public String innerGetMigrateSql(String tableName, String stagingTableName, List<String> columnNameList) {
         return String.format("%s INTO `%s` SELECT * FROM `%s`", getMethod(), tableName, stagingTableName);
     }
 }

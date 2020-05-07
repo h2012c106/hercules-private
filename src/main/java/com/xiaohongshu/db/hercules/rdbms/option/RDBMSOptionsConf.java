@@ -1,11 +1,13 @@
 package com.xiaohongshu.db.hercules.rdbms.option;
 
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class RDBMSOptionsConf extends BaseDataSourceOptionsConf {
+public final class RDBMSOptionsConf extends BaseOptionsConf {
 
     public static final String CONNECTION = "connection";
     public static final String USERNAME = "user";
@@ -15,8 +17,13 @@ public class RDBMSOptionsConf extends BaseDataSourceOptionsConf {
     public static final String TABLE = "table";
 
     @Override
-    protected List<SingleOptionConf> setOptionConf() {
-        List<SingleOptionConf> tmpList = super.setOptionConf();
+    protected List<BaseOptionsConf> generateAncestorList() {
+        return null;
+    }
+
+    @Override
+    protected List<SingleOptionConf> innerGenerateOptionConf() {
+        List<SingleOptionConf> tmpList = new ArrayList<>();
         tmpList.add(SingleOptionConf.builder()
                 .name(CONNECTION)
                 .needArg(true)
@@ -40,5 +47,10 @@ public class RDBMSOptionsConf extends BaseDataSourceOptionsConf {
                 .description("The jdbc driver class name, e.g. 'com.mysql.jdbc.Driver'.")
                 .build());
         return tmpList;
+    }
+
+    @Override
+    public void innerValidateOptions(GenericOptions options) {
+
     }
 }

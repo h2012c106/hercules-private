@@ -38,15 +38,15 @@ public final class DateUtils {
 
     public static DateResult stringToDate(String value, DateFormatWrapper dateFormatWrapper) {
         try {
-            return new DateResult(dateFormatWrapper.getDateFormat().parse(value), DateType.DATETIME);
+            return new DateResult(dateFormatWrapper.getDatetimeFormat().parse(value), DateType.DATETIME);
         } catch (ParseException ignored) {
         }
         try {
-            return new DateResult(dateFormatWrapper.getTimeFormat().parse(value), DateType.DATE);
+            return new DateResult(dateFormatWrapper.getDateFormat().parse(value), DateType.DATE);
         } catch (ParseException ignored) {
         }
         try {
-            return new DateResult(dateFormatWrapper.getDatetimeFormat().parse(value), DateType.TIME);
+            return new DateResult(dateFormatWrapper.getTimeFormat().parse(value), DateType.TIME);
         } catch (ParseException ignored) {
         }
         throw new SerializeException("Unparsable formatted date: " + value);

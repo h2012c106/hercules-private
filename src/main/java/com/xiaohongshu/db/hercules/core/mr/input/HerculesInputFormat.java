@@ -9,8 +9,6 @@ import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterInitializer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
-import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -41,7 +39,7 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
         columnTypeMap = SchemaUtils.convert(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
     }
 
-    abstract protected List<InputSplit> innerGetSplits(JobContext context) throws IOException, InterruptedException;
+    abstract protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException;
 
     @Override
     public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
@@ -52,7 +50,10 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
 
         initializeContext(options.getSourceOptions());
 
-        List<InputSplit> res = innerGetSplits(context);
+        int numSplits = options.getCommonOptions().getInteger(CommonOptionsConf.NUM_MAPPER,
+                CommonOptionsConf.DEFAULT_NUM_MAPPER);
+
+        List<InputSplit> res = innerGetSplits(context, numSplits);
 
         // 换算各个mapper实际的qps
         if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
