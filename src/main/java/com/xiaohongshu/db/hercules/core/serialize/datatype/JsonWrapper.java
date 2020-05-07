@@ -18,7 +18,7 @@ import java.util.Date;
 @Deprecated
 public class JsonWrapper extends BaseWrapper<JSON> {
 
-    private final static DataType DATA_TYPE = DataType.JSON;
+    private final static DataType DATA_TYPE = null;
 
     private final static String DEFAULT_ENCODE = "UTF-8";
 

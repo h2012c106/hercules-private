@@ -4,7 +4,6 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -23,7 +22,7 @@ public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
     private static final Log LOG = LogFactory.getLog(RDBMSRichLineRecordWriter.class);
 
     public RDBMSRichLineRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSManager manager)
-            throws SQLException, ClassNotFoundException {
+            throws Exception {
         super(context, tableName, exportType, manager);
     }
 
@@ -38,23 +37,26 @@ public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
     }
 
     @Override
-    protected PreparedStatement getPreparedStatement(WorkerMission mission, Connection connection) throws Exception {
+    protected PreparedStatement getPreparedStatement(RDBMSWorkerMission mission, Connection connection) throws Exception {
         List<HerculesWritable> recordList = mission.getHerculesWritableList();
         String sql = mission.getSql();
 
-        LOG.debug("Batch export sql is: " + sql);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Batch export sql is: " + sql);
+        }
         PreparedStatement preparedStatement = connection.prepareStatement(sql);
         // 因为有很多行问号，所以下标值需要在循环间继承
         int meaningfulSeq = 0;
         for (HerculesWritable record : recordList) {
             // 排去null的下标
             for (int i = 0; i < columnNameList.size(); ++i) {
-                BaseWrapper columnValue = record.get(columnNameList.get(i));
+                String columnName = columnNameList.get(i);
+                BaseWrapper columnValue = record.get(columnName);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (columnValue == null) {
                     continue;
                 }
-                WrapperSetter<PreparedStatement> setter = wrapperSetterList.get(i);
+                WrapperSetter<PreparedStatement> setter = getWrapperSetter(columnTypeMap.get(columnName));
                 // meaningfulSeq + 1为prepared statement里问号的下标
                 setter.set(columnValue, preparedStatement, null, ++meaningfulSeq);
             }

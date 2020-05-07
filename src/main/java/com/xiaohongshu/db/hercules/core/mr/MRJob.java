@@ -192,8 +192,8 @@ public class MRJob {
                     .findCounter(HerculesMapper.ESTIMATED_BYTE_SIZE_COUNTER_NAME).getValue());
             LOG.info("Transferred " + perfCounters.toString());
             numRecords = ConfigurationHelper.getNumMapOutputRecords(job);
-            LOG.info("Retrieved " + numRecords + " records.");
         }
+        LOG.info("Retrieved " + numRecords + " records.");
 
         if (!success) {
             printFailedTaskLog(job);
