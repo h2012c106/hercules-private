@@ -26,6 +26,10 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
         this(BigInteger.valueOf(value), 8);
     }
 
+    public IntegerWrapper(Short value) {
+        this(BigInteger.valueOf(value), 2);
+    }
+
     public IntegerWrapper(String value) {
         this(NumberUtils.createBigInteger(value), value.length());
     }

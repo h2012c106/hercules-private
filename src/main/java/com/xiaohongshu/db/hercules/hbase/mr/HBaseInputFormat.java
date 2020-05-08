@@ -1,14 +1,18 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
+import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
+import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
+import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataType;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
@@ -26,6 +30,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 
+import javax.sql.rowset.serial.SerialException;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -39,11 +44,14 @@ import java.util.NavigableMap;
  */
 public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter> implements HBaseManagerInitializer {
 
+    private static final Log LOG = LogFactory.getLog(HBaseInputFormat.class);
     private HBaseManager manager;
     private GenericOptions sourceOptions;
+    private Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     @Override
     protected void initializeContext(GenericOptions sourceOptions) {
+        hbaseColumnTypeMap = HBaseDataTypeConverter.convert(sourceOptions.getJson(HBaseOptionsConf.HBASE_COLUMN_TYPE_MAP, null));
         super.initializeContext(sourceOptions);
         this.sourceOptions = sourceOptions;
         manager = initializeManager(sourceOptions);
@@ -63,7 +71,7 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
 
     @Override
     protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new HBaseRecordReader(manager, converter, sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null));
+        return new HBaseRecordReader(manager, converter, sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null), hbaseColumnTypeMap);
     }
 
     @Override
@@ -129,16 +137,18 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
     private ResultScanner scanner;
     private Result value;
     private Table table;
+    private Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     /**
      * @param manager
      * @param converter
      * @param rowKeyCol 用来作为rowKey的一列数据
      */
-    public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol) {
+    public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol, Map<String, HBaseDataType> hbaseColumnTypeMap) {
 
         super(converter);
         this.manager = manager;
+        this.hbaseColumnTypeMap = hbaseColumnTypeMap;
         if(rowKeyCol!=null){
             this.rowKeyCol = rowKeyCol;
         }
@@ -160,11 +170,20 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
         return new WrapperGetter<NavigableMap<Long, byte[]>>() {
             @Override
             public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
+                HBaseDataType dataType = hbaseColumnTypeMap.get(name);
                 byte[] res = columnValueMap.firstEntry().getValue();
-                if (res==null) {
+                if(null==res){
                     return new NullWrapper();
-                } else {
-                    return new IntegerWrapper(Bytes.toInt(res));
+                }
+                switch(dataType){
+                    case SHORT:
+                        return new IntegerWrapper(Bytes.toShort(res));
+                    case INT:
+                        return new IntegerWrapper(Bytes.toInt(res));
+                    case LONG:
+                        return new IntegerWrapper(Bytes.toLong(res));
+                    default:
+                        throw new MapReduceException("Unknown data type: " + dataType.name());
                 }
             }
         };
@@ -175,11 +194,20 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
         return new WrapperGetter<NavigableMap<Long, byte[]>>() {
             @Override
             public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
+                HBaseDataType dataType = hbaseColumnTypeMap.get(name);
                 byte[] res = columnValueMap.firstEntry().getValue();
-                if (res==null) {
+                if(null==res){
                     return new NullWrapper();
-                } else {
-                    return new DoubleWrapper(Bytes.toDouble(res));
+                }
+                switch(dataType){
+                    case FLOAT:
+                        return new DoubleWrapper(Bytes.toFloat(res));
+                    case DOUBLE:
+                        return new DoubleWrapper(Bytes.toDouble(res));
+                    case BIGDECIMAL:
+                        return new DoubleWrapper(Bytes.toBigDecimal(res));
+                    default:
+                        throw new MapReduceException("Unknown data type: " + dataType.name());
                 }
             }
         };
@@ -307,7 +335,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
                 }
             }
         }
-        LOG.info("FROM RECORD!: "+record.toString());
+//        LOG.info("FROM RECORD!: "+record.toString());
         return record;
     }
 

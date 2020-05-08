@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
+import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -9,6 +10,9 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
+import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataType;
+import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
@@ -35,6 +39,7 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
 
     private GenericOptions targetOptions;
     private HBaseManager manager;
+    private Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     /**
      * 配置 conf 并返回 HerculesRecordWriter
@@ -45,10 +50,11 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
         targetOptions = options.getTargetOptions();
+        hbaseColumnTypeMap = HBaseDataTypeConverter.convert(targetOptions.getJson(HBaseOptionsConf.HBASE_COLUMN_TYPE_MAP, null));
         manager = initializeManager(targetOptions);
         HBaseManager.setTargetConf(manager.getConf(), targetOptions);
         // 传到 recordWriter 的 manager 有设置好了的 conf， 可以通过 manager 获得 Connection
-        return new HBaseRecordWriter(manager, context);
+        return new HBaseRecordWriter(manager, context, hbaseColumnTypeMap);
     }
 
     @Override
@@ -69,20 +75,22 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
 
 class HBaseRecordWriter extends HerculesRecordWriter<Put> {
 
+    private static final Log LOG = LogFactory.getLog(HBaseRecordWriter.class);
     private String columnFamily;
     private String rowKeyCol;
     private HBaseManager manager;
-    private static final Log LOG = LogFactory.getLog(HBaseRecordWriter.class);
+    private Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     private BufferedMutator mutator;
 
     /**
      * 获取 columnFamily，rowKeyCol 并通过 conf
      */
-    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException {
+    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context, Map<String, HBaseDataType> hbaseColumnTypeMap) throws IOException {
         super(context);
 
         this.manager = manager;
+        this.hbaseColumnTypeMap = hbaseColumnTypeMap;
         Configuration conf = manager.getConf();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
         rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL_NAME);
@@ -113,7 +121,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         }else{
             // 如果存在 columnNameList， 则以 columnNameList 为准构建PUT。
             for (int i = 0; i < columnNameList.size(); ++i) {
-                String qualifier = (String) columnNameList.get(i);
+                String qualifier = columnNameList.get(i);
                 wrapper = record.get(qualifier);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (wrapper == null) {
@@ -123,7 +131,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
                 constructPut(put, wrapper, qualifier);
             }
         }
-        LOG.info("TO PUT! "+put.toJSON());
+//        LOG.info("TO PUT! "+put.toJSON());
         return put;
     }
 
@@ -154,7 +162,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     @Override
     protected void innerColumnWrite(HerculesWritable record) throws IOException, InterruptedException {
 
-        LOG.info("TO RECORD!: "+record.toString());
+//        LOG.info("TO RECORD!: "+record.toString());
         innerMapWrite(record);
     }
 
@@ -177,7 +185,20 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             @Override
             public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
                 Long res = wrapper.asLong();
-                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
+                HBaseDataType dataType = hbaseColumnTypeMap.get(name);
+                switch(dataType){
+                    case SHORT:
+                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.shortValue()));
+                        break;
+                    case INT:
+                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.intValue()));
+                        break;
+                    case LONG:
+                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
+                        break;
+                    default:
+                        throw new MapReduceException("Unknown data type: " + dataType.name());
+                }
             }
         };
     }
@@ -187,8 +208,20 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         return new WrapperSetter<Put>() {
             @Override
             public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
-                Double res = wrapper.asDouble();
-                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
+                HBaseDataType dataType = hbaseColumnTypeMap.get(name);
+                switch(dataType){
+                    case FLOAT:
+                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble().floatValue()));
+                        break;
+                    case DOUBLE:
+                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble()));
+                        break;
+                    case BIGDECIMAL:
+                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asBigDecimal()));
+                        break;
+                    default:
+                        throw new MapReduceException("Unknown data type: " + dataType.name());
+                }
             }
         };
     }
