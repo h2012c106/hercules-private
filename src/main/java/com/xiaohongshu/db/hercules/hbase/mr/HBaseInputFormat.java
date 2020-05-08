@@ -96,8 +96,9 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
                 newSplits.add(new HBaseSplit(startKey, endKey));
                 i++;
             }
-            return newSplits;
+            splits = newSplits;
         }
+        LOG.info(String.format("Actually split to %d splits: %s", splits.size(), splits.toString()));
         return splits;
     }
 
@@ -162,10 +163,7 @@ class HBaseSplit extends InputSplit implements Writable {
 
     @Override
     public String toString() {
-        return "HBaseSplit{" +
-                "startKey='" + startKey + '\'' +
-                ", endKey='" + endKey + '\'' +
-                '}';
+        return '{'+startKey +" <=rowkey< " + endKey + '}';
     }
 }
 
