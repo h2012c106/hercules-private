@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.mysql.option;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
@@ -19,7 +20,10 @@ public final class MysqlOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return Collections.singletonList(new RDBMSOutputOptionsConf());
+        return Lists.newArrayList(
+                new RDBMSOutputOptionsConf(),
+                new MysqlOptionsConf()
+        );
     }
 
     @Override

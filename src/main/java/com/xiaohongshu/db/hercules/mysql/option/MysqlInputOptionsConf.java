@@ -1,12 +1,12 @@
 package com.xiaohongshu.db.hercules.mysql.option;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.RANDOM_FUNC_NAME;
@@ -17,7 +17,10 @@ public final class MysqlInputOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return Collections.singletonList(new RDBMSInputOptionsConf());
+        return Lists.newArrayList(
+                new RDBMSInputOptionsConf(),
+                new MysqlOptionsConf()
+        );
     }
 
     @Override

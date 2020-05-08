@@ -1,12 +1,12 @@
 package com.xiaohongshu.db.hercules.clickhouse.option;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.FETCH_SIZE;
@@ -18,7 +18,10 @@ public final class ClickhouseInputOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return Collections.singletonList(new RDBMSInputOptionsConf());
+        return Lists.newArrayList(
+                new RDBMSInputOptionsConf(),
+                new ClickhouseOptionsConf()
+        );
     }
 
     @Override
