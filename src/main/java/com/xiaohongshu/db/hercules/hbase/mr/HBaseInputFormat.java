@@ -49,7 +49,7 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     }
 
     @Override
-    protected List<InputSplit> innerGetSplits(JobContext context) throws IOException, InterruptedException {
+    protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
         List<InputSplit> splits = new ArrayList<>();
         List<RegionInfo> rsInfo = manager.getRegionInfo(sourceOptions.getString(HBaseInputOptionsConf.TABLE, null));
         for(RegionInfo r: rsInfo){

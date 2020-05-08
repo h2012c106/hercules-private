@@ -89,10 +89,8 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     }
 
     @Override
-    public void close(TaskAttemptContext context) throws IOException {
-        // TODO Elegantly terminate job
-        mutator.flush();
-        manager.closeConnection();
+    public void write(Object key, Object value) throws IOException, InterruptedException {
+
     }
 
     /**
@@ -173,6 +171,12 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     }
 
     @Override
+    protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
+        mutator.flush();
+        manager.closeConnection();
+    }
+
+    @Override
     protected WrapperSetter getIntegerSetter() {
         return new WrapperSetter() {
             @Override
@@ -240,10 +244,5 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     @Override
     protected WrapperSetter getNullSetter() {
         return null;
-    }
-
-    @Override
-    protected boolean isColumnNameOneLevel() {
-        return false;
     }
 }

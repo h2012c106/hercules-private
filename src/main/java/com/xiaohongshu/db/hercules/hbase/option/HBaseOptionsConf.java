@@ -1,13 +1,14 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class HBaseOptionsConf extends BaseDataSourceOptionsConf {
+public class HBaseOptionsConf extends BaseOptionsConf {
 
     public final static String HB_ZK_QUORUM="hbase.zookeeper.quorum";
     public final static String HB_ZK_PORT="hbase.zookeeper.port";
