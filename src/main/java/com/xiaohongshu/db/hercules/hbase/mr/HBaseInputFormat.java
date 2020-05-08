@@ -8,6 +8,7 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
+import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
@@ -51,14 +52,12 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
         List<InputSplit> splits = new ArrayList<>();
-        List<RegionInfo> rsInfo = manager.getRegionInfo(sourceOptions.getString(HBaseInputOptionsConf.TABLE, null));
+        List<RegionInfo> rsInfo = manager.getRegionInfo(sourceOptions.getString(HBaseOptionsConf.TABLE, null));
         for(RegionInfo r: rsInfo){
             String startKey = Bytes.toString(r.getStartKey());
             String endKey = Bytes.toString(r.getEndKey());
             splits.add(new HBaseSplit(startKey,endKey));
         }
-//        splits.remove(0);
-//        splits.remove(splits.size()-1);
         return splits;
     }
 
@@ -304,7 +303,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
                     continue;
                 }
                 for (Map.Entry<Long, byte[]> s : columnValueMap.entrySet()) {                //获取列对应的不同版本数据，默认最新的一个
-                    record.put(columnName, wrapperGetterList.get(i).get(columnValueMap, columnName, 0));
+                    record.put(columnName, getWrapperGetter(columnTypeMap.get(columnName)).get(columnValueMap, columnName, 0));
                 }
             }
         }

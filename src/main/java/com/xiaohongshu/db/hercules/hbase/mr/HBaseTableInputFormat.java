@@ -271,7 +271,7 @@ class HBaseRecordReaderBackup extends HerculesRecordReader<NavigableMap<Long, by
                 NavigableMap<Long, byte[]> columnValueMap = familyMap.get(columnName.getBytes());
 
                 for (Map.Entry<Long, byte[]> s : columnValueMap.entrySet()) {                //获取列对应的不同版本数据，默认最新的一个
-                    record.put(columnName, wrapperGetterList.get(i).get(columnValueMap, columnName, 0));
+//                    record.put(columnName, wrapperGetterList.get(i).get(columnValueMap, columnName, 0));
                 }
             }
         }

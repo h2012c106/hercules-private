@@ -26,6 +26,9 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.sql.PreparedStatement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
@@ -64,7 +67,7 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
     }
 }
 
-class HBaseRecordWriter extends HerculesRecordWriter {
+class HBaseRecordWriter extends HerculesRecordWriter<List<byte[]>> {
 
     private String columnFamily;
     private String rowKeyCol;
@@ -86,11 +89,6 @@ class HBaseRecordWriter extends HerculesRecordWriter {
 
         // 目前相关的变量统一从 Configuration conf 中拿取
         mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
-    }
-
-    @Override
-    public void write(Object key, Object value) throws IOException, InterruptedException {
-
     }
 
     /**
@@ -136,7 +134,7 @@ class HBaseRecordWriter extends HerculesRecordWriter {
      * @param qualifier
      */
     public void constructPut(Put put, BaseWrapper wrapper, String qualifier) throws Exception {
-        if(qualifier == rowKeyCol){
+        if(qualifier.equals(rowKeyCol)){
             // if the qualifier is the row key col, dont put it the the Put object
             return;
         }
@@ -145,10 +143,10 @@ class HBaseRecordWriter extends HerculesRecordWriter {
         if(dt==null){
             dt = wrapper.getType();
         }
-        WrapperSetter wrapperSetter = getWrapperSetter(dt);
-
-        byte[] value = wrapperSetter.set(wrapper, null, null, 0);
-//        byte[] value = getBytesSetter().set(wrapper, null, null, 0);
+        WrapperSetter<List<byte[]>> wrapperSetter = getWrapperSetter(dt);
+        List<byte[]> valueContainer = new ArrayList<>();
+        wrapperSetter.set(wrapper, valueContainer, null, 0);
+        byte[] value = valueContainer.get(0);
         put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
     }
 
@@ -177,72 +175,71 @@ class HBaseRecordWriter extends HerculesRecordWriter {
     }
 
     @Override
-    protected WrapperSetter getIntegerSetter() {
-        return new WrapperSetter() {
+    protected WrapperSetter<List<byte[]>> getIntegerSetter() {
+        return new WrapperSetter<List<byte[]>>() {
             @Override
-            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
                 Long res = wrapper.asLong();
-                return Bytes.toBytes(res);
+                row.add(Bytes.toBytes(res));
             }
         };
     }
 
     @Override
-    protected WrapperSetter getDoubleSetter() {
-        return new WrapperSetter() {
+    protected WrapperSetter<List<byte[]>> getDoubleSetter() {
+        return new WrapperSetter<List<byte[]>>() {
             @Override
-            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
                 Double res = wrapper.asDouble();
-                return Bytes.toBytes(res);
+                row.add(Bytes.toBytes(res));
             }
         };
     }
 
     @Override
-    protected WrapperSetter getBooleanSetter() {
-        return new WrapperSetter() {
+    protected WrapperSetter<List<byte[]>> getBooleanSetter() {
+        return new WrapperSetter<List<byte[]>>() {
             @Override
-            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
                 Boolean res = wrapper.asBoolean();
-                return Bytes.toBytes(res);
+                row.add(Bytes.toBytes(res));
             }
         };
     }
 
     @Override
-    protected WrapperSetter getStringSetter() {
-        return new WrapperSetter() {
+    protected WrapperSetter<List<byte[]>> getStringSetter() {
+        return new WrapperSetter<List<byte[]>>() {
             @Override
-            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
+            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
                 String res = wrapper.asString();
-                return Bytes.toBytes(res);
+                row.add(Bytes.toBytes(res));
             }
         };
     }
 
     @Override
-    protected WrapperSetter getDateSetter() {
-        return new WrapperSetter() {
+    protected WrapperSetter<List<byte[]>> getDateSetter() {
+        return new WrapperSetter<List<byte[]>>() {
             @Override
-            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
-                return wrapper.asBytes();
+            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
+                row.add(wrapper.asBytes());
             }
         };
     }
 
     @Override
-    protected WrapperSetter getBytesSetter() {
-        return new WrapperSetter() {
+    protected WrapperSetter<List<byte[]>> getBytesSetter() {
+        return new WrapperSetter<List<byte[]>>() {
             @Override
-            public byte[] set(@NonNull BaseWrapper wrapper, Object row, String name, int seq) throws Exception {
-                byte[] res = wrapper.asBytes();
-                return res;
+            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
+                row.add(wrapper.asBytes());
             }
         };
     }
 
     @Override
-    protected WrapperSetter getNullSetter() {
+    protected WrapperSetter<List<byte[]>> getNullSetter() {
         return null;
     }
 }

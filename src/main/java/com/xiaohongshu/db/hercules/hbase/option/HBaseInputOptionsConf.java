@@ -1,12 +1,19 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
+import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class HBaseInputOptionsConf extends HBaseOptionsConf {
+import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
+
+public class HBaseInputOptionsConf extends BaseOptionsConf {
 
 
     public static String KEEP_ROW_KEY_COL = "hbase.mapreduce.keeprowkeycol";
@@ -48,14 +55,16 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
     public static final String NUM_MAPPERS_PER_REGION = "hbase.mapreduce.tableinput.mappers.per.region";
 
     @Override
-    protected List<SingleOptionConf> setOptionConf() {
-        List<SingleOptionConf> tmpList = super.setOptionConf();
-        tmpList.add(SingleOptionConf.builder()
-                .name(TABLE)
-                .needArg(true)
-                .necessary(true)
-                .description("Job parameter that specifies the input table.")
-                .build());
+    protected List<BaseOptionsConf> generateAncestorList() {
+        return Lists.newArrayList(
+                new BaseInputOptionsConf(),
+                new HBaseOptionsConf()
+        );
+    }
+
+    @Override
+    protected List<SingleOptionConf> innerGenerateOptionConf() {
+        List<SingleOptionConf> tmpList = new ArrayList<>();
         tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_ROW_START)
                 .needArg(true)
@@ -139,5 +148,10 @@ public class HBaseInputOptionsConf extends HBaseOptionsConf {
                 .description("Specify the name of the row key col passed to the recordWriter.")
                 .build());
         return tmpList;
+    }
+
+    @Override
+    public void innerValidateOptions(GenericOptions options) {
+
     }
 }

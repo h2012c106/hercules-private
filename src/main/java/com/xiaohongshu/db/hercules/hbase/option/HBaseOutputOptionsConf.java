@@ -1,10 +1,12 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
-import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.option.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class HBaseOutputOptionsConf extends HBaseOptionsConf {
+public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
     public final static String COLUMN_FAMILY = "hbase.mapreduce.column.family";
 
@@ -19,19 +21,21 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
     public static final long DEFAULT_WRITE_BUFFER_SIZE = 8 * 1024 * 1024;
 
     @Override
-    protected List<SingleOptionConf> setOptionConf() {
-        List<SingleOptionConf> tmpList = super.setOptionConf();
+    protected List<BaseOptionsConf> generateAncestorList() {
+        return Lists.newArrayList(
+                new BaseOutputOptionsConf(),
+                new HBaseOptionsConf()
+        );
+    }
+
+    @Override
+    protected List<SingleOptionConf> innerGenerateOptionConf() {
+        List<SingleOptionConf> tmpList = new ArrayList<>();
         tmpList.add(SingleOptionConf.builder()
                 .name(COLUMN_FAMILY)
                 .needArg(true)
                 .necessary(true)
                 .description("Column Family to Scan.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(TABLE)
-                .needArg(true)
-                .necessary(true)
-                .description("Job parameter that specifies the output table..")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(EXECUTE_THREAD_NUM)
@@ -50,5 +54,10 @@ public class HBaseOutputOptionsConf extends HBaseOptionsConf {
                 .description(String.format("The write buffer size, default %d bytes.", DEFAULT_EXECUTE_THREAD_NUM))
                 .build());
         return tmpList;
+    }
+
+    @Override
+    public void innerValidateOptions(GenericOptions options) {
+
     }
 }

@@ -2,12 +2,19 @@ package com.xiaohongshu.db.hercules.hbase.parser;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;
+import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.parser.BaseParser;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 
-public class HBaseOutputParser extends BaseDataSourceParser {
+public class HBaseOutputParser extends BaseParser {
+
+//    public HBaseOutputParser(BaseOptionsConf optionsConf) {
+//        super(optionsConf);
+//    }
+
+    public HBaseOutputParser() {
+        super(new HBaseOutputOptionsConf());
+    }
 
     @Override
     public DataSourceRole getDataSourceRole() {
@@ -17,16 +24,5 @@ public class HBaseOutputParser extends BaseDataSourceParser {
     @Override
     public DataSource getDataSource() {
         return DataSource.HBase;
-    }
-
-    @Override
-    protected BaseDataSourceOptionsConf getOptionsConf() {
-        return new HBaseOutputOptionsConf();
-    }
-
-    @Override
-    protected void validateOptions(GenericOptions options) {
-        super.validateOptions(options);
-        // TODO add some dependency check
     }
 }

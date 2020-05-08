@@ -15,5 +15,5 @@ public interface WrapperSetter<T> {
      * @param seq
      * @return
      */
-    public byte[] set(@NonNull BaseWrapper wrapper, T row, String name, int seq) throws Exception;
+    public void set(@NonNull BaseWrapper wrapper, T row, String name, int seq) throws Exception;
 }
