@@ -67,7 +67,7 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
     }
 }
 
-class HBaseRecordWriter extends HerculesRecordWriter<List<byte[]>> {
+class HBaseRecordWriter extends HerculesRecordWriter<Put> {
 
     private String columnFamily;
     private String rowKeyCol;
@@ -139,15 +139,12 @@ class HBaseRecordWriter extends HerculesRecordWriter<List<byte[]>> {
             return;
         }
         // 优先从columnTypeMap中获取对应的DataType，如果为null，则从wrapper中获取。
-        DataType dt = (DataType) columnTypeMap.get(qualifier);
+        DataType dt = columnTypeMap.get(qualifier);
         if(dt==null){
             dt = wrapper.getType();
         }
-        WrapperSetter<List<byte[]>> wrapperSetter = getWrapperSetter(dt);
-        List<byte[]> valueContainer = new ArrayList<>();
-        wrapperSetter.set(wrapper, valueContainer, null, 0);
-        byte[] value = valueContainer.get(0);
-        put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
+        WrapperSetter<Put> wrapperSetter = getWrapperSetter(dt);
+        wrapperSetter.set(wrapper, put, qualifier, 0);
     }
 
 
@@ -175,71 +172,71 @@ class HBaseRecordWriter extends HerculesRecordWriter<List<byte[]>> {
     }
 
     @Override
-    protected WrapperSetter<List<byte[]>> getIntegerSetter() {
-        return new WrapperSetter<List<byte[]>>() {
+    protected WrapperSetter<Put> getIntegerSetter() {
+        return new WrapperSetter<Put>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
+            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
                 Long res = wrapper.asLong();
-                row.add(Bytes.toBytes(res));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
             }
         };
     }
 
     @Override
-    protected WrapperSetter<List<byte[]>> getDoubleSetter() {
-        return new WrapperSetter<List<byte[]>>() {
+    protected WrapperSetter<Put> getDoubleSetter() {
+        return new WrapperSetter<Put>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
+            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
                 Double res = wrapper.asDouble();
-                row.add(Bytes.toBytes(res));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
             }
         };
     }
 
     @Override
-    protected WrapperSetter<List<byte[]>> getBooleanSetter() {
-        return new WrapperSetter<List<byte[]>>() {
+    protected WrapperSetter<Put> getBooleanSetter() {
+        return new WrapperSetter<Put>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
+            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
                 Boolean res = wrapper.asBoolean();
-                row.add(Bytes.toBytes(res));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
             }
         };
     }
 
     @Override
-    protected WrapperSetter<List<byte[]>> getStringSetter() {
-        return new WrapperSetter<List<byte[]>>() {
+    protected WrapperSetter<Put> getStringSetter() {
+        return new WrapperSetter<Put>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
+            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
                 String res = wrapper.asString();
-                row.add(Bytes.toBytes(res));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
             }
         };
     }
 
     @Override
-    protected WrapperSetter<List<byte[]>> getDateSetter() {
-        return new WrapperSetter<List<byte[]>>() {
+    protected WrapperSetter<Put> getDateSetter() {
+        return new WrapperSetter<Put>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
-                row.add(wrapper.asBytes());
+            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), wrapper.asBytes());
             }
         };
     }
 
     @Override
-    protected WrapperSetter<List<byte[]>> getBytesSetter() {
-        return new WrapperSetter<List<byte[]>>() {
+    protected WrapperSetter<Put> getBytesSetter() {
+        return new WrapperSetter<Put>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, List<byte[]> row, String name, int seq) throws Exception {
-                row.add(wrapper.asBytes());
+            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), wrapper.asBytes());
             }
         };
     }
 
     @Override
-    protected WrapperSetter<List<byte[]>> getNullSetter() {
+    protected WrapperSetter<Put> getNullSetter() {
         return null;
     }
 }
