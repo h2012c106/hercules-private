@@ -57,6 +57,9 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
         manager = initializeManager(sourceOptions);
     }
 
+    /**
+     * split策略：一个region对应一个split
+     */
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
         List<InputSplit> splits = new ArrayList<>();
@@ -139,6 +142,9 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
     private Table table;
     private Map<String, HBaseDataType> hbaseColumnTypeMap;
 
+    // 测试io等待时间
+//    private Long ioTimeStatistics = new Long(0l);
+
     /**
      * @param manager
      * @param converter
@@ -167,78 +173,66 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected WrapperGetter getIntegerGetter() {
-        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
-            @Override
-            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
-                HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-                byte[] res = columnValueMap.firstEntry().getValue();
-                if(null==res){
-                    return new NullWrapper();
-                }
-                switch(dataType){
-                    case SHORT:
-                        return new IntegerWrapper(Bytes.toShort(res));
-                    case INT:
-                        return new IntegerWrapper(Bytes.toInt(res));
-                    case LONG:
-                        return new IntegerWrapper(Bytes.toLong(res));
-                    default:
-                        throw new MapReduceException("Unknown data type: " + dataType.name());
-                }
+        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
+            HBaseDataType dataType = hbaseColumnTypeMap.get(name);
+            byte[] res = columnValueMap.firstEntry().getValue();
+            if(null==res){
+                return new NullWrapper();
+            }
+            switch(dataType){
+                case SHORT:
+                    return new IntegerWrapper(Bytes.toShort(res));
+                case INT:
+                    return new IntegerWrapper(Bytes.toInt(res));
+                case LONG:
+                    return new IntegerWrapper(Bytes.toLong(res));
+                default:
+                    throw new MapReduceException("Unknown data type: " + dataType.name());
             }
         };
     }
 
     @Override
     protected WrapperGetter getDoubleGetter() {
-        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
-            @Override
-            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
-                HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-                byte[] res = columnValueMap.firstEntry().getValue();
-                if(null==res){
-                    return new NullWrapper();
-                }
-                switch(dataType){
-                    case FLOAT:
-                        return new DoubleWrapper(Bytes.toFloat(res));
-                    case DOUBLE:
-                        return new DoubleWrapper(Bytes.toDouble(res));
-                    case BIGDECIMAL:
-                        return new DoubleWrapper(Bytes.toBigDecimal(res));
-                    default:
-                        throw new MapReduceException("Unknown data type: " + dataType.name());
-                }
+        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
+            HBaseDataType dataType = hbaseColumnTypeMap.get(name);
+            byte[] res = columnValueMap.firstEntry().getValue();
+            if(null==res){
+                return new NullWrapper();
+            }
+            switch(dataType){
+                case FLOAT:
+                    return new DoubleWrapper(Bytes.toFloat(res));
+                case DOUBLE:
+                    return new DoubleWrapper(Bytes.toDouble(res));
+                case BIGDECIMAL:
+                    return new DoubleWrapper(Bytes.toBigDecimal(res));
+                default:
+                    throw new MapReduceException("Unknown data type: " + dataType.name());
             }
         };
     }
 
     @Override
     protected WrapperGetter getBooleanGetter() {
-        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
-            @Override
-            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
-                byte[] res = columnValueMap.firstEntry().getValue();
-                if (res==null) {
-                    return new NullWrapper();
-                } else {
-                    return new BooleanWrapper(Bytes.toBoolean(res));
-                }
+        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
+            byte[] res = columnValueMap.firstEntry().getValue();
+            if (res==null) {
+                return new NullWrapper();
+            } else {
+                return new BooleanWrapper(Bytes.toBoolean(res));
             }
         };
     }
 
     @Override
     protected WrapperGetter getStringGetter() {
-        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
-            @Override
-            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
-                byte[] res = columnValueMap.firstEntry().getValue();
-                if (res==null) {
-                    return new NullWrapper();
-                } else {
-                    return new StringWrapper(Bytes.toString(res));
-                }
+        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
+            byte[] res = columnValueMap.firstEntry().getValue();
+            if (res==null) {
+                return new NullWrapper();
+            } else {
+                return new StringWrapper(Bytes.toString(res));
             }
         };
     }
@@ -246,44 +240,33 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
     // TODO 检查目前的转换能否正常work，借鉴自 dataX
     @Override
     protected WrapperGetter getDateGetter() {
-        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
-            @Override
-            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
-                byte[] res = columnValueMap.firstEntry().getValue();
-                if (res==null) {
-                    return new NullWrapper();
-                } else {
-                    String dateValue = Bytes.toStringBinary(res);
-                    // 需要设定一个dateformat，即 new String()
-                    return new DateWrapper(DateUtils.parseDate(dateValue, new String()));
-                }
+        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
+            byte[] res = columnValueMap.firstEntry().getValue();
+            if (res==null) {
+                return new NullWrapper();
+            } else {
+                String dateValue = Bytes.toStringBinary(res);
+                // 需要设定一个dateformat，即 new String()
+                return new DateWrapper(DateUtils.parseDate(dateValue, new String()));
             }
         };
     }
 
     @Override
     protected WrapperGetter getBytesGetter() {
-        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
-            @Override
-            public BaseWrapper get(NavigableMap<Long, byte[]> columnValueMap, String name, int seq) throws Exception {
-                byte[] res = columnValueMap.firstEntry().getValue();
-                if (res==null) {
-                    return new NullWrapper();
-                } else {
-                    return new BytesWrapper(res);
-                }
+        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
+            byte[] res = columnValueMap.firstEntry().getValue();
+            if (res==null) {
+                return new NullWrapper();
+            } else {
+                return new BytesWrapper(res);
             }
         };
     }
 
     @Override
     protected WrapperGetter getNullGetter() {
-        return new WrapperGetter<NavigableMap<Long, byte[]>>() {
-            @Override
-            public BaseWrapper get(NavigableMap<Long, byte[]> row, String name, int seq) throws Exception {
-                return NullWrapper.INSTANCE;
-            }
-        };
+        return (WrapperGetter<NavigableMap<Long, byte[]>>) (row, name, seq) -> NullWrapper.INSTANCE;
     }
 
     /**
@@ -291,7 +274,9 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
      */
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
+//        long startTime = System.currentTimeMillis();
         value = scanner.next();
+//        ioTimeStatistics += (System.currentTimeMillis()-startTime);
         if(null!=value){
             return true;
         }
@@ -327,7 +312,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
                 String columnName = columnNameList.get(i);
                 NavigableMap<Long, byte[]> columnValueMap = familyMap.get(columnName.getBytes());
                 if(columnValueMap==null){ // 上游没有该行数据，做忽略处理，并且做好log
-                    LOG.info("The Column "+columnName+" has not content in the record, skipping.");
+                    LOG.warn("The Column "+columnName+" has not content in the record, skipping.");
                     continue;
                 }
                 for (Map.Entry<Long, byte[]> s : columnValueMap.entrySet()) {                //获取列对应的不同版本数据，默认最新的一个
@@ -335,7 +320,6 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
                 }
             }
         }
-//        LOG.info("FROM RECORD!: "+record.toString());
         return record;
     }
 
@@ -346,14 +330,10 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     public void close() throws IOException {
-//        if(null!=scanner){
-//            LOG.info("SCANNER");
-//        }
-//        if(null!=table){
-//            LOG.info("TABLENOTNULL");
-//        }
-//        scanner.close();
-//        table.close();
+
+//        LOG.info("TIMESPENTFORIO: "+ioTimeStatistics.toString());
+        scanner.close();
+        table.close();
         manager.closeConnection();
     }
 }

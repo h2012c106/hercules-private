@@ -181,91 +181,69 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
 
     @Override
     protected WrapperSetter<Put> getIntegerSetter() {
-        return new WrapperSetter<Put>() {
-            @Override
-            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
-                Long res = wrapper.asLong();
-                HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-                switch(dataType){
-                    case SHORT:
-                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.shortValue()));
-                        break;
-                    case INT:
-                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.intValue()));
-                        break;
-                    case LONG:
-                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
-                        break;
-                    default:
-                        throw new MapReduceException("Unknown data type: " + dataType.name());
-                }
+        return (wrapper, put, name, seq) -> {
+            Long res = wrapper.asLong();
+            HBaseDataType dataType = hbaseColumnTypeMap.get(name);
+            switch(dataType){
+                case SHORT:
+                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.shortValue()));
+                    break;
+                case INT:
+                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.intValue()));
+                    break;
+                case LONG:
+                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
+                    break;
+                default:
+                    throw new MapReduceException("Unknown data type: " + dataType.name());
             }
         };
     }
 
     @Override
     protected WrapperSetter<Put> getDoubleSetter() {
-        return new WrapperSetter<Put>() {
-            @Override
-            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
-                HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-                switch(dataType){
-                    case FLOAT:
-                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble().floatValue()));
-                        break;
-                    case DOUBLE:
-                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble()));
-                        break;
-                    case BIGDECIMAL:
-                        put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asBigDecimal()));
-                        break;
-                    default:
-                        throw new MapReduceException("Unknown data type: " + dataType.name());
-                }
+        return (wrapper, put, name, seq) -> {
+            HBaseDataType dataType = hbaseColumnTypeMap.get(name);
+            switch(dataType){
+                case FLOAT:
+                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble().floatValue()));
+                    break;
+                case DOUBLE:
+                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble()));
+                    break;
+                case BIGDECIMAL:
+                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asBigDecimal()));
+                    break;
+                default:
+                    throw new MapReduceException("Unknown data type: " + dataType.name());
             }
         };
     }
 
     @Override
     protected WrapperSetter<Put> getBooleanSetter() {
-        return new WrapperSetter<Put>() {
-            @Override
-            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
-                Boolean res = wrapper.asBoolean();
-                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
-            }
+        return (wrapper, put, name, seq) -> {
+            Boolean res = wrapper.asBoolean();
+            put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
     }
 
     @Override
     protected WrapperSetter<Put> getStringSetter() {
-        return new WrapperSetter<Put>() {
-            @Override
-            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
-                String res = wrapper.asString();
-                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
-            }
+        return (wrapper, put, name, seq) -> {
+            String res = wrapper.asString();
+            put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
     }
 
     @Override
     protected WrapperSetter<Put> getDateSetter() {
-        return new WrapperSetter<Put>() {
-            @Override
-            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
-                put.addColumn(columnFamily.getBytes(), name.getBytes(), wrapper.asBytes());
-            }
-        };
+        return (wrapper, put, name, seq) -> put.addColumn(columnFamily.getBytes(), name.getBytes(), wrapper.asBytes());
     }
 
     @Override
     protected WrapperSetter<Put> getBytesSetter() {
-        return new WrapperSetter<Put>() {
-            @Override
-            public void set(@NonNull BaseWrapper wrapper, Put put, String name, int seq) throws Exception {
-                put.addColumn(columnFamily.getBytes(), name.getBytes(), wrapper.asBytes());
-            }
-        };
+        return (wrapper, put, name, seq) -> put.addColumn(columnFamily.getBytes(), name.getBytes(), wrapper.asBytes());
     }
 
     @Override
