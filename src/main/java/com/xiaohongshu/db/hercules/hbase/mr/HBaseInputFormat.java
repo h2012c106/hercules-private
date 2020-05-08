@@ -1,9 +1,11 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
+import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
@@ -34,10 +36,7 @@ import javax.sql.rowset.serial.SerialException;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.util.*;
 
 /**
  * 用 proxy 的方式，使用 TableInputFormat 来访问上游数据库，实现 split 和 recordReader 功能。
@@ -58,7 +57,7 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     }
 
     /**
-     * split策略：一个region对应一个split
+     * split策略：默认一个region对应一个split，指定 num—mapper 后，可以合并region生成新的split
      */
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
@@ -68,6 +67,36 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
             String startKey = Bytes.toString(r.getStartKey());
             String endKey = Bytes.toString(r.getEndKey());
             splits.add(new HBaseSplit(startKey,endKey));
+        }
+        splits.sort((o1, o2) -> {
+            HBaseSplit s1 = (HBaseSplit) o1;
+            HBaseSplit s2 = (HBaseSplit) o2;
+            return s1.getStartKey().compareTo(s2.getStartKey());
+        });
+        int regionNum = splits.size();
+        List<InputSplit> newSplits = new ArrayList<>();
+        if(numSplits<splits.size()){
+            int i = 0;
+            int regionsPerSplit = (int) Math.ceil((float)regionNum/(float)numSplits);
+            while(i<regionNum){
+                if(newSplits.size()+regionNum-i+1==numSplits){
+                    newSplits.addAll(splits.subList(i,splits.size()));
+                    break;
+                }
+                HBaseSplit startRegion = (HBaseSplit) splits.get(i);
+                String startKey = startRegion.getStartKey();
+                i = i+regionsPerSplit-1;
+                HBaseSplit endRegion;
+                if(i<regionNum){
+                    endRegion = (HBaseSplit) splits.get(i);
+                }else{
+                    endRegion = (HBaseSplit) splits.get(splits.size()-1);
+                }
+                String endKey = endRegion.getEndKey();
+                newSplits.add(new HBaseSplit(startKey, endKey));
+                i++;
+            }
+            return newSplits;
         }
         return splits;
     }
@@ -129,6 +158,14 @@ class HBaseSplit extends InputSplit implements Writable {
     public void readFields(DataInput dataInput) throws IOException {
         this.startKey = Text.readString(dataInput);
         this.endKey = Text.readString(dataInput);
+    }
+
+    @Override
+    public String toString() {
+        return "HBaseSplit{" +
+                "startKey='" + startKey + '\'' +
+                ", endKey='" + endKey + '\'' +
+                '}';
     }
 }
 
