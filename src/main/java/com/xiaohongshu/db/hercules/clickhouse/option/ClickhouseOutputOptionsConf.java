@@ -1,13 +1,12 @@
 package com.xiaohongshu.db.hercules.clickhouse.option;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
-import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf.AUTOCOMMIT;
@@ -16,7 +15,10 @@ import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf.ST
 public final class ClickhouseOutputOptionsConf extends BaseOptionsConf {
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return Collections.singletonList(new RDBMSOutputOptionsConf());
+        return Lists.newArrayList(
+                new RDBMSOutputOptionsConf(),
+                new ClickhouseOptionsConf()
+        );
     }
 
     @Override
