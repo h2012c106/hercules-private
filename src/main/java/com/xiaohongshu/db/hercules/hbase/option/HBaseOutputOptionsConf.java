@@ -10,10 +10,6 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
     public final static String COLUMN_FAMILY = "hbase.mapreduce.column.family";
 
-    // define recordWriter Write thread Num
-    public static final String EXECUTE_THREAD_NUM = "execute-thread-num";
-    public static final Integer DEFAULT_EXECUTE_THREAD_NUM = 1;
-
     // the column specified to be the row key of PUT or DELETE operations
     // 当上游也是HBase的时候，此设置共享。
     public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
@@ -38,11 +34,6 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
                 .description("Column Family to Scan.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(EXECUTE_THREAD_NUM)
-                .needArg(true)
-                .description("The thread number for executing Hbase Puts.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
                 .name(ROW_KEY_COL_NAME)
                 .needArg(true)
                 .necessary(true)
@@ -51,7 +42,7 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(WRITE_BUFFER_SIZE)
                 .needArg(true)
-                .description(String.format("The write buffer size, default %d bytes.", DEFAULT_EXECUTE_THREAD_NUM))
+                .description(String.format("The write buffer size, default %d bytes.", DEFAULT_WRITE_BUFFER_SIZE))
                 .build());
         return tmpList;
     }

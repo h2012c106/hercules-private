@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.schema.manager;
 
+import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
@@ -40,7 +41,7 @@ public class HBaseManager {
     }
 
     /**
-     * 配置最基本的链接数据库的参数，后续还需要通过{@link #setSourceConf}和{@link #setTargetConf}来分别进行详细的配置
+     * 配置最基本的链接数据库的参数，后续还需要通过{@link #genScan}来进行详细的配置
      */
     public void setBasicConf(){
         // set connection
@@ -69,7 +70,6 @@ public class HBaseManager {
         Admin admin = getConnection().getAdmin();
         List<RegionInfo> rsInfo = admin.getRegions(TableName.valueOf(tn));
         admin.close();
-//        System.out.println(rsInfo.toString());
         return rsInfo;
     }
 
@@ -84,9 +84,6 @@ public class HBaseManager {
         List<String> startStopKeys = new ArrayList<>();
         startStopKeys.add(new String(rsInfo.get(0).getStartKey()));
         startStopKeys.add(new String(rsInfo.get(1).getEndKey()));
-//        List<String> keys = new ArrayList<String>();
-//        keys.add("00");
-//        keys.add("ff");
         return startStopKeys;
     }
 
@@ -96,6 +93,11 @@ public class HBaseManager {
         }
     }
 
+    /**
+     * 返回一个新创建的Table连接
+     * @return Table
+     * @throws IOException
+     */
     public Table getHtable() throws IOException {
         Connection conn = getConnection();
         System.out.println(options.getString(HBaseOptionsConf.TABLE,null));
@@ -120,67 +122,28 @@ public class HBaseManager {
         if(null!=options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)){
             scan.setBatch(options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null));
         }
+        // cache blocks 配置项不开放给用户
         scan.setCacheBlocks(false);
         return scan;
     }
 
-    /**
-     * 上下游的的 conf 的配置放到 HBaseManager 中来完成
-     * @param conf
-     * @param sourceOptions
-     * @param manager
-     * @throws IOException
-     */
-    public static void setSourceConf(Configuration conf, GenericOptions sourceOptions, HBaseManager manager) throws IOException {
-
-        conf.set(HBaseOptionsConf.TABLE, sourceOptions.getString(HBaseOptionsConf.TABLE, null));
-        conf.set(TableInputFormat.INPUT_TABLE, sourceOptions.getString(HBaseOptionsConf.TABLE, null));
-        // input table name must be specified
-//        if(conf.get(HbaseInputOptionsConf.INPUT_TABLE)==null){
-//            throw new Exception("Input table name must be specified");
-//        }
-        conf.setBoolean(HBaseInputOptionsConf.MAPREDUCE_INPUT_AUTOBALANCE, sourceOptions.getBoolean(HBaseInputOptionsConf.MAPREDUCE_INPUT_AUTOBALANCE, true));
-        conf.setInt(HBaseInputOptionsConf.NUM_MAPPERS_PER_REGION, sourceOptions.getInteger(HBaseInputOptionsConf.NUM_MAPPERS_PER_REGION, 1));
-
-        conf.set(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, sourceOptions.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, null));
-        conf.setInt(HBaseInputOptionsConf.SCAN_CACHEDROWS, sourceOptions.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, 500));
-
-//        conf.set(HBaseInputOptionsConf.MAX_AVERAGE_REGION_SIZE, sourceOptions.getString(HBaseInputOptionsConf.MAX_AVERAGE_REGION_SIZE, null));
-        //if starStop key not specified, the start key and the stop key of the table will be collected.
-        List<String> startStopKeys = manager.getTableStartStopKeys(conf.get(HBaseOptionsConf.TABLE));
-//        conf.set(HBaseInputOptionsConf.SCAN_ROW_START, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_START, startStopKeys.get(0)));
-//        conf.set(HBaseInputOptionsConf.SCAN_ROW_STOP, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_STOP, startStopKeys.get(1)));
-
-        if(null!=sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null)){
-            // set timestamp for Scan
-            conf.set(HBaseInputOptionsConf.SCAN_TIMERANGE_START,
-                    sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null));
-        }
-        if(null!=sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null)){
-            conf.set(HBaseInputOptionsConf.SCAN_TIMERANGE_END, sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null));
-        }
-        if(null!=sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMESTAMP, null)){
-            conf.set(HBaseInputOptionsConf.SCAN_TIMESTAMP, sourceOptions.getString(HBaseInputOptionsConf.SCAN_TIMESTAMP, null));
-        }
-    }
-
-
-
     public static void setTargetConf(Configuration conf, GenericOptions targetOptions){
 
-        conf.set(HBaseOutputOptionsConf.COLUMN_FAMILY,
-                targetOptions.getString(HBaseOutputOptionsConf.COLUMN_FAMILY,null));
 
-        conf.setInt(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM,
-                targetOptions.getInteger(HBaseOutputOptionsConf.EXECUTE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM));
+        HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.COLUMN_FAMILY, targetOptions, true);
+        HBaseManager.setConfParam(conf, HBaseOptionsConf.TABLE, targetOptions, true);
+        HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.ROW_KEY_COL_NAME, targetOptions, true);
 
-        conf.set(HBaseOptionsConf.TABLE, targetOptions.getString(HBaseOptionsConf.TABLE,null));
-        conf.set(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, targetOptions.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME,null));
+        conf.setLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,
+                targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE));
 
-        if(targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,null)!=null){
-            conf.setLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,null));
+    }
+
+    public static void setConfParam(Configuration conf, String paramName, GenericOptions options, boolean notNull){
+        conf.set(paramName, options.getString(paramName, null));
+        if(notNull&&(conf.get(paramName)==null)){
+            throw new ParseException("The param should not be null: "+paramName);
         }
-
     }
 
 
@@ -197,7 +160,7 @@ public class HBaseManager {
         Connection hConnection = manager.getConnection();
         TableName hTableName = TableName.valueOf(userTable);
         Admin admin = null;
-        BufferedMutator bufferedMutator = null;
+        BufferedMutator bufferedMutator;
         try {
             admin = hConnection.getAdmin();
             bufferedMutator = hConnection.getBufferedMutator(
