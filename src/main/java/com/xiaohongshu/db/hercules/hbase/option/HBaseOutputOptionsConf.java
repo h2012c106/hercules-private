@@ -10,6 +10,9 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
     public final static String COLUMN_FAMILY = "hbase.mapreduce.column.family";
 
+    public static final String MAX_WRITE_THREAD_NUM = "hbase.htable.threads.max";
+    public static final int DEFAULT_MAX_WRITE_THREAD_NUM = 5;
+
     // the column specified to be the row key of PUT or DELETE operations
     // 当上游也是HBase的时候，此设置共享。
     public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
@@ -43,6 +46,11 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
                 .name(WRITE_BUFFER_SIZE)
                 .needArg(true)
                 .description(String.format("The write buffer size, default %d bytes.", DEFAULT_WRITE_BUFFER_SIZE))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(MAX_WRITE_THREAD_NUM)
+                .needArg(true)
+                .description(String.format("The write maximum threads num, default %d threads.", DEFAULT_MAX_WRITE_THREAD_NUM))
                 .build());
         return tmpList;
     }

@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.mapreduce.RowCounter;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -41,16 +42,16 @@ public class HBaseManager {
     }
 
     /**
-     * 配置最基本的链接数据库的参数，后续还需要通过{@link #genScan}来进行详细的配置
+     * 配置基本的链接数据库的参数，后续通过{@link #genScan}来进行详细的配置Scan
      */
     public void setBasicConf(){
-        // set connection
+
         conf.set(HBaseOptionsConf.HB_ZK_QUORUM, options.getString(HBaseOptionsConf.HB_ZK_QUORUM,null));
-        conf.set(HBaseOptionsConf.HB_ZK_PORT, options.getString(HBaseOptionsConf.HB_ZK_PORT,"2182"));
+        conf.set(HBaseOptionsConf.HB_ZK_PORT, options.getString(HBaseOptionsConf.HB_ZK_PORT,"2181"));
     }
 
     public Configuration getConf(){
-        // return conf if conf already set
+
         if(conf != null){
             return conf;
         }
@@ -71,20 +72,6 @@ public class HBaseManager {
         List<RegionInfo> rsInfo = admin.getRegions(TableName.valueOf(tn));
         admin.close();
         return rsInfo;
-    }
-
-    /**
-     * 通过获得的regionList，返回整个表的startKey和StopKey。默认是整个表全量导出。
-     * @param tn
-     * @return
-     * @throws IOException
-     */
-    public List<String> getTableStartStopKeys(String tn) throws IOException {
-        List<RegionInfo> rsInfo = getRegionInfo(tn);
-        List<String> startStopKeys = new ArrayList<>();
-        startStopKeys.add(new String(rsInfo.get(0).getStartKey()));
-        startStopKeys.add(new String(rsInfo.get(1).getEndKey()));
-        return startStopKeys;
     }
 
     public void closeConnection() throws IOException {
@@ -133,10 +120,10 @@ public class HBaseManager {
         HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.COLUMN_FAMILY, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOptionsConf.TABLE, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.ROW_KEY_COL_NAME, targetOptions, true);
-
+        conf.setInt(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM,
+                targetOptions.getInteger(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_MAX_WRITE_THREAD_NUM));
         conf.setLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,
                 targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE));
-
     }
 
     public static void setConfParam(Configuration conf, String paramName, GenericOptions options, boolean notNull){
@@ -145,7 +132,6 @@ public class HBaseManager {
             throw new ParseException("The param should not be null: "+paramName);
         }
     }
-
 
     /**
      * 通过配置好的conf以及manager来获取BufferedMutator.

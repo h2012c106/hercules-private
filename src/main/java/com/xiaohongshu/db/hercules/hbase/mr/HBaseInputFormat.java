@@ -39,7 +39,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * 用 proxy 的方式，使用 TableInputFormat 来访问上游数据库，实现 split 和 recordReader 功能。
+ * 通过获取的regions list 来生成splits。最少一个region对应一个split
  */
 public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter> implements HBaseManagerInitializer {
 
@@ -57,7 +57,7 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     }
 
     /**
-     * split策略：默认一个region对应一个split，指定 num—mapper 后，可以合并region生成新的split
+     * split策略：默认一个region对应一个split，指定 num—mapper 后，可以合并region生成新的split。
      */
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
@@ -104,7 +104,13 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
 
     @Override
     protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new HBaseRecordReader(manager, converter, sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null), hbaseColumnTypeMap);
+        String rowKeyCol = sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null);
+        if(rowKeyCol!=null){
+            LOG.info("rowKeyCol name has been set to: "+rowKeyCol);
+        }else{
+            LOG.info("rowKeyCol name not set. rowKey will be excluded.");
+        }
+        return new HBaseRecordReader(manager, converter, rowKeyCol, hbaseColumnTypeMap);
     }
 
     @Override
@@ -167,18 +173,15 @@ class HBaseSplit extends InputSplit implements Writable {
     }
 }
 
-class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>, DataTypeConverter> {
+class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, DataTypeConverter> {
 
     private static final Log LOG = LogFactory.getLog(HBaseRecordReader.class);
-    private HBaseManager manager;
+    private final HBaseManager manager;
     private String rowKeyCol = null;
     private ResultScanner scanner;
     private Result value;
     private Table table;
-    private Map<String, HBaseDataType> hbaseColumnTypeMap;
-
-    // 测试io等待时间
-//    private Long ioTimeStatistics = new Long(0l);
+    private final Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     /**
      * @param manager
@@ -190,13 +193,11 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
         super(converter);
         this.manager = manager;
         this.hbaseColumnTypeMap = hbaseColumnTypeMap;
-        if(rowKeyCol!=null){
-            this.rowKeyCol = rowKeyCol;
-        }
+        this.rowKeyCol = rowKeyCol;
     }
 
     /**
-     * 传入 split 和 context 的时候直接传入 tableRecordReader，利用 tableRecordReader 来完成读数据。
+     * 创建scanner，通过scanner.next()不断或许新的数据。
      */
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
@@ -208,9 +209,9 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected WrapperGetter getIntegerGetter() {
-        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
+        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            byte[] res = columnValueMap.firstEntry().getValue();
+            byte[] res = columnValuePair.getValue();
             if(null==res){
                 return new NullWrapper();
             }
@@ -229,9 +230,9 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected WrapperGetter getDoubleGetter() {
-        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
+        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            byte[] res = columnValueMap.firstEntry().getValue();
+            byte[] res = columnValuePair.getValue();
             if(null==res){
                 return new NullWrapper();
             }
@@ -250,8 +251,8 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected WrapperGetter getBooleanGetter() {
-        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
-            byte[] res = columnValueMap.firstEntry().getValue();
+        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
+            byte[] res = columnValuePair.getValue();
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -262,8 +263,8 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected WrapperGetter getStringGetter() {
-        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
-            byte[] res = columnValueMap.firstEntry().getValue();
+        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
+            byte[] res = columnValuePair.getValue();
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -275,8 +276,8 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
     // TODO 检查目前的转换能否正常work，借鉴自 dataX
     @Override
     protected WrapperGetter getDateGetter() {
-        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
-            byte[] res = columnValueMap.firstEntry().getValue();
+        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
+            byte[] res = columnValuePair.getValue();
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -289,8 +290,8 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected WrapperGetter getBytesGetter() {
-        return (WrapperGetter<NavigableMap<Long, byte[]>>) (columnValueMap, name, seq) -> {
-            byte[] res = columnValueMap.firstEntry().getValue();
+        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
+            byte[] res = columnValuePair.getValue();
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -301,7 +302,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
     @Override
     protected WrapperGetter getNullGetter() {
-        return (WrapperGetter<NavigableMap<Long, byte[]>>) (row, name, seq) -> NullWrapper.INSTANCE;
+        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> NullWrapper.INSTANCE;
     }
 
     /**
@@ -309,9 +310,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
      */
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
-//        long startTime = System.currentTimeMillis();
         value = scanner.next();
-//        ioTimeStatistics += (System.currentTimeMillis()-startTime);
         if(null!=value){
             return true;
         }
@@ -336,7 +335,7 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
 
         int columnNum = columnNameList.size();
         HerculesWritable record = new HerculesWritable(columnNum);
-        // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游
+        // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
         if(rowKeyCol!=null){
             record.put(rowKeyCol,  new BytesWrapper(value.getRow()));
         }
@@ -344,29 +343,31 @@ class HBaseRecordReader extends HerculesRecordReader<NavigableMap<Long, byte[]>,
             NavigableMap<byte[], NavigableMap<Long, byte[]>> familyMap = map.get(family);//列簇作为key获取其中的列相关数据
 
             for(int i=0;i<columnNum;i++){
-                String columnName = columnNameList.get(i);
-                NavigableMap<Long, byte[]> columnValueMap = familyMap.get(columnName.getBytes());
+                String qualifier = columnNameList.get(i);
+
+                NavigableMap<Long, byte[]> columnValueMap = familyMap.get(qualifier.getBytes());
                 if(columnValueMap==null){ // 上游没有该行数据，做忽略处理，并且做好log
-                    LOG.warn("The Column "+columnName+" has not content in the record, skipping.");
+                    LOG.warn("The Column "+qualifier+" has no content in the record, skipping.");
                     continue;
                 }
-                for (Map.Entry<Long, byte[]> s : columnValueMap.entrySet()) {                //获取列对应的不同版本数据，默认最新的一个
-                    record.put(columnName, getWrapperGetter(columnTypeMap.get(columnName)).get(columnValueMap, columnName, 0));
-                }
+                // TODO 如何用正确的姿势将两个版本的数据传递到下游，目前放一个就break出去
+                 for(Map.Entry<Long, byte[]> entry: columnValueMap.entrySet()){
+                     record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(entry, qualifier, 0));
+                     break;
+                 }
             }
         }
         return record;
     }
 
     @Override
-    public float getProgress() throws IOException, InterruptedException {
+    public float getProgress(){
         return 0;
     }
 
     @Override
     public void close() throws IOException {
 
-//        LOG.info("TIMESPENTFORIO: "+ioTimeStatistics.toString());
         scanner.close();
         table.close();
         manager.closeConnection();
