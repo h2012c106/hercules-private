@@ -106,14 +106,14 @@ public class HBaseManager {
 
         scan.withStartRow(Bytes.toBytes(startKey))
                 .withStopRow(Bytes.toBytes(endKey));
-//        if(null!=options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null)){
-//            scan.addFamily(Bytes.toBytes(options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null)));
-//        }
-//        if(null!=options.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null)
-//                &&null!=options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null)){
-//            scan.setTimeRange(options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null),
-//                    options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null));
-//        }
+        if(null!=options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null)){
+            scan.addFamily(Bytes.toBytes(options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null)));
+        }
+        if((null!=options.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null))
+                &&(null!=options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null))){
+            scan.setTimeRange(options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null),
+                    options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null));
+        }
         if(null!=options.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, null)){
             scan.setCaching(options.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, null));
         }
