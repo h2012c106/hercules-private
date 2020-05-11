@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 
@@ -19,10 +20,6 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
     public static String KEEP_ROW_KEY_COL = "hbase.mapreduce.keeprowkeycol";
     public static String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
 
-    /** Base-64 encoded scanner. All other SCAN_ confs are ignored if this is specified.
-     * See {@link TableMapReduceUtil#convertScanToString(Scan)} for more details.
-     */
-    public static final String SCAN = "hbase.mapreduce.scan";
     /** Scan start row */
     public static final String SCAN_ROW_START = "hbase.mapreduce.scan.row.start";
     /** Scan stop row */

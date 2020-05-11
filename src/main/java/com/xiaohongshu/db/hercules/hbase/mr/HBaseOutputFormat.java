@@ -113,9 +113,9 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         Put put = new Put(record.get(rowKeyCol).asBytes());
         BaseWrapper wrapper;
         if(columnNameList.size()==0){
-            for(Map.Entry colVal: record.getRow().entrySet()){
-                String qualifier = (String) colVal.getKey();
-                wrapper = (BaseWrapper) colVal.getValue();
+            for(Map.Entry<String, BaseWrapper> colVal: record.getRow().entrySet()){
+                String qualifier = colVal.getKey();
+                wrapper = colVal.getValue();
                 constructPut(put, wrapper, qualifier);
             }
         }else{
@@ -131,7 +131,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
                 constructPut(put, wrapper, qualifier);
             }
         }
-//        LOG.info("TO PUT! "+put.toJSON());
         return put;
     }
 

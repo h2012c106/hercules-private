@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.schema.manager;
 
+import com.google.protobuf.TextFormat;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
@@ -18,7 +19,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf.BLACK_COLUMN;
 
 public class HBaseManager {
 
@@ -95,9 +99,11 @@ public class HBaseManager {
 
         scan.withStartRow(Bytes.toBytes(startKey))
                 .withStopRow(Bytes.toBytes(endKey));
-        if(null!=options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null)){
-            scan.addFamily(Bytes.toBytes(options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null)));
+        String scanColumnFamily = options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null);
+        if(null==scanColumnFamily){
+            throw new ParseException("Scan column family can't be null.");
         }
+        scan.addFamily(Bytes.toBytes(scanColumnFamily));
         if((null!=options.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null))
                 &&(null!=options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null))){
             scan.setTimeRange(options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null),
@@ -108,6 +114,12 @@ public class HBaseManager {
         }
         if(null!=options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)){
             scan.setBatch(options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null));
+        }
+        List<String> scanColumns = Arrays.asList(options.getStringArray(HBaseInputOptionsConf.SCAN_COLUMNS, new String[]{}));
+        if(scanColumns.size()!=0){
+            for(String qualifier: scanColumns){
+                scan.addColumn(Bytes.toBytes(scanColumnFamily), Bytes.toBytes(qualifier));
+            }
         }
         // cache blocks 配置项不开放给用户
         scan.setCacheBlocks(false);

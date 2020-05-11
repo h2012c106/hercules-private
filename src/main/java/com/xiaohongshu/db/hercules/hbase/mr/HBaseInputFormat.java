@@ -1,17 +1,14 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
+import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
-import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataType;
@@ -30,13 +27,14 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.yarn.webapp.hamlet2.Hamlet;
 
-import javax.sql.rowset.serial.SerialException;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * 通过获取的regions list 来生成splits。最少一个region对应一个split
@@ -73,9 +71,14 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
             HBaseSplit s2 = (HBaseSplit) o2;
             return s1.getStartKey().compareTo(s2.getStartKey());
         });
+        filterSplits(splits, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_START, null),
+                sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_STOP,null));
         int regionNum = splits.size();
         List<InputSplit> newSplits = new ArrayList<>();
         if(numSplits<splits.size()){
+            if(numSplits==1){
+                LOG.warn("Map set to 1, only use 1 map.");
+            }
             int i = 0;
             int regionsPerSplit = (int) Math.ceil((float)regionNum/(float)numSplits);
             while(i<regionNum){
@@ -100,6 +103,31 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
         }
         LOG.info(String.format("Actually split to %d splits: %s", splits.size(), splits.toString()));
         return splits;
+    }
+
+    private void filterSplits(List<InputSplit> splits, String rowStartKey, String rowStopKey){
+        HBaseSplit theSplit;
+        if(null!=rowStartKey&&null!=rowStopKey){
+            if(rowStartKey.compareTo(rowStopKey)>=0){
+                throw new ParseException("rowStopKey must be larger than rowStartKey. Please check input.");
+            }
+        }
+        if(null!=rowStopKey){
+            theSplit = (HBaseSplit) splits.get(splits.size()-1);
+            while(rowStopKey.compareTo(theSplit.getStartKey())<0){
+                splits.remove(splits.size()-1);
+                theSplit = (HBaseSplit) splits.get(splits.size()-1);
+            }
+            theSplit.setEndKey(rowStopKey);
+        }
+        if(null!=rowStartKey){
+            theSplit = (HBaseSplit) splits.get(0);
+            while(rowStartKey.compareTo(theSplit.getEndKey())>0){
+                splits.remove(0);
+                theSplit = (HBaseSplit) splits.get(0);
+            }
+            theSplit.setStartKey(rowStartKey);
+        }
     }
 
     @Override
@@ -143,6 +171,14 @@ class HBaseSplit extends InputSplit implements Writable {
     
     public String getEndKey(){
         return endKey;
+    }
+
+    public void setStartKey(String startKey){
+        this.startKey = startKey;
+    }
+
+    public void setEndKey(String endKey){
+        this.endKey = endKey;
     }
 
     @Override
@@ -333,6 +369,8 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
 
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = value.getMap();
 
+        // TODO 利用getNoVersionMap可以获取包含最新版本的唯一数据。
+//        NavigableMap<byte[], NavigableMap<byte[], byte[]>> map = value.getNoVersionMap();
         int columnNum = columnNameList.size();
         HerculesWritable record = new HerculesWritable(columnNum);
         // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
@@ -368,8 +406,8 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
     @Override
     public void close() throws IOException {
 
-        scanner.close();
-        table.close();
+//        scanner.close();
+//        table.close();
         manager.closeConnection();
     }
 }

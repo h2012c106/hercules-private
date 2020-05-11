@@ -3,7 +3,6 @@ package com.xiaohongshu.db.hercules.hbase.schema;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
-import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import lombok.SneakyThrows;
 
@@ -68,5 +67,10 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
             }
         }
         return columnTypeMap;
+    }
+
+    public Map<String, DataType> getColumnListFromHive(){
+        return null;
+
     }
 }

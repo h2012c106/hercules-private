@@ -1,12 +1,12 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,6 @@ import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.
 
 public final class HBaseOptionsConf extends BaseOptionsConf {
 
-    private static final Log LOG = LogFactory.getLog(HBaseOptionsConf.class);
     public final static String HB_ZK_QUORUM="hbase.zookeeper.quorum";
     public final static String HB_ZK_PORT="hbase.zookeeper.port";
     public final static String TABLE="hbase.table";
@@ -112,6 +111,11 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-
+        // 确保 hive 相关参数完整
+        ParseUtils.validateDependency(options,
+                HIVE_URL,
+                null,
+                Lists.newArrayList(HIVE_USER,HIVE_PASSWD,HIVE_Table),
+                null);
     }
 }
