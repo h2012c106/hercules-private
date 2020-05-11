@@ -118,9 +118,12 @@ public class HBaseManager {
         List<String> scanColumns = Arrays.asList(options.getStringArray(HBaseInputOptionsConf.SCAN_COLUMNS, new String[]{}));
         if(scanColumns.size()!=0){
             for(String qualifier: scanColumns){
+                LOG.info("SCANQUALIFIER: "+qualifier);
                 scan.addColumn(Bytes.toBytes(scanColumnFamily), Bytes.toBytes(qualifier));
             }
         }
+        LOG.info("getAllowPartialResults: "+scan.getAllowPartialResults());
+
         // cache blocks 配置项不开放给用户
         scan.setCacheBlocks(false);
         return scan;

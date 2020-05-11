@@ -81,6 +81,7 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_COLUMNS)
                 .needArg(true)
+                .list(true)
                 .listDelimiter(COLUMN_DELIMITER)
                 .description("Space delimited list of columns and column families to scan.")
                 .build());

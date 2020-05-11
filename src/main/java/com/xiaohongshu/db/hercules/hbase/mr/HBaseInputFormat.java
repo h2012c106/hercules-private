@@ -113,20 +113,30 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
             }
         }
         if(null!=rowStopKey){
+            LOG.info("Row stop key is set to: "+rowStopKey+" (exclusive)");
             theSplit = (HBaseSplit) splits.get(splits.size()-1);
             while(rowStopKey.compareTo(theSplit.getStartKey())<0){
                 splits.remove(splits.size()-1);
                 theSplit = (HBaseSplit) splits.get(splits.size()-1);
             }
-            theSplit.setEndKey(rowStopKey);
+            if(theSplit.getStartKey().equals(rowStopKey)){
+                splits.remove(splits.size()-1);
+            }else{
+                theSplit.setEndKey(rowStopKey);
+            }
         }
         if(null!=rowStartKey){
+            LOG.info("Row start key is set to: "+rowStartKey+" (inclusive)");
             theSplit = (HBaseSplit) splits.get(0);
             while(rowStartKey.compareTo(theSplit.getEndKey())>0){
                 splits.remove(0);
                 theSplit = (HBaseSplit) splits.get(0);
             }
-            theSplit.setStartKey(rowStartKey);
+            if(theSplit.getEndKey().equals(rowStartKey)){
+                splits.remove(0);
+            }else{
+                theSplit.setStartKey(rowStartKey);
+            }
         }
     }
 
