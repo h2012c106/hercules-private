@@ -110,7 +110,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         if(record.get(rowKeyCol)==null){
             throw new RuntimeException("Row key col not found in the HerculesWritable object.");
         }
-        Put put = new Put(record.get(rowKeyCol).asBytes());
+        Put put = new Put(Bytes.toBytes(record.get(rowKeyCol).asString()));
         BaseWrapper wrapper;
         if(columnNameList.size()==0){
             for(Map.Entry<String, BaseWrapper> colVal: record.getRow().entrySet()){
@@ -120,12 +120,11 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             }
         }else{
             // 如果存在 columnNameList， 则以 columnNameList 为准构建PUT。
-            for (int i = 0; i < columnNameList.size(); ++i) {
-                String qualifier = columnNameList.get(i);
+            for (String qualifier : columnNameList) {
                 wrapper = record.get(qualifier);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (wrapper == null) {
-                    LOG.info("No wrapper found for column: "+qualifier);
+                    LOG.info("No wrapper found for column: " + qualifier);
                     continue;
                 }
                 constructPut(put, wrapper, qualifier);
@@ -151,6 +150,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             dt = wrapper.getType();
         }
         WrapperSetter<Put> wrapperSetter = getWrapperSetter(dt);
+        LOG.info("COLUMN NAME: "+qualifier);
         wrapperSetter.set(wrapper, put, qualifier, 0);
     }
 
@@ -161,7 +161,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     @Override
     protected void innerColumnWrite(HerculesWritable record) throws IOException, InterruptedException {
 
-//        LOG.info("TO RECORD!: "+record.toString());
         innerMapWrite(record);
     }
 
@@ -182,6 +181,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected WrapperSetter<Put> getIntegerSetter() {
         return (wrapper, put, name, seq) -> {
             Long res = wrapper.asLong();
+            LOG.info("GOT INTEGER DATA: "+res);
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
             switch(dataType){
                 case SHORT:
@@ -203,6 +203,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected WrapperSetter<Put> getDoubleSetter() {
         return (wrapper, put, name, seq) -> {
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
+            LOG.info("GOT DOUBLE DATA: "+wrapper.asDouble());
             switch(dataType){
                 case FLOAT:
                     put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble().floatValue()));
@@ -223,6 +224,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected WrapperSetter<Put> getBooleanSetter() {
         return (wrapper, put, name, seq) -> {
             Boolean res = wrapper.asBoolean();
+            LOG.info("GOT BOOLEAN DATA: "+res);
             put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
     }
@@ -231,6 +233,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected WrapperSetter<Put> getStringSetter() {
         return (wrapper, put, name, seq) -> {
             String res = wrapper.asString();
+            LOG.info("GOT STRING DATA: "+res);
             put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
     }

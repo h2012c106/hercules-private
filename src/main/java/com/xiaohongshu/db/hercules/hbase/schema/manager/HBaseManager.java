@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import static com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf.BLACK_COLUMN;
 
@@ -118,7 +119,6 @@ public class HBaseManager {
         List<String> scanColumns = Arrays.asList(options.getStringArray(HBaseInputOptionsConf.SCAN_COLUMNS, new String[]{}));
         if(scanColumns.size()!=0){
             for(String qualifier: scanColumns){
-                LOG.info("SCANQUALIFIER: "+qualifier);
                 scan.addColumn(Bytes.toBytes(scanColumnFamily), Bytes.toBytes(qualifier));
             }
         }
@@ -130,7 +130,6 @@ public class HBaseManager {
     }
 
     public static void setTargetConf(Configuration conf, GenericOptions targetOptions){
-
 
         HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.COLUMN_FAMILY, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOptionsConf.TABLE, targetOptions, true);
@@ -188,5 +187,40 @@ public class HBaseManager {
         if(null!=conn){
             conn.close();
         }
+    }
+
+    /**
+     * Only for testing purpose, will be deleted.
+     */
+    public void InsertTestDataToHBaseTable() throws IOException {
+        Connection conn = getConnection();
+        long writeBufferSize = conf.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE);
+        BufferedMutator bufferedMutator = conn.getBufferedMutator(
+                new BufferedMutatorParams(TableName.valueOf("hercules_test_table"))
+                        .pool(HTable.getDefaultExecutor(conf))
+                        .writeBufferSize(writeBufferSize));
+        int INSERT_COUNT = 10000;
+        List<String> keys = Arrays.asList("01","02","03","04","05","06","07","08","09","10",
+                "11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26");
+        Random rand = new Random();
+        Put put;
+        for(int i=0;i<=INSERT_COUNT;i++){
+            if(i%50000==0){
+                LOG.info("Insert into table hercules_test_table, progress: "+i);
+            }
+            StringBuilder rowkey = new StringBuilder(keys.get(rand.nextInt(keys.size())));
+            rowkey.append(System.currentTimeMillis());
+            rowkey.append(i);
+            put = new Put(Bytes.toBytes(rowkey.toString()));
+            byte[] family = Bytes.toBytes("cf");
+            put.addColumn(family,Bytes.toBytes("c1"),Bytes.toBytes("HelloWorld"));
+            put.addColumn(family,Bytes.toBytes("c2"),Bytes.toBytes(i%2==0));
+            put.addColumn(family,Bytes.toBytes("c3"),Bytes.toBytes(3.1415926));
+            put.addColumn(family,Bytes.toBytes("c4"),Bytes.toBytes(1234234));
+            put.addColumn(family,Bytes.toBytes("c5"),Bytes.toBytes("a String!"));
+            bufferedMutator.mutate(put);
+        }
+        bufferedMutator.flush();
+        bufferedMutator.close();
     }
 }

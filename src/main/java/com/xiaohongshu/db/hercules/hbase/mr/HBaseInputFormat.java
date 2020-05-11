@@ -31,10 +31,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
+import java.util.*;
 
 /**
  * 通过获取的regions list 来生成splits。最少一个region对应一个split
@@ -45,13 +42,21 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     private HBaseManager manager;
     private GenericOptions sourceOptions;
     private Map<String, HBaseDataType> hbaseColumnTypeMap;
+    
+    // TODO 测试用
+//    private int insertData = 1;
 
+    @SneakyThrows
     @Override
     protected void initializeContext(GenericOptions sourceOptions) {
         hbaseColumnTypeMap = HBaseDataTypeConverter.convert(sourceOptions.getJson(HBaseOptionsConf.HBASE_COLUMN_TYPE_MAP, null));
         super.initializeContext(sourceOptions);
         this.sourceOptions = sourceOptions;
         manager = initializeManager(sourceOptions);
+//        if(insertData==1){
+//            manager.InsertTestDataToHBaseTable();
+//            insertData--;
+//        }
     }
 
     /**
@@ -105,24 +110,18 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
         return splits;
     }
 
+
+    /**
+     * 若用户指定scan的起始rowkey，则根据指定的rowkey对splits列表进行过滤和重新设置。
+     *
+     * @param rowStartKey （inclusive）
+     * @param rowStopKey （exclusive）
+     */
     private void filterSplits(List<InputSplit> splits, String rowStartKey, String rowStopKey){
         HBaseSplit theSplit;
         if(null!=rowStartKey&&null!=rowStopKey){
             if(rowStartKey.compareTo(rowStopKey)>=0){
                 throw new ParseException("rowStopKey must be larger than rowStartKey. Please check input.");
-            }
-        }
-        if(null!=rowStopKey){
-            LOG.info("Row stop key is set to: "+rowStopKey+" (exclusive)");
-            theSplit = (HBaseSplit) splits.get(splits.size()-1);
-            while(rowStopKey.compareTo(theSplit.getStartKey())<0){
-                splits.remove(splits.size()-1);
-                theSplit = (HBaseSplit) splits.get(splits.size()-1);
-            }
-            if(theSplit.getStartKey().equals(rowStopKey)){
-                splits.remove(splits.size()-1);
-            }else{
-                theSplit.setEndKey(rowStopKey);
             }
         }
         if(null!=rowStartKey){
@@ -136,6 +135,19 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
                 splits.remove(0);
             }else{
                 theSplit.setStartKey(rowStartKey);
+            }
+        }
+        if(null!=rowStopKey){
+            LOG.info("Row stop key is set to: "+rowStopKey+" (exclusive)");
+            theSplit = (HBaseSplit) splits.get(splits.size()-1);
+            while(rowStopKey.compareTo(theSplit.getStartKey())<0){
+                splits.remove(splits.size()-1);
+                theSplit = (HBaseSplit) splits.get(splits.size()-1);
+            }
+            if(theSplit.getStartKey().equals(rowStopKey)){
+                splits.remove(splits.size()-1);
+            }else{
+                theSplit.setEndKey(rowStopKey);
             }
         }
     }
@@ -219,7 +231,7 @@ class HBaseSplit extends InputSplit implements Writable {
     }
 }
 
-class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, DataTypeConverter> {
+class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> {
 
     private static final Log LOG = LogFactory.getLog(HBaseRecordReader.class);
     private final HBaseManager manager;
@@ -255,9 +267,8 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
 
     @Override
     protected WrapperGetter getIntegerGetter() {
-        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
+        return (WrapperGetter<byte[]>) (res, name, seq) -> {
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            byte[] res = columnValuePair.getValue();
             if(null==res){
                 return new NullWrapper();
             }
@@ -276,9 +287,8 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
 
     @Override
     protected WrapperGetter getDoubleGetter() {
-        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
+        return (WrapperGetter<byte[]>) (res, name, seq) -> {
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            byte[] res = columnValuePair.getValue();
             if(null==res){
                 return new NullWrapper();
             }
@@ -297,8 +307,7 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
 
     @Override
     protected WrapperGetter getBooleanGetter() {
-        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
-            byte[] res = columnValuePair.getValue();
+        return (WrapperGetter<byte[]>) (res, name, seq) -> {
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -309,8 +318,7 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
 
     @Override
     protected WrapperGetter getStringGetter() {
-        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
-            byte[] res = columnValuePair.getValue();
+        return (WrapperGetter<byte[]>) (res, name, seq) -> {
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -322,8 +330,7 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
     // TODO 检查目前的转换能否正常work，借鉴自 dataX
     @Override
     protected WrapperGetter getDateGetter() {
-        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
-            byte[] res = columnValuePair.getValue();
+        return (WrapperGetter<byte[]>) (res, name, seq) -> {
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -336,8 +343,7 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
 
     @Override
     protected WrapperGetter getBytesGetter() {
-        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> {
-            byte[] res = columnValuePair.getValue();
+        return (WrapperGetter<byte[]>) (res, name, seq) -> {
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -348,7 +354,7 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
 
     @Override
     protected WrapperGetter getNullGetter() {
-        return (WrapperGetter<Map.Entry<Long, byte[]>>) (columnValuePair, name, seq) -> NullWrapper.INSTANCE;
+        return (WrapperGetter<byte[]>) (res, name, seq) -> NullWrapper.INSTANCE;
     }
 
     /**
@@ -368,7 +374,6 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
         return NullWritable.get();
     }
 
-
     /**
      * 从 tableRecordReader 中获得 NavigableMap， 遍历 map，将所有的数据放入 HerculesWritable 并返回。
      * @return HerculesWritable
@@ -377,10 +382,45 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
     @Override
     public HerculesWritable getCurrentValue(){
 
+        int columnNum = columnNameList.size();
+        HerculesWritable record = new HerculesWritable(columnNum);
+        // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
+        if(rowKeyCol!=null){
+            record.put(rowKeyCol,  new BytesWrapper(value.getRow()));
+        }
+        getLatestRecord(record, columnNum);
+        return record;
+    }
+
+    /**
+     * 获取 san 出来的 timestamp 范围中最新的一个版本
+     */
+    private void  getLatestRecord(HerculesWritable record, int columnNum) throws Exception {
+
+        // 利用getNoVersionMap可以获取包含最新版本的唯一数据。
+        NavigableMap<byte[], NavigableMap<byte[], byte[]>> familyColMap = value.getNoVersionMap();
+        for (byte[] family : familyColMap.keySet()) {
+            NavigableMap<byte[], byte[]> colValMap = familyColMap.get(family);
+            for(int i=0;i<columnNum;i++){
+                String qualifier = columnNameList.get(i);
+                byte[] val = colValMap.get(Bytes.toBytes(qualifier));
+                if(null==val){
+                    LOG.warn("The Column "+qualifier+" has no content in the record, skipping.");
+                    continue;
+                }
+                record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(val, qualifier, 0));
+            }
+        }
+    }
+
+    /**
+     * 注意！暂时没有 implement multiVersion 的功能，如果需要，则要解决 一个 rowkey 映射多条数据的问题，并且把 timestamp 正确传给下游
+     * 可用 recordBuffer实现（先查 recordBuffer，再获取下一个数据）
+     */
+    private HerculesWritable getMultiVersionRecord() throws Exception {
+
         NavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, byte[]>>> map = value.getMap();
 
-        // TODO 利用getNoVersionMap可以获取包含最新版本的唯一数据。
-//        NavigableMap<byte[], NavigableMap<byte[], byte[]>> map = value.getNoVersionMap();
         int columnNum = columnNameList.size();
         HerculesWritable record = new HerculesWritable(columnNum);
         // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
@@ -399,10 +439,10 @@ class HBaseRecordReader extends HerculesRecordReader<Map.Entry<Long, byte[]>, Da
                     continue;
                 }
                 // TODO 如何用正确的姿势将两个版本的数据传递到下游，目前放一个就break出去
-                 for(Map.Entry<Long, byte[]> entry: columnValueMap.entrySet()){
-                     record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(entry, qualifier, 0));
-                     break;
-                 }
+                for(Map.Entry<Long, byte[]> entry: columnValueMap.entrySet()){
+//                    record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(entry, qualifier, 0));
+                    break;
+                }
             }
         }
         return record;
