@@ -76,27 +76,27 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
 class HBaseRecordWriter extends HerculesRecordWriter<Put> {
 
     private static final Log LOG = LogFactory.getLog(HBaseRecordWriter.class);
-    private String columnFamily;
-    private String rowKeyCol;
-    private HBaseManager manager;
-    private Map<String, HBaseDataType> hbaseColumnTypeMap;
+    private final String columnFamily;
+    private final String rowKeyCol;
+    private final HBaseManager manager;
+    private final Map<String, HBaseDataType> hbaseColumnTypeMap;
 
-    private BufferedMutator mutator;
+    private final BufferedMutator mutator;
+    private final boolean debug;
 
     /**
      * 获取 columnFamily，rowKeyCol 并通过 conf
      */
     public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context, Map<String, HBaseDataType> hbaseColumnTypeMap) throws IOException {
         super(context);
-
         this.manager = manager;
         this.hbaseColumnTypeMap = hbaseColumnTypeMap;
         Configuration conf = manager.getConf();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
         rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL_NAME);
-
         // 目前相关的变量统一从 Configuration conf 中拿取
         mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
+        debug = options.getTargetOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
     }
 
     /**
@@ -150,7 +150,9 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             dt = wrapper.getType();
         }
         WrapperSetter<Put> wrapperSetter = getWrapperSetter(dt);
-        LOG.info("COLUMN NAME: "+qualifier);
+        if(debug){
+            LOG.debug("COLUMN NAME: "+qualifier);
+        }
         wrapperSetter.set(wrapper, put, qualifier, 0);
     }
 
@@ -160,7 +162,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
      */
     @Override
     protected void innerColumnWrite(HerculesWritable record) throws IOException, InterruptedException {
-
         innerMapWrite(record);
     }
 
@@ -181,7 +182,9 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected WrapperSetter<Put> getIntegerSetter() {
         return (wrapper, put, name, seq) -> {
             Long res = wrapper.asLong();
-            LOG.info("GOT INTEGER DATA: "+res);
+            if(debug){
+                LOG.debug("GOT INTEGER DATA: "+res);
+            }
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
             switch(dataType){
                 case SHORT:
@@ -203,7 +206,9 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected WrapperSetter<Put> getDoubleSetter() {
         return (wrapper, put, name, seq) -> {
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            LOG.info("GOT DOUBLE DATA: "+wrapper.asDouble());
+            if(debug){
+                LOG.debug("GOT DOUBLE DATA: "+wrapper.asDouble());
+            }
             switch(dataType){
                 case FLOAT:
                     put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble().floatValue()));
@@ -224,7 +229,9 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected WrapperSetter<Put> getBooleanSetter() {
         return (wrapper, put, name, seq) -> {
             Boolean res = wrapper.asBoolean();
-            LOG.info("GOT BOOLEAN DATA: "+res);
+            if(debug){
+                LOG.debug("GOT BOOLEAN DATA: "+res);
+            }
             put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
     }
@@ -233,7 +240,9 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected WrapperSetter<Put> getStringSetter() {
         return (wrapper, put, name, seq) -> {
             String res = wrapper.asString();
-            LOG.info("GOT STRING DATA: "+res);
+            if(debug){
+                LOG.debug("GOT STRING DATA: "+res);
+            }
             put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
     }

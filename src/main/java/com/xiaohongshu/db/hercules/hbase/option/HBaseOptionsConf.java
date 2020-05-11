@@ -26,6 +26,8 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     public final static String HIVE_Table="hbase.hive.table";
     public final static String HBASE_COLUMN_TYPE_MAP="hbase.column.type.map";
 
+    public final static String DEBUG = "hbase.debug";
+
     /**
      * hbase 测需要维护自己的类型，同时保证框架测的类型符合要求。
      */
@@ -105,6 +107,12 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
                 .name(HIVE_Table)
                 .needArg(true)
                 .description("The table name used to specify hive table. Default it would be the the same as HBase table.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(DEBUG)
+                .defaultStringValue("0")
+                .needArg(true)
+                .description("Debug setting.")
                 .build());
         return tmpList;
     }

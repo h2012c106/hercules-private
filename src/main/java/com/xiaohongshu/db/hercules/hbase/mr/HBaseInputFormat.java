@@ -42,7 +42,7 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     private HBaseManager manager;
     private GenericOptions sourceOptions;
     private Map<String, HBaseDataType> hbaseColumnTypeMap;
-    
+
     // TODO 测试用
 //    private int insertData = 1;
 
@@ -190,7 +190,7 @@ class HBaseSplit extends InputSplit implements Writable {
     public String getStartKey(){
         return startKey;
     }
-    
+
     public String getEndKey(){
         return endKey;
     }
@@ -235,15 +235,15 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
 
     private static final Log LOG = LogFactory.getLog(HBaseRecordReader.class);
     private final HBaseManager manager;
-    private String rowKeyCol = null;
+    private final String rowKeyCol;
     private ResultScanner scanner;
     private Result value;
-    private Table table;
     private final Map<String, HBaseDataType> hbaseColumnTypeMap;
 
+    // debug
+    private final boolean debug;
+
     /**
-     * @param manager
-     * @param converter
      * @param rowKeyCol 用来作为rowKey的一列数据
      */
     public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol, Map<String, HBaseDataType> hbaseColumnTypeMap) {
@@ -252,6 +252,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         this.manager = manager;
         this.hbaseColumnTypeMap = hbaseColumnTypeMap;
         this.rowKeyCol = rowKeyCol;
+        this.debug = options.getSourceOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
     }
 
     /**
@@ -260,7 +261,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         HBaseSplit hbaseSplit = (HBaseSplit) split;
-        table = manager.getHtable();
+        Table table = manager.getHtable();
         Scan scan = new Scan();
         scanner = table.getScanner(manager.genScan(scan, hbaseSplit.getStartKey(), hbaseSplit.getEndKey()));
     }
@@ -272,16 +273,24 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
             if(null==res){
                 return new NullWrapper();
             }
+            IntegerWrapper wrapper;
             switch(dataType){
                 case SHORT:
-                    return new IntegerWrapper(Bytes.toShort(res));
+                    wrapper = new IntegerWrapper(Bytes.toShort(res));
+                    break;
                 case INT:
-                    return new IntegerWrapper(Bytes.toInt(res));
+                    wrapper = new IntegerWrapper(Bytes.toInt(res));
+                    break;
                 case LONG:
-                    return new IntegerWrapper(Bytes.toLong(res));
+                    wrapper = new IntegerWrapper(Bytes.toLong(res));
+                    break;
                 default:
                     throw new MapReduceException("Unknown data type: " + dataType.name());
             }
+            if(debug){
+                LOG.debug("GOT "+dataType.name()+" DARA: "+wrapper.asBigInteger());
+            }
+            return wrapper;
         };
     }
 
@@ -292,22 +301,33 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
             if(null==res){
                 return new NullWrapper();
             }
+            DoubleWrapper wrapper;
             switch(dataType){
                 case FLOAT:
-                    return new DoubleWrapper(Bytes.toFloat(res));
+                    wrapper = new DoubleWrapper(Bytes.toFloat(res));
+                    break;
                 case DOUBLE:
-                    return new DoubleWrapper(Bytes.toDouble(res));
+                    wrapper = new DoubleWrapper(Bytes.toDouble(res));
+                    break;
                 case BIGDECIMAL:
-                    return new DoubleWrapper(Bytes.toBigDecimal(res));
+                    wrapper = new DoubleWrapper(Bytes.toBigDecimal(res));
+                    break;
                 default:
                     throw new MapReduceException("Unknown data type: " + dataType.name());
             }
+            if(debug){
+                LOG.debug("GOT "+dataType.name()+" DARA: "+wrapper.asDouble());
+            }
+            return wrapper;
         };
     }
 
     @Override
     protected WrapperGetter getBooleanGetter() {
         return (WrapperGetter<byte[]>) (res, name, seq) -> {
+            if(debug){
+                LOG.debug("GOT BOOLEAN DARA: "+Bytes.toBoolean(res));
+            }
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -319,6 +339,9 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     @Override
     protected WrapperGetter getStringGetter() {
         return (WrapperGetter<byte[]>) (res, name, seq) -> {
+            if(debug){
+                LOG.debug("GOT STRING DARA: "+Bytes.toString(res));
+            }
             if (res==null) {
                 return new NullWrapper();
             } else {
@@ -407,6 +430,9 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
                 if(null==val){
                     LOG.warn("The Column "+qualifier+" has no content in the record, skipping.");
                     continue;
+                }
+                if(debug){
+                    LOG.debug("QUALIFIER: "+qualifier);
                 }
                 record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(val, qualifier, 0));
             }
