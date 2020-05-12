@@ -48,11 +48,12 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
         // 不兼容时的设置(可能需要)
 //        client.setMetaConf("hive.metastore.client.capability.check","false");
         List<FieldSchema> schema = client.getSchema(dbName, tbName);
-        Map<String, DataType> columnTypeMap = new HashMap();
+        HashMap<String, DataType> columnTypeMap = new HashMap();
         for(FieldSchema fs:schema){
             String columnName = fs.getName();
-            if(columnNameSet.contains(columnName)){
-                columnTypeMap.put(columnName, DataType.valueOf(fs.getType()));
+            // TODO 若columnNameSet为空，则全部传出去 (确定这里的逻辑)
+            if(columnNameSet.contains(columnName)||columnNameSet.size()==0){
+                columnTypeMap.put(columnName, converter.hbaseConvertElementType(fs.getType()));
             }
         }
         return columnTypeMap;
