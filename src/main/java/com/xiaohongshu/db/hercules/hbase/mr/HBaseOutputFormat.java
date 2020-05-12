@@ -10,6 +10,7 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.datatype.NullWrapper;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataType;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
@@ -96,7 +97,8 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL_NAME);
         // 目前相关的变量统一从 Configuration conf 中拿取
         mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
-        debug = options.getTargetOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
+//        debug = options.getTargetOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
+        debug = true;
     }
 
     /**
@@ -123,10 +125,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             for (String qualifier : columnNameList) {
                 wrapper = record.get(qualifier);
                 // 如果没有这列值，则meaningfulSeq不加
-                if (wrapper == null) {
-                    LOG.info("No wrapper found for column: " + qualifier);
-                    continue;
-                }
                 constructPut(put, wrapper, qualifier);
             }
         }
@@ -135,11 +133,13 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
 
     /**
      * 获取正确的 DataType 和 WrapperSetter，并将数据放入 Put
-     * @param put
-     * @param wrapper
-     * @param qualifier
      */
     public void constructPut(Put put, BaseWrapper wrapper, String qualifier) throws Exception {
+
+        if (wrapper == null || wrapper instanceof NullWrapper) {
+            LOG.info("No wrapper found for column: " + qualifier);
+            return;
+        }
         if(qualifier.equals(rowKeyCol)){
             // if the qualifier is the row key col, dont put it the the Put object
             return;
@@ -151,7 +151,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         }
         WrapperSetter<Put> wrapperSetter = getWrapperSetter(dt);
         if(debug){
-            LOG.debug("COLUMN NAME: "+qualifier);
+            LOG.info("COLUMN NAME: "+qualifier);
         }
         wrapperSetter.set(wrapper, put, qualifier, 0);
     }
@@ -183,7 +183,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         return (wrapper, put, name, seq) -> {
             Long res = wrapper.asLong();
             if(debug){
-                LOG.debug("GOT INTEGER DATA: "+res);
+                LOG.info("GOT INTEGER DATA: "+res);
             }
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
             switch(dataType){
@@ -207,7 +207,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         return (wrapper, put, name, seq) -> {
             HBaseDataType dataType = hbaseColumnTypeMap.get(name);
             if(debug){
-                LOG.debug("GOT DOUBLE DATA: "+wrapper.asDouble());
+                LOG.info("GOT DOUBLE DATA: "+wrapper.asDouble());
             }
             switch(dataType){
                 case FLOAT:
@@ -230,7 +230,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         return (wrapper, put, name, seq) -> {
             Boolean res = wrapper.asBoolean();
             if(debug){
-                LOG.debug("GOT BOOLEAN DATA: "+res);
+                LOG.info("GOT BOOLEAN DATA: "+res);
             }
             put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
@@ -239,9 +239,9 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     @Override
     protected WrapperSetter<Put> getStringSetter() {
         return (wrapper, put, name, seq) -> {
-            String res = wrapper.asString();
+            String res = wrapper.asString()==null? "":wrapper.asString();
             if(debug){
-                LOG.debug("GOT STRING DATA: "+res);
+                LOG.info("GOT STRING DATA: "+res);
             }
             put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };

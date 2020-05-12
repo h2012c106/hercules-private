@@ -23,7 +23,10 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     public final static String HIVE_URL="hbase.hive.url";
     public final static String HIVE_USER="hbase.hive.user";
     public final static String HIVE_PASSWD="hbase.hive.passwd";
-    public final static String HIVE_Table="hbase.hive.table";
+
+    public final static String HIVE_DATABASE ="hbase.hive.database";
+    public final static String HIVE_TABLE ="hbase.hive.table";
+    public final static String HIVE_THRIFT_URL ="hbase.hive.thrifturl";
     public final static String HBASE_COLUMN_TYPE_MAP="hbase.column.type.map";
 
     public final static String DEBUG = "hbase.debug";
@@ -104,9 +107,21 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
                 .description("Password use to connect Hive database")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(HIVE_Table)
+                .name(HIVE_TABLE)
                 .needArg(true)
                 .description("The table name used to specify hive table. Default it would be the the same as HBase table.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(HIVE_DATABASE)
+                .defaultStringValue("0")
+                .needArg(true)
+                .description("Hive metastore database.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(HIVE_THRIFT_URL)
+                .defaultStringValue("0")
+                .needArg(true)
+                .description("Thrif url to connect hive metastore.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(DEBUG)
@@ -123,7 +138,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
         ParseUtils.validateDependency(options,
                 HIVE_URL,
                 null,
-                Lists.newArrayList(HIVE_USER,HIVE_PASSWD,HIVE_Table),
+                Lists.newArrayList(HIVE_USER,HIVE_PASSWD, HIVE_TABLE),
                 null);
     }
 }

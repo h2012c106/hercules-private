@@ -241,7 +241,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     private final Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     // debug
-    private final boolean debug;
+    private boolean debug;
 
     /**
      * @param rowKeyCol 用来作为rowKey的一列数据
@@ -252,7 +252,6 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         this.manager = manager;
         this.hbaseColumnTypeMap = hbaseColumnTypeMap;
         this.rowKeyCol = rowKeyCol;
-        this.debug = options.getSourceOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
     }
 
     /**
@@ -264,6 +263,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         Table table = manager.getHtable();
         Scan scan = new Scan();
         scanner = table.getScanner(manager.genScan(scan, hbaseSplit.getStartKey(), hbaseSplit.getEndKey()));
+        this.debug = options.getSourceOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
     }
 
     @Override
