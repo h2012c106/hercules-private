@@ -31,16 +31,22 @@ public class HBaseDataTypeConverter  implements DataTypeConverter<Integer, Resul
 
     public DataType hbaseConvertElementType(String type){
         DataType dt;
-        switch(type.toLowerCase()){
+        switch(type.toLowerCase().split("\\(")[0]){
             case "short":
             case "int":
             case "long":
+            case "tinyint":
+            case "smallint":
                 dt = DataType.valueOf("INTEGER");
                 break;
             case "float":
             case "double":
-            case "bigdecimal":
+            case "decimal":
                 dt = DataType.valueOf("DOUBLE");
+                break;
+            case "char":
+            case "varchar":
+                dt = DataType.valueOf("String");
                 break;
             default:
                 dt = DataType.valueOf(type.toUpperCase());

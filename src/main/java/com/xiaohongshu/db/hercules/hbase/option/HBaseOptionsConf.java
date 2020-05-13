@@ -24,11 +24,10 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     public final static String HIVE_USER="hbase.hive.user";
     public final static String HIVE_PASSWD="hbase.hive.passwd";
 
-    public final static String HIVE_DATABASE ="hbase.hive.database";
     public final static String HIVE_TABLE ="hbase.hive.table";
-    public final static String HIVE_THRIFT_URL ="hbase.hive.thrifturl";
-    public final static String HBASE_COLUMN_TYPE_MAP="hbase.column.type.map";
+    public final static String HIVE_METASTORE_URL="hbase.column.type.map";
 
+    public final static String HBASE_COLUMN_TYPE_MAP="hbase.column.type.map";
     public final static String DEBUG = "hbase.debug";
 
     /**
@@ -112,16 +111,9 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
                 .description("The table name used to specify hive table. Default it would be the the same as HBase table.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(HIVE_DATABASE)
-                .defaultStringValue("0")
+                .name(HIVE_METASTORE_URL)
                 .needArg(true)
-                .description("Hive metastore database.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(HIVE_THRIFT_URL)
-                .defaultStringValue("0")
-                .needArg(true)
-                .description("Thrif url to connect hive metastore.")
+                .description("JDBC url to connect hive metastore(mysql).")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(DEBUG)
@@ -136,7 +128,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     public void innerValidateOptions(GenericOptions options) {
         // 确保 hive 相关参数完整
         ParseUtils.validateDependency(options,
-                HIVE_URL,
+                HIVE_METASTORE_URL,
                 null,
                 Lists.newArrayList(HIVE_USER,HIVE_PASSWD, HIVE_TABLE),
                 null);

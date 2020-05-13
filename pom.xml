@@ -28,7 +28,7 @@
                 <executions>
                     <execution>
                         <id>assemble-all</id>
-                        <phase>package</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>

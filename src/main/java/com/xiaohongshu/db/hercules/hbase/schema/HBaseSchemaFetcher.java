@@ -11,10 +11,7 @@ import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 
 import java.sql.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter> {
 
@@ -39,60 +36,34 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
     @Override
     public Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet) {
 
-        String dbName = getOptions().getString(HBaseOptionsConf.HIVE_DATABASE, "");
-        String tbName = getOptions().getString(HBaseOptionsConf.HIVE_TABLE, "");
-        String thriftUrl = getOptions().getString(HBaseOptionsConf.HIVE_THRIFT_URL, "");
-        HiveConf hiveConf = new HiveConf();
-        hiveConf.set("hive.metastore.uris", thriftUrl);
-        IMetaStoreClient client = RetryingMetaStoreClient.getProxy(hiveConf, false);
-        // 不兼容时的设置(可能需要)
-//        client.setMetaConf("hive.metastore.client.capability.check","false");
-        List<FieldSchema> schema = client.getSchema(dbName, tbName);
-        HashMap<String, DataType> columnTypeMap = new HashMap();
-        for(FieldSchema fs:schema){
-            String columnName = fs.getName();
-            // TODO 若columnNameSet为空，则全部传出去 (确定这里的逻辑)
-            if(columnNameSet.contains(columnName)||columnNameSet.size()==0){
-                columnTypeMap.put(columnName, converter.hbaseConvertElementType(fs.getType()));
-            }
-        }
-        return columnTypeMap;
-    }
-
-
-    @SneakyThrows
-    protected Map<String, DataType> getColumnListFromHive(Set<String> columnNameSet) {
-
-        Map<String, DataType> columnTypeMap = new HashMap<String, DataType>();
-        String url = getOptions().getString(HBaseOptionsConf.HIVE_URL, "");
+        Class.forName ("com.mysql.cj.jdbc.Driver");
+//        String url = "jdbc:mysql://10.23.145.1:3306/metastore";
+        String url = getOptions().getString(HBaseOptionsConf.HIVE_METASTORE_URL, "");
         if(url.equals("")){
-            return columnTypeMap;
+            return null;
         }
-        String driverName = "org.apache.hive.jdbc.HiveDriver";
-        Class.forName(driverName);
-        // Establish Hive connection and try to get schema if url is given
+
         String hiveUser = getOptions().getString(HBaseOptionsConf.HIVE_USER, "");
         String hivePasswd = getOptions().getString(HBaseOptionsConf.HIVE_PASSWD, "");
-        String hiveTable = getOptions().getString(HBaseOptionsConf.HIVE_TABLE, getOptions().getString(HBaseOptionsConf.TABLE, ""));
-        if(!url.equals("")){
-            try{
-                Connection conn = DriverManager.getConnection(url, hiveUser, hivePasswd);
-                DatabaseMetaData databaseMetaData = conn.getMetaData();
-                ResultSet columns = databaseMetaData.getColumns(null,null, hiveTable,null);
-                while(columns.next()){
-                    String columnName = columns.getString("COLUMN_NAME");
-                    String datatype = columns.getString("DATA_TYPE");
-//                    String columnsize = columns.getString("COLUMN_SIZE");
-//                    String decimaldigits = columns.getString("DECIMAL_DIGITS");
-//                    String isNullable = columns.getString("IS_NULLABLE");
-//                    String is_autoIncrment = columns.getString("IS_AUTOINCREMENT");
-                    columnTypeMap.put(columnName, DataType.valueOf(datatype));
-                }
-            }catch(SQLException e){
-                throw e;
+        String hiveTable = getOptions().getString(HBaseOptionsConf.HIVE_TABLE, "");
+
+        Properties props = new Properties();
+        props.setProperty("user",hiveUser);
+        props.setProperty("password",hivePasswd);
+
+        Connection conn = DriverManager.getConnection(url,props);
+        Statement statement = conn.createStatement();
+        String sql =String.format("select COLUMN_NAME,TYPE_NAME from TBLS t JOIN SDS s ON t.SD_ID = s.SD_ID " +
+                "JOIN COLUMNS_V2 c ON s.CD_ID = c.CD_ID where t.TBL_NAME='%s';", hiveTable);
+        ResultSet resultSet = statement.executeQuery(sql);
+
+        Map<String, DataType> columnTypeMap = new HashMap<>();
+        while(resultSet.next()){
+            String columnName = resultSet.getString(1);
+            if(columnNameSet.contains(columnName)||columnNameSet.size()==0){
+                columnTypeMap.put(columnName,converter.hbaseConvertElementType(resultSet.getString(2)));
             }
         }
         return columnTypeMap;
     }
-
 }
