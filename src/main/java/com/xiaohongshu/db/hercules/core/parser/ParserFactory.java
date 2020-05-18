@@ -13,6 +13,7 @@ import com.xiaohongshu.db.hercules.parquet.parser.ParquetInputParser;
 import com.xiaohongshu.db.hercules.parquet.parser.ParquetOutputParser;
 import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSInputParser;
 import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSOutputParser;
+import com.xiaohongshu.db.hercules.tidb.parser.TiDBInputParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +28,7 @@ public final class ParserFactory {
         register(DataSource.RDBMS, DataSourceRole.TARGET, new RDBMSOutputParser());
         register(DataSource.MySQL, DataSourceRole.SOURCE, new MysqlInputParser());
         register(DataSource.MySQL, DataSourceRole.TARGET, new MysqlOutputParser());
-        register(DataSource.TiDB, DataSourceRole.SOURCE, new MysqlInputParser());
+        register(DataSource.TiDB, DataSourceRole.SOURCE, new TiDBInputParser());
         register(DataSource.TiDB, DataSourceRole.TARGET, new MysqlOutputParser());
         register(DataSource.Clickhouse, DataSourceRole.SOURCE, new ClickhouseInputParser());
         register(DataSource.Clickhouse, DataSourceRole.TARGET, new ClickhouseOutputParser());

@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
@@ -26,17 +27,17 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordReader.class);
 
-    private Long pos = 0L;
+    protected Long pos = 0L;
     /**
      * 用于估算进度
      */
     private Long mapAverageRowNum;
-    private Connection connection = null;
-    private PreparedStatement statement = null;
-    private ResultSet resultSet = null;
-    private HerculesWritable value;
+    protected Connection connection = null;
+    protected PreparedStatement statement = null;
+    protected ResultSet resultSet = null;
+    protected HerculesWritable value;
 
-    private RDBMSManager manager;
+    protected RDBMSManager manager;
 
     private AtomicBoolean hasClosed = new AtomicBoolean(false);
 
@@ -45,22 +46,14 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
         this.manager = manager;
     }
 
-    @Override
-    protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
+    protected final String makeSql(GenericOptions sourceOptions, RDBMSInputSplit split) {
+        String querySql = SqlUtils.makeBaseQuery(sourceOptions);
+        String splitBoundary = String.format("%s AND %s", split.getLowerClause(),
+                split.getUpperClause());
+        return SqlUtils.addWhere(querySql, splitBoundary);
+    }
 
-        columnTypeMap = new StingyMap<>(super.columnTypeMap);
-
-        mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
-
-        String querySql = SqlUtils.makeBaseQuery(options.getSourceOptions());
-        RDBMSInputSplit rdbmsInputSplit = (RDBMSInputSplit) split;
-        String splitBoundary = String.format("%s AND %s", rdbmsInputSplit.getLowerClause(),
-                rdbmsInputSplit.getUpperClause());
-        querySql = SqlUtils.addWhere(querySql, splitBoundary);
-
-        Integer fetchSize = options.getSourceOptions().getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
-
+    protected void start(String querySql, Integer fetchSize) throws IOException {
         try {
             connection = manager.getConnection();
             statement = connection.prepareStatement(querySql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -77,10 +70,28 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
     }
 
     @Override
+    protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+        Configuration configuration = context.getConfiguration();
+
+        columnTypeMap = new StingyMap<>(super.columnTypeMap);
+
+        mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
+
+        String querySql = makeSql(options.getSourceOptions(), (RDBMSInputSplit) split);
+
+        Integer fetchSize = options.getSourceOptions().getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
+
+        start(querySql, fetchSize);
+    }
+
+    protected boolean hasNext() throws SQLException {
+        return resultSet.next();
+    }
+
+    @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
         try {
-            if (!resultSet.next()) {
-                LOG.info(String.format("Selected %d records.", pos));
+            if (!hasNext()) {
                 return false;
             }
 
@@ -133,6 +144,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
 
     @Override
     public void close() throws IOException {
+        LOG.info(String.format("Selected %d records.", pos));
         if (!hasClosed.getAndSet(true)) {
             if (resultSet != null) {
                 try {

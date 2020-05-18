@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.FETCH_SIZE;
