@@ -14,6 +14,9 @@ import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf.AU
 import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf.STATEMENT_PER_COMMIT;
 
 public final class ClickhouseOutputOptionsConf extends BaseOptionsConf {
+
+    public static final String ENABLE_NULL = "enable-null";
+
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
         return Collections.singletonList(new RDBMSOutputOptionsConf());
@@ -21,7 +24,13 @@ public final class ClickhouseOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<SingleOptionConf> innerGenerateOptionConf() {
-        return null;
+        List<SingleOptionConf> res = new ArrayList<>();
+        res.add(SingleOptionConf.builder()
+                .name(ENABLE_NULL)
+                .needArg(false)
+                .description("If specified, will not use the default value to represent null.")
+                .build());
+        return res;
     }
 
     @Override
