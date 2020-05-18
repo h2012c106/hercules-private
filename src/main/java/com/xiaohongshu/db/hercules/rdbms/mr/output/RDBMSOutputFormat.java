@@ -25,7 +25,7 @@ public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSMana
         GenericOptions targetOptions = options.getTargetOptions();
 
         RDBMSManager manager = generateManager(targetOptions);
-        RDBMSWrapperSetterFactory wrapperSetterFactory = generateWrapperSetterFactory();
+        RDBMSWrapperSetterFactory wrapperSetterFactory = generateWrapperSetterFactory(targetOptions);
 
         try {
             String tableName = targetOptions.getString(RDBMSOptionsConf.TABLE, null);
@@ -80,7 +80,7 @@ public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSMana
         return new RDBMSManager(options);
     }
 
-    protected RDBMSWrapperSetterFactory generateWrapperSetterFactory() {
+    protected RDBMSWrapperSetterFactory generateWrapperSetterFactory(GenericOptions targetOptions) {
         return new RDBMSWrapperSetterFactory();
     }
 }
