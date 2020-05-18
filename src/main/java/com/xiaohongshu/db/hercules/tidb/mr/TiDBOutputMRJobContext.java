@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.tidb.mr;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlOutputMRJobContext;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
@@ -24,13 +25,14 @@ public class TiDBOutputMRJobContext extends MysqlOutputMRJobContext {
     private static final Log LOG = LogFactory.getLog(TiDBOutputMRJobContext.class);
 
     @Override
-    public void postRun(GenericOptions options) {
-        if (options.hasProperty(RDBMSOutputOptionsConf.STAGING_TABLE)) {
-            String stagingTable = options.getString(RDBMSOutputOptionsConf.STAGING_TABLE, null);
+    public void postRun(WrappingOptions options) {
+        GenericOptions targetOptions = options.getTargetOptions();
+        if (targetOptions.hasProperty(RDBMSOutputOptionsConf.STAGING_TABLE)) {
+            String stagingTable = targetOptions.getString(RDBMSOutputOptionsConf.STAGING_TABLE, null);
             Connection connection = null;
             Statement statement = null;
             try {
-                connection = initializeManager(options).getConnection();
+                connection = generateManager(targetOptions).getConnection();
                 connection.setAutoCommit(true);
                 statement = connection.createStatement();
 
@@ -38,8 +40,8 @@ public class TiDBOutputMRJobContext extends MysqlOutputMRJobContext {
                 statement.execute("set @@tidb_batch_insert=1");
 
                 // 执行pre migrate sql
-                if (options.hasProperty(RDBMSOutputOptionsConf.PRE_MIGRATE_SQL)) {
-                    String preSql = options.getString(RDBMSOutputOptionsConf.PRE_MIGRATE_SQL, null);
+                if (targetOptions.hasProperty(RDBMSOutputOptionsConf.PRE_MIGRATE_SQL)) {
+                    String preSql = targetOptions.getString(RDBMSOutputOptionsConf.PRE_MIGRATE_SQL, null);
                     for (String sql : splitSql(preSql)) {
                         if (sql.length() == 0) {
                             continue;
@@ -50,12 +52,12 @@ public class TiDBOutputMRJobContext extends MysqlOutputMRJobContext {
                 }
 
                 // 执行migrate
-                String targetTable = options.getString(RDBMSOptionsConf.TABLE, null);
-                ExportType exportType = ExportType.valueOfIgnoreCase(options.getString(RDBMSOutputOptionsConf.EXPORT_TYPE,
+                String targetTable = targetOptions.getString(RDBMSOptionsConf.TABLE, null);
+                ExportType exportType = ExportType.valueOfIgnoreCase(targetOptions.getString(RDBMSOutputOptionsConf.EXPORT_TYPE,
                         null));
                 StatementGetter statementGetter = StatementGetterFactory.get(exportType);
 
-                List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+                List<String> columnNameList = Arrays.asList(targetOptions.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
                 String migrateSql = statementGetter.getMigrateSql(targetTable, stagingTable, columnNameList);
                 String deleteSql = String.format("DELETE FROM `%s`", stagingTable);
 

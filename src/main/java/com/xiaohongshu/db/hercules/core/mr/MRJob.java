@@ -157,10 +157,10 @@ public class MRJob {
         Job job = new Job(configuration);
         job.setJarByClass(MRJob.class);
 
-        sourceAssemblySupplier.getJobContextAsSource().configureInput();
+        sourceAssemblySupplier.getJobContextAsSource().configureJob(job, options);
         job.setInputFormatClass(sourceAssemblySupplier.getInputFormatClass());
 
-        targetAssemblySupplier.getJobContextAsSource().configureOutput();
+        targetAssemblySupplier.getJobContextAsSource().configureJob(job, options);
         job.setOutputFormatClass(targetAssemblySupplier.getOutputFormatClass());
 
         job.setMapperClass(HerculesMapper.class);
@@ -175,8 +175,8 @@ public class MRJob {
 
         configureMRJob(job.getConfiguration());
 
-        sourceAssemblySupplier.getJobContextAsSource().preRun(options.getSourceOptions());
-        targetAssemblySupplier.getJobContextAsTarget().preRun(options.getTargetOptions());
+        sourceAssemblySupplier.getJobContextAsSource().preRun(options);
+        targetAssemblySupplier.getJobContextAsTarget().preRun(options);
 
         PerfCounters perfCounters = new PerfCounters();
         perfCounters.startClock();
@@ -200,7 +200,7 @@ public class MRJob {
             throw new MapReduceException("The map reduce job failed.");
         }
 
-        sourceAssemblySupplier.getJobContextAsSource().postRun(options.getSourceOptions());
-        targetAssemblySupplier.getJobContextAsTarget().postRun(options.getTargetOptions());
+        sourceAssemblySupplier.getJobContextAsSource().postRun(options);
+        targetAssemblySupplier.getJobContextAsTarget().postRun(options);
     }
 }

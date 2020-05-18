@@ -33,9 +33,13 @@ public final class ClickhouseInputOptionsConf extends BaseOptionsConf {
                 .description("The random function used at balance mode sampling.")
                 .defaultStringValue(DEFAULT_RANDOM_FUNC_NAME)
                 .build());
-        // clickhouse jdbc不支持fetch size
-        clearOption(tmpList, FETCH_SIZE);
         return tmpList;
+    }
+
+    @Override
+    protected List<String> deleteOptions() {
+        // clickhouse jdbc不支持fetch size
+        return Collections.singletonList(FETCH_SIZE);
     }
 
     @Override

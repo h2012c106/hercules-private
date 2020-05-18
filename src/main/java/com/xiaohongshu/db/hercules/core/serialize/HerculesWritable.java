@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.core.serialize;
 
-import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.MapWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.io.Writable;
 

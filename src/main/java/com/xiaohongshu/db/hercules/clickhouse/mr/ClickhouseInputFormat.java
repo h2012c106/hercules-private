@@ -17,8 +17,8 @@ public class ClickhouseInputFormat extends RDBMSInputFormat {
     }
 
     @Override
-    public RDBMSManager initializeManager(GenericOptions options) {
-        return super.initializeManager(options);
+    public RDBMSManager generateManager(GenericOptions options) {
+        return super.generateManager(options);
     }
 
     @Override

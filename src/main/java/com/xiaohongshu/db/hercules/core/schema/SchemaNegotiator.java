@@ -9,7 +9,7 @@ import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -117,7 +117,7 @@ public final class SchemaNegotiator {
         needTypeColumnNameSet.addAll(additionalNeedTypeColumnNameSet);
         needTypeColumnNameSet.addAll(columnNameList);
 
-        Map<String, DataType> res = SchemaUtils.convert(datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
+        Map<String, DataType> res = SchemaUtils.convert(datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()));
         // 如果用户全部指定，则返回就完事儿了
         if (res.keySet().containsAll(needTypeColumnNameSet)) {
             return res;
@@ -227,6 +227,9 @@ public final class SchemaNegotiator {
                 SchemaUtils.convert(sourceColumnTypeMap).toJSONString());
         targetOptions.set(BaseDataSourceOptionsConf.COLUMN_TYPE,
                 SchemaUtils.convert(targetColumnTypeMap).toJSONString());
+
+        sourceSchemaFetcher.postNegotiate(sourceColumnNameList, sourceColumnTypeMap);
+        targetSchemaFetcher.postNegotiate(targetColumnNameList, targetColumnTypeMap);
     }
 
 }

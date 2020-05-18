@@ -9,7 +9,7 @@ public enum DataSource {
     TiDB,
     Clickhouse,
     MongoDB,
-    HDFSTextFile;
+    Parquet;
 
     public static DataSource valueOfIgnoreCase(String value) {
         for (DataSource dataSource : DataSource.values()) {

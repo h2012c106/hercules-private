@@ -21,6 +21,7 @@ public abstract class BaseOptionsConf {
     /**
      * 检查套娃有没有套回自己（导致无穷递归）
      * 后代检查时不用担心祖先有问题，因为祖先在new的时候必然已经检查过了
+     * TODO 这个逻辑应该塞到测试里去做，编译时做一次就够了，现在每次启动都要做一把很蠢
      *
      * @param self
      */
@@ -81,6 +82,9 @@ public abstract class BaseOptionsConf {
         }
         List<SingleOptionConf> thisRes = innerGenerateOptionConf();
         res.addAll(thisRes == null ? new ArrayList<>(0) : thisRes);
+        // 清除不要的options
+        List<String> deleteOptionList = deleteOptions();
+        clearOption(res, deleteOptionList == null ? Collections.EMPTY_LIST : deleteOptionList);
         return res;
     }
 
@@ -90,6 +94,10 @@ public abstract class BaseOptionsConf {
      * @return
      */
     abstract protected List<SingleOptionConf> innerGenerateOptionConf();
+
+    protected List<String> deleteOptions() {
+        return null;
+    }
 
     public void validateOptions(GenericOptions options) {
         for (BaseOptionsConf ancestor : ancestorList) {
@@ -121,9 +129,9 @@ public abstract class BaseOptionsConf {
     public void innerProcessOptions(GenericOptions options) {
     }
 
-    protected final List<SingleOptionConf> clearOption(List<SingleOptionConf> confList, String confName) {
+    private List<SingleOptionConf> clearOption(List<SingleOptionConf> confList, Collection<String> confNameList) {
         return confList.stream()
-                .filter(conf -> !conf.getName().equals(confName))
+                .filter(conf -> !confNameList.contains(conf.getName()))
                 .collect(Collectors.toList());
     }
 

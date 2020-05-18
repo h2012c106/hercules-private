@@ -23,11 +23,13 @@ public final class ClickhouseOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<SingleOptionConf> innerGenerateOptionConf() {
-        List<SingleOptionConf> tmpList = new ArrayList<>();
+        return null;
+    }
+
+    @Override
+    protected List<String> deleteOptions() {
         // clickhouse jdbc完全没有commit行为
-        clearOption(tmpList, AUTOCOMMIT);
-        clearOption(tmpList, STATEMENT_PER_COMMIT);
-        return tmpList;
+        return Lists.newArrayList(AUTOCOMMIT, STATEMENT_PER_COMMIT);
     }
 
     @Override

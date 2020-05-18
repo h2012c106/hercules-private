@@ -8,14 +8,15 @@ import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
-import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerInitializer;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSManagerInitializer {
+public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSManagerGenerator {
+
     @Override
     public RDBMSRecordWriter getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
         WrappingOptions options = new WrappingOptions();
@@ -23,7 +24,8 @@ public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSMana
 
         GenericOptions targetOptions = options.getTargetOptions();
 
-        RDBMSManager manager = initializeManager(targetOptions);
+        RDBMSManager manager = generateManager(targetOptions);
+        RDBMSWrapperSetterFactory wrapperSetterFactory = generateWrapperSetterFactory();
 
         try {
             String tableName = targetOptions.getString(RDBMSOptionsConf.TABLE, null);
@@ -37,12 +39,12 @@ public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSMana
             }
 
             if (ExportType.valueOfIgnoreCase(targetOptions.getString(RDBMSOutputOptionsConf.EXPORT_TYPE, null)).isUpdate()) {
-                return new RDBMSUpdateRecordWriter(context, tableName, exportType, manager);
+                return new RDBMSUpdateRecordWriter(context, tableName, exportType, manager,wrapperSetterFactory);
             }
             if (targetOptions.getBoolean(RDBMSOutputOptionsConf.BATCH, false)) {
-                return new RDBMSBatchRecordWriter(context, tableName, exportType, manager);
+                return new RDBMSBatchRecordWriter(context, tableName, exportType, manager,wrapperSetterFactory);
             } else {
-                return new RDBMSRichLineRecordWriter(context, tableName, exportType, manager);
+                return new RDBMSRichLineRecordWriter(context, tableName, exportType, manager,wrapperSetterFactory);
             }
         } catch (Exception e) {
             throw new IOException(e);
@@ -74,7 +76,11 @@ public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSMana
     }
 
     @Override
-    public RDBMSManager initializeManager(GenericOptions options) {
+    public RDBMSManager generateManager(GenericOptions options) {
         return new RDBMSManager(options);
+    }
+
+    protected RDBMSWrapperSetterFactory generateWrapperSetterFactory() {
+        return new RDBMSWrapperSetterFactory();
     }
 }
