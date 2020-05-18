@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST;
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST;
+import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBOutputOptionsConf.DECIMAL_AS_STRING;
 
 public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
 
@@ -55,6 +56,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
     private final Long statementPerBulk;
     private final List<String> updateKeyList;
     private final boolean bulkOrdered;
+    private final boolean decimalAsString;
 
     private final MongoDBMultiThreadAsyncWriter writer;
 
@@ -92,6 +94,8 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
             updateKeyList = null;
         }
         bulkOrdered = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.BULK_ORDERED, false);
+
+        decimalAsString = options.getTargetOptions().getBoolean(DECIMAL_AS_STRING, false);
 
         recordList = new ArrayList<>(statementPerBulk.intValue());
 
@@ -340,7 +344,11 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
                     if (res == null) {
                         row.put(columnName, null);
                     } else {
-                        row.put(columnName, new Decimal128(res));
+                        if (decimalAsString) {
+                            row.put(columnName, res.toPlainString());
+                        } else {
+                            row.put(columnName, new Decimal128(res));
+                        }
                     }
                 }
             };
