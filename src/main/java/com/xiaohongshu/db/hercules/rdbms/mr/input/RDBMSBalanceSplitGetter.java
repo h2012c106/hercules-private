@@ -29,14 +29,21 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
         int singleByteSize;
         DataType dataType = columnTypeMap.get(splitBy);
         switch (dataType) {
+            case BYTE:
+            case SHORT:
             case INTEGER:
+            case LONG:
+            case FLOAT:
             case DOUBLE:
+            case DECIMAL:
                 singleByteSize = 8;
                 break;
             case BOOLEAN:
                 singleByteSize = 1;
                 break;
             case DATE:
+            case TIME:
+            case DATETIME:
                 singleByteSize = 16;
                 break;
             case STRING:
