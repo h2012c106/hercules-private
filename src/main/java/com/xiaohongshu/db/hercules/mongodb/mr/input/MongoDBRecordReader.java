@@ -5,19 +5,19 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.mongodb.mr.DocumentWithColumnPath;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBDataTypeConverter;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -25,13 +25,17 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
+import org.bson.types.Decimal128;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST;
+import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST;
+
 public class MongoDBRecordReader
-        extends HerculesRecordReader<DocumentWithColumnPath, MongoDBDataTypeConverter> {
+        extends HerculesRecordReader<Document, MongoDBDataTypeConverter> {
 
     private static final Log LOG = LogFactory.getLog(MongoDBRecordReader.class);
 
@@ -49,23 +53,18 @@ public class MongoDBRecordReader
 
     private AtomicBoolean hasClosed = new AtomicBoolean(false);
 
-    /**
-     * List->ListWrapper企图复用WrapperGetter的无奈之举，不然需要写一大长串DataType的switch case去Object转Wrapper
-     */
-    private final String fakeColumnName = "FAKE_NAME";
-    private final Document fakeDocument = new Document(fakeColumnName, 0);
-    private final DocumentWithColumnPath fakeDocumentWithColumnPath = new DocumentWithColumnPath(fakeDocument, "###LIST###");
+    private final Document fakeDocument = new Document(FAKE_COLUMN_NAME_USED_BY_LIST, 0);
 
     public MongoDBRecordReader(MongoDBDataTypeConverter converter, MongoDBManager manager) {
-        super(converter);
+        super(converter, null);
+        setWrapperGetterFactory(new MongoDBWrapperGetterFactory());
         this.manager = manager;
     }
 
     private Document makeColumnProjection(List<String> columnNameList) {
         Document res = new Document();
-        if (!columnNameList.contains(MongoDBManager.ID)) {
-            res.put(MongoDBManager.ID, 0);
-        }
+        // 不需要判断，无脑置0，反正如果包含的话也会置回1
+        res.put(MongoDBManager.ID, 0);
         for (String columnName : columnNameList) {
             res.put(columnName, 1);
         }
@@ -110,19 +109,16 @@ public class MongoDBRecordReader
         }
     }
 
-    private MapWrapper documentToMapWrapper(DocumentWithColumnPath documentWithColumnPath)
+    private MapWrapper documentToMapWrapper(Document document, String documentPosition)
             throws Exception {
-        Document document = documentWithColumnPath.getDocument();
-        String columnPath = documentWithColumnPath.getColumnPath();
         MapWrapper res = new MapWrapper(document.size());
         for (Map.Entry<String, Object> entry : document.entrySet()) {
             String columnName = entry.getKey();
             // 用于columnTypeMap
-            String fullColumnName = WritableUtils.concatColumn(columnPath, columnName);
+            String fullColumnName = WritableUtils.concatColumn(documentPosition, columnName);
             Object columnValue = entry.getValue();
             DataType columnType = columnTypeMap.getOrDefault(fullColumnName, converter.convertElementType(columnValue));
-            res.put(columnName, getWrapperGetter(columnType)
-                    .get(documentWithColumnPath, columnName, -1));
+            res.put(columnName, getWrapperGetter(columnType).get(document, documentPosition, columnName, -1));
         }
         return res;
     }
@@ -131,8 +127,8 @@ public class MongoDBRecordReader
         ListWrapper res = new ListWrapper(list.size());
         for (Object columnValue : list) {
             DataType columnType = converter.convertElementType(columnValue);
-            fakeDocument.put(fakeColumnName, columnValue);
-            res.add(getWrapperGetter(columnType).get(fakeDocumentWithColumnPath, fakeColumnName, -1));
+            fakeDocument.put(FAKE_COLUMN_NAME_USED_BY_LIST, columnValue);
+            res.add(getWrapperGetter(columnType).get(fakeDocument, FAKE_PARENT_NAME_USED_BY_LIST, FAKE_COLUMN_NAME_USED_BY_LIST, -1));
         }
         return res;
     }
@@ -148,7 +144,7 @@ public class MongoDBRecordReader
             ++pos;
 
             Document item = cursor.next();
-            value = new HerculesWritable(documentToMapWrapper(new DocumentWithColumnPath(item, null)));
+            value = new HerculesWritable(documentToMapWrapper(item, null));
             return true;
         } catch (Exception e) {
             close();
@@ -203,132 +199,217 @@ public class MongoDBRecordReader
         }
     }
 
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getIntegerGetter() {
-        return new WrapperGetter<DocumentWithColumnPath>() {
-            @Override
-            public BaseWrapper get(DocumentWithColumnPath row, String name, int seq) throws Exception {
-                Object value = row.getDocument().get(name);
-                if (value == null) {
-                    return NullWrapper.INSTANCE;
-                } else if (value instanceof Integer) {
-                    return new IntegerWrapper((Integer) value);
-                } else if (value instanceof Long) {
-                    return new IntegerWrapper((Long) value);
-                } else {
-                    return new IntegerWrapper(NumberUtils.createBigInteger(value.toString()));
+    private class MongoDBWrapperGetterFactory extends WrapperGetterFactory<Document> {
+
+        @Override
+        protected WrapperGetter<Document> getByteGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Byte value = row.get(columnName, Byte.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new IntegerWrapper(value);
+                    }
                 }
-            }
-        };
-    }
+            };
+        }
 
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getDoubleGetter() {
-        return new WrapperGetter<DocumentWithColumnPath>() {
-            @Override
-            public BaseWrapper get(DocumentWithColumnPath row, String name, int seq) throws Exception {
-                Object value = row.getDocument().get(name);
-                if (value == null) {
-                    return NullWrapper.INSTANCE;
-                } else if (value instanceof Float) {
-                    return new DoubleWrapper((Float) value);
-                } else if (value instanceof Double) {
-                    return new DoubleWrapper((Double) value);
-                } else {
-                    return new DoubleWrapper(NumberUtils.createBigDecimal(value.toString()));
+        @Override
+        protected WrapperGetter<Document> getShortGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Short value = row.get(columnName, Short.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new IntegerWrapper(value);
+                    }
                 }
-            }
-        };
-    }
+            };
+        }
 
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getBooleanGetter() {
-        return new WrapperGetter<DocumentWithColumnPath>() {
-            @Override
-            public BaseWrapper get(DocumentWithColumnPath row, String name, int seq) throws Exception {
-                Object value = row.getDocument().get(name);
-                if (value == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new BooleanWrapper((Boolean) value);
+        @Override
+        protected WrapperGetter<Document> getIntegerGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Integer value = row.get(columnName, Integer.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new IntegerWrapper(value);
+                    }
                 }
-            }
-        };
-    }
+            };
+        }
 
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getStringGetter() {
-        return new WrapperGetter<DocumentWithColumnPath>() {
-            @Override
-            public BaseWrapper get(DocumentWithColumnPath row, String name, int seq) throws Exception {
-                Object value = row.getDocument().get(name);
-                if (value == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new StringWrapper(value.toString());
+        @Override
+        protected WrapperGetter<Document> getLongGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Long value = row.get(columnName, Long.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new IntegerWrapper(value);
+                    }
                 }
-            }
-        };
-    }
+            };
+        }
 
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getDateGetter() {
-        return new WrapperGetter<DocumentWithColumnPath>() {
-            @Override
-            public BaseWrapper get(DocumentWithColumnPath row, String name, int seq) throws Exception {
-                Object value = row.getDocument().get(name);
-                if (value == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new DateWrapper((Date) value);
+        @Override
+        protected WrapperGetter<Document> getLonglongGetter() {
+            return null;
+        }
+
+        @Override
+        protected WrapperGetter<Document> getFloatGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Float value = row.get(columnName, Float.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new DoubleWrapper(value);
+                    }
                 }
-            }
-        };
-    }
+            };
+        }
 
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getBytesGetter() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getNullGetter() {
-        return new WrapperGetter<DocumentWithColumnPath>() {
-            @Override
-            public BaseWrapper get(DocumentWithColumnPath row, String name, int seq) throws Exception {
-                return NullWrapper.INSTANCE;
-            }
-        };
-    }
-
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getListGetter() {
-        return new WrapperGetter<DocumentWithColumnPath>() {
-            @Override
-            public BaseWrapper get(DocumentWithColumnPath row, String name, int seq) throws Exception {
-                Object value = row.getDocument().get(name);
-                if (value == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return listToListWrapper((ArrayList) value);
+        @Override
+        protected WrapperGetter<Document> getDoubleGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Double value = row.get(columnName, Double.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new DoubleWrapper(value);
+                    }
                 }
-            }
-        };
-    }
+            };
+        }
 
-    @Override
-    protected WrapperGetter<DocumentWithColumnPath> getMapGetter() {
-        return new WrapperGetter<DocumentWithColumnPath>() {
-            @Override
-            public BaseWrapper get(DocumentWithColumnPath row, String name, int seq) throws Exception {
-                Object value = row.getDocument().get(name);
-                if (value == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    String fullColumnName = WritableUtils.concatColumn(row.getColumnPath(), name);
-                    return documentToMapWrapper(new DocumentWithColumnPath((Document) value, fullColumnName));
+        @Override
+        protected WrapperGetter<Document> getDecimalGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Decimal128 value = row.get(columnName, Decimal128.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new DoubleWrapper(value.bigDecimalValue());
+                    }
                 }
-            }
-        };
+            };
+        }
+
+        @Override
+        protected WrapperGetter<Document> getBooleanGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Boolean value = row.get(columnName, Boolean.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new BooleanWrapper(value);
+                    }
+                }
+            };
+        }
+
+        @Override
+        protected WrapperGetter<Document> getStringGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Object value = row.get(columnName);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new StringWrapper(value.toString());
+                    }
+                }
+            };
+        }
+
+        @Override
+        protected WrapperGetter<Document> getDateGetter() {
+            return null;
+        }
+
+        @Override
+        protected WrapperGetter<Document> getTimeGetter() {
+            return null;
+        }
+
+        @Override
+        protected WrapperGetter<Document> getDatetimeGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Date value = row.get(columnName, Date.class);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return new DateWrapper(value, DataType.DATETIME);
+                    }
+                }
+            };
+        }
+
+        @Override
+        protected WrapperGetter<Document> getBytesGetter() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        protected WrapperGetter<Document> getNullGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    return NullWrapper.INSTANCE;
+                }
+            };
+        }
+
+        @Override
+        protected WrapperGetter<Document> getListGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Object value = row.get(columnName);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        return listToListWrapper((ArrayList) value);
+                    }
+                }
+            };
+        }
+
+        @Override
+        protected WrapperGetter<Document> getMapGetter() {
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Object value = row.get(columnName);
+                    if (value == null) {
+                        return NullWrapper.INSTANCE;
+                    } else {
+                        String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
+                        return documentToMapWrapper((Document) value, fullColumnName);
+                    }
+                }
+            };
+        }
     }
 }

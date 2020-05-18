@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.clickhouse.mr;
 
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSBalanceSplitGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.SplitGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.BaseSplitter;

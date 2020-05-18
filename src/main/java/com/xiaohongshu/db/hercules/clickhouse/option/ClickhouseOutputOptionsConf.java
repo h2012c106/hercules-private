@@ -1,9 +1,9 @@
 package com.xiaohongshu.db.hercules.clickhouse.option;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
-import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 
 import java.util.ArrayList;
@@ -21,11 +21,13 @@ public final class ClickhouseOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<SingleOptionConf> innerGenerateOptionConf() {
-        List<SingleOptionConf> tmpList = new ArrayList<>();
+        return null;
+    }
+
+    @Override
+    protected List<String> deleteOptions() {
         // clickhouse jdbc完全没有commit行为
-        clearOption(tmpList, AUTOCOMMIT);
-        clearOption(tmpList, STATEMENT_PER_COMMIT);
-        return tmpList;
+        return Lists.newArrayList(AUTOCOMMIT, STATEMENT_PER_COMMIT);
     }
 
     @Override

@@ -13,7 +13,7 @@ import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBDataTypeConverter;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
-import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManagerInitializer;
+import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManagerGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConverter>
-        implements MongoDBManagerInitializer {
+        implements MongoDBManagerGenerator {
 
     private static final Log LOG = LogFactory.getLog(MongoDBInputFormat.class);
 
@@ -45,7 +45,7 @@ public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConve
     @Override
     protected void initializeContext(GenericOptions sourceOptions) {
         super.initializeContext(sourceOptions);
-        manager = initializeManager(sourceOptions);
+        manager = generateManager(sourceOptions);
     }
 
     private boolean isPrimaryIdObjectId(MongoClient mongoClient, String db, String collection, String splitBy) {
@@ -218,12 +218,12 @@ public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConve
     }
 
     @Override
-    public MongoDBDataTypeConverter initializeConverter() {
+    public MongoDBDataTypeConverter generateConverter() {
         return new MongoDBDataTypeConverter();
     }
 
     @Override
-    public MongoDBManager initializeManager(GenericOptions options) {
+    public MongoDBManager generateManager(GenericOptions options) {
         return new MongoDBManager(options);
     }
 }

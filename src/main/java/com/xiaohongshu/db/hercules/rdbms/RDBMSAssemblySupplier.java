@@ -1,23 +1,23 @@
 package com.xiaohongshu.db.hercules.rdbms;
 
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
-import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
-import com.xiaohongshu.db.hercules.core.assembly.NullMRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.NullMRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterInitializer;
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputMRJobContext;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
-import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerInitializer;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
 
 public class RDBMSAssemblySupplier extends BaseAssemblySupplier
-        implements RDBMSManagerInitializer, DataTypeConverterInitializer<RDBMSDataTypeConverter> {
+        implements RDBMSManagerGenerator, DataTypeConverterGenerator<RDBMSDataTypeConverter> {
     public RDBMSAssemblySupplier(GenericOptions options) {
         super(options);
     }
@@ -34,7 +34,7 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier
 
     @Override
     protected BaseSchemaFetcher setSchemaFetcher() {
-        return new RDBMSSchemaFetcher(options, initializeConverter(), initializeManager(options));
+        return new RDBMSSchemaFetcher(options, generateConverter(), generateManager(options));
     }
 
     @Override
@@ -48,12 +48,12 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier
     }
 
     @Override
-    public RDBMSManager initializeManager(GenericOptions options) {
+    public RDBMSManager generateManager(GenericOptions options) {
         return new RDBMSManager(options);
     }
 
     @Override
-    public RDBMSDataTypeConverter initializeConverter() {
+    public RDBMSDataTypeConverter generateConverter() {
         return new RDBMSDataTypeConverter();
     }
 }

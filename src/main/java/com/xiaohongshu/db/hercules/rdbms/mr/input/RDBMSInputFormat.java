@@ -5,7 +5,7 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.*;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
@@ -14,7 +14,7 @@ import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
-import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerInitializer;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -27,7 +27,7 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.List;
 
-public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter> implements RDBMSManagerInitializer {
+public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter> implements RDBMSManagerGenerator {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
@@ -52,7 +52,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     protected void initializeContext(GenericOptions sourceOptions) {
         super.initializeContext(sourceOptions);
 
-        manager = initializeManager(sourceOptions);
+        manager = generateManager(sourceOptions);
         schemaFetcher = initializeSchemaFetcher(sourceOptions, converter, manager);
         baseSql = SqlUtils.makeBaseQuery(sourceOptions);
 
@@ -244,16 +244,16 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     @Override
     public HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
-        return new RDBMSRecordReader(manager, initializeConverter());
+        return new RDBMSRecordReader(manager, generateConverter());
     }
 
     @Override
-    public RDBMSManager initializeManager(GenericOptions options) {
+    public RDBMSManager generateManager(GenericOptions options) {
         return new RDBMSManager(options);
     }
 
     @Override
-    public RDBMSDataTypeConverter initializeConverter() {
+    public RDBMSDataTypeConverter generateConverter() {
         return new RDBMSDataTypeConverter();
     }
 }

@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.core.option;
 
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -10,6 +10,7 @@ import org.apache.commons.lang3.time.FastDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * 所有data source的OptionsConf应当继承自此
@@ -30,7 +31,8 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
     private final static String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static final String COLUMN_DELIMITER = ",";
-    public static final String NESTED_COLUMN_NAME_DELIMITER_REGEX = "\\.";
+    public static final String NESTED_COLUMN_NAME_DELIMITER = ".";
+    public static final String NESTED_COLUMN_NAME_DELIMITER_REGEX = Pattern.quote(NESTED_COLUMN_NAME_DELIMITER);
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {

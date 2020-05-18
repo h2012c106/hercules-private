@@ -5,9 +5,9 @@ import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterInitializer;
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,7 +24,7 @@ import java.util.Map;
 
 public abstract class HerculesInputFormat<C extends DataTypeConverter>
         extends InputFormat<NullWritable, HerculesWritable>
-        implements DataTypeConverterInitializer<C> {
+        implements DataTypeConverterGenerator<C> {
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
@@ -33,9 +33,11 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
 
     protected C converter;
     protected Map<String, DataType> columnTypeMap;
+    protected GenericOptions options;
 
     protected void initializeContext(GenericOptions sourceOptions) {
-        converter = initializeConverter();
+        options = sourceOptions;
+        converter = generateConverter();
         columnTypeMap = SchemaUtils.convert(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
     }
 
@@ -55,11 +57,17 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
 
         List<InputSplit> res = innerGetSplits(context, numSplits);
 
+        long actualNumSplits = res.size();
+        if (actualNumSplits < numSplits) {
+            LOG.warn(String.format("Actual map size is less than configured: %d vs %d", actualNumSplits, numSplits));
+        } else if (actualNumSplits > numSplits) {
+            LOG.warn(String.format("Actual map size is more than configured: %d vs %d", actualNumSplits, numSplits));
+        }
+
         // 换算各个mapper实际的qps
         if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
             double maxWriteQps = options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
-            double numMapper = res.size();
-            double maxWriteQpsPerMap = maxWriteQps / numMapper;
+            double maxWriteQpsPerMap = maxWriteQps / (double) actualNumSplits;
             LOG.info("Max write qps per map is: " + maxWriteQpsPerMap);
             options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
         }

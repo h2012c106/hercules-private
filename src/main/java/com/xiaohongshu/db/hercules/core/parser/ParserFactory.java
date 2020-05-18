@@ -9,6 +9,8 @@ import com.xiaohongshu.db.hercules.mongodb.parser.MongoDBInputParser;
 import com.xiaohongshu.db.hercules.mongodb.parser.MongoDBOutputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlInputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlOutputParser;
+import com.xiaohongshu.db.hercules.parquet.parser.ParquetInputParser;
+import com.xiaohongshu.db.hercules.parquet.parser.ParquetOutputParser;
 import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSInputParser;
 import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSOutputParser;
 
@@ -21,8 +23,6 @@ public final class ParserFactory {
             = new HashMap<DataSource, Map<DataSourceRole, BaseParser>>(DataSource.values().length);
 
     static {
-        // 类似这么注册
-        // register(new xxx());
         register(DataSource.RDBMS, DataSourceRole.SOURCE, new RDBMSInputParser());
         register(DataSource.RDBMS, DataSourceRole.TARGET, new RDBMSOutputParser());
         register(DataSource.MySQL, DataSourceRole.SOURCE, new MysqlInputParser());
@@ -33,6 +33,8 @@ public final class ParserFactory {
         register(DataSource.Clickhouse, DataSourceRole.TARGET, new ClickhouseOutputParser());
         register(DataSource.MongoDB, DataSourceRole.SOURCE, new MongoDBInputParser());
         register(DataSource.MongoDB, DataSourceRole.TARGET, new MongoDBOutputParser());
+        register(DataSource.Parquet, DataSourceRole.SOURCE, new ParquetInputParser());
+        register(DataSource.Parquet, DataSourceRole.TARGET, new ParquetOutputParser());
     }
 
     private static void register(DataSource dataSource, DataSourceRole dataSourceRole, BaseParser instance) {

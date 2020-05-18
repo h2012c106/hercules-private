@@ -4,6 +4,8 @@ import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -36,23 +38,41 @@ public final class DateUtils {
         return targetDateFormat;
     }
 
-    public static DateResult stringToDate(String value, DateFormatWrapper dateFormatWrapper) {
+    public static Date stringToDate(String value, DataType dateType, DateFormatWrapper dateFormatWrapper) {
         try {
-            return new DateResult(dateFormatWrapper.getDatetimeFormat().parse(value), DateType.DATETIME);
+            switch (dateType) {
+                case DATE:
+                    return dateFormatWrapper.getDateFormat().parse(value);
+                case TIME:
+                    return dateFormatWrapper.getTimeFormat().parse(value);
+                case DATETIME:
+                    return dateFormatWrapper.getDatetimeFormat().parse(value);
+                default:
+                    throw new RuntimeException("Unknown date type: " + dateType);
+            }
+        } catch (ParseException e) {
+            throw new SerializeException(String.format("Unparsable formatted date [%s], exception: %s",
+                    value, ExceptionUtils.getStackTrace(e)));
+        }
+    }
+
+    public static Date stringToDate(String value, DateFormatWrapper dateFormatWrapper) {
+        try {
+            return dateFormatWrapper.getDatetimeFormat().parse(value);
         } catch (ParseException ignored) {
         }
         try {
-            return new DateResult(dateFormatWrapper.getDateFormat().parse(value), DateType.DATE);
+            return dateFormatWrapper.getDateFormat().parse(value);
         } catch (ParseException ignored) {
         }
         try {
-            return new DateResult(dateFormatWrapper.getTimeFormat().parse(value), DateType.TIME);
+            return dateFormatWrapper.getTimeFormat().parse(value);
         } catch (ParseException ignored) {
         }
         throw new SerializeException("Unparsable formatted date: " + value);
     }
 
-    public static String timestampToString(long value, DateType dateType, DateFormatWrapper dateFormatWrapper) {
+    public static String timestampToString(long value, DataType dateType, DateFormatWrapper dateFormatWrapper) {
         SimpleDateFormat format;
         switch (dateType) {
             case DATE:
@@ -61,13 +81,16 @@ public final class DateUtils {
             case TIME:
                 format = dateFormatWrapper.getTimeFormat();
                 break;
-            default:
+            case DATETIME:
                 format = dateFormatWrapper.getDatetimeFormat();
+                break;
+            default:
+                throw new RuntimeException("Unknown date type: " + dateType);
         }
         return format.format(value);
     }
 
-    public static String dateToString(Date value, DateType dateType, DateFormatWrapper dateFormatWrapper) {
+    public static String dateToString(Date value, DataType dateType, DateFormatWrapper dateFormatWrapper) {
         SimpleDateFormat format;
         switch (dateType) {
             case DATE:
@@ -76,23 +99,20 @@ public final class DateUtils {
             case TIME:
                 format = dateFormatWrapper.getTimeFormat();
                 break;
-            default:
+            case DATETIME:
                 format = dateFormatWrapper.getDatetimeFormat();
+                break;
+            default:
+                throw new RuntimeException("Unknown date type: " + dateType);
         }
         return format.format(value);
-    }
-
-    public enum DateType {
-        DATE,
-        TIME,
-        DATETIME;
     }
 
     public static class DateResult {
         private Date value;
-        private DateType type;
+        private DataType type;
 
-        public DateResult(Date value, DateType type) {
+        public DateResult(Date value, DataType type) {
             this.value = value;
             this.type = type;
         }
@@ -101,7 +121,7 @@ public final class DateUtils {
             return value;
         }
 
-        public DateType getType() {
+        public DataType getType() {
             return type;
         }
     }
