@@ -29,7 +29,7 @@ public class ParquetRecordWriter extends HerculesRecordWriter<Group> {
         wrapperManager.setColumnTypeMap(columnTypeMap);
 
         // 不用担心NPE，横竖这里都有了
-        MessageType messageType = MessageTypeParser.parseMessageType(options.getSourceOptions().getString(MESSAGE_TYPE, null));
+        MessageType messageType = MessageTypeParser.parseMessageType(options.getTargetOptions().getString(MESSAGE_TYPE, null));
         groupFactory = new SimpleGroupFactory(messageType);
     }
 

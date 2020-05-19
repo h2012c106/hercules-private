@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
+import static com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf.DELETE_TARGET_DIR;
 
 public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConverter> {
 
@@ -73,7 +74,13 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
     private Path firstOfDir(Path dir) {
         FileStatus[] fileStatuses;
         try {
-            fileStatuses = FileSystem.get(dir.toUri(), tmpConfiguration).listStatus(dir);
+            FileSystem fs = FileSystem.get(dir.toUri(), tmpConfiguration);
+            if (!fs.exists(dir)) {
+                LOG.warn(String.format("Dir [%s] doesn't exist, cannot fetch schema.", dir.toString()));
+                return null;
+            } else {
+                fileStatuses = fs.listStatus(dir);
+            }
         } catch (IOException e) {
             throw new SchemaException(e);
         }
@@ -83,15 +90,16 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
                 return tmpPath;
             }
         }
-        // 在作为目标时，这里基本逃不掉抛错，间接限制必须要用户定义schema
-        throw new SchemaException(String.format("There should be at least one parquet file in dir [%s], now zero.", dir.toString()));
+        LOG.warn(String.format("There should be at least one parquet file in dir [%s], now zero.", dir.toString()));
+        return null;
     }
 
     private MessageType fetchMessageType() {
         String dir = getOptions().getString(DIR, null);
         try {
-            MessageType res = ParquetFileReader
-                    .readFooter(tmpConfiguration, firstOfDir(new Path(dir)))
+            Path first = firstOfDir(new Path(dir));
+            MessageType res = first == null ? null : ParquetFileReader
+                    .readFooter(tmpConfiguration, first)
                     .getFileMetaData()
                     .getSchema();
             if (res == null) {
@@ -116,30 +124,41 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
         // 获得parquet schema
         if (getOptions().hasProperty(MESSAGE_TYPE)) {
             messageType = MessageTypeParser.parseMessageType(getOptions().getString(MESSAGE_TYPE, null));
-        } else {
+        } else if(!options.hasProperty(DELETE_TARGET_DIR)) {
+            // 如果作为目标，自动从原文件取schema可能不太合适，毕竟万一上游动了schema，下游感知不到，故仅在作为上游时取
             messageType = fetchMessageType();
-            // 顺便偷摸把取出来的parquet message type塞到options里，因为之后还有用，不用屡次取了
-            getOptions().set(MESSAGE_TYPE, messageType.toString());
+            if (messageType != null) {
+                // 顺便偷摸把取出来的parquet message type塞到options里，因为之后还有用，不用屡次取了
+                getOptions().set(MESSAGE_TYPE, messageType.toString());
+            }
         }
     }
 
     @Override
     protected List<String> innerGetColumnNameList() {
-        return messageType.getFields()
-                .stream()
-                .map(Type::getName)
-                .collect(Collectors.toList());
+        if (messageType != null) {
+            return messageType.getFields()
+                    .stream()
+                    .map(Type::getName)
+                    .collect(Collectors.toList());
+        } else {
+            return null;
+        }
     }
 
     @Override
     protected Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet) {
-        return converter.convertRowType(messageType);
+        if (messageType != null) {
+            return converter.convertRowType(messageType);
+        } else {
+            return null;
+        }
     }
 
     @Override
     public void postNegotiate(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
         // 自动装配一个schema
-        if (StringUtils.isEmpty(getOptions().getString(MESSAGE_TYPE, null))) {
+        if (StringUtils.isEmpty(getOptions().getString(MESSAGE_TYPE, null)) && columnNameList.size() > 0) {
             String messageTypeStr = converter.convertTypeMap(columnNameList, columnTypeMap).toString();
             LOG.info("Generate the parquet schema from negotiated column name list and column type map: " + messageTypeStr);
             getOptions().set(MESSAGE_TYPE, messageTypeStr);

@@ -47,7 +47,6 @@ public class ParquetOutputMRJobContext implements MRJobContext {
                 if (fs.exists(targetDir)) {
                     fs.delete(targetDir, true);
                     LOG.info("Destination directory " + targetDir + " deleted.");
-                    return;
                 } else {
                     LOG.info("Destination directory " + targetDir + " is not present, "
                             + "hence not deleting.");

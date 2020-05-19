@@ -31,6 +31,8 @@ public class MRJob {
             = new String[]{"mapreduce.map.maxattempts", "mapred.map.max.attempts"};
     private static final String[] MAPREDUCE_MAP_SPECULATIVE_EXECUTION
             = new String[]{"mapreduce.map.speculative", "mapred.map.tasks.speculative.execution"};
+    private static final String[] MAPREDUCE_USER_CLASSPATH_FIRST
+            = new String[]{"mapreduce.user.classpath.first", "mapreduce.task.classpath.user.precedence"};
 
     private BaseAssemblySupplier sourceAssemblySupplier;
     private BaseAssemblySupplier targetAssemblySupplier;
@@ -58,6 +60,7 @@ public class MRJob {
     private void configureMRJob(Configuration configuration) {
         configure(configuration, Integer.toString(1), MAPREDUCE_MAP_MAX_ATTEMPTS);
         configure(configuration, Boolean.toString(false), MAPREDUCE_MAP_SPECULATIVE_EXECUTION);
+        configure(configuration, Boolean.toString(true), MAPREDUCE_USER_CLASSPATH_FIRST);
     }
 
 
@@ -160,7 +163,7 @@ public class MRJob {
         sourceAssemblySupplier.getJobContextAsSource().configureJob(job, options);
         job.setInputFormatClass(sourceAssemblySupplier.getInputFormatClass());
 
-        targetAssemblySupplier.getJobContextAsSource().configureJob(job, options);
+        targetAssemblySupplier.getJobContextAsTarget().configureJob(job, options);
         job.setOutputFormatClass(targetAssemblySupplier.getOutputFormatClass());
 
         job.setMapperClass(HerculesMapper.class);

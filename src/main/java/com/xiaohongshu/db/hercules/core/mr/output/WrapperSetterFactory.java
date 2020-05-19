@@ -6,7 +6,6 @@ import com.xiaohongshu.db.hercules.core.utils.ReflectionUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -38,9 +37,9 @@ public abstract class WrapperSetterFactory<T> {
                 throw new UnsupportedOperationException();
             }
         } catch (Exception e) {
-            LOG.warn(String.format("Undefined convert strategy of %s, exception: %s",
+            LOG.warn(String.format("Undefined output convert strategy of %s, exception: %s",
                     dataType.toString(),
-                    ExceptionUtils.getStackTrace(e)));
+                    e.getMessage()));
         }
     }
 

@@ -39,7 +39,7 @@ public abstract class WrapperGetterFactory<T> {
                 throw new UnsupportedOperationException();
             }
         } catch (Exception e) {
-            LOG.warn(String.format("Undefined convert strategy of %s, exception: %s", dataType.toString(), e.getMessage()));
+            LOG.warn(String.format("Undefined input convert strategy of %s, exception: %s", dataType.toString(), e.getMessage()));
         }
     }
 

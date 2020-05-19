@@ -44,8 +44,6 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
 
-        LOG.warn(context.getConfiguration().get("hercules.column.target", "sadasdsad"));
-
         columnNameList = Arrays.asList(options.getTargetOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
         columnTypeMap = SchemaUtils.convert(options.getTargetOptions().getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
 
