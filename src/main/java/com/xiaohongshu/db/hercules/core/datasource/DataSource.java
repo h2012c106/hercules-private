@@ -9,7 +9,8 @@ public enum DataSource {
     TiDB,
     Clickhouse,
     MongoDB,
-    Parquet;
+    Parquet,
+    ParquetSchema;
 
     public static DataSource valueOfIgnoreCase(String value) {
         for (DataSource dataSource : DataSource.values()) {

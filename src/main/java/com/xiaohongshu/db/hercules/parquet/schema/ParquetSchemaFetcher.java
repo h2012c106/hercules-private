@@ -124,7 +124,7 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
         // 获得parquet schema
         if (getOptions().hasProperty(MESSAGE_TYPE)) {
             messageType = MessageTypeParser.parseMessageType(getOptions().getString(MESSAGE_TYPE, null));
-        } else if(!options.hasProperty(DELETE_TARGET_DIR)) {
+        } else if (!options.hasProperty(DELETE_TARGET_DIR)) {
             // 如果作为目标，自动从原文件取schema可能不太合适，毕竟万一上游动了schema，下游感知不到，故仅在作为上游时取
             messageType = fetchMessageType();
             if (messageType != null) {
@@ -158,10 +158,13 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
     @Override
     public void postNegotiate(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
         // 自动装配一个schema
-        if (StringUtils.isEmpty(getOptions().getString(MESSAGE_TYPE, null)) && columnNameList.size() > 0) {
-            String messageTypeStr = converter.convertTypeMap(columnNameList, columnTypeMap).toString();
-            LOG.info("Generate the parquet schema from negotiated column name list and column type map: " + messageTypeStr);
-            getOptions().set(MESSAGE_TYPE, messageTypeStr);
+        if (StringUtils.isEmpty(getOptions().getString(MESSAGE_TYPE, null))) {
+            MessageType generatedMessageType = converter.convertTypeMap(columnNameList, columnTypeMap);
+            if (generatedMessageType != null) {
+                String messageTypeStr = generatedMessageType.toString();
+                LOG.info("Generate the parquet schema from negotiated column name list and column type map: " + messageTypeStr);
+                getOptions().set(MESSAGE_TYPE, messageTypeStr);
+            }
         }
     }
 }

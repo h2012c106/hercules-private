@@ -29,7 +29,7 @@ public class ParquetHerculesDataTypeConverter extends ParquetDataTypeConverter {
     }
 
     @Override
-    protected Types.Builder<?, ? extends Type> convertDataType(DataType dataType, Type.Repetition repetition) {
+    public Types.Builder<?, ? extends Type> convertDataType(DataType dataType, Type.Repetition repetition) {
         switch (dataType) {
             case BYTE:
                 return Types.primitive(PrimitiveType.PrimitiveTypeName.INT32, repetition)
