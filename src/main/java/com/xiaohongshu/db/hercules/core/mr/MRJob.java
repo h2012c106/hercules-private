@@ -20,6 +20,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.sqoop.util.PerfCounters;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -150,6 +151,27 @@ public class MRJob {
         LOG.info(result.getData());
     }
 
+    /**
+     * 反射获得map执行时间，从job拿不到，counters里又是private，逼我来硬的
+     *
+     * @param perfCounters
+     * @return
+     */
+    private Double getMapTaskSec(PerfCounters perfCounters) {
+        try {
+            Field field = perfCounters.getClass().getDeclaredField("nanoseconds");
+            try {
+                field.setAccessible(true);
+                return (double) field.getLong(perfCounters) / 1.0E9D;
+            } finally {
+                field.setAccessible(false);
+            }
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            LOG.warn("Fetch map task sec from PerfCounters failed: " + e.getMessage());
+            return null;
+        }
+    }
+
     public void run(String... args) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration configuration = new Configuration();
 
@@ -196,7 +218,12 @@ public class MRJob {
             LOG.info("Transferred " + perfCounters.toString());
             numRecords = ConfigurationHelper.getNumMapOutputRecords(job);
         }
-        LOG.info("Retrieved " + numRecords + " records.");
+        Double runSec = getMapTaskSec(perfCounters);
+        if (runSec != null) {
+            LOG.info(String.format("Retrieved %d records (%.4f row/sec).", numRecords, (double) numRecords / runSec));
+        } else {
+            LOG.info(String.format("Retrieved %d records.", numRecords));
+        }
 
         if (!success) {
             printFailedTaskLog(job);

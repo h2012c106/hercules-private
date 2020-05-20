@@ -157,6 +157,7 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
             if (needClose) {
                 close();
             }
+            LOG.error(ExceptionUtils.getStackTrace(exceptionList.get(0)));
             throw new IOException(exceptionList.get(0));
         }
     }

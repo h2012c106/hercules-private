@@ -76,7 +76,7 @@ public class ParquetSqoopDataTypeConverter extends ParquetDataTypeConverter {
     }
 
     @Override
-    protected Types.Builder<?, ? extends Type> convertDataType(DataType dataType, Type.Repetition repetition) {
+    public Types.Builder<?, ? extends Type> convertDataType(DataType dataType, Type.Repetition repetition) {
         switch (dataType) {
             case BYTE:
             case SHORT:

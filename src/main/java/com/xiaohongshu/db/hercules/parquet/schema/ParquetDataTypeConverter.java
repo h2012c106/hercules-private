@@ -1,16 +1,19 @@
 package com.xiaohongshu.db.hercules.parquet.schema;
 
-import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import lombok.NonNull;
+import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.parquet.schema.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+
+import static com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils.GENERATED_MESSAGE_NAME;
 
 /**
  * Parquet作为底层数据，各个逻辑类型写parquet的姿势（写入类型，写入方法）都会有不同，目前已知的有sqoop任务、hive以及parquet logic type的写入姿势。
@@ -28,7 +31,8 @@ import java.util.*;
  */
 public abstract class ParquetDataTypeConverter implements DataTypeConverter<ParquetType, MessageType> {
 
-    private static final String GENERATED_MESSAGE_NAME = "hercules_generated_message";
+    private static final Log LOG = LogFactory.getLog(ParquetDataTypeConverter.class);
+
     private static final Type.Repetition DEFAULT_REPETITION = Type.Repetition.OPTIONAL;
 
     protected String getAnnotationName(LogicalTypeAnnotation annotation) {
@@ -87,138 +91,38 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
         return res;
     }
 
-    abstract protected Types.Builder<?, ? extends Type> convertDataType(DataType dataType, Type.Repetition repetition);
+    abstract public Types.Builder<?, ? extends Type> convertDataType(DataType dataType, Type.Repetition repetition);
 
-    private Types.Builder<?, ? extends Type> convertDataType(DataType dataType) {
+    public Types.Builder<?, ? extends Type> convertDataType(DataType dataType) {
         return convertDataType(dataType, DEFAULT_REPETITION);
     }
 
     public MessageType convertTypeMap(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
         if (columnNameList.size() == 0) {
-            throw new RuntimeException("The parquet-schema-making need to know the transferred column list.");
+            LOG.warn("The parquet-schema-making need to know the transferred column list, cannot generate message type.");
+            return null;
         }
         if (!columnTypeMap.keySet().containsAll(columnNameList)) {
             Set<String> tmpSet = new HashSet<>(columnNameList);
             tmpSet.removeAll(columnTypeMap.keySet());
-            throw new RuntimeException("The parquet-schema-making need to know all columns' type, now miss: " + tmpSet);
+            LOG.warn(String.format("The parquet-schema-making need to know all columns' type, now miss: %s, cannot generate message type.", tmpSet));
+            return null;
         }
 
         Set<String> columnNameSet = new LinkedHashSet<>(columnNameList);
 
         // 根节点是message
-        BuilderTreeNode root = new BuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, DataType.MAP);
+        TypeBuilderTreeNode root = new TypeBuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, DataType.MAP);
         for (String columnName : columnNameSet) {
-            BuilderTreeNode tmpNode = root;
+            TypeBuilderTreeNode tmpNode = root;
             WritableUtils.ColumnSplitResult splitResult = WritableUtils.splitColumnWrapped(columnName);
             for (String parentColumnName : splitResult.getParentColumnList()) {
-                tmpNode = tmpNode.addAndReturnChildren(new BuilderTreeNode(parentColumnName, convertDataType(DataType.MAP), tmpNode, DataType.MAP));
+                tmpNode = tmpNode.addAndReturnChildren(new TypeBuilderTreeNode(parentColumnName, convertDataType(DataType.MAP), tmpNode, DataType.MAP));
             }
             DataType finalColumnType = columnTypeMap.get(columnName);
-            tmpNode.addAndReturnChildren(new BuilderTreeNode(splitResult.getFinalColumn(), convertDataType(finalColumnType), tmpNode, finalColumnType));
+            tmpNode.addAndReturnChildren(new TypeBuilderTreeNode(splitResult.getFinalColumn(), convertDataType(finalColumnType), tmpNode, finalColumnType));
         }
 
-        return (MessageType) calculateTree(root);
-    }
-
-    /**
-     * 后序遍历树
-     *
-     * @return
-     */
-    private Type calculateTree(BuilderTreeNode node) {
-        if (node.getChildren() == null) {
-            return node.getValue().named(node.getColumnName());
-        } else {
-            Types.GroupBuilder<GroupType> groupBuilder = (Types.GroupBuilder<GroupType>) node.getValue();
-            for (BuilderTreeNode child : node.getChildren().values()) {
-                groupBuilder.addField(calculateTree(child));
-            }
-            return groupBuilder.named(node.getColumnName());
-        }
-    }
-
-    /**
-     * 用于记录Type Builder，因为parquet group type成型后就不允许加列了，所以得先把半成品记录成树，最后一次性成型
-     */
-    private class BuilderTreeNode {
-        private String columnName;
-        private DataType type;
-        private Types.Builder<?, ? extends Type> value;
-        private BuilderTreeNode parent;
-        private Map<String, BuilderTreeNode> children;
-
-        public BuilderTreeNode(String columnName, Types.Builder<?, ? extends Type> value,
-                               BuilderTreeNode parent, DataType type) {
-            this.columnName = columnName;
-            this.type = type;
-            this.value = value;
-            this.parent = parent;
-            this.children = type == DataType.MAP ? new LinkedHashMap<>() : null;
-        }
-
-        public String getColumnName() {
-            return columnName;
-        }
-
-        public void setColumnName(String columnName) {
-            this.columnName = columnName;
-        }
-
-        public Map<String, BuilderTreeNode> getChildren() {
-            return children;
-        }
-
-        public DataType getType() {
-            return type;
-        }
-
-        private List<String> getFullColumnName() {
-            if (parent == null) {
-                return new ArrayList<>();
-            }
-            List<String> res = parent.getFullColumnName();
-            res.add(columnName);
-            return res;
-        }
-
-        private String getFullColumnNameStr() {
-            return WritableUtils.concatColumn(getFullColumnName());
-        }
-
-        public BuilderTreeNode addAndReturnChildren(@NonNull BuilderTreeNode newChildren) {
-            if (type != DataType.MAP) {
-                throw new RuntimeException("Unexpected to add children to a ungroup tree node.");
-            }
-            BuilderTreeNode storedValue = children.get(newChildren.getColumnName());
-            if (storedValue == null) {
-                children.put(newChildren.getColumnName(), newChildren);
-                return newChildren;
-            } else if (storedValue.equals(newChildren)) {
-                // 返回原值，新值没有被插入
-                return storedValue;
-            } else {
-                // 如果同名node类型不同，直接抛错
-                throw new RuntimeException(String.format("Unequaled column type of column [%s]: %s vs %s",
-                        getFullColumnNameStr(), storedValue.getType(), newChildren.getType()));
-            }
-        }
-
-        public Types.Builder<?, ? extends Type> getValue() {
-            return value;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            BuilderTreeNode that = (BuilderTreeNode) o;
-            return com.google.common.base.Objects.equal(columnName, that.columnName) &&
-                    type == that.type;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(columnName, type);
-        }
+        return (MessageType) ParquetSchemaUtils.calculateTree(root, this);
     }
 }

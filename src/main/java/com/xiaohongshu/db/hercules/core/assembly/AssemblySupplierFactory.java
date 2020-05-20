@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.mongodb.MongoDBAssemblySupplier;
 import com.xiaohongshu.db.hercules.mysql.MysqlAssemblySupplier;
 import com.xiaohongshu.db.hercules.parquet.ParquetAssemblySupplier;
+import com.xiaohongshu.db.hercules.parquetschema.ParquetSchemaAssemblySupplier;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
 import com.xiaohongshu.db.hercules.tidb.TiDBAssemblySupplier;
 
@@ -27,6 +28,7 @@ public final class AssemblySupplierFactory {
         register(DataSource.Clickhouse, ClickhouseAssemblySupplier.class);
         register(DataSource.MongoDB, MongoDBAssemblySupplier.class);
         register(DataSource.Parquet, ParquetAssemblySupplier.class);
+        register(DataSource.ParquetSchema, ParquetSchemaAssemblySupplier.class);
     }
 
     private static void register(DataSource dataSource, Class<? extends BaseAssemblySupplier> assemblySupplierClass) {
