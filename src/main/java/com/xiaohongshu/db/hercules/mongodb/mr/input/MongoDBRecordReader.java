@@ -21,7 +21,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
@@ -29,7 +28,6 @@ import org.bson.types.Decimal128;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST;
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST;
@@ -50,8 +48,6 @@ public class MongoDBRecordReader
     private MongoCursor<Document> cursor = null;
     private MongoClient client = null;
     private HerculesWritable value;
-
-    private AtomicBoolean hasClosed = new AtomicBoolean(false);
 
     private final Document fakeDocument = new Document(FAKE_COLUMN_NAME_USED_BY_LIST, 0);
 
@@ -134,7 +130,7 @@ public class MongoDBRecordReader
     }
 
     @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
+    public boolean innerNextKeyValue() throws IOException, InterruptedException {
         try {
             if (!cursor.hasNext()) {
                 LOG.info(String.format("Selected %d records.", pos));
@@ -153,12 +149,7 @@ public class MongoDBRecordReader
     }
 
     @Override
-    public NullWritable getCurrentKey() throws IOException, InterruptedException {
-        return NullWritable.get();
-    }
-
-    @Override
-    public HerculesWritable getCurrentValue() throws IOException, InterruptedException {
+    public HerculesWritable innerGetCurrentValue() throws IOException, InterruptedException {
         return value;
     }
 
@@ -180,21 +171,19 @@ public class MongoDBRecordReader
     }
 
     @Override
-    public void close() throws IOException {
-        if (!hasClosed.getAndSet(true)) {
-            if (cursor != null) {
-                try {
-                    cursor.close();
-                } catch (Exception e) {
-                    LOG.warn("Exception closing cursor: " + ExceptionUtils.getStackTrace(e));
-                }
+    public void innerClose() throws IOException {
+        if (cursor != null) {
+            try {
+                cursor.close();
+            } catch (Exception e) {
+                LOG.warn("Exception closing cursor: " + ExceptionUtils.getStackTrace(e));
             }
-            if (client != null) {
-                try {
-                    client.close();
-                } catch (Exception e) {
-                    LOG.warn("Exception closing client: " + ExceptionUtils.getStackTrace(e));
-                }
+        }
+        if (client != null) {
+            try {
+                client.close();
+            } catch (Exception e) {
+                LOG.warn("Exception closing client: " + ExceptionUtils.getStackTrace(e));
             }
         }
     }

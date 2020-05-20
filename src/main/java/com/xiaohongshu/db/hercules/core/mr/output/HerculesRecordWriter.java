@@ -26,6 +26,8 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordWriter.class);
 
+    private long time = 0;
+
     private WrapperSetterFactory<T> wrapperSetterFactory;
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -97,6 +99,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
      */
     @Override
     public final void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
+        long start = System.currentTimeMillis();
         if (rateLimiter != null) {
             acquireTime += rateLimiter.acquire();
         }
@@ -105,6 +108,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         } else {
             innerColumnWrite(value);
         }
+        time += (System.currentTimeMillis() - start);
     }
 
     abstract protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException;
@@ -112,8 +116,11 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
     @Override
     public final void close(TaskAttemptContext context) throws IOException, InterruptedException {
         if (!closed.getAndSet(true)) {
+            long start = System.currentTimeMillis();
             innerClose(context);
-            LOG.info(String.format("Spent %.2fs of blocking on qps control.", acquireTime));
+            time += (System.currentTimeMillis() - start);
+            LOG.info(String.format("Spent %.3fs of blocking on qps control.", acquireTime));
+            LOG.info(String.format("Spent %.3fs on write.", (double) time / 1000.0));
         }
     }
 

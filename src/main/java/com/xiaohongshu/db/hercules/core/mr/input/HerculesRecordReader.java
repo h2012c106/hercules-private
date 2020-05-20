@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @param <T> 数据源读入时用于表示一行的数据结构，详情可见{@link WrapperGetter}
@@ -25,6 +26,10 @@ public abstract class HerculesRecordReader<T, C extends DataTypeConverter>
         extends RecordReader<NullWritable, HerculesWritable> {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordReader.class);
+
+    private long time = 0;
+
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     private WrapperGetterFactory<T> wrapperGetterFactory;
 
@@ -66,6 +71,43 @@ public abstract class HerculesRecordReader<T, C extends DataTypeConverter>
         emptyColumnNameList = columnNameList.size() == 0;
 
         myInitialize(split, context);
+    }
+
+    @Override
+    public final NullWritable getCurrentKey() throws IOException, InterruptedException {
+        return NullWritable.get();
+    }
+
+    abstract protected HerculesWritable innerGetCurrentValue() throws IOException, InterruptedException;
+
+    @Override
+    public final HerculesWritable getCurrentValue() throws IOException, InterruptedException {
+        long start = System.currentTimeMillis();
+        HerculesWritable res = innerGetCurrentValue();
+        time += (System.currentTimeMillis() - start);
+        return res;
+    }
+
+    abstract public boolean innerNextKeyValue() throws IOException, InterruptedException;
+
+    @Override
+    public final boolean nextKeyValue() throws IOException, InterruptedException {
+        long start = System.currentTimeMillis();
+        boolean res = innerNextKeyValue();
+        time += (System.currentTimeMillis() - start);
+        return res;
+    }
+
+    abstract public void innerClose() throws IOException;
+
+    @Override
+    public final void close() throws IOException {
+        if (!closed.getAndSet(true)) {
+            long start = System.currentTimeMillis();
+            innerClose();
+            time += (System.currentTimeMillis() - start);
+            LOG.info(String.format("Spent %.3fs on read.", (double) time / 1000.0));
+        }
     }
 
     protected final WrapperGetter<T> getWrapperGetter(DataType dataType) {

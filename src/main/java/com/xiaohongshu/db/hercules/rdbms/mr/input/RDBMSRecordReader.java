@@ -12,7 +12,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
@@ -21,7 +20,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> {
 
@@ -38,8 +36,6 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
     protected HerculesWritable value;
 
     protected RDBMSManager manager;
-
-    private AtomicBoolean hasClosed = new AtomicBoolean(false);
 
     public RDBMSRecordReader(RDBMSManager manager, RDBMSDataTypeConverter converter) {
         super(converter, new RDBMSWrapperGetterFactory());
@@ -89,7 +85,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
     }
 
     @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
+    public boolean innerNextKeyValue() throws IOException, InterruptedException {
         try {
             if (!hasNext()) {
                 return false;
@@ -112,12 +108,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
     }
 
     @Override
-    public NullWritable getCurrentKey() throws IOException, InterruptedException {
-        return NullWritable.get();
-    }
-
-    @Override
-    public HerculesWritable getCurrentValue() throws IOException, InterruptedException {
+    public HerculesWritable innerGetCurrentValue() throws IOException, InterruptedException {
         return value;
     }
 
@@ -143,29 +134,27 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
     }
 
     @Override
-    public void close() throws IOException {
+    public void innerClose() throws IOException {
         LOG.info(String.format("Selected %d records.", pos));
-        if (!hasClosed.getAndSet(true)) {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing resultSet: " + ExceptionUtils.getStackTrace(e));
-                }
+        if (resultSet != null) {
+            try {
+                resultSet.close();
+            } catch (SQLException e) {
+                LOG.warn("SQLException closing resultSet: " + ExceptionUtils.getStackTrace(e));
             }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
-                }
+        }
+        if (statement != null) {
+            try {
+                statement.close();
+            } catch (SQLException e) {
+                LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
             }
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing connection: " + ExceptionUtils.getStackTrace(e));
-                }
+        }
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                LOG.warn("SQLException closing connection: " + ExceptionUtils.getStackTrace(e));
             }
         }
     }

@@ -114,17 +114,12 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     }
 
     @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
+    public boolean innerNextKeyValue() throws IOException, InterruptedException {
         return delegate.nextKeyValue();
     }
 
     @Override
-    public NullWritable getCurrentKey() throws IOException, InterruptedException {
-        return NullWritable.get();
-    }
-
-    @Override
-    public HerculesWritable getCurrentValue() throws IOException, InterruptedException {
+    public HerculesWritable innerGetCurrentValue() throws IOException, InterruptedException {
         try {
             return new HerculesWritable(wrapperManager.groupToMapWrapper(delegate.getCurrentValue(), null));
         } catch (Exception e) {
@@ -138,7 +133,7 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     }
 
     @Override
-    public void close() throws IOException {
+    public void innerClose() throws IOException {
         delegate.close();
     }
 }

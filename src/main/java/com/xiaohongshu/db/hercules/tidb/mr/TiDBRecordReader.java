@@ -74,11 +74,6 @@ public class TiDBRecordReader extends RDBMSRecordReader {
         }
     }
 
-    @Override
-    public HerculesWritable getCurrentValue() throws IOException, InterruptedException {
-        return super.getCurrentValue();
-    }
-
     private boolean executeNewSplit() throws SQLException {
         if (querySqlIterator.hasNext()) {
             String querySql = querySqlIterator.next();
