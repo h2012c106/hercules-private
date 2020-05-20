@@ -54,7 +54,9 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         emptyColumnNameList = columnNameList.size() == 0;
 
         if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
-            rateLimiter = RateLimiter.create(options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null));
+            double qps = options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
+            LOG.info("The map max qps is limited to: " + qps);
+            rateLimiter = RateLimiter.create(qps);
         }
     }
 
@@ -99,10 +101,10 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
      */
     @Override
     public final void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
-        long start = System.currentTimeMillis();
         if (rateLimiter != null) {
             acquireTime += rateLimiter.acquire();
         }
+        long start = System.currentTimeMillis();
         if (emptyColumnNameList) {
             innerMapWrite(value);
         } else {

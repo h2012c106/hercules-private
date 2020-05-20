@@ -4,6 +4,7 @@ import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
 import com.xiaohongshu.db.hercules.core.serialize.DataType;
@@ -69,7 +70,10 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
             double maxWriteQps = options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
             double maxWriteQpsPerMap = maxWriteQps / (double) actualNumSplits;
             LOG.info("Max write qps per map is: " + maxWriteQpsPerMap);
-            options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
+            // 在这里设置options吊用没有，这里的和别的地方的是深拷贝关系，要设置Configuration
+            // options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
+            configuration.setDouble(GenericOptions.getConfigurationName(CommonOptionsConf.MAX_WRITE_QPS, OptionsType.COMMON),
+                    maxWriteQpsPerMap);
         }
 
         return res;
