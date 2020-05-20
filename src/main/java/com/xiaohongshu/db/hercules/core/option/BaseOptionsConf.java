@@ -84,8 +84,7 @@ public abstract class BaseOptionsConf {
         res.addAll(thisRes == null ? new ArrayList<>(0) : thisRes);
         // 清除不要的options
         List<String> deleteOptionList = deleteOptions();
-        clearOption(res, deleteOptionList == null ? Collections.EMPTY_LIST : deleteOptionList);
-        return res;
+        return clearOption(res, deleteOptionList == null ? Collections.EMPTY_LIST : deleteOptionList);
     }
 
     /**
