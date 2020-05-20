@@ -126,6 +126,21 @@ public final class GenericOptions {
         });
     }
 
+    public static String getConfigurationName(String param,OptionsType type){
+        String suffix;
+        switch (type) {
+            case SOURCE:
+                suffix = SOURCE_SUFFIX;
+                break;
+            case TARGET:
+                suffix = TARGET_SUFFIX;
+                break;
+            default:
+                suffix = COMMON_SUFFIX;
+        }
+        return String.join(CONFIGURATION_DELIMITER, Lists.newArrayList(PREFIX, param, suffix));
+    }
+
     public void toConfiguration(Configuration configuration, OptionsType type) {
         String suffix;
         switch (type) {

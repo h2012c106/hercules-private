@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import lombok.NonNull;
 
 import java.util.ArrayList;

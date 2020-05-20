@@ -22,6 +22,7 @@ public final class MongoDBOutputOptionsConf extends BaseOptionsConf {
     public static final String STATEMENT_PER_BULK = "statement-per-bulk";
     public static final String BULK_ORDERED = "bulk-ordered";
     public static final String EXECUTE_THREAD_NUM = "execute-thread-num";
+    public static final String DECIMAL_AS_STRING = "decimal-as-string";
 
     private static final String[] DEFAULT_OBJECT_ID = new String[]{"_id"};
     private static final long DEFAULT_STATEMENT_PER_BULK = 200;
@@ -88,6 +89,11 @@ public final class MongoDBOutputOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .description("The thread num when executing update statement.")
                 .defaultStringValue(Integer.toString(DEFAULT_EXECUTE_THREAD_NUM))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(DECIMAL_AS_STRING)
+                .needArg(false)
+                .description("The decimal is not supported until v3.4.")
                 .build());
         return tmpList;
     }

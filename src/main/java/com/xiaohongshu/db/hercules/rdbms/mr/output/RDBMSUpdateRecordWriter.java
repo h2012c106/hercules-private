@@ -1,9 +1,9 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
+import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
@@ -13,7 +13,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,9 +22,10 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
 
     private List<String> updateKeyList;
 
-    public RDBMSUpdateRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSManager manager)
+    public RDBMSUpdateRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType,
+                                   RDBMSManager manager, RDBMSWrapperSetterFactory wrapperSetterFactory)
             throws Exception {
-        super(context, tableName, exportType, manager);
+        super(context, tableName, exportType, manager, wrapperSetterFactory);
 
         updateKeyList = Arrays.asList(options.getTargetOptions().getStringArray(RDBMSOutputOptionsConf.UPDATE_KEY, null));
     }
@@ -62,7 +62,7 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
                 }
                 WrapperSetter<PreparedStatement> setter = getWrapperSetter(columnTypeMap.get(columnName));
                 // meaningfulSeq + 1为prepared statement里问号的下标
-                setter.set(columnValue, preparedStatement, null, ++meaningfulSeq);
+                setter.set(columnValue, preparedStatement, null, null, ++meaningfulSeq);
             }
             for (int i = 0; i < updateKeyList.size(); ++i) {
                 String columnName = updateKeyList.get(i);
@@ -72,7 +72,7 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
                     throw new MapReduceException(String.format("The update key [%s] should be the subset of source data source columns.", columnName));
                 }
                 // meaningfulSeq得续上
-                getWrapperSetter(columnTypeMap.get(columnName)).set(columnValue, preparedStatement, null, ++meaningfulSeq);
+                getWrapperSetter(columnTypeMap.get(columnName)).set(columnValue, preparedStatement, null, null, ++meaningfulSeq);
             }
             preparedStatement.addBatch();
         }

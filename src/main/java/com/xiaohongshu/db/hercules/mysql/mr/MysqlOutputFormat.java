@@ -7,7 +7,7 @@ import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 
 public class MysqlOutputFormat extends RDBMSOutputFormat {
     @Override
-    public RDBMSManager initializeManager(GenericOptions options) {
+    public RDBMSManager generateManager(GenericOptions options) {
         return new MysqlManager(options);
     }
 }

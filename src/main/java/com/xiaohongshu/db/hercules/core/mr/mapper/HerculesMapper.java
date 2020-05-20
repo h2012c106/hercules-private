@@ -29,6 +29,8 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
     private static final Log LOG = LogFactory.getLog(HerculesMapper.class);
 
+    private long time = 0;
+
     private Map<String, String> columnMap;
     private List<String> blackColumnList;
 
@@ -81,8 +83,18 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     @Override
     protected void map(NullWritable key, HerculesWritable value, Context context)
             throws IOException, InterruptedException {
+        long start = System.currentTimeMillis();
         context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
         value = rowTransfer(value);
         context.write(key, value);
+        time += (System.currentTimeMillis() - start);
+    }
+
+    @Override
+    protected void cleanup(Context context) throws IOException, InterruptedException {
+        long start = System.currentTimeMillis();
+        super.cleanup(context);
+        time += (System.currentTimeMillis() - start);
+        LOG.info(String.format("Spent %.3fs on mapping.", (double) time / 1000.0));
     }
 }

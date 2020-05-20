@@ -11,8 +11,12 @@ import com.xiaohongshu.db.hercules.mongodb.parser.MongoDBInputParser;
 import com.xiaohongshu.db.hercules.mongodb.parser.MongoDBOutputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlInputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlOutputParser;
+import com.xiaohongshu.db.hercules.parquet.parser.ParquetInputParser;
+import com.xiaohongshu.db.hercules.parquet.parser.ParquetOutputParser;
+import com.xiaohongshu.db.hercules.parquetschema.parser.ParquetSchemaParser;
 import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSInputParser;
 import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSOutputParser;
+import com.xiaohongshu.db.hercules.tidb.parser.TiDBInputParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,13 +27,11 @@ public final class ParserFactory {
             = new HashMap<DataSource, Map<DataSourceRole, BaseParser>>(DataSource.values().length);
 
     static {
-        // 类似这么注册
-        // register(new xxx());
         register(DataSource.RDBMS, DataSourceRole.SOURCE, new RDBMSInputParser());
         register(DataSource.RDBMS, DataSourceRole.TARGET, new RDBMSOutputParser());
         register(DataSource.MySQL, DataSourceRole.SOURCE, new MysqlInputParser());
         register(DataSource.MySQL, DataSourceRole.TARGET, new MysqlOutputParser());
-        register(DataSource.TiDB, DataSourceRole.SOURCE, new MysqlInputParser());
+        register(DataSource.TiDB, DataSourceRole.SOURCE, new TiDBInputParser());
         register(DataSource.TiDB, DataSourceRole.TARGET, new MysqlOutputParser());
         register(DataSource.Clickhouse, DataSourceRole.SOURCE, new ClickhouseInputParser());
         register(DataSource.Clickhouse, DataSourceRole.TARGET, new ClickhouseOutputParser());
@@ -37,6 +39,9 @@ public final class ParserFactory {
         register(DataSource.HBase, DataSourceRole.TARGET, new HBaseOutputParser());
         register(DataSource.MongoDB, DataSourceRole.SOURCE, new MongoDBInputParser());
         register(DataSource.MongoDB, DataSourceRole.TARGET, new MongoDBOutputParser());
+        register(DataSource.Parquet, DataSourceRole.SOURCE, new ParquetInputParser());
+        register(DataSource.Parquet, DataSourceRole.TARGET, new ParquetOutputParser());
+        register(DataSource.ParquetSchema, DataSourceRole.TARGET, new ParquetSchemaParser());
     }
 
     private static void register(DataSource dataSource, DataSourceRole dataSourceRole, BaseParser instance) {

@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.BaseSplitter;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
@@ -29,14 +29,21 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
         int singleByteSize;
         DataType dataType = columnTypeMap.get(splitBy);
         switch (dataType) {
+            case BYTE:
+            case SHORT:
             case INTEGER:
+            case LONG:
+            case FLOAT:
             case DOUBLE:
+            case DECIMAL:
                 singleByteSize = 8;
                 break;
             case BOOLEAN:
                 singleByteSize = 1;
                 break;
             case DATE:
+            case TIME:
+            case DATETIME:
                 singleByteSize = 16;
                 break;
             case STRING:

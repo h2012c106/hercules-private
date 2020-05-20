@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.FETCH_SIZE;
@@ -33,9 +34,13 @@ public final class ClickhouseInputOptionsConf extends BaseOptionsConf {
                 .description("The random function used at balance mode sampling.")
                 .defaultStringValue(DEFAULT_RANDOM_FUNC_NAME)
                 .build());
-        // clickhouse jdbc不支持fetch size
-        clearOption(tmpList, FETCH_SIZE);
         return tmpList;
+    }
+
+    @Override
+    protected List<String> deleteOptions() {
+        // clickhouse jdbc不支持fetch size
+        return Collections.singletonList(FETCH_SIZE);
     }
 
     @Override

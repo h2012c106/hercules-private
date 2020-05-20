@@ -4,8 +4,6 @@ import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.MultiThreadAsyncWriter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
@@ -17,11 +15,9 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,9 +50,10 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     abstract protected PreparedStatement getPreparedStatement(RDBMSWorkerMission mission, Connection connection)
             throws Exception;
 
-    public RDBMSRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSManager manager)
+    public RDBMSRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType,
+                             RDBMSManager manager, RDBMSWrapperSetterFactory wrapperSetterFactory)
             throws Exception {
-        super(context);
+        super(context, wrapperSetterFactory);
 
         this.manager = manager;
 
@@ -147,96 +144,6 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         }
 
         writer.done();
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getIntegerSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
-                Long res = wrapper.asLong();
-                if (res == null) {
-                    row.setNull(seq, Types.BIGINT);
-                } else {
-                    row.setLong(seq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getDoubleSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
-                BigDecimal res = wrapper.asBigDecimal();
-                if (res == null) {
-                    row.setNull(seq, Types.NUMERIC);
-                } else {
-                    row.setBigDecimal(seq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getBooleanSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
-                Boolean res = wrapper.asBoolean();
-                if (res == null) {
-                    row.setNull(seq, Types.BOOLEAN);
-                } else {
-                    row.setBoolean(seq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getStringSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
-                String res = wrapper.asString();
-                if (res == null) {
-                    row.setNull(seq, Types.VARCHAR);
-                } else {
-                    row.setString(seq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getDateSetter() {
-        return getStringSetter();
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getBytesSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
-                byte[] res = wrapper.asBytes();
-                if (res == null) {
-                    row.setNull(seq, Types.LONGVARBINARY);
-                } else {
-                    row.setBytes(seq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getNullSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String name, int seq) throws Exception {
-                row.setNull(seq, Types.NULL);
-            }
-        };
     }
 
     private class RDBMSMultiThreadAsyncWriter extends MultiThreadAsyncWriter<RDBMSMultiThreadAsyncWriter.ThreadContext, RDBMSWorkerMission> {

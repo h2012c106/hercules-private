@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.core.assembly;
 
+import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;

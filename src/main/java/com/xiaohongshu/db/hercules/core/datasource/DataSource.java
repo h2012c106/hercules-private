@@ -10,7 +10,8 @@ public enum DataSource {
     Clickhouse,
     HBase,
     MongoDB,
-    HDFSTextFile;
+    Parquet,
+    ParquetSchema;
 
     public static DataSource valueOfIgnoreCase(String value) {
         for (DataSource dataSource : DataSource.values()) {

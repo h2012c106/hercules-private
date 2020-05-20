@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -78,5 +78,13 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter> {
      */
     protected Set<String> getAdditionalNeedTypeColumn() {
         return new HashSet<>(0);
+    }
+
+    /**
+     * 获得最终的schema信息后可能会对生成/修改一些参数，如parquet的schema信息就需要在negotiate后生成
+     * @param columnNameList
+     * @param columnTypeMap
+     */
+    public void postNegotiate(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
     }
 }

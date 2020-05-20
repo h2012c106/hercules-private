@@ -5,7 +5,7 @@ import com.xiaohongshu.db.hercules.clickhouse.mr.ClickhouseOutputFormat;
 import com.xiaohongshu.db.hercules.clickhouse.mr.ClickhouseOutputMRContext;
 import com.xiaohongshu.db.hercules.clickhouse.schema.ClickhouseSchemaFetcher;
 import com.xiaohongshu.db.hercules.clickhouse.schema.manager.ClickhouseManager;
-import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
@@ -29,7 +29,7 @@ public class ClickhouseAssemblySupplier extends RDBMSAssemblySupplier {
 
     @Override
     protected BaseSchemaFetcher setSchemaFetcher() {
-        return new ClickhouseSchemaFetcher(options, initializeConverter(), initializeManager(options));
+        return new ClickhouseSchemaFetcher(options, generateConverter(), generateManager(options));
     }
 
     @Override
@@ -38,7 +38,7 @@ public class ClickhouseAssemblySupplier extends RDBMSAssemblySupplier {
     }
 
     @Override
-    public RDBMSManager initializeManager(GenericOptions options) {
+    public RDBMSManager generateManager(GenericOptions options) {
         return new ClickhouseManager(options);
     }
 }

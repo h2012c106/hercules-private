@@ -20,6 +20,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.sqoop.util.PerfCounters;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +32,8 @@ public class MRJob {
             = new String[]{"mapreduce.map.maxattempts", "mapred.map.max.attempts"};
     private static final String[] MAPREDUCE_MAP_SPECULATIVE_EXECUTION
             = new String[]{"mapreduce.map.speculative", "mapred.map.tasks.speculative.execution"};
+    private static final String[] MAPREDUCE_USER_CLASSPATH_FIRST
+            = new String[]{"mapreduce.user.classpath.first", "mapreduce.task.classpath.user.precedence"};
 
     private BaseAssemblySupplier sourceAssemblySupplier;
     private BaseAssemblySupplier targetAssemblySupplier;
@@ -58,6 +61,7 @@ public class MRJob {
     private void configureMRJob(Configuration configuration) {
         configure(configuration, Integer.toString(1), MAPREDUCE_MAP_MAX_ATTEMPTS);
         configure(configuration, Boolean.toString(false), MAPREDUCE_MAP_SPECULATIVE_EXECUTION);
+        configure(configuration, Boolean.toString(true), MAPREDUCE_USER_CLASSPATH_FIRST);
     }
 
 
@@ -147,6 +151,27 @@ public class MRJob {
         LOG.info(result.getData());
     }
 
+    /**
+     * 反射获得map执行时间，从job拿不到，counters里又是private，逼我来硬的
+     *
+     * @param perfCounters
+     * @return
+     */
+    private Double getMapTaskSec(PerfCounters perfCounters) {
+        try {
+            Field field = perfCounters.getClass().getDeclaredField("nanoseconds");
+            try {
+                field.setAccessible(true);
+                return (double) field.getLong(perfCounters) / 1.0E9D;
+            } finally {
+                field.setAccessible(false);
+            }
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            LOG.warn("Fetch map task sec from PerfCounters failed: " + e.getMessage());
+            return null;
+        }
+    }
+
     public void run(String... args) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration configuration = new Configuration();
 
@@ -157,10 +182,10 @@ public class MRJob {
         Job job = new Job(configuration);
         job.setJarByClass(MRJob.class);
 
-        sourceAssemblySupplier.getJobContextAsSource().configureInput();
+        sourceAssemblySupplier.getJobContextAsSource().configureJob(job, options);
         job.setInputFormatClass(sourceAssemblySupplier.getInputFormatClass());
 
-        targetAssemblySupplier.getJobContextAsSource().configureOutput();
+        targetAssemblySupplier.getJobContextAsTarget().configureJob(job, options);
         job.setOutputFormatClass(targetAssemblySupplier.getOutputFormatClass());
 
         job.setMapperClass(HerculesMapper.class);
@@ -175,8 +200,8 @@ public class MRJob {
 
         configureMRJob(job.getConfiguration());
 
-        sourceAssemblySupplier.getJobContextAsSource().preRun(options.getSourceOptions());
-        targetAssemblySupplier.getJobContextAsTarget().preRun(options.getTargetOptions());
+        sourceAssemblySupplier.getJobContextAsSource().preRun(options);
+        targetAssemblySupplier.getJobContextAsTarget().preRun(options);
 
         PerfCounters perfCounters = new PerfCounters();
         perfCounters.startClock();
@@ -193,14 +218,19 @@ public class MRJob {
             LOG.info("Transferred " + perfCounters.toString());
             numRecords = ConfigurationHelper.getNumMapOutputRecords(job);
         }
-        LOG.info("Retrieved " + numRecords + " records.");
+        Double runSec = getMapTaskSec(perfCounters);
+        if (runSec != null) {
+            LOG.info(String.format("Retrieved %d records (%.4f row/sec).", numRecords, (double) numRecords / runSec));
+        } else {
+            LOG.info(String.format("Retrieved %d records.", numRecords));
+        }
 
         if (!success) {
             printFailedTaskLog(job);
             throw new MapReduceException("The map reduce job failed.");
         }
 
-        sourceAssemblySupplier.getJobContextAsSource().postRun(options.getSourceOptions());
-        targetAssemblySupplier.getJobContextAsTarget().postRun(options.getTargetOptions());
+        sourceAssemblySupplier.getJobContextAsSource().postRun(options);
+        targetAssemblySupplier.getJobContextAsTarget().postRun(options);
     }
 }

@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.mysql;
 
-import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -32,7 +32,7 @@ public class MysqlAssemblySupplier extends RDBMSAssemblySupplier {
     }
 
     @Override
-    public RDBMSManager initializeManager(GenericOptions options) {
+    public RDBMSManager generateManager(GenericOptions options) {
         return new MysqlManager(options);
     }
 }

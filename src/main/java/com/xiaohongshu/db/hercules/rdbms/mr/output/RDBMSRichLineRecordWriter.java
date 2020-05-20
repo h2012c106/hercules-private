@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
+import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
@@ -11,7 +11,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.List;
 
 /**
@@ -21,9 +20,10 @@ public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRichLineRecordWriter.class);
 
-    public RDBMSRichLineRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType, RDBMSManager manager)
+    public RDBMSRichLineRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType,
+                                     RDBMSManager manager, RDBMSWrapperSetterFactory wrapperSetterFactory)
             throws Exception {
-        super(context, tableName, exportType, manager);
+        super(context, tableName, exportType, manager, wrapperSetterFactory);
     }
 
     @Override
@@ -58,7 +58,7 @@ public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
                 }
                 WrapperSetter<PreparedStatement> setter = getWrapperSetter(columnTypeMap.get(columnName));
                 // meaningfulSeq + 1为prepared statement里问号的下标
-                setter.set(columnValue, preparedStatement, null, ++meaningfulSeq);
+                setter.set(columnValue, preparedStatement, null, null, ++meaningfulSeq);
             }
         }
         preparedStatement.addBatch();

@@ -1,17 +1,16 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
-import com.xiaohongshu.db.hercules.core.datasource.DataSource;
-import com.xiaohongshu.db.hercules.core.datasource.DataSourceGetter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 这东西在{@link BaseSchemaFetcher}与读入的时候逐行判断时有用
  *
- * @author huanghanxiang
  * @param <T> 判断数据源类型的标准，例如sql为int，内部使用switch...case；mongo为Object，内部使用if...instance of
  * @param <L> 数据源读入时表示一行的数据结构
+ * @author huanghanxiang
  */
 public interface DataTypeConverter<T, L> {
 
