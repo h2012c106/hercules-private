@@ -92,6 +92,9 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
     @Override
     protected void cleanup(Context context) throws IOException, InterruptedException {
+        long start = System.currentTimeMillis();
+        super.cleanup(context);
+        time += (System.currentTimeMillis() - start);
         LOG.info(String.format("Spent %.3fs on mapping.", (double) time / 1000.0));
     }
 }
