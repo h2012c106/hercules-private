@@ -1,35 +1,33 @@
 package com.xiaohongshu.db.hercules.hbase.schema.manager;
 
-import com.google.protobuf.TextFormat;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import lombok.SneakyThrows;
+import org.apache.arrow.flatbuf.Decimal;
+import org.apache.arrow.flatbuf.Int;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.mapreduce.RowCounter;
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
-import static com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf.BLACK_COLUMN;
 
 public class HBaseManager {
 
     private static final Log LOG = LogFactory.getLog(HBaseManager.class);
 
-    private GenericOptions options;
+    private final GenericOptions options;
     private Connection conn = null;
     private Configuration conf = null;
 
@@ -65,12 +63,6 @@ public class HBaseManager {
         return conf;
     }
 
-    /**
-     * 通过表名和创建好的Connection来获取regionList
-     * @param tn 表名
-     * @return
-     * @throws IOException
-     */
     public List<RegionInfo> getRegionInfo(String tn) throws IOException {
 
         Admin admin = getConnection().getAdmin();
@@ -85,11 +77,6 @@ public class HBaseManager {
         }
     }
 
-    /**
-     * 返回一个新创建的Table连接
-     * @return Table
-     * @throws IOException
-     */
     public Table getHtable() throws IOException {
         Connection conn = getConnection();
         System.out.println(options.getString(HBaseOptionsConf.TABLE,null));
@@ -116,14 +103,12 @@ public class HBaseManager {
         if(null!=options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)){
             scan.setBatch(options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null));
         }
-        List<String> scanColumns = Arrays.asList(options.getStringArray(HBaseInputOptionsConf.SCAN_COLUMNS, new String[]{}));
+        List<String> scanColumns = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, new String[]{}));
         if(scanColumns.size()!=0){
             for(String qualifier: scanColumns){
                 scan.addColumn(Bytes.toBytes(scanColumnFamily), Bytes.toBytes(qualifier));
             }
         }
-        LOG.info("getAllowPartialResults: "+scan.getAllowPartialResults());
-
         // cache blocks 配置项不开放给用户
         scan.setCacheBlocks(false);
         return scan;
@@ -148,11 +133,7 @@ public class HBaseManager {
     }
 
     /**
-     * 通过配置好的conf以及manager来获取BufferedMutator.
-     * @param conf
-     * @param manager
-     * @return
-     * @throws IOException
+     * 通过配置好的conf以及manager来获取BufferedMutator(Async).
      */
     public static BufferedMutator getBufferedMutator(Configuration conf, HBaseManager manager) throws IOException {
         String userTable = conf.get(HBaseOptionsConf.TABLE);
@@ -175,15 +156,13 @@ public class HBaseManager {
         return bufferedMutator;
     }
 
-    @SneakyThrows
-    public static void closeAdmin(Admin admin){
+    public static void closeAdmin(Admin admin) throws IOException {
         if(null!=admin){
             admin.close();
         }
     }
 
-    @SneakyThrows
-    public static void closeConnection(Connection conn){
+    public static void closeConnection(Connection conn) throws IOException {
         if(null!=conn){
             conn.close();
         }
@@ -199,11 +178,23 @@ public class HBaseManager {
                 new BufferedMutatorParams(TableName.valueOf("hercules_test_table"))
                         .pool(HTable.getDefaultExecutor(conf))
                         .writeBufferSize(writeBufferSize));
-        int INSERT_COUNT = 10000;
+        int INSERT_COUNT = 200000;
         List<String> keys = Arrays.asList("01","02","03","04","05","06","07","08","09","10",
                 "11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26");
         Random rand = new Random();
         Put put;
+        Integer c1 = 1232;
+        Short c2 = 15;
+        Long c3 = 123L;
+        Double c4 = 3.1415926;
+        Float c5 = 2.14153f;
+        BigDecimal c6 = new BigDecimal(2.321312);
+        String c7 = "This is a short string";
+        String c8 = "This is a long string: tringBuilder rowkey = new StringBuilder(keys.get(rand.nexttringBuilder rowkey =" +
+                " new StringBuilder(keys.get(rand.nexttringBuilder rowkey = new StringBuilder(keys.get" +
+                "(rand.nexttringBuilder rowkey = new StringBuilder(keys.get(rand.next";
+        byte[] c9 = c7.getBytes();
+
         for(int i=0;i<=INSERT_COUNT;i++){
             if(i%50000==0){
                 LOG.info("Insert into table hercules_test_table, progress: "+i);
@@ -213,11 +204,16 @@ public class HBaseManager {
             rowkey.append(i);
             put = new Put(Bytes.toBytes(rowkey.toString()));
             byte[] family = Bytes.toBytes("cf");
-            put.addColumn(family,Bytes.toBytes("c1"),Bytes.toBytes("HelloWorld"));
-            put.addColumn(family,Bytes.toBytes("c2"),Bytes.toBytes(i%2==0));
-            put.addColumn(family,Bytes.toBytes("c3"),Bytes.toBytes(3.1415926));
-            put.addColumn(family,Bytes.toBytes("c4"),Bytes.toBytes(1234234));
-            put.addColumn(family,Bytes.toBytes("c5"),Bytes.toBytes("a String!"));
+            put.addColumn(family,Bytes.toBytes("c1"),Bytes.toBytes(c1));
+            put.addColumn(family,Bytes.toBytes("c2"),Bytes.toBytes(c2));
+            put.addColumn(family,Bytes.toBytes("c3"),Bytes.toBytes(c3));
+            put.addColumn(family,Bytes.toBytes("c4"),Bytes.toBytes(c4));
+            put.addColumn(family,Bytes.toBytes("c5"),Bytes.toBytes(c5));
+            put.addColumn(family,Bytes.toBytes("c6"),Bytes.toBytes(c6));
+            put.addColumn(family,Bytes.toBytes("c7"),Bytes.toBytes(c7));
+            put.addColumn(family,Bytes.toBytes("c8"),Bytes.toBytes(c8));
+            put.addColumn(family,Bytes.toBytes("c9"),c9);
+            put.addColumn(family,Bytes.toBytes("c10"),Bytes.toBytes(false));
             bufferedMutator.mutate(put);
         }
         bufferedMutator.flush();

@@ -2,16 +2,10 @@ package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.*;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
-import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
-import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
-import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
@@ -26,8 +20,6 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
     public static final String SCAN_ROW_STOP = "hbase.mapreduce.scan.row.stop";
     /** Column Family to Scan */
     public static final String SCAN_COLUMN_FAMILY = "hbase.mapreduce.scan.column.family";
-    /** Space delimited list of columns and column families to scan. */
-    public static final String SCAN_COLUMNS = "hbase.mapreduce.scan.columns";
     /** The timestamp used to filter columns with a specific timestamp. */
     public static final String SCAN_TIMESTAMP = "hbase.mapreduce.scan.timestamp";
     /** The starting timestamp used to filter columns with a specific range of versions. */
@@ -77,13 +69,6 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("Column Family to Scan.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(SCAN_COLUMNS)
-                .needArg(true)
-                .list(true)
-                .listDelimiter(COLUMN_DELIMITER)
-                .description("Space delimited list of columns and column families to scan.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_TIMESTAMP)

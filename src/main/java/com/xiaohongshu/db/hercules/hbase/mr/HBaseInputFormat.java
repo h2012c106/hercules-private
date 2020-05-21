@@ -190,12 +190,12 @@ class HBaseSplit extends InputSplit implements Writable {
     }
 
     @Override
-    public long getLength() throws IOException, InterruptedException {
+    public long getLength() {
         return 0;
     }
 
     @Override
-    public String[] getLocations() throws IOException, InterruptedException {
+    public String[] getLocations() {
         return new String[0];
     }
 
@@ -228,11 +228,15 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     /**
      * @param rowKeyCol 用来作为rowKey的一列数据
      */
-    public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol) {
+    @SneakyThrows
+    public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol){
 
         super(converter, new HBaseInputWrapperManager());
         this.manager = manager;
         this.rowKeyCol = rowKeyCol;
+
+        // 测试用
+//        manager.InsertTestDataToHBaseTable();
     }
 
     /**
@@ -326,16 +330,14 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         for (byte[] family : map.keySet()) {
             NavigableMap<byte[], NavigableMap<Long, byte[]>> familyMap = map.get(family);//列簇作为key获取其中的列相关数据
 
-            for(int i=0;i<columnNum;i++){
-                String qualifier = columnNameList.get(i);
-
+            for (String qualifier : columnNameList) {
                 NavigableMap<Long, byte[]> columnValueMap = familyMap.get(qualifier.getBytes());
-                if(columnValueMap==null){ // 上游没有该行数据，做忽略处理，并且做好log
-                    LOG.warn("The Column "+qualifier+" has no content in the record, skipping.");
+                if (columnValueMap == null) { // 上游没有该行数据，做忽略处理，并且做好log
+                    LOG.warn("The Column " + qualifier + " has no content in the record, skipping.");
                     continue;
                 }
                 // TODO 如何用正确的姿势将两个版本的数据传递到下游，目前放一个就break出去
-                for(Map.Entry<Long, byte[]> entry: columnValueMap.entrySet()){
+                for (Map.Entry<Long, byte[]> entry : columnValueMap.entrySet()) {
 //                    record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(entry, qualifier, 0,0));
                     break;
                 }
