@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.schema;
 
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
 import org.apache.commons.lang3.StringUtils;
 
 public enum HBaseDataType {

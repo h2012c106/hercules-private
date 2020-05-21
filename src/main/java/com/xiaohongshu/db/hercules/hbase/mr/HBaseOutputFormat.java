@@ -4,13 +4,13 @@ import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
+import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.NullWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataType;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
@@ -30,10 +30,6 @@ import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.math.BigInteger;
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
@@ -89,7 +85,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
      * 获取 columnFamily，rowKeyCol 并通过 conf
      */
     public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context, Map<String, HBaseDataType> hbaseColumnTypeMap) throws IOException {
-        super(context);
+        super(context, new HBaseOutputWrapperManager());
         this.manager = manager;
         this.hbaseColumnTypeMap = hbaseColumnTypeMap;
         Configuration conf = manager.getConf();
@@ -134,7 +130,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     /**
      * 获取正确的 DataType 和 WrapperSetter，并将数据放入 Put
      */
-    public void constructPut(Put put, BaseWrapper wrapper, String qualifier) throws Exception {
+    public void constructPut(Put put, BaseWrapper<?> wrapper, String qualifier) throws Exception {
 
         if (wrapper == null || wrapper instanceof NullWrapper) {
             LOG.info("No wrapper found for column: " + qualifier);
@@ -153,7 +149,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         if(debug){
             LOG.info("COLUMN NAME: "+qualifier);
         }
-        wrapperSetter.set(wrapper, put, qualifier, 0);
+        wrapperSetter.set(wrapper, put, columnFamily, qualifier, 0);
     }
 
 
@@ -176,89 +172,5 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
         mutator.flush();
         manager.closeConnection();
-    }
-
-    @Override
-    protected WrapperSetter<Put> getIntegerSetter() {
-        return (wrapper, put, name, seq) -> {
-            Long res = wrapper.asLong();
-            if(debug){
-                LOG.info("GOT INTEGER DATA: "+res);
-            }
-            HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            switch(dataType){
-                case SHORT:
-                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.shortValue()));
-                    break;
-                case INT:
-                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.intValue()));
-                    break;
-                case LONG:
-                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
-                    break;
-                default:
-                    throw new MapReduceException("Unknown data type: " + dataType.name());
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<Put> getDoubleSetter() {
-        return (wrapper, put, name, seq) -> {
-            HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            if(debug){
-                LOG.info("GOT DOUBLE DATA: "+wrapper.asDouble());
-            }
-            switch(dataType){
-                case FLOAT:
-                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble().floatValue()));
-                    break;
-                case DOUBLE:
-                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble()));
-                    break;
-                case BIGDECIMAL:
-                    put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asBigDecimal()));
-                    break;
-                default:
-                    throw new MapReduceException("Unknown data type: " + dataType.name());
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<Put> getBooleanSetter() {
-        return (wrapper, put, name, seq) -> {
-            Boolean res = wrapper.asBoolean();
-            if(debug){
-                LOG.info("GOT BOOLEAN DATA: "+res);
-            }
-            put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
-        };
-    }
-
-    @Override
-    protected WrapperSetter<Put> getStringSetter() {
-        return (wrapper, put, name, seq) -> {
-            String res = wrapper.asString()==null? "":wrapper.asString();
-            if(debug){
-                LOG.info("GOT STRING DATA: "+res);
-            }
-            put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
-        };
-    }
-
-    @Override
-    protected WrapperSetter<Put> getDateSetter() {
-        return (wrapper, put, name, seq) -> put.addColumn(columnFamily.getBytes(), name.getBytes(), wrapper.asBytes());
-    }
-
-    @Override
-    protected WrapperSetter<Put> getBytesSetter() {
-        return (wrapper, put, name, seq) -> put.addColumn(columnFamily.getBytes(), name.getBytes(), wrapper.asBytes());
-    }
-
-    @Override
-    protected WrapperSetter<Put> getNullSetter() {
-        return null;
     }
 }

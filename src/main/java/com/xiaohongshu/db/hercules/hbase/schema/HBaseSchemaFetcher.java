@@ -2,13 +2,9 @@ package com.xiaohongshu.db.hercules.hbase.schema;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import lombok.SneakyThrows;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.FieldSchema;
 
 import java.sql.*;
 import java.util.*;
@@ -53,8 +49,9 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
 
         Connection conn = DriverManager.getConnection(url,props);
         Statement statement = conn.createStatement();
-        String sql =String.format("select COLUMN_NAME,TYPE_NAME from TBLS t JOIN SDS s ON t.SD_ID = s.SD_ID " +
-                "JOIN COLUMNS_V2 c ON s.CD_ID = c.CD_ID where t.TBL_NAME='%s';", hiveTable);
+        // metastore 中可能存在重复的table名字
+        String sql =String.format("select COLUMN_NAME,TYPE_NAME from TBLS t JOIN SDS s ON t.SD_ID = s.SD_ID JOIN COLUMNS_V2 c ON s.CD_ID = c.CD_ID where " +
+                "t.TBL_NAME='%s' and t.TBL_ID=(select TBL_ID from TBLS t where t.TBL_NAME='%s' limit 1);", hiveTable);
         ResultSet resultSet = statement.executeQuery(sql);
 
         Map<String, DataType> columnTypeMap = new HashMap<>();

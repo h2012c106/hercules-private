@@ -30,33 +30,6 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     public final static String HBASE_COLUMN_TYPE_MAP="hbase.column.type.map";
     public final static String DEBUG = "hbase.debug";
 
-    /**
-     * hbase 测需要维护自己的类型，同时保证框架测的类型符合要求。
-     */
-    @Override
-    public void innerProcessOptions(GenericOptions options) {
-        JSONObject columnTypeJson = options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null);
-        for(String key:columnTypeJson.keySet()){
-            String dataType = columnTypeJson.getString(key);
-            switch(dataType.toLowerCase()){
-                case "short":
-                case "int":
-                case "long":
-                    dataType = "INTEGER";
-                    break;
-                case "float":
-                case "double":
-                case "bigdecimal":
-                    dataType = "DOUBLE";
-                    break;
-                default:
-            }
-            columnTypeJson.fluentPut(key, dataType);
-        }
-        options.set(HBASE_COLUMN_TYPE_MAP, options.getString(BaseDataSourceOptionsConf.COLUMN_TYPE,null));
-        options.set(BaseDataSourceOptionsConf.COLUMN_TYPE, columnTypeJson.toString());
-    }
-
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
         return null;

@@ -6,9 +6,9 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataType;
@@ -41,22 +41,13 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     private static final Log LOG = LogFactory.getLog(HBaseInputFormat.class);
     private HBaseManager manager;
     private GenericOptions sourceOptions;
-    private Map<String, HBaseDataType> hbaseColumnTypeMap;
-
-    // TODO 测试用
-//    private int insertData = 1;
 
     @SneakyThrows
     @Override
     protected void initializeContext(GenericOptions sourceOptions) {
-        hbaseColumnTypeMap = HBaseDataTypeConverter.convert(sourceOptions.getJson(HBaseOptionsConf.HBASE_COLUMN_TYPE_MAP, null));
         super.initializeContext(sourceOptions);
         this.sourceOptions = sourceOptions;
         manager = initializeManager(sourceOptions);
-//        if(insertData==1){
-//            manager.InsertTestDataToHBaseTable();
-//            insertData--;
-//        }
     }
 
     /**
@@ -160,17 +151,17 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
         }else{
             LOG.info("rowKeyCol name not set. rowKey will be excluded.");
         }
-        return new HBaseRecordReader(manager, converter, rowKeyCol, hbaseColumnTypeMap);
-    }
-
-    @Override
-    public HBaseDataTypeConverter initializeConverter() {
-        return new HBaseDataTypeConverter();
+        return new HBaseRecordReader(manager, converter, rowKeyCol);
     }
 
     @Override
     public HBaseManager initializeManager(GenericOptions options) {
         return new HBaseManager(options);
+    }
+
+    @Override
+    public HBaseDataTypeConverter generateConverter() {
+        return new HBaseDataTypeConverter();
     }
 }
 
@@ -238,7 +229,6 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     private final String rowKeyCol;
     private ResultScanner scanner;
     private Result value;
-    private final Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     // debug
     private boolean debug;
@@ -246,11 +236,10 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     /**
      * @param rowKeyCol 用来作为rowKey的一列数据
      */
-    public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol, Map<String, HBaseDataType> hbaseColumnTypeMap) {
+    public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol) {
 
-        super(converter);
+        super(converter, new HBaseInputWrapperManager());
         this.manager = manager;
-        this.hbaseColumnTypeMap = hbaseColumnTypeMap;
         this.rowKeyCol = rowKeyCol;
     }
 
@@ -267,134 +256,10 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     }
 
     @Override
-    protected WrapperGetter getIntegerGetter() {
-        return (WrapperGetter<byte[]>) (res, name, seq) -> {
-            HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            if(null==res){
-                return new NullWrapper();
-            }
-            IntegerWrapper wrapper;
-            switch(dataType){
-                case SHORT:
-                    wrapper = new IntegerWrapper(Bytes.toShort(res));
-                    break;
-                case INT:
-                    wrapper = new IntegerWrapper(Bytes.toInt(res));
-                    break;
-                case LONG:
-                    wrapper = new IntegerWrapper(Bytes.toLong(res));
-                    break;
-                default:
-                    throw new MapReduceException("Unknown data type: " + dataType.name());
-            }
-            if(debug){
-                LOG.debug("GOT "+dataType.name()+" DARA: "+wrapper.asBigInteger());
-            }
-            return wrapper;
-        };
-    }
-
-    @Override
-    protected WrapperGetter getDoubleGetter() {
-        return (WrapperGetter<byte[]>) (res, name, seq) -> {
-            HBaseDataType dataType = hbaseColumnTypeMap.get(name);
-            if(null==res){
-                return new NullWrapper();
-            }
-            DoubleWrapper wrapper;
-            switch(dataType){
-                case FLOAT:
-                    wrapper = new DoubleWrapper(Bytes.toFloat(res));
-                    break;
-                case DOUBLE:
-                    wrapper = new DoubleWrapper(Bytes.toDouble(res));
-                    break;
-                case BIGDECIMAL:
-                    wrapper = new DoubleWrapper(Bytes.toBigDecimal(res));
-                    break;
-                default:
-                    throw new MapReduceException("Unknown data type: " + dataType.name());
-            }
-            if(debug){
-                LOG.debug("GOT "+dataType.name()+" DARA: "+wrapper.asDouble());
-            }
-            return wrapper;
-        };
-    }
-
-    @Override
-    protected WrapperGetter getBooleanGetter() {
-        return (WrapperGetter<byte[]>) (res, name, seq) -> {
-            if(debug){
-                LOG.debug("GOT BOOLEAN DARA: "+Bytes.toBoolean(res));
-            }
-            if (res==null) {
-                return new NullWrapper();
-            } else {
-                return new BooleanWrapper(Bytes.toBoolean(res));
-            }
-        };
-    }
-
-    @Override
-    protected WrapperGetter getStringGetter() {
-        return (WrapperGetter<byte[]>) (res, name, seq) -> {
-            if(debug){
-                LOG.debug("GOT STRING DARA: "+Bytes.toString(res));
-            }
-            if (res==null) {
-                return new NullWrapper();
-            } else {
-                return new StringWrapper(Bytes.toString(res));
-            }
-        };
-    }
-
-    // TODO 检查目前的转换能否正常work，借鉴自 dataX
-    @Override
-    protected WrapperGetter getDateGetter() {
-        return (WrapperGetter<byte[]>) (res, name, seq) -> {
-            if (res==null) {
-                return new NullWrapper();
-            } else {
-                String dateValue = Bytes.toStringBinary(res);
-                // 需要设定一个dateformat，即 new String()
-                return new DateWrapper(DateUtils.parseDate(dateValue, new String()));
-            }
-        };
-    }
-
-    @Override
-    protected WrapperGetter getBytesGetter() {
-        return (WrapperGetter<byte[]>) (res, name, seq) -> {
-            if (res==null) {
-                return new NullWrapper();
-            } else {
-                return new BytesWrapper(res);
-            }
-        };
-    }
-
-    @Override
-    protected WrapperGetter getNullGetter() {
-        return (WrapperGetter<byte[]>) (res, name, seq) -> NullWrapper.INSTANCE;
-    }
-
-    /**
-     * 调用 tableRecordReader.nextKeyValue()，准备好新的一行数据（Result）
-     */
-    @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
-        value = scanner.next();
-        if(null!=value){
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public NullWritable getCurrentKey() {
-        return NullWritable.get();
+    public void innerClose() throws IOException {
+//        scanner.close();
+//        table.close();
+        manager.closeConnection();
     }
 
     /**
@@ -403,7 +268,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
      */
     @SneakyThrows
     @Override
-    public HerculesWritable getCurrentValue(){
+    protected HerculesWritable innerGetCurrentValue() {
 
         int columnNum = columnNameList.size();
         HerculesWritable record = new HerculesWritable(columnNum);
@@ -413,6 +278,20 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         }
         getLatestRecord(record, columnNum);
         return record;
+    }
+
+
+
+    /**
+     * 调用 tableRecordReader.nextKeyValue()，准备好新的一行数据（Result）
+     */
+    @Override
+    public boolean innerNextKeyValue() throws IOException, InterruptedException {
+        value = scanner.next();
+        if(null!=value){
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -434,7 +313,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
                 if(debug){
                     LOG.debug("QUALIFIER: "+qualifier);
                 }
-                record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(val, qualifier, 0));
+                record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(val, qualifier, "", 0));
             }
         }
     }
@@ -477,13 +356,5 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     @Override
     public float getProgress(){
         return 0;
-    }
-
-    @Override
-    public void close() throws IOException {
-
-//        scanner.close();
-//        table.close();
-        manager.closeConnection();
     }
 }

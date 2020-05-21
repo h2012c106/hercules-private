@@ -2,8 +2,7 @@ package com.xiaohongshu.db.hercules.hbase.schema;
 
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.DataType;
-import lombok.Data;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import lombok.NonNull;
 import org.apache.hadoop.hbase.client.Result;
 
