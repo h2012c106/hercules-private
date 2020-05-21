@@ -1,16 +1,17 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.option.*;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
@@ -150,6 +151,13 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-
+        String rowKeyCol = options.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, null);
+        if(rowKeyCol!=null){
+            List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+            if(!columnNameList.contains(rowKeyCol)){
+                throw new RuntimeException("Missing row key col in column name list: "+columnNameList);
+            }
+        }
     }
+
 }

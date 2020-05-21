@@ -11,9 +11,6 @@ import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
-import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
-import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataType;
-import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
@@ -30,13 +27,14 @@ import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
 
     private GenericOptions targetOptions;
     private HBaseManager manager;
-    private Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     /**
      * 配置 conf 并返回 HerculesRecordWriter
@@ -47,11 +45,10 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
         targetOptions = options.getTargetOptions();
-        hbaseColumnTypeMap = HBaseDataTypeConverter.convert(targetOptions.getJson(HBaseOptionsConf.HBASE_COLUMN_TYPE_MAP, null));
         manager = initializeManager(targetOptions);
         HBaseManager.setTargetConf(manager.getConf(), targetOptions);
         // 传到 recordWriter 的 manager 有设置好了的 conf， 可以通过 manager 获得 Connection
-        return new HBaseRecordWriter(manager, context, hbaseColumnTypeMap);
+        return new HBaseRecordWriter(manager, context);
     }
 
     @Override
@@ -76,25 +73,24 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     private final String columnFamily;
     private final String rowKeyCol;
     private final HBaseManager manager;
-    private final Map<String, HBaseDataType> hbaseColumnTypeMap;
 
     private final BufferedMutator mutator;
-    private final boolean debug;
 
     /**
      * 获取 columnFamily，rowKeyCol 并通过 conf
      */
-    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context, Map<String, HBaseDataType> hbaseColumnTypeMap) throws IOException {
+    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException {
         super(context, new HBaseOutputWrapperManager());
         this.manager = manager;
-        this.hbaseColumnTypeMap = hbaseColumnTypeMap;
         Configuration conf = manager.getConf();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
         rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL_NAME);
+        List<String> temp = new ArrayList<>(columnNameList);
+        temp.remove(rowKeyCol);
+        columnNameList = temp;
         // 目前相关的变量统一从 Configuration conf 中拿取
         mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
 //        debug = options.getTargetOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
-        debug = true;
     }
 
     /**
@@ -146,9 +142,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             dt = wrapper.getType();
         }
         WrapperSetter<Put> wrapperSetter = getWrapperSetter(dt);
-        if(debug){
-            LOG.info("COLUMN NAME: "+qualifier);
-        }
         wrapperSetter.set(wrapper, put, columnFamily, qualifier, 0);
     }
 

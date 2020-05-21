@@ -61,7 +61,7 @@ public class MRJob {
     private void configureMRJob(Configuration configuration) {
         configure(configuration, Integer.toString(1), MAPREDUCE_MAP_MAX_ATTEMPTS);
         configure(configuration, Boolean.toString(false), MAPREDUCE_MAP_SPECULATIVE_EXECUTION);
-        configure(configuration, Boolean.toString(true), MAPREDUCE_USER_CLASSPATH_FIRST);
+        configure(configuration, Boolean.toString(false), MAPREDUCE_USER_CLASSPATH_FIRST);
     }
 
 

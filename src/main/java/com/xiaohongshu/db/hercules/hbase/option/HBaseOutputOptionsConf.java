@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class HBaseOutputOptionsConf extends BaseOptionsConf {
@@ -57,6 +58,10 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-
+        String rowKeyCol = options.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, null);
+        List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+        if(!columnNameList.contains(rowKeyCol)){
+            throw new RuntimeException("Missing row key col in column name list: "+columnNameList);
+        }
     }
 }

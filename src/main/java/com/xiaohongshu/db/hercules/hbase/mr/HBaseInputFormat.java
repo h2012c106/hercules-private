@@ -1,27 +1,22 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
-import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataType;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -253,6 +248,9 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         Scan scan = new Scan();
         scanner = table.getScanner(manager.genScan(scan, hbaseSplit.getStartKey(), hbaseSplit.getEndKey()));
         this.debug = options.getSourceOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
+        List<String> temp = new ArrayList<>(columnNameList);
+        temp.remove(rowKeyCol);
+        columnNameList = temp;
     }
 
     @Override
@@ -307,7 +305,9 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
                 String qualifier = columnNameList.get(i);
                 byte[] val = colValMap.get(Bytes.toBytes(qualifier));
                 if(null==val){
-                    LOG.warn("The Column "+qualifier+" has no content in the record, skipping.");
+                    if(LOG.isDebugEnabled()){
+                        LOG.debug("The Column "+qualifier+" has no content in the record, skipping.");
+                    }
                     continue;
                 }
                 if(debug){

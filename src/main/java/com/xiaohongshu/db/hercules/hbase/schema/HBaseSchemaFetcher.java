@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.hbase.schema;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import lombok.SneakyThrows;
 
@@ -20,6 +21,8 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
      */
     @Override
     protected List<String> innerGetColumnNameList() {
+
+        // TODO validate row key col
         return null;
     }
 
@@ -61,6 +64,18 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
                 columnTypeMap.put(columnName,converter.hbaseConvertElementType(resultSet.getString(2)));
             }
         }
+        String rowKeyCol = getOptions().getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null);
+        if(rowKeyCol!=null){
+            columnTypeMap.put(rowKeyCol, DataType.BYTES);
+        }
         return columnTypeMap;
     }
+
+    @Override
+    public void postNegotiate(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
+        super.postNegotiate(columnNameList, columnTypeMap);
+
+        // TODO validate row key col
+    }
+
 }

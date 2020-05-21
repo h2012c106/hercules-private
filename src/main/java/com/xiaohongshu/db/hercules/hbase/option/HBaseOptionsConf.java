@@ -6,10 +6,14 @@ import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN;
 import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
@@ -105,5 +109,18 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
                 null,
                 Lists.newArrayList(HIVE_USER,HIVE_PASSWD, HIVE_TABLE),
                 null);
+    }
+
+    @Override
+    public void processOptions(GenericOptions options) {
+        super.processOptions(options);
+
+        String rowKeyCol = options.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, null);
+        if(rowKeyCol==null){
+            return;
+        }
+        Map<String, DataType> columnTypeMap = SchemaUtils.convert(options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
+        columnTypeMap.put(rowKeyCol, DataType.BYTES);
+        options.set(BaseDataSourceOptionsConf.COLUMN_TYPE, SchemaUtils.convert(columnTypeMap).toJSONString());
     }
 }

@@ -20,14 +20,6 @@ public class HBaseDataTypeConverter  implements DataTypeConverter<Integer, Resul
         return null;
     }
 
-    public static Map<String, HBaseDataType> convert(@NonNull JSONObject jsonObject) {
-        return jsonObject.getInnerMap()
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        entry -> HBaseDataType.valueOfIgnoreCase((String) entry.getValue())));
-    }
-
     public DataType hbaseConvertElementType(String type){
         DataType dt;
         switch(type.toLowerCase().split("\\(")[0]){
