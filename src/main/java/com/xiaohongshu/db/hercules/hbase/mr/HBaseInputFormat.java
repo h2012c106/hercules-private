@@ -99,7 +99,6 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
 
     /**
      * 若用户指定scan的起始rowkey，则根据指定的rowkey对splits列表进行过滤和重新设置。
-     *
      * @param rowStartKey （inclusive）
      * @param rowStopKey （exclusive）
      */
@@ -225,9 +224,6 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     private ResultScanner scanner;
     private Result value;
 
-    /**
-     * @param rowKeyCol 用来作为rowKey的一列数据
-     */
     @SneakyThrows
     public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol){
 
@@ -262,7 +258,6 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
 
     /**
      * 从 tableRecordReader 中获得 NavigableMap， 遍历 map，将所有的数据放入 HerculesWritable 并返回。
-     * @return HerculesWritable
      */
     @SneakyThrows
     @Override
@@ -278,9 +273,6 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         return record;
     }
 
-    /**
-     * 调用 tableRecordReader.nextKeyValue()，准备好新的一行数据（Result）
-     */
     @Override
     public boolean innerNextKeyValue() throws IOException, InterruptedException {
         value = scanner.next();

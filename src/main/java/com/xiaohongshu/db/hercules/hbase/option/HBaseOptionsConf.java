@@ -22,15 +22,12 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     public final static String HB_ZK_PORT="hbase.zookeeper.port";
     public final static String TABLE="hbase.table";
 
-    public final static String HIVE_URL="hbase.hive.url";
+    public final static String HIVE_METASTORE_URL="hbase.column.type.map";
     public final static String HIVE_USER="hbase.hive.user";
     public final static String HIVE_PASSWD="hbase.hive.passwd";
-
     public final static String HIVE_TABLE ="hbase.hive.table";
-    public final static String HIVE_METASTORE_URL="hbase.column.type.map";
 
     public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
-    public final static String DEBUG = "hbase.debug";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -66,11 +63,6 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
                 .listDelimiter(COLUMN_DELIMITER)
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(HIVE_URL)
-                .needArg(true)
-                .description("The hive table to extract schema for HBase.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
                 .name(HIVE_USER)
                 .needArg(true)
                 .description("User name used to connect Hive database.")
@@ -89,12 +81,6 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
                 .name(HIVE_METASTORE_URL)
                 .needArg(true)
                 .description("JDBC url to connect hive metastore(mysql).")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(DEBUG)
-                .defaultStringValue("0")
-                .needArg(true)
-                .description("Debug setting.")
                 .build());
         return tmpList;
     }

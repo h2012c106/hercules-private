@@ -119,7 +119,7 @@ public class HBaseInputWrapperManager extends WrapperGetterFactory<byte[]> {
 
     @Override
     protected WrapperGetter<byte[]> getDatetimeGetter() {
-        return null;
+        return getLongGetter();
     }
 
     @Override

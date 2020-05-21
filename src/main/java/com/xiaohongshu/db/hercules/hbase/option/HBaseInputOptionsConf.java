@@ -11,9 +11,6 @@ import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.
 
 public class HBaseInputOptionsConf extends BaseOptionsConf {
 
-
-    public static String KEEP_ROW_KEY_COL = "hbase.mapreduce.keeprowkeycol";
-
     /** Scan start row */
     public static final String SCAN_ROW_START = "hbase.mapreduce.scan.row.start";
     /** Scan stop row */
@@ -26,22 +23,10 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
     public static final String SCAN_TIMERANGE_START = "hbase.mapreduce.scan.timerange.start";
     /** The ending timestamp used to filter columns with a specific range of versions. */
     public static final String SCAN_TIMERANGE_END = "hbase.mapreduce.scan.timerange.end";
-    /** The maximum number of version to return. */
-    public static final String SCAN_MAXVERSIONS = "hbase.mapreduce.scan.maxversions";
     /** The number of rows for caching that will be passed to scanners. */
     public static final String SCAN_CACHEDROWS = "hbase.mapreduce.scan.cachedrows";
     /** Set the maximum number of values to return for each call to next(). */
     public static final String SCAN_BATCHSIZE = "hbase.mapreduce.scan.batchsize";
-    /** Specify if we have to shuffle the map tasks. */
-    public static final String SHUFFLE_MAPS = "hbase.mapreduce.inputtable.shufflemaps";
-
-    /** Specify if we enable auto-balance to set number of mappers in M/R jobs. */
-    public static final String MAPREDUCE_INPUT_AUTOBALANCE = "hbase.mapreduce.tif.input.autobalance";
-    /** In auto-balance, we split input by ave region size, if calculated region size is too big, we can set it. */
-    public static final String MAX_AVERAGE_REGION_SIZE = "hbase.mapreduce.tif.ave.regionsize";
-
-    /** Set the number of Mappers for each region, all regions have same number of Mappers */
-    public static final String NUM_MAPPERS_PER_REGION = "hbase.mapreduce.tableinput.mappers.per.region";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -86,11 +71,6 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
                 .description("The ending timestamp used to filter columns with a specific range of versions.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(SCAN_MAXVERSIONS)
-                .needArg(true)
-                .description("The maximum number of version to return..")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
                 .name(SCAN_CACHEDROWS)
                 .needArg(true)
                 .description("The number of rows for caching that will be passed to scanners.")
@@ -99,31 +79,6 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
                 .name(SCAN_BATCHSIZE)
                 .needArg(true)
                 .description("Set the maximum number of values to return for each call to next().")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(SHUFFLE_MAPS)
-                .description("Specify if we have to shuffle the map tasks.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(MAPREDUCE_INPUT_AUTOBALANCE)
-                .description("Specify if we enable auto-balance to set number of mappers in M/R jobs.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(MAX_AVERAGE_REGION_SIZE)
-                .needArg(true)
-                .description("In auto-balance, we split input by ave region size, " +
-                        "if calculated region size is too big, we can set it.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(NUM_MAPPERS_PER_REGION)
-                .needArg(true)
-                .description("Specify if we have to shuffle the map tasks.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(KEEP_ROW_KEY_COL)
-                .necessary(true)
-                .defaultStringValue("0")
-                .description("Specify whether pass the rowkey to the recordWriter.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
