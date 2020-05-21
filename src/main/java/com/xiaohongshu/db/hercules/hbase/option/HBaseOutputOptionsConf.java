@@ -16,7 +16,6 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
     // the column specified to be the row key of PUT or DELETE operations
     // 当上游也是HBase的时候，此设置共享。
-    public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
     public static final String WRITE_BUFFER_SIZE = "hbase.mapreduce.writebuffersize";
     public static final long DEFAULT_WRITE_BUFFER_SIZE = 8 * 1024 * 1024;
 
@@ -38,7 +37,7 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
                 .description("Column Family to Scan.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(ROW_KEY_COL_NAME)
+                .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
                 .needArg(true)
                 .necessary(true)
                 .description("The column specified to be the row key of PUT or DELETE operations")
@@ -58,9 +57,9 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-        String rowKeyCol = options.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, null);
+        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-        if(!columnNameList.contains(rowKeyCol)){
+        if(columnNameList.size()>0&&!columnNameList.contains(rowKeyCol)){
             throw new RuntimeException("Missing row key col in column name list: "+columnNameList);
         }
     }

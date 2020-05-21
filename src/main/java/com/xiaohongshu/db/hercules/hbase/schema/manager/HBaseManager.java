@@ -133,7 +133,7 @@ public class HBaseManager {
 
         HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.COLUMN_FAMILY, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOptionsConf.TABLE, targetOptions, true);
-        HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.ROW_KEY_COL_NAME, targetOptions, true);
+        HBaseManager.setConfParam(conf, HBaseOptionsConf.ROW_KEY_COL_NAME, targetOptions, true);
         conf.setInt(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM,
                 targetOptions.getInteger(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_MAX_WRITE_THREAD_NUM));
         conf.setLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,

@@ -140,7 +140,7 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
 
     @Override
     protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        String rowKeyCol = sourceOptions.getString(HBaseInputOptionsConf.ROW_KEY_COL_NAME, null);
+        String rowKeyCol = sourceOptions.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if(rowKeyCol!=null){
             LOG.info("rowKeyCol name has been set to: "+rowKeyCol);
         }else{
@@ -225,9 +225,6 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     private ResultScanner scanner;
     private Result value;
 
-    // debug
-    private boolean debug;
-
     /**
      * @param rowKeyCol 用来作为rowKey的一列数据
      */
@@ -239,7 +236,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     }
 
     /**
-     * 创建scanner，通过scanner.next()不断或许新的数据。
+     * 创建scanner，通过scanner.next()不断获取新的数据。
      */
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
@@ -247,7 +244,6 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         Table table = manager.getHtable();
         Scan scan = new Scan();
         scanner = table.getScanner(manager.genScan(scan, hbaseSplit.getStartKey(), hbaseSplit.getEndKey()));
-        this.debug = options.getSourceOptions().getBoolean(HBaseOptionsConf.DEBUG, false);
         List<String> temp = new ArrayList<>(columnNameList);
         temp.remove(rowKeyCol);
         columnNameList = temp;
@@ -278,18 +274,13 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         return record;
     }
 
-
-
     /**
      * 调用 tableRecordReader.nextKeyValue()，准备好新的一行数据（Result）
      */
     @Override
     public boolean innerNextKeyValue() throws IOException, InterruptedException {
         value = scanner.next();
-        if(null!=value){
-            return true;
-        }
-        return false;
+        return null != value;
     }
 
     /**
@@ -310,7 +301,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
                     }
                     continue;
                 }
-                if(debug){
+                if(LOG.isDebugEnabled()){
                     LOG.debug("QUALIFIER: "+qualifier);
                 }
                 record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(val, qualifier, "", 0));
@@ -345,7 +336,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
                 }
                 // TODO 如何用正确的姿势将两个版本的数据传递到下游，目前放一个就break出去
                 for(Map.Entry<Long, byte[]> entry: columnValueMap.entrySet()){
-//                    record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(entry, qualifier, 0));
+//                    record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(entry, qualifier, 0,0));
                     break;
                 }
             }

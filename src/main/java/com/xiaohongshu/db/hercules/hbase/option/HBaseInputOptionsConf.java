@@ -19,7 +19,6 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
 
 
     public static String KEEP_ROW_KEY_COL = "hbase.mapreduce.keeprowkeycol";
-    public static String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
 
     /** Scan start row */
     public static final String SCAN_ROW_START = "hbase.mapreduce.scan.row.start";
@@ -142,7 +141,7 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
                 .description("Specify whether pass the rowkey to the recordWriter.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(ROW_KEY_COL_NAME)
+                .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
                 .needArg(true)
                 .description("Specify the name of the row key col passed to the recordWriter.")
                 .build());
@@ -151,10 +150,10 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-        String rowKeyCol = options.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, null);
+        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if(rowKeyCol!=null){
             List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-            if(!columnNameList.contains(rowKeyCol)){
+            if(columnNameList.size()>0&&!columnNameList.contains(rowKeyCol)){
                 throw new RuntimeException("Missing row key col in column name list: "+columnNameList);
             }
         }

@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
-import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
@@ -11,10 +10,10 @@ import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
+import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,9 +32,6 @@ import java.util.Map;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
 
-    private GenericOptions targetOptions;
-    private HBaseManager manager;
-
     /**
      * 配置 conf 并返回 HerculesRecordWriter
      */
@@ -44,20 +40,20 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
 
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
-        targetOptions = options.getTargetOptions();
-        manager = initializeManager(targetOptions);
+        GenericOptions targetOptions = options.getTargetOptions();
+        HBaseManager manager = initializeManager(targetOptions);
         HBaseManager.setTargetConf(manager.getConf(), targetOptions);
         // 传到 recordWriter 的 manager 有设置好了的 conf， 可以通过 manager 获得 Connection
         return new HBaseRecordWriter(manager, context);
     }
 
     @Override
-    public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
+    public void checkOutputSpecs(JobContext context) {
 
     }
 
     @Override
-    public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
+    public OutputCommitter getOutputCommitter(TaskAttemptContext context){
         return new NullOutputCommitter();
     }
 
@@ -84,7 +80,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         this.manager = manager;
         Configuration conf = manager.getConf();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
-        rowKeyCol = conf.get(HBaseOutputOptionsConf.ROW_KEY_COL_NAME);
+        rowKeyCol = conf.get(HBaseOptionsConf.ROW_KEY_COL_NAME);
         List<String> temp = new ArrayList<>(columnNameList);
         temp.remove(rowKeyCol);
         columnNameList = temp;
@@ -150,7 +146,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
      * innerColumnWrite 和 innerMapWrite 一致。因为 hbase 写入是遍历 HerculesWritable 中的 map
      */
     @Override
-    protected void innerColumnWrite(HerculesWritable record) throws IOException, InterruptedException {
+    protected void innerColumnWrite(HerculesWritable record){
         innerMapWrite(record);
     }
 
@@ -162,7 +158,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     }
 
     @Override
-    protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
+    protected void innerClose(TaskAttemptContext context) throws IOException {
         mutator.flush();
         manager.closeConnection();
     }

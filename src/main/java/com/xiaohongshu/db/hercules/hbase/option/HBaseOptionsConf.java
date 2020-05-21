@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
@@ -11,7 +10,6 @@ import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +29,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     public final static String HIVE_TABLE ="hbase.hive.table";
     public final static String HIVE_METASTORE_URL="hbase.column.type.map";
 
-    public final static String HBASE_COLUMN_TYPE_MAP="hbase.column.type.map";
+    public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
     public final static String DEBUG = "hbase.debug";
 
     @Override
@@ -115,7 +113,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     public void processOptions(GenericOptions options) {
         super.processOptions(options);
 
-        String rowKeyCol = options.getString(HBaseOutputOptionsConf.ROW_KEY_COL_NAME, null);
+        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if(rowKeyCol==null){
             return;
         }
