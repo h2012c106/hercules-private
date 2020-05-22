@@ -191,6 +191,7 @@ public class HBaseManager {
                 " new StringBuilder(keys.get(rand.nexttringBuilder rowkey = new StringBuilder(keys.get" +
                 "(rand.nexttringBuilder rowkey = new StringBuilder(keys.get(rand.next";
         byte[] c9 = c7.getBytes();
+        boolean c10 = false;
 
         for(int i=0;i<=INSERT_COUNT;i++){
             if(i%50000==0){
@@ -210,7 +211,7 @@ public class HBaseManager {
             put.addColumn(family,Bytes.toBytes("c7"),Bytes.toBytes(c7));
             put.addColumn(family,Bytes.toBytes("c8"),Bytes.toBytes(c8));
             put.addColumn(family,Bytes.toBytes("c9"),c9);
-            put.addColumn(family,Bytes.toBytes("c10"),Bytes.toBytes(false));
+            put.addColumn(family,Bytes.toBytes("c10"),Bytes.toBytes(c10));
             bufferedMutator.mutate(put);
         }
         bufferedMutator.flush();

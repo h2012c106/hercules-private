@@ -72,8 +72,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
 
     private final BufferedMutator mutator;
 
-    private int debug = 1;
-
     public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException {
         super(context, new HBaseOutputWrapperManager());
         this.manager = manager;
@@ -107,14 +105,10 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
                 constructPut(put, wrapper, qualifier);
             }
         }else{
-            if(debug==1){
-                debug -= 1;
-                LOG.info("columnNameList: "+columnNameList);
-            }
+            // 注意，columnNameList 可能可以确保不为空？
             // 如果存在 columnNameList， 则以 columnNameList 为准构建PUT。
             for (String qualifier : columnNameList) {
                 wrapper = record.get(qualifier);
-                // 如果没有这列值，则meaningfulSeq不加
                 constructPut(put, wrapper, qualifier);
             }
         }
@@ -127,11 +121,13 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     public void constructPut(Put put, BaseWrapper<?> wrapper, String qualifier) throws Exception {
 
         if (wrapper instanceof NullWrapper) {
-            LOG.info("No wrapper found for column: " + qualifier);
+            if(LOG.isDebugEnabled()){
+                LOG.info("No wrapper found for column: " + qualifier);
+            }
             return;
         }
         if(qualifier.equals(rowKeyCol)){
-            // if the qualifier is the row key col, dont put it the the Put object
+            // if the qualifier is the row key col, don't put it into the Put object
             return;
         }
         // 优先从columnTypeMap中获取对应的DataType，如果为null，则从wrapper中获取。
@@ -139,12 +135,11 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         if(dt==null){
             dt = wrapper.getType();
         }
-        WrapperSetter<Put> wrapperSetter = getWrapperSetter(dt);
-        wrapperSetter.set(wrapper, put, columnFamily, qualifier, 0);
+        getWrapperSetter(dt).set(wrapper, put, columnFamily, qualifier, 0);
     }
 
     /**
-     * innerColumnWrite 和 innerMapWrite 一致。因为 hbase 写入是遍历 HerculesWritable 中的 map
+     * innerColumnWrite 和 innerMapWrite 处理逻辑暂设一致。hbase 写入是遍历 HerculesWritable 中的 map
      */
     @Override
     protected void innerColumnWrite(HerculesWritable record){

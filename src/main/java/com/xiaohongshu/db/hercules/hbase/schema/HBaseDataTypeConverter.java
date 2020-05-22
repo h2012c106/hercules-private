@@ -17,24 +17,33 @@ public class HBaseDataTypeConverter  implements DataTypeConverter<Integer, Resul
         return null;
     }
 
+    // 该函数用于处理从hive metastore中取出的为String的DataType
     public DataType hbaseConvertElementType(String type){
         DataType dt;
         switch(type.toLowerCase().split("\\(")[0]){
             case "short":
-            case "int":
-            case "long":
             case "tinyint":
             case "smallint":
+                dt = DataType.valueOf("SHORT");
+                break;
+            case "int":
                 dt = DataType.valueOf("INTEGER");
                 break;
+            case "long":
+                dt = DataType.valueOf("LONG");
+                break;
             case "float":
+                dt = DataType.valueOf("FLOAT");
+                break;
             case "double":
-            case "decimal":
                 dt = DataType.valueOf("DOUBLE");
+                break;
+            case "decimal":
+                dt = DataType.valueOf("DECIMAL");
                 break;
             case "char":
             case "varchar":
-                dt = DataType.valueOf("String");
+                dt = DataType.valueOf("STRING");
                 break;
             default:
                 dt = DataType.valueOf(type.toUpperCase());

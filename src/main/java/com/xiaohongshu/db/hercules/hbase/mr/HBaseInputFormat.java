@@ -325,7 +325,9 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
             for (String qualifier : columnNameList) {
                 NavigableMap<Long, byte[]> columnValueMap = familyMap.get(qualifier.getBytes());
                 if (columnValueMap == null) { // 上游没有该行数据，做忽略处理，并且做好log
-                    LOG.warn("The Column " + qualifier + " has no content in the record, skipping.");
+                    if(LOG.isDebugEnabled()){
+                        LOG.warn("The Column " + qualifier + " has no content in the record, skipping.");
+                    }
                     continue;
                 }
                 // TODO 如何用正确的姿势将两个版本的数据传递到下游，目前放一个就break出去
