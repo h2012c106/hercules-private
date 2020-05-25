@@ -239,14 +239,18 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
      * 创建scanner，通过scanner.next()不断获取新的数据。
      */
     @Override
-    protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException {
         HBaseSplit hbaseSplit = (HBaseSplit) split;
         Table table = manager.getHtable();
         Scan scan = new Scan();
         scanner = table.getScanner(manager.genScan(scan, hbaseSplit.getStartKey(), hbaseSplit.getEndKey()));
+
         List<String> temp = new ArrayList<>(columnNameList);
         temp.remove(rowKeyCol);
         columnNameList = temp;
+        if (columnNameList.size() == 0) {
+            throw new RuntimeException("Column name list failed to fetch(no column name found).");
+        }
     }
 
     @Override
