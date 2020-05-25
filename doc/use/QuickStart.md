@@ -2,7 +2,7 @@
 ## 工具用途
 在两种异构数据源之间进行表级别的同步，默认通过列名进行大小写敏感的列的一一对应。  
 ## 命令格式
-```shell script
+```
 hadoop jar hercules-dev-jar-with-dependencies.jar com.xiaohongshu.db.hercules.Hercules [源数据源]::[目标数据源] [GENERIC_OPTIONS] [SOURCE_OPTIONS] [TARGET_OPTIONS] [COMMON_OPTIONS]
 ```
 + 源数据源: 源数据源[名字](../Introduction.md#概览)，大小写不敏感。
@@ -13,7 +13,7 @@ hadoop jar hercules-dev-jar-with-dependencies.jar com.xiaohongshu.db.hercules.He
 + COMMON_OPTIONS: 公共参数，无前缀，主要用于配置Hercules，例`--num-mapper 4`。
 
 样例:
-```shell script
+```
 hadoop jar hercules-dev-jar-with-dependencies.jar com.xiaohongshu.db.hercules.Hercules TIDB::Parquet --source-connection 'jdbc:mysql://10.4.45.160:4000/sqoop_test' --source-user 'root' --source-password '******' --source-table 'obd_allocation_specify' --source-fetch-size 10000 --source-balance --source-split-by sys_no --target-dir 'obs://xhs.hw.tidb/hercules-test/' --target-schema-style sqoop --target-delete-target-dir --num-mapper 16 --allow-copy-column-name --allow-copy-column-type
 ```
 
