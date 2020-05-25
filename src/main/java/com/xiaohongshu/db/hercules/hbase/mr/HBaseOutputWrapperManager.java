@@ -87,9 +87,7 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
 
     @Override
     protected WrapperSetter<Put> getDatetimeSetter() {
-        return (wrapper, put, columnFamily, name, seq) ->
-                put.addColumn(columnFamily.getBytes(),
-                        name.getBytes(), Bytes.toBytes(wrapper.asLong()));
+        return null;
     }
 
     @Override

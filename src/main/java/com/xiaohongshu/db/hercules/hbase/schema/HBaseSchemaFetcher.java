@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.schema;
 
+import com.google.common.collect.Sets;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.serialize.DataType;
@@ -17,35 +18,35 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
     @SneakyThrows
     public HBaseSchemaFetcher(GenericOptions options, HBaseDataTypeConverter converter) {
         super(options, converter);
-        initHiveMetaInfo();
+//        initHiveMetaInfo();
     }
 
     // 如果 HBase 的 ColumnTypeMap 由用户全部指定，不需要从数据库中获取。
     private void initHiveMetaInfo() throws SQLException, ClassNotFoundException {
 
         String url = getOptions().getString(HBaseOptionsConf.HIVE_METASTORE_URL, "");
-        if(url.equals("")){
+        if (url.equals("")) {
             return;
         }
-        Class.forName ("com.mysql.cj.jdbc.Driver");
+        Class.forName("com.mysql.cj.jdbc.Driver");
         String hiveUser = getOptions().getString(HBaseOptionsConf.HIVE_USER, "");
         String hivePasswd = getOptions().getString(HBaseOptionsConf.HIVE_PASSWD, "");
         String hiveTable = getOptions().getString(HBaseOptionsConf.HIVE_TABLE, "");
 
         Properties props = new Properties();
-        props.setProperty("user",hiveUser);
-        props.setProperty("password",hivePasswd);
+        props.setProperty("user", hiveUser);
+        props.setProperty("password", hivePasswd);
 
-        Connection conn = DriverManager.getConnection(url,props);
+        Connection conn = DriverManager.getConnection(url, props);
         Statement statement = conn.createStatement();
         // metastore 中可能存在重复的table名字
-        String sql =String.format("select COLUMN_NAME,TYPE_NAME from TBLS t JOIN SDS s ON t.SD_ID = s.SD_ID JOIN COLUMNS_V2 c ON s.CD_ID = c.CD_ID where " +
+        String sql = String.format("select COLUMN_NAME,TYPE_NAME from TBLS t JOIN SDS s ON t.SD_ID = s.SD_ID JOIN COLUMNS_V2 c ON s.CD_ID = c.CD_ID where " +
                 "t.TBL_NAME='%s' and t.TBL_ID=(select TBL_ID from TBLS t where t.TBL_NAME='%s' limit 1);", hiveTable, hiveTable);
         ResultSet resultSet = statement.executeQuery(sql);
 
-        while(resultSet.next()){
+        while (resultSet.next()) {
             String columnName = resultSet.getString(1);
-            columnTypeMap.put(columnName,converter.hbaseConvertElementType(resultSet.getString(2)));
+            columnTypeMap.put(columnName, converter.hbaseConvertElementType(resultSet.getString(2)));
             columnNameList.add(columnName);
         }
     }
@@ -59,7 +60,7 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
     public Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet) {
 
         String rowKeyCol = getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        if(rowKeyCol!=null){
+        if (rowKeyCol != null) {
             columnTypeMap.put(rowKeyCol, DataType.BYTES);
         }
         return columnTypeMap;
@@ -70,11 +71,18 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
         super.postNegotiate(columnNameList, columnTypeMap);
 
         String rowKeyCol = getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        if(rowKeyCol!=null){
-            if(!columnNameList.contains(rowKeyCol)){
-                throw new RuntimeException("Missing row key col in column name list: "+columnNameList);
+        if (rowKeyCol != null) {
+            if (!columnNameList.contains(rowKeyCol)) {
+                throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
             }
         }
     }
 
+    @Override
+    public Set<DataType> getSupportedDataTypeSet() {
+        return Sets.newHashSet(DataType.BOOLEAN, DataType.BYTES,
+                DataType.DECIMAL, DataType.DOUBLE,
+                DataType.FLOAT, DataType.INTEGER,
+                DataType.LONG, DataType.SHORT, DataType.STRING);
+    }
 }
