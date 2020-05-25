@@ -1,7 +1,10 @@
 package com.xiaohongshu.db.hercules.mongodb.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.*;
+import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.BaseOutputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import com.xiaohongshu.db.hercules.mongodb.ExportType;
 
@@ -100,12 +103,12 @@ public final class MongoDBOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-        ExportType exportType=ExportType.valueOfIgnoreCase(options.getString(EXPORT_TYPE,null));
-        if(!exportType.isInsert()){
+        ExportType exportType = ExportType.valueOfIgnoreCase(options.getString(EXPORT_TYPE, null));
+        if (!exportType.isInsert()) {
             ParseUtils.assertTrue(options.hasProperty(UPDATE_KEY), "When use update/replace mode, the update key must be specified.");
         }
-        if(options.getBoolean(UPSERT,false)){
-            ParseUtils.assertTrue(!exportType.isInsert(),"Why insert mode need upsert feature.");
+        if (options.getBoolean(UPSERT, false)) {
+            ParseUtils.assertTrue(!exportType.isInsert(), "Why insert mode need upsert feature.");
         }
         ParseUtils.assertTrue(options.getInteger(STATEMENT_PER_BULK, null) > 0,
                 "The statement num per bulk should > 0.");
