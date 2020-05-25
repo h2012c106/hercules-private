@@ -10,6 +10,7 @@
 + 描述 (必填)
 + 是否为列表型参数 (默认为`false`)
 + 为列表参数时的分隔符 (默认为`,`)
+
 ### OptionsConf
 负责定义、使用SingleOptionConf注册、校验、二次加工用户参数。  
 由于不可避免地会遇到参数多继承问题，此类严格使用组合模式，每个子类定义一个祖先列表，不可使用继承，一切参数的定义均通过组合方式而非继承。  
@@ -25,6 +26,7 @@
 同时提供方法在移除祖先定义的参数。
 + 校验参数会优先进行祖先的校验逻辑，而后进行本类的校验逻辑。(`TODO` 若同名参数出现后代与祖先校验规则不一致，有可能出现被祖先误杀的情景，不甚合理，但还没想好怎么优化)
 + 二次加工参数会优先进行祖先的校验逻辑，而后进行本类的校验逻辑。
+
 ### Parser
 负责参数的解析行为，与OptionsConf解耦，内部维护一OptionsConf实例，用于提供参数信息、校验参数及二次加工参数。内部流程如下:  
 
@@ -39,6 +41,7 @@
 其中，有两点记录一笔:  
 + 由于支持存储字符串Array，GenericOptions内部使用`@%HHXHH%@`作为分隔符。
 + 由于空字符串值在转换为Configuration后会被过滤，导致下游读出后此参数消失，而事实上空值与无此参数是有区别的，故使用`@%HHX_HERCULES_EMPTY_PLACEHOLDER_XHH%@`作为空值占位符。
+
 ### WrappingOptions
 GenericOptions的封装类，内部存储三个GenericOptions，方便传参调用。并能够调用GenericOptions与Configuration之间转换方法进行整体转换。
 
@@ -64,6 +67,7 @@ Hercules内部数据类型枚举值，由于系统模型为星型结构，除了
 + BYTES
 + LIST
 + MAP
+
 ### SchemaNegotiator
 全局唯一，策略模式Context对象，采用源/目标SchemaFetcher作为策略对象。内部流程如下:  
 
