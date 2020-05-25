@@ -26,6 +26,11 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
     final private List<Exception> exceptionList = new ArrayList<Exception>();
     final private AtomicBoolean threadPoolClosed = new AtomicBoolean(false);
 
+    /**
+     * 若此值偏大，说明工人数量偏少，可以适度增加
+     */
+    private long putWaitTime = 0;
+
     public MultiThreadAsyncWriter(int threadNum) {
         this.threadNum = threadNum;
     }
@@ -81,11 +86,17 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
                 @Override
                 public void run() {
                     LOG.info(String.format("Thread %s start.", Thread.currentThread().getName()));
+                    /**
+                     * 若本线程此值偏大，说明本工人多余，工人数量偏多，可以适度减少
+                     */
+                    long takeWaitingTime = 0;
                     while (true) {
                         // 从任务队列里阻塞取
                         M mission = null;
                         try {
+                            long startTime = System.currentTimeMillis();
                             mission = missionQueue.take();
+                            takeWaitingTime += (System.currentTimeMillis() - startTime);
                         } catch (InterruptedException e) {
                             LOG.warn("Worker's taking mission interrupted: " + ExceptionUtils.getStackTrace(e));
                             continue;
@@ -111,7 +122,14 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
                             break;
                         }
                     }
-                    closeContext(context);
+                    try {
+                        closeContext(context);
+                    } catch (Exception e) {
+                        LOG.warn(String.format("Thread %s close with exception: %s",
+                                Thread.currentThread().getName(), ExceptionUtils.getStackTrace(e)));
+                    }
+                    LOG.info(String.format("Thread %s use %dms for taking mission.",
+                            Thread.currentThread().getName(), takeWaitingTime));
                 }
             });
         }
@@ -126,7 +144,9 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
     public final void put(M mission) throws InterruptedException, IOException {
         // 先检查有没有抛错
         checkException(true);
+        long startTime = System.currentTimeMillis();
         missionQueue.put(mission);
+        putWaitTime += (System.currentTimeMillis() - startTime);
     }
 
     abstract protected M innerGetCloseMission();
@@ -164,6 +184,7 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
 
     public final void done() throws IOException, InterruptedException {
         close();
+        LOG.info(String.format("Use %dms for putting mission.", putWaitTime));
         // 尘埃落定了再检查有没有抛错
         checkException(false);
     }

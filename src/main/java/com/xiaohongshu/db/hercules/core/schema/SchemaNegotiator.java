@@ -135,6 +135,16 @@ public final class SchemaNegotiator {
         return datasourceQueriedTypeMap;
     }
 
+    private List<String> copyNameList(List<String> copiedList, BiMap<String, String> columnMap, DataSourceRole role) {
+        if (role == DataSourceRole.SOURCE) {
+            columnMap = columnMap.inverse();
+        }
+        BiMap<String, String> finalColumnMap = columnMap;
+        return copiedList.stream()
+                .map(columnName -> finalColumnMap.getOrDefault(columnName, columnName))
+                .collect(Collectors.toList());
+    }
+
     private Map<String, DataType> copyTypeMap(Map<String, DataType> source, Map<String, DataType> target,
                                               BiMap<String, String> columnMap, DataSourceRole role) {
         // 被抄袭的
@@ -192,10 +202,10 @@ public final class SchemaNegotiator {
         if (commonOptions.getBoolean(CommonOptionsConf.ALLOW_COPY_COLUMN_NAME, false)) {
             if (sourceColumnNameList.size() == 0 && targetColumnNameList.size() != 0) {
                 LOG.info("The source data source copy the column name list.");
-                sourceColumnNameList = new ArrayList<>(targetColumnNameList);
+                sourceColumnNameList = copyNameList(targetColumnNameList, biColumnMap, DataSourceRole.SOURCE);
             } else if (sourceColumnNameList.size() != 0 && targetColumnNameList.size() == 0) {
                 LOG.info("The target data source copy the column name list.");
-                targetColumnNameList = new ArrayList<>(sourceColumnNameList);
+                targetColumnNameList = copyNameList(sourceColumnNameList, biColumnMap, DataSourceRole.TARGET);
             }
         }
 

@@ -70,7 +70,9 @@ public abstract class HerculesRecordReader<T, C extends DataTypeConverter>
 
         emptyColumnNameList = columnNameList.size() == 0;
 
+        long start = System.currentTimeMillis();
         myInitialize(split, context);
+        time += (System.currentTimeMillis() - start);
     }
 
     @Override
