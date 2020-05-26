@@ -61,7 +61,7 @@ public class MRJob {
     private void configureMRJob(Configuration configuration) {
         configure(configuration, Integer.toString(1), MAPREDUCE_MAP_MAX_ATTEMPTS);
         configure(configuration, Boolean.toString(false), MAPREDUCE_MAP_SPECULATIVE_EXECUTION);
-        configure(configuration, Boolean.toString(false), MAPREDUCE_USER_CLASSPATH_FIRST);
+        // configure(configuration, Boolean.toString(true), MAPREDUCE_USER_CLASSPATH_FIRST);
     }
 
 
@@ -175,6 +175,8 @@ public class MRJob {
     public void run(String... args) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration configuration = new Configuration();
 
+        configureMRJob(configuration);
+
         new GenericOptionsParser(configuration, args);
 
         options.toConfiguration(configuration);
@@ -197,8 +199,6 @@ public class MRJob {
                         CommonOptionsConf.DEFAULT_NUM_MAPPER)
         );
         job.setNumReduceTasks(0);
-
-        configureMRJob(job.getConfiguration());
 
         sourceAssemblySupplier.getJobContextAsSource().preRun(options);
         targetAssemblySupplier.getJobContextAsTarget().preRun(options);

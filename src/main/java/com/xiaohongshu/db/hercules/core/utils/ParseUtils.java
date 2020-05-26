@@ -41,7 +41,7 @@ public final class ParseUtils {
                     DataSource.valueOfIgnoreCase(targetStr)
             };
         } else {
-            throw new ParseException(String.format("Wrong definitive format, should be like 'xxx%syyy'", DATA_SOURCE_SEPARATOR));
+            throw new ParseException(String.format("Wrong definitive format, should be like 'xxx%syyy', now: %s.", DATA_SOURCE_SEPARATOR, arg));
         }
     }
 

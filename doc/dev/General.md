@@ -66,10 +66,10 @@ Hercules参数存储对象，内部分别存储源数据源、目标数据源与
 
 ![Hercules数据流](../image/Hercules数据流.png)  
 
-其中，Hercules内部通过[HerculesWritable](./Core.md#HerculesWritable)来进行数据的规范化与传输。  
+其中，Hercules内部通过[HerculesWritable](./Core.md#herculeswritable)来进行数据的规范化与传输。  
 流程详细描述如下:  
 1. RecordReader从源数据源逐行读取数据，并打包成对应数据类型，如JDBC-ResultSet、MongoDB-Document等。
-2. 由[WrapperGetter](./Core.md#WrapperGetter)实现类将上面一步读取的数据类型逐列转换为Hercules的内部类型，并将整行打包为一个HerculesWritable对象。
+2. 由[WrapperGetter](./Core.md#wrappergetter)实现类将上面一步读取的数据类型逐列转换为Hercules的内部类型，并将整行打包为一个HerculesWritable对象。
 3. HerculesMapper对上游读入的HerculesWritable根据用户参数进行一定的处理，包括列名变换、嵌套关系处理、列黑名单过滤等。
-4. 由[WrapperSetter](./Core.md#WrapperSetter)实现类将HerculesWritable内数据逐列转换成目标数据源的写数据类型，如JDBC-PreparedStatement、MongoDB-Document等。
+4. 由[WrapperSetter](./Core.md#wrappersetter)实现类将HerculesWritable内数据逐列转换成目标数据源的写数据类型，如JDBC-PreparedStatement、MongoDB-Document等。
 5. RecordWriter将上一步构造的数据对象写入目标数据源。

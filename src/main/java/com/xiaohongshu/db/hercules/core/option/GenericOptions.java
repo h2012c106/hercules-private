@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.parser.OptionsType;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 
 import java.math.BigDecimal;
@@ -126,7 +127,7 @@ public final class GenericOptions {
         });
     }
 
-    public static String getConfigurationName(String param,OptionsType type){
+    public static String getConfigurationName(String param, OptionsType type) {
         String suffix;
         switch (type) {
             case SOURCE:
@@ -173,8 +174,14 @@ public final class GenericOptions {
             default:
                 suffix = COMMON_SUFFIX;
         }
-        for (Map.Entry<String, String> entry : configuration.getPropsWithPrefix(PREFIX + CONFIGURATION_DELIMITER).entrySet()) {
+        String prefix = PREFIX + CONFIGURATION_DELIMITER;
+        for (Map.Entry<String, String> entry : configuration) {
             String key = entry.getKey();
+            if (!StringUtils.startsWith(key, prefix)) {
+                continue;
+            } else {
+                key = key.substring(prefix.length());
+            }
             String value = entry.getValue();
             if (key.endsWith(suffix)) {
                 key = key.substring(0, key.length() - (CONFIGURATION_DELIMITER + suffix).length());

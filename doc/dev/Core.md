@@ -47,8 +47,8 @@ GenericOptions的封装类，内部存储三个GenericOptions，方便传参调�
 
 ## Schema
 ### DataType
-Hercules内部数据类型枚举值，由于系统模型为星型结构，除了需要定义各数据类型的[中间存储介质](./Core.md#Wrapper)外，还需定义内部类型以标准化导入导出流程，并且使得上述双侧数据源互相参考schema信息的feature成为可能。  
-其中，负责将数据源自身类型转换为Hercules内部类型的类是[DataTypeConvert](./General.md#DataTypeConvert)。  
+Hercules内部数据类型枚举值，由于系统模型为星型结构，除了需要定义各数据类型的[中间存储介质](./Core.md#wrapper)外，还需定义内部类型以标准化导入导出流程，并且使得上述双侧数据源互相参考schema信息的feature成为可能。  
+其中，负责将数据源自身类型转换为Hercules内部类型的类是[DataTypeConvert](./General.md#datatypeconvert)。  
 总共定义17种Hercules内部基本类型，并包括`LIST`和`MAP`两种集合类型，能够覆盖绝大多数数据源类型，方便转换:  
 + NULL
 + BYTE
