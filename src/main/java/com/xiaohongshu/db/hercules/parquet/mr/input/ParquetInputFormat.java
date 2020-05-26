@@ -25,9 +25,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.EMPTY_AS_NULL;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.ORIGINAL_SPLIT;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
-import static com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf.EMPTY_AS_NULL;
 
 public class ParquetInputFormat extends HerculesInputFormat<ParquetDataTypeConverter> {
 
