@@ -33,9 +33,9 @@
 ### Parser
 每个数据源存在两个实例，此类为模版模式类，基类负责进行命令行参数的解析；数据源两个子类负责给出数据源作为源/目标时对应的OptionsConf实例。Parser与OptionsConf分离的目的在于用户参数的解析与用户参数的定义之间的解耦，可借助ParserFactory作为抽象工厂以适应未来更多的用户参数输入形式(如RestAPI)。  
 ### WrappingOptions
-Hercules参数存储对象，内部分别存储源数据源、目标数据源与公共参数三个对象。提供与[Configuration](./General.md#Configuration)之间的转换方法，大幅自动化Hercules与MR Job之间两个配置体系间的传参过程。
+Hercules参数存储对象，内部分别存储源数据源、目标数据源与公共参数三个对象。提供与[Configuration](./General.md#configuration)之间的转换方法，大幅自动化Hercules与MR Job之间两个配置体系间的传参过程。
 ### AssemblySupplier
-每个数据源存在一个实例，提供[SchemaNegotiator](./General.md#SchemaNegotiator)以及[MRJob](./General.md#MRJob)两个策略模式Context对象的具体策略对象——SchemaFetcher、InputFormat(Class)、OutputFormat(Class)以及分别作为源/目标时的MRJobContext。  
+每个数据源存在一个实例，提供[SchemaNegotiator](./General.md#schemanegotiator)以及[MRJob](./General.md#mrjob)两个策略模式Context对象的具体策略对象——SchemaFetcher、InputFormat(Class)、OutputFormat(Class)以及分别作为源/目标时的MRJobContext。  
 这个类的存在意义可能比较难以表述，打个比方，以汽车为例，一辆车(策略模式Context对象)走动需要发动机、变速箱等(策略对象)等共同协作，而现在的场景是需要这些零件有一个共同的生产商(如福特的车就用福特的发动机、变速箱)，而AssemblySupplier类便扮演了"生产商"这个角色，数据源类型对应"品牌"概念，而AssemblySupplierFactory就根据不同的"品牌"提供不同的"生产商"，此外，一些"子品牌"(子数据源类型，如Mysql之于RDBMS)需要提供不同的零件也可通过继承来实现。  
 自然，各个策略对象可以构建各自的工厂去生产，但是在Hercules场景下，数据源内部的策略需要的是高内聚，而工厂带来的解耦性与额外的结构复杂度是完全不必要的。  
 ### DataTypeConvert

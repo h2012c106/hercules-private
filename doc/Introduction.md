@@ -33,19 +33,19 @@ Hercules的目标在于采Sqoop、DataX两者之长——使用MR作为多任务
 
 |数据源|可读|可写|
 |:---:|:---:|:---:|
-|Mysql|[✓](./use/Mysql.md#Source)|[✓](./use/Mysql.md#Target)|
-|TiDB|[✓](./use/TiDB.md#Source)|[✓](./use/TiDB.md#Target)|
-|Clickhouse|[✓](./use/Clickhouse.md#Source)|[✓](./use/Clickhouse.md#Target)|
-|Generic JDBC|[✓](./use/RDBMS.md#Source)|[✓](./use/RDBMS.md#Target)|
-|MongoDB|[✓](./use/MongoDB.md#Source)|[✓](./use/MongoDB.md#Target)|
-|Parquet|[✓](./use/Parquet.md#Source)|[✓](./use/Parquet.md#Target)|
-|Parquet Schema|✗|[✓](./use/ParquetSchema.md#Target)|
+|Mysql|[✓](./use/Mysql.md#source)|[✓](./use/Mysql.md#target)|
+|TiDB|[✓](./use/TiDB.md#source)|[✓](./use/TiDB.md#target)|
+|Clickhouse|[✓](./use/Clickhouse.md#source)|[✓](./use/Clickhouse.md#target)|
+|Generic JDBC|[✓](./use/RDBMS.md#source)|[✓](./use/RDBMS.md#target)|
+|MongoDB|[✓](./use/MongoDB.md#source)|[✓](./use/MongoDB.md#target)|
+|Parquet|[✓](./use/Parquet.md#source)|[✓](./use/Parquet.md#target)|
+|Parquet Schema|✗|[✓](./use/ParquetSchema.md#target)|
 
 ## 优势
 + 利用MR，极大隐去单机瓶颈，并可以利用yarn做任务调度及资源管理之用。(Sqoop优势)
 + 交换机模式提供了复杂度为O(2n)的解决方案，而非O(n²)。 (DataX优势)
 + 数据源间强解耦能够有效避免一颗老鼠屎坏了一锅汤，不会像Sqoop一样背着过重的涉及到整体结构的历史包袱。 (DataX优势)
-+ 基本数据类型之间提供一定的[转换能力](./dev/Core.md#Wrapper)，能够适应上下游数据类型不一致的情况。 (DataX优势，但提供更多的数据类型，能够提供更高的精度，避免不够用导致数据源自己定义自己的数据类型，架空Hercules的逻辑/绕过Hercules的约束)
++ 基本数据类型之间提供一定的[转换能力](./dev/Core.md#wrapper)，能够适应上下游数据类型不一致的情况。 (DataX优势，但提供更多的数据类型，能够提供更高的精度，避免不够用导致数据源自己定义自己的数据类型，架空Hercules的逻辑/绕过Hercules的约束)
 + 支持Map与List数据类型，并允许利用列名映射的方式做嵌套与嵌套展开。
 + 支持数据源schema的高灵活获取策略，结合*用户配置*、*数据源读取*以及*对侧数据源提供*的方式，兼具灵活性与方便性。
 + 还在想...

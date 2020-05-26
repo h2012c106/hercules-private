@@ -31,12 +31,12 @@ hadoop jar hercules-dev-jar-with-dependencies.jar com.xiaohongshu.db.hercules.He
 |help|✗|✗| |打印帮助信息| |
 |num-mapper|✓|✗|`4`|map task的数量，控制并行度| |
 |log-level|✓|✗|`INFO`|日志打印级别，全大写，`OFF`/`SEVERE`/`WARNING`/`INFO`/`CONFIG`/`FINE`/`FINER`/`FINEST`/`ALL`| |
-|allow-source-more-column|✗|✗| |在源目标均可以获得列名列表时，允许源数据源表多列，详情参见[此处](../dev/Core.md#SchemaNegotiator)| |
-|allow-target-more-column|✗|✗| |在源目标均可以获得列名列表时，允许目标数据源表多列，详情参见[此处](../dev/Core.md#SchemaNegotiator)| |
+|allow-source-more-column|✗|✗| |在源目标均可以获得列名列表时，允许源数据源表多列，详情参见[此处](../dev/Core.md#schemanegotiator)| |
+|allow-target-more-column|✗|✗| |在源目标均可以获得列名列表时，允许目标数据源表多列，详情参见[此处](../dev/Core.md#schemanegotiator)| |
 |column-map|✓|✗|`{}`|列名映射关系，json格式，key为源表列名，value为目标表列名，需要遵从BiMap规则，value不允许重复|`{"source_column": "target_column"}`|
 |max-write-qps|✓|✗|无|极限写qps，若不指定，则不做限制。**注意: 若下游写使用batch形式，此参数仅会限制写batch缓存速度，仅能保证全局qps，若要压下瞬时写压力，需要同时考虑减小batch大小**。| |
-|allow-copy-column-name|✗|✗| |是否允许上下游互相借鉴列名列表，详情参见[此处](../dev/Core.md#SchemaNegotiator)| |
-|allow-copy-column-type|✗|✗| |是否允许上下游互相借鉴列类型映射，详情参见[此处](../dev/Core.md#SchemaNegotiator)| |
+|allow-copy-column-name|✗|✗| |是否允许上下游互相借鉴列名列表，详情参见[此处](../dev/Core.md#schemanegotiator)| |
+|allow-copy-column-type|✗|✗| |是否允许上下游互相借鉴列类型映射，详情参见[此处](../dev/Core.md#schemanegotiator)| |
 
 ## 支持的数据类型
 + [RDBMS](./RDBMS.md)
