@@ -6,7 +6,7 @@
 |参数名(实际使用需加上`source-`前缀)|需要值|必填|默认值|描述|例|
 |:---:|:---:|:---:|:---:|---|:---:|
 |column|✓|✗|无|需要同步的列名列表，以`,`分隔|`columnA,columnB`|
-|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#DataType))，大小写不敏感|`{"columnA":"integer"}`|
+|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#datatype))，大小写不敏感|`{"columnA":"integer"}`|
 |black-column|✓|✗|` `|不需要同步的列名列表，以`,`分隔，若和`column`有冲突，此配置更优先|`columnA,columnB`|
 |connection|✓|✓|无|mongodb链接，格式`<host>:<port>`，允许多个，以`,`分隔|`10.4.12.12:27018`|
 |user|✓|✗|无|数据库用户名，若不指定，则无用户名登录| |
@@ -33,7 +33,7 @@ TODO:
 |参数名(实际使用需加上`target-`前缀)|需要值|必填|默认值|描述|例|
 |:---:|:---:|:---:|:---:|---|:---:|
 |column|✓|✗|无|需要同步的列名列表，以`,`分隔|`columnA,columnB`|
-|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#DataType))，大小写不敏感|`{"columnA":"integer"}`|
+|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#datatype))，大小写不敏感|`{"columnA":"integer"}`|
 |black-column|✓|✗|` `|不需要同步的列名列表，以`,`分隔，若和`column`有冲突，此配置更优先|`columnA,columnB`|
 |connection|✓|✓|无|mongodb链接，格式`<host>:<port>`，允许多个，以`,`分隔|`10.4.12.12:27018`|
 |user|✓|✗|无|数据库用户名，若不指定，则无用户名登录| |
@@ -41,7 +41,7 @@ TODO:
 |authdb|✓|✗|无|数据库authdb，若不指定，则使用`database`指定值| |
 |database|✓|✓|无|同步表db名| |
 |collection|✓|✓|无|同步表collection名| |
-|object-id|✓|✗|`_id`|由于工具[内部类型](../dev/Core.md#DataType)无`ObjectId`，需要显式指定，支持多列，以`,`分隔| |
+|object-id|✓|✗|`_id`|由于工具[内部类型](../dev/Core.md#datatype)无`ObjectId`，需要显式指定，支持多列，以`,`分隔| |
 |export-type|✓|✓|无|写模式，`INSERT`/`UPDATE_ONE`/`UPDATE_MANY`/`REPLACE_ONE`| |
 |update-key|✓|✗|无|更新键，当`export-type`不为`INSERT`时，必须指定。允许指定多列，以`,`分隔|`updateKeyA,updateKeyB`|
 |upsert|✗|✗| |若更新时，`update-key`下无数据，是否插入| |

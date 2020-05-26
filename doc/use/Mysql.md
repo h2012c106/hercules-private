@@ -6,7 +6,7 @@
 |参数名(实际使用需加上`source-`前缀)|需要值|必填|默认值|描述|例|
 |:---:|:---:|:---:|:---:|---|:---:|
 |column|✓|✗|无|需要同步的列名列表，以`,`分隔|`columnA,columnB`|
-|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#DataType))，大小写不敏感|`{"columnA":"integer"}`|
+|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#datatype))，大小写不敏感|`{"columnA":"integer"}`|
 |black-column|✓|✗|` `|不需要同步的列名列表，以`,`分隔，若和`column`有冲突，此配置更优先|`columnA,columnB`|
 |connection|✓|✓|无|数据库jdbc链接，需要带上database名|`jdbc:mysql://10.4.45.160:4000/sqoop_test`|
 |user|✓|✗|无|数据库用户名，若不指定，则无用户名登录| |
@@ -38,7 +38,7 @@ TODO:
 |参数名(实际使用需加上`target-`前缀)|需要值|必填|默认值|描述|例|
 |:---:|:---:|:---:|:---:|---|:---:|
 |column|✓|✗|无|需要同步的列名列表，以`,`分隔|`columnA,columnB`|
-|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#DataType))，大小写不敏感|`{"columnA":"integer"}`|
+|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#datatype))，大小写不敏感|`{"columnA":"integer"}`|
 |connection|✓|✓|无|数据库jdbc链接，需要带上database名|`jdbc:mysql://10.4.45.160:4000/sqoop_test`|
 |user|✓|✗|无|数据库用户名，若不指定，则无用户名登录| |
 |password|✓|✗|无|数据库密码，若不指定，则无密码登录| |
