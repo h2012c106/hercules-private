@@ -1,1 +1,1 @@
-[文档](./doc/Introduction.md)
+# [文档请移步](./doc/Introduction.md)
