@@ -5,7 +5,7 @@
 |参数名(实际使用需加上`source-`前缀)|需要值|必填|默认值|描述|例|
 |:---:|:---:|:---:|:---:|---|:---:|
 |column|✓|✗|无|需要同步的列名列表，以`,`分隔|`columnA,columnB`|
-|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#DataType))，大小写不敏感|`{"columnA":"integer"}`|
+|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#datatype))，大小写不敏感|`{"columnA":"integer"}`|
 |black-column|✓|✗|` `|不需要同步的列名列表，以`,`分隔，若和`column`有冲突，此配置更优先|`columnA,columnB`|
 |dir|✓|✓| |parquet所在目录| |
 |message-type|✓|✗|无|parquet schema| |
@@ -23,7 +23,7 @@
 |参数名(实际使用需加上`target-`前缀)|需要值|必填|默认值|描述|例|
 |:---:|:---:|:---:|:---:|---|:---:|
 |column|✓|✗|无|需要同步的列名列表，以`,`分隔|`columnA,columnB`|
-|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#DataType))，大小写不敏感|`{"columnA":"integer"}`|
+|column-type|✓|✗|`{}`|列类型，json格式，key为列名，大小写敏感；value为列类型([DataType](../dev/Core.md#datatype))，大小写不敏感|`{"columnA":"integer"}`|
 |black-column|✓|✗|` `|不需要同步的列名列表，以`,`分隔，若和`column`有冲突，此配置更优先|`columnA,columnB`|
 |dir|✓|✓| |parquet导出目录| |
 |message-type|✓|✗|无|parquet schema| |
