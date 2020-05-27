@@ -7,19 +7,6 @@
     <groupId>com.xiaohongshu.db</groupId>
     <artifactId>hercules</artifactId>
     <version>dev</version>
-<!--    <repositories>-->
-<!--        <repository>-->
-<!--            <id>alimaven</id>-->
-<!--            <name>aliyun maven</name>-->
-<!--            <url>http://maven.aliyun.com/nexus/content/groups/public/</url>-->
-<!--            <releases>-->
-<!--                <enabled>true</enabled>-->
-<!--            </releases>-->
-<!--            <snapshots>-->
-<!--                <enabled>false</enabled>-->
-<!--            </snapshots>-->
-<!--        </repository>-->
-<!--    </repositories>-->
     <build>
         <plugins>
             <plugin>
@@ -239,6 +226,7 @@
             <version>1.11.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-exec -->
+        <!--这个依赖必须晚于parquet-hadoop申明，不然会以hive-exec的parquet(这逼直接复制源码进项目的，maven管不了)覆盖掉parquet-hadoop-->
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
