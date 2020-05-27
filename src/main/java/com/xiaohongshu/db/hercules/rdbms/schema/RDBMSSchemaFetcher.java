@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.schema;
 
+import com.google.common.collect.Sets;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
@@ -202,5 +203,15 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
         } else {
             return res;
         }
+    }
+
+
+    @Override
+    public Set<DataType> getSupportedDataTypeSet() {
+        return Sets.newHashSet(DataType.BYTE, DataType.BOOLEAN, DataType.BYTES,
+                DataType.DECIMAL, DataType.DOUBLE,
+                DataType.FLOAT, DataType.INTEGER,
+                DataType.LONG, DataType.SHORT, DataType.STRING,
+                DataType.DATE, DataType.TIME, DataType.DATETIME);
     }
 }

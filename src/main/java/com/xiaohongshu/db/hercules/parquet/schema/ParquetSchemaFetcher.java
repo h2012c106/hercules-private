@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.parquet.schema;
 
+import com.google.common.collect.Sets;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
@@ -166,5 +167,16 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
                 getOptions().set(MESSAGE_TYPE, messageTypeStr);
             }
         }
+    }
+
+
+    @Override
+    public Set<DataType> getSupportedDataTypeSet() {
+        return Sets.newHashSet(DataType.BYTE, DataType.BOOLEAN, DataType.BYTES,
+                DataType.DECIMAL, DataType.DOUBLE,
+                DataType.FLOAT, DataType.INTEGER,
+                DataType.LONG, DataType.SHORT, DataType.STRING,
+                DataType.DATE, DataType.TIME, DataType.DATETIME,
+                DataType.LONGLONG);
     }
 }
