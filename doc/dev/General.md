@@ -1,6 +1,18 @@
 # 总览
 ## 打包
+
+1. 安装  
+根目录下执行`mvn clean install`，tar.gz包位于`./target/`。  
+在运行机器上执行:  
+```
+tar -zxvf hercules-xxx.tar.gz -C ./
+vim /etc/profile
+# 最后一行追加 export PATH="{hercules文件夹位置}/hercules/bin:$PATH"
+source /etc/profile
+```
+2. 仅打fatjar  
 根目录下执行`mvn clean package`，可执行jar包位于`./target/`。  
+
 ## 工作原理
 核心指导思想是利用MapReduce中的Map操作进行数据的切片-读取-处理-写入。在这个逻辑上与Sqoop保持一致。  
 上述流程实际是借助MapReduce框架的InputFormat、RecordReader、Mapper、OutputFormat以及RecordWriter共同完成的。  

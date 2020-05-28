@@ -55,6 +55,27 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <workingDirectory>${project.basedir}</workingDirectory>
+                            <executable>${project.basedir}/build/build.sh</executable>
+                            <arguments>
+                                <argument>${project.artifactId}-${project.version}.jar</argument>
+                                <argument>${project.build.directory}</argument>
+                                <argument>${project.artifactId}-${project.version}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -200,24 +221,6 @@
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>3.1.2</version>
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.apache.hadoop</groupId>-->
-<!--                    <artifactId>hadoop-yarn-registry</artifactId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.apache.hadoop</groupId>-->
-<!--                    <artifactId>hadoop-yarn-server-resourcemanager</artifactId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.apache.hadoop</groupId>-->
-<!--                    <artifactId>hadoop-hdfs</artifactId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.apache.hadoop</groupId>-->
-<!--                    <artifactId>hadoop-common</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
         </dependency>
 
     </dependencies>

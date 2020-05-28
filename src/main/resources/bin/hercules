@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# 不太会写bash，反正至少确立用bash启动的路子
+
+selfDir=$(cd "$(dirname "$0")" || exit 1;pwd)
+echo "Hercules shell at ${selfDir}"
+exec hadoop jar "${selfDir}/../hercules-${version}.jar" "$@"
