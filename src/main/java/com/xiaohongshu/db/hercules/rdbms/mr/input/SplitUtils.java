@@ -177,7 +177,7 @@ public final class SplitUtils {
                     minMaxCountResult.close();
                 }
             } catch (SQLException se) {
-                LOG.debug("SQLException closing resultset: " + se.toString());
+                LOG.warn("SQLException closing resultset: " + se.toString());
             }
 
             try {
@@ -185,7 +185,7 @@ public final class SplitUtils {
                     minMaxCountStatement.close();
                 }
             } catch (SQLException se) {
-                LOG.debug("SQLException closing statement: " + se.toString());
+                LOG.warn("SQLException closing statement: " + se.toString());
             }
 
             try {
@@ -193,7 +193,7 @@ public final class SplitUtils {
                     connection.close();
                 }
             } catch (SQLException se) {
-                LOG.debug("SQLException closing connection: " + se.toString());
+                LOG.warn("SQLException closing connection: " + se.toString());
             }
         }
     }

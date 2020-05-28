@@ -11,6 +11,7 @@ import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
 import com.xiaohongshu.db.hercules.core.parser.ParserFactory;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
+import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import lombok.SneakyThrows;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -39,6 +40,8 @@ public class Hercules {
     }
 
     public static void main(String[] args) {
+        LogUtils.configureLog4J();
+
         printVersionInfo();
 
         // 获得 dataFlow 参数，模式为 SOURCE_TYPE::TARGET_TYPE
