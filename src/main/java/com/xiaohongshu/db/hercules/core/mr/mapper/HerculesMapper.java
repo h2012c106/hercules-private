@@ -86,8 +86,8 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         long start = System.currentTimeMillis();
         context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
         value = rowTransfer(value);
-        context.write(key, value);
         time += (System.currentTimeMillis() - start);
+        context.write(key, value);
     }
 
     @Override
