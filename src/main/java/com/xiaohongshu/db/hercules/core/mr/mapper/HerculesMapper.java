@@ -41,7 +41,7 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         // 黑名单处理
         WritableUtils.filterColumn(value.getRow(), blackColumnList);
 
-        // TODO 列聚合
+        // TODO 列聚合x
 
         // 转换列名
         WritableUtils.convertColumnName(value, columnMap);

@@ -98,18 +98,9 @@ public class HBaseInputWrapperManager extends WrapperGetterFactory<byte[]> {
         };
     }
 
-    // TODO 检查目前的转换能否正常work，借鉴自 dataX
     @Override
     protected WrapperGetter<byte[]> getDateGetter() {
-        return (res, name, seq, al) -> {
-            if (res==null) {
-                return new NullWrapper();
-            } else {
-                String dateValue = Bytes.toStringBinary(res);
-                // 需要设定一个dateformat，即 new String()
-                return new DateWrapper(DateUtils.parseDate(dateValue, new String()), DataType.DATE);
-            }
-        };
+        return null;
     }
 
     @Override
@@ -119,7 +110,7 @@ public class HBaseInputWrapperManager extends WrapperGetterFactory<byte[]> {
 
     @Override
     protected WrapperGetter<byte[]> getDatetimeGetter() {
-        return getLongGetter();
+        return null;
     }
 
     @Override
