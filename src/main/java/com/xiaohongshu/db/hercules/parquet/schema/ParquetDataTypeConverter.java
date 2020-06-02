@@ -125,4 +125,6 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
 
         return (MessageType) ParquetSchemaUtils.calculateTree(root, this);
     }
+
+    abstract public Set<DataType> getSupportedDataTypeSet();
 }

@@ -13,6 +13,7 @@ import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.parquet.format.DateType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -232,6 +233,10 @@ public final class SchemaNegotiator {
         // 塞column name list
         sourceOptions.set(BaseDataSourceOptionsConf.COLUMN, sourceColumnNameList.toArray(new String[0]));
         targetOptions.set(BaseDataSourceOptionsConf.COLUMN, targetColumnNameList.toArray(new String[0]));
+
+        checkDataTypeSet(sourceColumnTypeMap, sourceSchemaFetcher);
+        checkDataTypeSet(targetColumnTypeMap, targetSchemaFetcher);
+
         // 塞column type map
         sourceOptions.set(BaseDataSourceOptionsConf.COLUMN_TYPE,
                 SchemaUtils.convert(sourceColumnTypeMap).toJSONString());
@@ -242,4 +247,16 @@ public final class SchemaNegotiator {
         targetSchemaFetcher.postNegotiate(targetColumnNameList, targetColumnTypeMap);
     }
 
+    private void checkDataTypeSet(Map<String, DataType> source, BaseSchemaFetcher schemaFetcher) {
+        Set<DataType> supportedDataTypeSet = schemaFetcher.getSupportedDataTypeSet();
+        Map<String, DataType> errorMap = new HashMap<>();
+        for (Map.Entry<String, DataType> entry : source.entrySet()) {
+            if (!supportedDataTypeSet.contains(entry.getValue())) {
+                errorMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+        if (errorMap.size() != 0) {
+            throw new RuntimeException("Unsupported data type found: " + errorMap);
+        }
+    }
 }

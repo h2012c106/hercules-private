@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import javax.xml.crypto.Data;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -87,4 +88,6 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter> {
      */
     public void postNegotiate(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
     }
+
+    abstract  public Set<DataType> getSupportedDataTypeSet();
 }
