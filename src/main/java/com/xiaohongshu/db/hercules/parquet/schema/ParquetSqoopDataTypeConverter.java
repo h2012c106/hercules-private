@@ -1,9 +1,12 @@
 package com.xiaohongshu.db.hercules.parquet.schema;
 
+import com.google.common.collect.Sets;
 import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.parquet.schema.*;
+
+import java.util.Set;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
 
@@ -111,5 +114,26 @@ public class ParquetSqoopDataTypeConverter extends ParquetDataTypeConverter {
             default:
                 throw new RuntimeException(String.format("The type [%s] cannot be expressed by parquet schema.", dataType));
         }
+    }
+
+    @Override
+    public Set<DataType> getSupportedDataTypeSet() {
+        return Sets.newHashSet(
+                DataType.BYTE,
+                DataType.SHORT,
+                DataType.INTEGER,
+                DataType.LONG,
+                DataType.FLOAT,
+                DataType.DOUBLE,
+                DataType.DECIMAL,
+                DataType.BOOLEAN,
+                DataType.DATE,
+                DataType.TIME,
+                DataType.DATETIME,
+                DataType.STRING,
+                DataType.BYTES,
+                DataType.LIST,
+                DataType.MAP
+        );
     }
 }
