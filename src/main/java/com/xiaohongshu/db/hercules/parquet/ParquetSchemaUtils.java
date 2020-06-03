@@ -140,7 +140,7 @@ public final class ParquetSchemaUtils {
             TypeBuilderTreeNode targetChild = targetChildren.get(columnName);
 
             Type.Repetition sourceRepetition = sourceChild.getRepetition();
-            DataType sourceBaseDataType = sourceChild.getType();
+            DataType sourceDataType = sourceChild.getType();
             if (targetChild == null) {
                 if (sourceRepetition == Type.Repetition.REQUIRED && !allowTargetUnexist) {
                     sourceChild.setRepetition(Type.Repetition.OPTIONAL);
@@ -148,17 +148,17 @@ public final class ParquetSchemaUtils {
                 target.addAndReturnChildren(sourceChild);
             } else {
                 Type.Repetition targetRepetition = targetChild.getRepetition();
-                DataType targetBaseDataType = targetChild.getType();
+                DataType targetDataType = targetChild.getType();
 
-                DataType negotiatedType = getNegotiatedType(targetBaseDataType, sourceBaseDataType, typeAutoUpgrade);
+                DataType negotiatedType = getNegotiatedType(targetDataType, sourceDataType, typeAutoUpgrade);
                 if (negotiatedType == null) {
-                    throw new RuntimeException(String.format("Unmatched data type of column [%s], expected [%s], actually [%s].", columnName, targetBaseDataType, sourceBaseDataType));
+                    throw new RuntimeException(String.format("Unmatched data type of column [%s], expected [%s], actually [%s].", columnName, targetDataType, sourceDataType));
                 } else {
                     targetChild.setType(negotiatedType);
                 }
 
                 // 如果存在子group需要合并子group
-                if (targetBaseDataType == BaseDataType.MAP) {
+                if (targetDataType == BaseDataType.MAP) {
                     // 目标、源node皆有此列，至少说明这列不论对于目标还是源都被正儿八经置过，故内部统统care少列
                     unionMapTree(targetChild, sourceChild, typeAutoUpgrade, false, false);
                 }

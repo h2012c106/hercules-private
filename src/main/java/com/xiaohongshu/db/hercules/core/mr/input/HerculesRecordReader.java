@@ -41,20 +41,28 @@ public abstract class HerculesRecordReader<T, C extends DataTypeConverter<?, ?>>
     protected List<String> columnNameList;
     protected Map<String, DataType> columnTypeMap;
 
-    protected C converter;
     protected BaseCustomDataTypeManager<?, ?> manager;
 
     protected boolean emptyColumnNameList;
 
-    public HerculesRecordReader(C converter, BaseCustomDataTypeManager<?, ?> manager,
+    public HerculesRecordReader(TaskAttemptContext context, BaseCustomDataTypeManager<?, ?> manager,
                                 WrapperGetterFactory<T> wrapperGetterFactory) {
-        this.converter = converter;
         this.manager = manager;
+
+        options = new WrappingOptions();
+        options.fromConfiguration(context.getConfiguration());
+
+        // 虽然negotiator中会强制塞，但是空值似乎传不过来
+        columnNameList = Arrays.asList(options.getSourceOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+        columnTypeMap = SchemaUtils.convert(options.getSourceOptions().getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), manager);
+
+        emptyColumnNameList = columnNameList.size() == 0;
+
         setWrapperGetterFactory(wrapperGetterFactory);
     }
 
-    public HerculesRecordReader(C converter, WrapperGetterFactory<T> wrapperGetterFactory) {
-        this(converter, NullCustomDataTypeManager.INSTANCE, wrapperGetterFactory);
+    public HerculesRecordReader(TaskAttemptContext context, WrapperGetterFactory<T> wrapperGetterFactory) {
+        this(context, NullCustomDataTypeManager.INSTANCE, wrapperGetterFactory);
     }
 
     /**
@@ -86,15 +94,6 @@ public abstract class HerculesRecordReader<T, C extends DataTypeConverter<?, ?>>
 
     @Override
     public final void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        options = new WrappingOptions();
-        options.fromConfiguration(context.getConfiguration());
-
-        // 虽然negotiator中会强制塞，但是空值似乎传不过来
-        columnNameList = Arrays.asList(options.getSourceOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-        columnTypeMap = SchemaUtils.convert(options.getSourceOptions().getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), manager);
-
-        emptyColumnNameList = columnNameList.size() == 0;
-
         long start = System.currentTimeMillis();
         myInitialize(split, context);
         time += (System.currentTimeMillis() - start);

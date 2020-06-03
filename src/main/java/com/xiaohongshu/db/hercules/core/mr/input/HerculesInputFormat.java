@@ -26,22 +26,19 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public abstract class HerculesInputFormat<C extends DataTypeConverter<?, ?>>
-        extends InputFormat<NullWritable, HerculesWritable>
-        implements DataTypeConverterGenerator<C>, CustomDataTypeManagerGenerator {
+public abstract class HerculesInputFormat extends InputFormat<NullWritable, HerculesWritable>
+        implements CustomDataTypeManagerGenerator {
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
     public HerculesInputFormat() {
     }
 
-    protected C converter;
     protected Map<String, DataType> columnTypeMap;
     protected GenericOptions options;
 
     protected void initializeContext(GenericOptions sourceOptions) {
         options = sourceOptions;
-        converter = generateConverter();
         columnTypeMap = SchemaUtils.convert(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), generateCustomDataTypeManager());
     }
 

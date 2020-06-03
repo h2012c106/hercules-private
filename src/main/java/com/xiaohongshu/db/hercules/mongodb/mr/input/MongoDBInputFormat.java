@@ -30,8 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConverter>
-        implements MongoDBManagerGenerator {
+public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBManagerGenerator {
 
     private static final Log LOG = LogFactory.getLog(MongoDBInputFormat.class);
 
@@ -204,12 +203,7 @@ public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConve
 
     @Override
     protected HerculesRecordReader<Document, MongoDBDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new MongoDBRecordReader(converter, generateCustomDataTypeManager(), manager);
-    }
-
-    @Override
-    public MongoDBDataTypeConverter generateConverter() {
-        return new MongoDBDataTypeConverter();
+        return new MongoDBRecordReader(context, generateCustomDataTypeManager(), manager);
     }
 
     @Override

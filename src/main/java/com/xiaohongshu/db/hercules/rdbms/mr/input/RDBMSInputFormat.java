@@ -1,11 +1,10 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
@@ -24,7 +23,8 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.List;
 
-public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter> implements RDBMSManagerGenerator {
+public class RDBMSInputFormat extends HerculesInputFormat
+        implements RDBMSManagerGenerator, DataTypeConverterGenerator<RDBMSDataTypeConverter> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
@@ -33,6 +33,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     protected RDBMSManager manager;
     private String baseSql;
     protected RDBMSSchemaFetcher schemaFetcher;
+    protected RDBMSDataTypeConverter converter;
 
     protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options,
                                                          RDBMSDataTypeConverter converter,
@@ -44,6 +45,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     protected void initializeContext(GenericOptions sourceOptions) {
         super.initializeContext(sourceOptions);
 
+        converter = generateConverter();
         manager = generateManager(sourceOptions);
         schemaFetcher = initializeSchemaFetcher(sourceOptions, converter, manager);
         baseSql = SqlUtils.makeBaseQuery(sourceOptions);
@@ -77,7 +79,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     @Override
     public HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
-        return new RDBMSRecordReader(manager, converter);
+        return new RDBMSRecordReader(context, manager);
     }
 
     @Override

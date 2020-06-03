@@ -13,6 +13,6 @@ public class TiDBInputFormat extends MysqlInputFormat {
 
     @Override
     public HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new TiDBRecordReader(manager, converter, schemaFetcher);
+        return new TiDBRecordReader(context, manager, schemaFetcher);
     }
 }

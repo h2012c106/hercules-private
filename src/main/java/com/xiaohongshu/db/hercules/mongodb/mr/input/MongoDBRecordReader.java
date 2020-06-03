@@ -52,10 +52,19 @@ public class MongoDBRecordReader
     private MongoClient client = null;
     private HerculesWritable value;
 
+    private MongoDBDataTypeConverter converter;
+
     private final Document fakeDocument = new Document(FAKE_COLUMN_NAME_USED_BY_LIST, 0);
 
-    public MongoDBRecordReader(MongoDBDataTypeConverter converter, MongoDBCustomDataTypeManager typeManager, MongoDBManager manager) {
-        super(converter, typeManager, null);
+    public MongoDBRecordReader(TaskAttemptContext context,
+                               MongoDBCustomDataTypeManager typeManager, MongoDBManager manager) {
+        this(context, new MongoDBDataTypeConverter(), typeManager, manager);
+    }
+
+    public MongoDBRecordReader(TaskAttemptContext context, MongoDBDataTypeConverter converter,
+                               MongoDBCustomDataTypeManager typeManager, MongoDBManager manager) {
+        super(context, typeManager, null);
+        this.converter = converter;
         setWrapperGetterFactory(new MongoDBWrapperGetterFactory());
         this.manager = manager;
     }
@@ -359,12 +368,12 @@ public class MongoDBRecordReader
             return new WrapperGetter<Document>() {
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
-                    Document value = row.get(columnName,Document.class);
+                    Document value = row.get(columnName, Document.class);
                     if (value == null) {
                         return MapWrapper.NULL_INSTANCE;
                     } else {
                         String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
-                        return documentToMapWrapper( value, fullColumnName);
+                        return documentToMapWrapper(value, fullColumnName);
                     }
                 }
             };

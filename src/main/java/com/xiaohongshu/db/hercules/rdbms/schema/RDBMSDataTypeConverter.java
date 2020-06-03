@@ -1,9 +1,9 @@
 package com.xiaohongshu.db.hercules.rdbms.schema;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 
 import java.sql.ResultSet;
 import java.sql.Types;
@@ -12,7 +12,7 @@ import java.util.Map;
 public class RDBMSDataTypeConverter implements DataTypeConverter<Integer, ResultSet> {
 
     @Override
-    public BaseDataType convertElementType(Integer standard) {
+    public DataType convertElementType(Integer standard) {
         switch (standard) {
             case Types.NULL:
                 return BaseDataType.NULL;

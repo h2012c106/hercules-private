@@ -4,7 +4,6 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
@@ -34,6 +33,11 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
         super(options, converter);
         this.manager = manager;
         this.baseSql = SqlUtils.makeBaseQuery(options, true);
+    }
+
+    public RDBMSSchemaFetcher(GenericOptions options,
+                              RDBMSManager manager) {
+        this(options, new RDBMSDataTypeConverter(), manager);
     }
 
 
