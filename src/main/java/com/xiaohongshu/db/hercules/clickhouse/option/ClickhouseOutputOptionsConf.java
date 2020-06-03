@@ -4,13 +4,14 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf.AUTOCOMMIT;
-import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf.STATEMENT_PER_COMMIT;
+import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf.*;
 
 public final class ClickhouseOutputOptionsConf extends BaseOptionsConf {
 
@@ -43,6 +44,8 @@ public final class ClickhouseOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-
+        ParseUtils.assertTrue(ExportType
+                .valueOfIgnoreCase(options.getString(EXPORT_TYPE, null))
+                .isInsert(), "Clickhouse only support INSERT export type.");
     }
 }
