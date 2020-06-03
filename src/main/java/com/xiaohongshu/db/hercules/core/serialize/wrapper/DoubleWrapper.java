@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
 import java.math.BigDecimal;
@@ -11,21 +12,33 @@ import java.util.Date;
 
 public class DoubleWrapper extends BaseWrapper<BigDecimal> {
 
-    public DoubleWrapper(Float value) {
-        this(BigDecimal.valueOf(value), DataType.FLOAT, 4);
+    private DoubleWrapper(Float value) {
+        this(BigDecimal.valueOf(value), BaseDataType.FLOAT, 4);
     }
 
-    public DoubleWrapper(Double value) {
-        this(BigDecimal.valueOf(value), DataType.DOUBLE, 8);
+    private DoubleWrapper(Double value) {
+        this(BigDecimal.valueOf(value), BaseDataType.DOUBLE, 8);
     }
 
-    public DoubleWrapper(BigDecimal value) {
+    private DoubleWrapper(BigDecimal value) {
         // 仅仅粗略估计
-        this(value, DataType.DECIMAL, value.toBigInteger().toByteArray().length);
+        this(value, BaseDataType.DECIMAL, value.toBigInteger().toByteArray().length);
     }
 
     private DoubleWrapper(BigDecimal value, DataType type, int byteSize) {
         super(value, type, byteSize);
+    }
+
+    public static BaseWrapper get(Float value) {
+        return value == null ? NullWrapper.get(BaseDataType.FLOAT) : new DoubleWrapper(value);
+    }
+
+    public static BaseWrapper get(Double value) {
+        return value == null ? NullWrapper.get(BaseDataType.DOUBLE) : new DoubleWrapper(value);
+    }
+
+    public static BaseWrapper get(BigDecimal value) {
+        return value == null ? NullWrapper.get(BaseDataType.DECIMAL) : new DoubleWrapper(value);
     }
 
     @Override

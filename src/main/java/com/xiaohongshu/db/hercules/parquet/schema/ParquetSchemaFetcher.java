@@ -1,9 +1,10 @@
 package com.xiaohongshu.db.hercules.parquet.schema;
 
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

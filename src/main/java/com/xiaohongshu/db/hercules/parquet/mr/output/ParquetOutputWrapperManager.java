@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
@@ -51,7 +52,7 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
         // 由于类型一定一致，所以可以事先取
         DataType columnType = converter.convertElementType(new ParquetType(res.getType().getType(columnName), false));
         WrapperSetter<Group> wrapperSetter = getWrapperSetter(columnType);
-        if (wrapper.getType() == DataType.LIST) {
+        if (wrapper.getType() == BaseDataType.LIST) {
             ListWrapper listWrapper = (ListWrapper) wrapper;
             for (int i = 0; i < listWrapper.size(); ++i) {
                 // 在set里都是对某一列无脑add的，不用担心，比读的逻辑简单很多
@@ -202,7 +203,7 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
             @Override
             public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
                 // 如果是null，就不报错了，不置值
-                if (wrapper.getType() != DataType.NULL) {
+                if (wrapper.getType() != BaseDataType.NULL) {
                     String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
                     Group newGroup = row.addGroup(rowName);
                     // 如果上游不是一个Map，直接报错

@@ -1,10 +1,11 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
@@ -32,11 +33,6 @@ public class RDBMSInputFormat extends HerculesInputFormat<RDBMSDataTypeConverter
     protected RDBMSManager manager;
     private String baseSql;
     protected RDBMSSchemaFetcher schemaFetcher;
-
-    /**
-     * rdbms使用{@link StingyMap}，不允许（不可能）拿到未被fetch到类型的列。
-     */
-    private StingyMap<String, DataType> columnTypeMap;
 
     protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options,
                                                          RDBMSDataTypeConverter converter,

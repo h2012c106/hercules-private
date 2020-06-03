@@ -1,7 +1,10 @@
 package com.xiaohongshu.db.hercules.core.mr.output;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.ReflectionUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -10,8 +13,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -28,31 +31,31 @@ public abstract class WrapperSetterFactory<T> {
     }
 
     private void setWrapperSetter(Map<DataType, WrapperSetter<T>> wrapperSetterMap,
-                                  DataType dataType, Function<Void, WrapperSetter<T>> setFunction) {
+                                  BaseDataType baseDataType, Function<Void, WrapperSetter<T>> setFunction) {
         try {
             WrapperSetter<T> tmpWrapper = setFunction.apply(null);
             if (tmpWrapper != null) {
-                wrapperSetterMap.put(dataType, tmpWrapper);
+                wrapperSetterMap.put(baseDataType, tmpWrapper);
             } else {
                 throw new UnsupportedOperationException();
             }
         } catch (Exception e) {
             LOG.warn(String.format("Undefined output convert strategy of %s, exception: %s",
-                    dataType.toString(),
+                    baseDataType.toString(),
                     e.getMessage()));
         }
     }
 
     private void initializeWrapperSetterMap() {
-        wrapperSetterMap = new HashMap<>(DataType.values().length);
+        wrapperSetterMap = new ConcurrentHashMap<>(BaseDataType.values().length);
         final WrapperSetterFactory self = this;
-        for (DataType dataType : DataType.values()) {
-            setWrapperSetter(wrapperSetterMap, dataType, new Function<Void, WrapperSetter<T>>() {
+        for (BaseDataType baseDataType : BaseDataType.values()) {
+            setWrapperSetter(wrapperSetterMap, baseDataType, new Function<Void, WrapperSetter<T>>() {
                 @Override
                 @SneakyThrows
                 @SuppressWarnings("unchecked")
                 public WrapperSetter<T> apply(Void aVoid) {
-                    String dataTypeCapitalName = StringUtils.capitalize(dataType.name().toLowerCase());
+                    String dataTypeCapitalName = StringUtils.capitalize(baseDataType.name().toLowerCase());
                     String methodName = "get" + dataTypeCapitalName + "Setter";
                     Method getMethod = ReflectionUtils.getMethod(self.getClass(), methodName);
                     try {
@@ -66,13 +69,27 @@ public abstract class WrapperSetterFactory<T> {
         }
     }
 
+    public final boolean contains(@NonNull DataType dataType) {
+        return wrapperSetterMap.containsKey(dataType);
+    }
+
     public final WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
-        WrapperSetter<T> res = wrapperSetterMap.get(dataType);
-        if (res == null) {
-            throw new MapReduceException("Unknown data type: " + dataType.name());
+        WrapperSetter<T> res;
+        if (dataType.isCustom()) {
+            final CustomDataType<?, T> customDataType = (CustomDataType<?, T>) dataType;
+            res = wrapperSetterMap.computeIfAbsent(customDataType, key -> new WrapperSetter<T>() {
+                @Override
+                public void set(@NonNull BaseWrapper wrapper, T row, String rowName, String columnName, int columnSeq) throws Exception {
+                    customDataType.write(wrapper, row, rowName, columnName, columnSeq);
+                }
+            });
         } else {
-            return res;
+            res = wrapperSetterMap.get(dataType);
+            if (res == null) {
+                throw new MapReduceException("Unknown data type: " + dataType.toString());
+            }
         }
+        return res;
     }
 
     abstract protected WrapperSetter<T> getByteSetter();

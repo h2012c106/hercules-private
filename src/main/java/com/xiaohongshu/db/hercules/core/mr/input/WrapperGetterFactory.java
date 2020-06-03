@@ -1,7 +1,10 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.ReflectionUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -10,8 +13,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -30,29 +33,29 @@ public abstract class WrapperGetterFactory<T> {
     }
 
     private void setWrapperGetter(Map<DataType, WrapperGetter<T>> wrapperGetterMap,
-                                  DataType dataType, Function<Void, WrapperGetter<T>> getFunction) {
+                                  BaseDataType baseDataType, Function<Void, WrapperGetter<T>> getFunction) {
         try {
             WrapperGetter<T> tmpWrapper = getFunction.apply(null);
             if (tmpWrapper != null) {
-                wrapperGetterMap.put(dataType, tmpWrapper);
+                wrapperGetterMap.put(baseDataType, tmpWrapper);
             } else {
                 throw new UnsupportedOperationException();
             }
         } catch (Exception e) {
-            LOG.warn(String.format("Undefined input convert strategy of %s, exception: %s", dataType.toString(), e.getMessage()));
+            LOG.warn(String.format("Undefined input convert strategy of %s, exception: %s", baseDataType.toString(), e.getMessage()));
         }
     }
 
     private void initializeWrapperGetterMap() {
-        wrapperGetterMap = new HashMap<>(DataType.values().length);
+        wrapperGetterMap = new ConcurrentHashMap<>(BaseDataType.values().length);
         final WrapperGetterFactory self = this;
-        for (DataType dataType : DataType.values()) {
-            setWrapperGetter(wrapperGetterMap, dataType, new Function<Void, WrapperGetter<T>>() {
+        for (BaseDataType baseDataType : BaseDataType.values()) {
+            setWrapperGetter(wrapperGetterMap, baseDataType, new Function<Void, WrapperGetter<T>>() {
                 @Override
                 @SneakyThrows
                 @SuppressWarnings("unchecked")
                 public WrapperGetter<T> apply(Void aVoid) {
-                    String dataTypeCapitalName = StringUtils.capitalize(dataType.name().toLowerCase());
+                    String dataTypeCapitalName = StringUtils.capitalize(baseDataType.name().toLowerCase());
                     String methodName = "get" + dataTypeCapitalName + "Getter";
                     Method getMethod = ReflectionUtils.getMethod(self.getClass(), methodName);
                     try {
@@ -66,13 +69,28 @@ public abstract class WrapperGetterFactory<T> {
         }
     }
 
+    public final boolean contains(@NonNull DataType dataType) {
+        return wrapperGetterMap.containsKey(dataType);
+    }
+
     public final WrapperGetter<T> getWrapperGetter(@NonNull DataType dataType) {
-        WrapperGetter<T> res = wrapperGetterMap.get(dataType);
-        if (res == null) {
-            throw new MapReduceException("Unsupported data type: " + dataType.name());
+        WrapperGetter<T> res;
+        if (dataType.isCustom()) {
+            final CustomDataType<T, ?> customDataType = (CustomDataType<T, ?>) dataType;
+            // 运行时赋
+            res = wrapperGetterMap.computeIfAbsent(customDataType, key -> new WrapperGetter<T>() {
+                @Override
+                public BaseWrapper get(T row, String rowName, String columnName, int columnSeq) throws Exception {
+                    return customDataType.read(row, rowName, columnName, columnSeq);
+                }
+            });
         } else {
-            return res;
+            res = wrapperGetterMap.get(dataType);
+            if (res == null) {
+                throw new MapReduceException("Unsupported data type: " + dataType.toString());
+            }
         }
+        return res;
     }
 
     abstract protected WrapperGetter<T> getByteGetter();

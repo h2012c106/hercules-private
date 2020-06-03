@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.parquet.schema;
 
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import org.apache.commons.logging.Log;
@@ -17,15 +18,15 @@ import static com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils.GENERATED_M
 
 /**
  * Parquet作为底层数据，各个逻辑类型写parquet的姿势（写入类型，写入方法）都会有不同，目前已知的有sqoop任务、hive以及parquet logic type的写入姿势。
- * 目前矛盾主要如下：（其中{@link DataType#LONGLONG}由于sql里没有对应类型，所以sqoop和hive不支持）
+ * 目前矛盾主要如下：（其中{@link BaseDataType#LONGLONG}由于sql里没有对应类型，所以sqoop和hive不支持）
  * 数据类型\上层读写               sqoop			hive											parquet logic type
- * {@link DataType#BYTE}        int32           int32 (INTEGER(8,true))                         同hive
- * {@link DataType#SHORT}       int32           int32 (INTEGER(16,true))                        同hive
- * {@link DataType#LONGLONG}    不支持           不支持                                           int96
- * {@link DataType#DECIMAL}	    binary (STRING)	binary (DECIMAL(p,s)) (p、s在hercules体系无法获得)	{@see <a href="https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#decimal">parquet decimal annotation</a>}
- * {@link DataType#DATE}		int64			int32 (DATE)									同hive
- * {@link DataType#TIME}		int64			不支持											{@see <a href="https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#time">parquet time annotation</a>}
- * {@link DataType#DATETIME}    int64			int96											{@see <a href="https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#timestamp">parquet timestamp annotation</a>}
+ * {@link BaseDataType#BYTE}        int32           int32 (INTEGER(8,true))                         同hive
+ * {@link BaseDataType#SHORT}       int32           int32 (INTEGER(16,true))                        同hive
+ * {@link BaseDataType#LONGLONG}    不支持           不支持                                           int96
+ * {@link BaseDataType#DECIMAL}	    binary (STRING)	binary (DECIMAL(p,s)) (p、s在hercules体系无法获得)	{@see <a href="https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#decimal">parquet decimal annotation</a>}
+ * {@link BaseDataType#DATE}		int64			int32 (DATE)									同hive
+ * {@link BaseDataType#TIME}		int64			不支持											{@see <a href="https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#time">parquet time annotation</a>}
+ * {@link BaseDataType#DATETIME}    int64			int96											{@see <a href="https://github.com/apache/parquet-format/blob/master/LogicalTypes.md#timestamp">parquet timestamp annotation</a>}
  * 为了适配各种上层读写parquet的姿势，故会做不同的类型转换/IO姿势，以子类方式实现。
  * 其中decimal由于precision+scale无法根据columnMap获得，所以decimal data type无法生成对应的schema，但是知道schema后IO是没问题的。
  */
@@ -64,7 +65,7 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
     private void recursiveGetMessageType(Map<String, DataType> res, Type type, String parentName) {
         String fullColumnName = WritableUtils.concatColumn(parentName, type.getName());
         if (type.isRepetition(Type.Repetition.REPEATED)) {
-            res.put(fullColumnName, DataType.LIST);
+            res.put(fullColumnName, BaseDataType.LIST);
             return;
         }
         if (type.isPrimitive()) {
@@ -74,7 +75,7 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
             for (Type child : groupType.getFields()) {
                 recursiveGetMessageType(res, child, fullColumnName);
             }
-            res.put(fullColumnName, DataType.MAP);
+            res.put(fullColumnName, BaseDataType.MAP);
         }
     }
 
@@ -112,12 +113,12 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
         Set<String> columnNameSet = new LinkedHashSet<>(columnNameList);
 
         // 根节点是message
-        TypeBuilderTreeNode root = new TypeBuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, DataType.MAP);
+        TypeBuilderTreeNode root = new TypeBuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, BaseDataType.MAP);
         for (String columnName : columnNameSet) {
             TypeBuilderTreeNode tmpNode = root;
             WritableUtils.ColumnSplitResult splitResult = WritableUtils.splitColumnWrapped(columnName);
             for (String parentColumnName : splitResult.getParentColumnList()) {
-                tmpNode = tmpNode.addAndReturnChildren(new TypeBuilderTreeNode(parentColumnName, convertDataType(DataType.MAP), tmpNode, DataType.MAP));
+                tmpNode = tmpNode.addAndReturnChildren(new TypeBuilderTreeNode(parentColumnName, convertDataType(BaseDataType.MAP), tmpNode, BaseDataType.MAP));
             }
             DataType finalColumnType = columnTypeMap.get(columnName);
             tmpNode.addAndReturnChildren(new TypeBuilderTreeNode(splitResult.getFinalColumn(), convertDataType(finalColumnType), tmpNode, finalColumnType));

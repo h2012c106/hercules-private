@@ -9,6 +9,7 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.mongodb.datatype.MongoDBCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBDataTypeConverter;
@@ -23,7 +24,6 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
-import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,14 +46,6 @@ public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConve
     protected void initializeContext(GenericOptions sourceOptions) {
         super.initializeContext(sourceOptions);
         manager = generateManager(sourceOptions);
-    }
-
-    private boolean isPrimaryIdObjectId(MongoClient mongoClient, String db, String collection, String splitBy) {
-        MongoDatabase database = mongoClient.getDatabase(db);
-        MongoCollection<Document> col = database.getCollection(collection);
-        Document doc = col.find().limit(1).first();
-        Object id = doc.get(splitBy);
-        return id instanceof ObjectId;
     }
 
     /**
@@ -114,8 +106,6 @@ public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConve
                     supportSplitVector = false;
                 }
             }
-
-//            boolean isObjectId = isPrimaryIdObjectId(client, databaseStr, collectionStr, SPLIT_BY);
 
             if (supportSplitVector) {
                 boolean forceMedianSplit = false;
@@ -213,8 +203,8 @@ public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConve
     }
 
     @Override
-    protected HerculesRecordReader<?, MongoDBDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new MongoDBRecordReader(converter, manager);
+    protected HerculesRecordReader<Document, MongoDBDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+        return new MongoDBRecordReader(converter, generateCustomDataTypeManager(), manager);
     }
 
     @Override
@@ -225,5 +215,10 @@ public class MongoDBInputFormat extends HerculesInputFormat<MongoDBDataTypeConve
     @Override
     public MongoDBManager generateManager(GenericOptions options) {
         return new MongoDBManager(options);
+    }
+
+    @Override
+    public MongoDBCustomDataTypeManager generateCustomDataTypeManager() {
+        return MongoDBCustomDataTypeManager.INSTANCE;
     }
 }

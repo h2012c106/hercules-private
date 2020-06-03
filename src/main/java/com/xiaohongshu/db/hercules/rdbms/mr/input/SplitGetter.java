@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.BaseSplitter;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.hadoop.mapreduce.InputSplit;

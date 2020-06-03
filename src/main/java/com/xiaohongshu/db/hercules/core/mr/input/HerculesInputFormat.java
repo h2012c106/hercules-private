@@ -1,13 +1,16 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManagerGenerator;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.logging.Log;
@@ -23,9 +26,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public abstract class HerculesInputFormat<C extends DataTypeConverter>
+public abstract class HerculesInputFormat<C extends DataTypeConverter<?, ?>>
         extends InputFormat<NullWritable, HerculesWritable>
-        implements DataTypeConverterGenerator<C> {
+        implements DataTypeConverterGenerator<C>, CustomDataTypeManagerGenerator {
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
@@ -39,7 +42,7 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
     protected void initializeContext(GenericOptions sourceOptions) {
         options = sourceOptions;
         converter = generateConverter();
-        columnTypeMap = SchemaUtils.convert(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
+        columnTypeMap = SchemaUtils.convert(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), generateCustomDataTypeManager());
     }
 
     abstract protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException;
@@ -80,7 +83,7 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
     }
 
     @Override
-    public HerculesRecordReader<?, C> createRecordReader(InputSplit split, TaskAttemptContext context)
+    public HerculesRecordReader<?, ? extends DataTypeConverter<?, ?>> createRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
         Configuration configuration = context.getConfiguration();
 
@@ -92,6 +95,11 @@ public abstract class HerculesInputFormat<C extends DataTypeConverter>
         return innerCreateRecordReader(split, context);
     }
 
-    abstract protected HerculesRecordReader<?, C> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
+    abstract protected HerculesRecordReader<?, ? extends DataTypeConverter<?, ?>> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException;
+
+    @Override
+    public BaseCustomDataTypeManager<?, ?> generateCustomDataTypeManager() {
+        return NullCustomDataTypeManager.INSTANCE;
+    }
 }

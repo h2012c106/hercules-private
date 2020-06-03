@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
@@ -13,17 +14,13 @@ import java.util.Date;
 
 public class StringWrapper extends BaseWrapper<String> {
 
-    private final static DataType DATA_TYPE = DataType.STRING;
+    private final static DataType DATA_TYPE = BaseDataType.STRING;
 
     private final static String DEFAULT_ENCODE = "UTF-8";
 
     private String encode = null;
 
-    public StringWrapper(byte[] value) {
-        this(value, DEFAULT_ENCODE);
-    }
-
-    public StringWrapper(byte[] value, String encode) {
+    private StringWrapper(byte[] value, String encode) {
         this("");
         String strValue = null;
         try {
@@ -36,8 +33,20 @@ public class StringWrapper extends BaseWrapper<String> {
         this.encode = encode;
     }
 
-    public StringWrapper(String value) {
+    private StringWrapper(String value) {
         super(value, DATA_TYPE, value.length());
+    }
+
+    public static BaseWrapper get(byte[] value, String encode) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new StringWrapper(value, encode);
+    }
+
+    public static BaseWrapper get(byte[] value) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new StringWrapper(value, DEFAULT_ENCODE);
+    }
+
+    public static BaseWrapper get(String value) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new StringWrapper(value);
     }
 
     @Override

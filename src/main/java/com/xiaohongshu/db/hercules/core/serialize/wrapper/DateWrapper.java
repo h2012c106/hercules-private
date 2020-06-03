@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import lombok.NonNull;
 
@@ -15,12 +15,12 @@ import java.util.Date;
  */
 public class DateWrapper extends BaseWrapper<String> {
 
-    public DateWrapper(Long value, DataType type) {
+    private DateWrapper(Long value, DataType type) {
         this(new Date(value), type);
     }
 
-    public DateWrapper(Date value, DataType type) {
-        this(DateUtils.dateToString(value, type, DateUtils.getSourceDateFormat()), type);
+    private DateWrapper(Date value, DataType type) {
+        this(DateUtils.dateToString(value, type.getBaseDataType(), DateUtils.getSourceDateFormat()), type);
     }
 
     /**
@@ -29,8 +29,20 @@ public class DateWrapper extends BaseWrapper<String> {
      *
      * @param value
      */
-    public DateWrapper(String value, @NonNull DataType type) {
+    private DateWrapper(String value, @NonNull DataType type) {
         super(value, type, value.length());
+    }
+
+    public static BaseWrapper get(Long value, DataType type) {
+        return value == null ? NullWrapper.get(type) : new DateWrapper(value, type);
+    }
+
+    public static BaseWrapper get(Date value, DataType type) {
+        return value == null ? NullWrapper.get(type) : new DateWrapper(value, type);
+    }
+
+    public static BaseWrapper get(String value, DataType type) {
+        return value == null ? NullWrapper.get(type) : new DateWrapper(value, type);
     }
 
     @Override
@@ -65,7 +77,7 @@ public class DateWrapper extends BaseWrapper<String> {
      */
     @Override
     public Date asDate() {
-        return DateUtils.stringToDate(getValue(), getType(), DateUtils.getSourceDateFormat());
+        return DateUtils.stringToDate(getValue(), getType().getBaseDataType(), DateUtils.getSourceDateFormat());
     }
 
     /**
@@ -79,8 +91,8 @@ public class DateWrapper extends BaseWrapper<String> {
             return getValue();
         } else {
             // 当上下游日期格式不一致时，又遇到错误的日期格式/值，则会抛错
-            return DateUtils.dateToString(DateUtils.stringToDate(getValue(), getType(), DateUtils.getSourceDateFormat()),
-                    getType(),
+            return DateUtils.dateToString(DateUtils.stringToDate(getValue(), getType().getBaseDataType(), DateUtils.getSourceDateFormat()),
+                    getType().getBaseDataType(),
                     DateUtils.getTargetDateFormat());
         }
     }

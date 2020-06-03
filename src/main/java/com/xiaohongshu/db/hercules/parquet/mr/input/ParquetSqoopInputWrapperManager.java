@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.DateWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.DoubleWrapper;
@@ -37,43 +37,51 @@ public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager 
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getDecimalGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                return new DoubleWrapper(new BigDecimal(row.getGroup().getString(columnName, row.getValueSeq())));
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return DoubleWrapper.get(row.isEmpty()
+                        ? null
+                        : new BigDecimal(row.getGroup().getString(columnName, row.getValueSeq())));
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getDateGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                Long ts = row.getGroup().getLong(columnName, row.getValueSeq());
-                return new DateWrapper(ts, DataType.DATE);
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return DateWrapper.get(row.isEmpty()
+                                ? null
+                                : row.getGroup().getLong(columnName, row.getValueSeq()),
+                        BaseDataType.DATE);
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getTimeGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                Long ts = row.getGroup().getLong(columnName, row.getValueSeq());
-                return new DateWrapper(ts, DataType.TIME);
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return DateWrapper.get(row.isEmpty()
+                                ? null
+                                : row.getGroup().getLong(columnName, row.getValueSeq()),
+                        BaseDataType.TIME);
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getDatetimeGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                Long ts = row.getGroup().getLong(columnName, row.getValueSeq());
-                return new DateWrapper(ts, DataType.DATETIME);
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return DateWrapper.get(row.isEmpty()
+                                ? null
+                                : row.getGroup().getLong(columnName, row.getValueSeq()),
+                        BaseDataType.DATETIME);
             }
         };
     }

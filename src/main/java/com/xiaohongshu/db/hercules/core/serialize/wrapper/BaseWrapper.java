@@ -3,8 +3,9 @@ package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import lombok.NonNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -52,6 +53,10 @@ public abstract class BaseWrapper<T> {
 
     public long getByteSize() {
         return byteSize;
+    }
+
+    public boolean isNull(){
+        return false;
     }
 
     private void addParentByteSize(long byteSize) {
@@ -116,9 +121,9 @@ public abstract class BaseWrapper<T> {
     public static DataType isJsonStrListOrMap(String s) {
         Object res = JSON.parse(s);
         if (res instanceof JSONArray) {
-            return DataType.LIST;
+            return BaseDataType.LIST;
         } else if (res instanceof JSONObject) {
-            return DataType.MAP;
+            return BaseDataType.MAP;
         } else {
             throw new SerializeException("Unknown json parse result class: " + res.getClass().getCanonicalName());
         }

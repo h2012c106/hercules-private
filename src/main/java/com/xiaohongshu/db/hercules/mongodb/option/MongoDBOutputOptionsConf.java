@@ -18,7 +18,6 @@ import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.
 
 public final class MongoDBOutputOptionsConf extends BaseOptionsConf {
 
-    public static final String OBJECT_ID = "object-id";
     public static final String EXPORT_TYPE = "export-type";
     public static final String UPDATE_KEY = "update-key";
     public static final String UPSERT = "upsert";
@@ -27,7 +26,6 @@ public final class MongoDBOutputOptionsConf extends BaseOptionsConf {
     public static final String EXECUTE_THREAD_NUM = "execute-thread-num";
     public static final String DECIMAL_AS_STRING = "decimal-as-string";
 
-    private static final String[] DEFAULT_OBJECT_ID = new String[]{"_id"};
     private static final long DEFAULT_STATEMENT_PER_BULK = 200;
     public static final int DEFAULT_EXECUTE_THREAD_NUM = 1;
 
@@ -44,15 +42,6 @@ public final class MongoDBOutputOptionsConf extends BaseOptionsConf {
     @Override
     protected List<SingleOptionConf> innerGenerateOptionConf() {
         List<SingleOptionConf> tmpList = new ArrayList<>();
-        tmpList.add(SingleOptionConf.builder()
-                .name(OBJECT_ID)
-                .needArg(true)
-                .description(String.format("The objectId type column list, delimited by %s. " +
-                        "This type config will overwrite the %s config", OBJECT_ID_DELIMITER, COLUMN_TYPE))
-                .defaultStringValue(String.join(OBJECT_ID_DELIMITER, DEFAULT_OBJECT_ID))
-                .list(true)
-                .listDelimiter(COLUMN_DELIMITER)
-                .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(EXPORT_TYPE)
                 .needArg(true)

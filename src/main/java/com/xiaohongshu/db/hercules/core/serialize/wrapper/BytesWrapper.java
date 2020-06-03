@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -13,17 +14,13 @@ import java.util.Date;
 
 public class BytesWrapper extends BaseWrapper<byte[]> {
 
-    private final static DataType DATA_TYPE = DataType.BYTES;
+    private final static DataType DATA_TYPE = BaseDataType.BYTES;
 
     private final static String DEFAULT_ENCODE = "UTF-8";
 
     private String encode;
 
-    public BytesWrapper(String value) {
-        this(value, DEFAULT_ENCODE);
-    }
-
-    public BytesWrapper(String value, String encode) {
+    private BytesWrapper(String value, String encode) {
         this(new byte[0]);
         byte[] bytesValue = null;
         try {
@@ -36,13 +33,29 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
         this.encode = encode;
     }
 
-    public BytesWrapper(byte[] value, String encode) {
+    private BytesWrapper(byte[] value, String encode) {
         this(value);
         this.encode = encode;
     }
 
-    public BytesWrapper(byte[] value) {
+    private BytesWrapper(byte[] value) {
         super(value, DATA_TYPE, value.length);
+    }
+
+    public static BaseWrapper get(String value, String encode) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new BytesWrapper(value, encode);
+    }
+
+    public static BaseWrapper get(String value) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new BytesWrapper(value, DEFAULT_ENCODE);
+    }
+
+    public static BaseWrapper get(byte[] value, String encode) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new BytesWrapper(value, encode);
+    }
+
+    public static BaseWrapper get(byte[] value) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new BytesWrapper(value);
     }
 
     @Override

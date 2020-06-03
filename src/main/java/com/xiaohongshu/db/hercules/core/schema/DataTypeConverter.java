@@ -1,9 +1,8 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 这东西在{@link BaseSchemaFetcher}与读入的时候逐行判断时有用

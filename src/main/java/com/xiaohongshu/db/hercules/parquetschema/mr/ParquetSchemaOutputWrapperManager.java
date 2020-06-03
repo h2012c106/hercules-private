@@ -1,9 +1,10 @@
 package com.xiaohongshu.db.hercules.parquetschema.mr;
 
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
@@ -56,7 +57,7 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     }
 
     public void union(MapWrapper value, TypeBuilderTreeNode res) throws Exception {
-        TypeBuilderTreeNode root = new TypeBuilderTreeNode(res.getColumnName(), Types.buildMessage(), null, DataType.MAP);
+        TypeBuilderTreeNode root = new TypeBuilderTreeNode(res.getColumnName(), Types.buildMessage(), null, BaseDataType.MAP);
         ParquetSchemaUtils.unionMapTree(res, mapWrapperToTree(value, root, null), typeAutoUpgrade, first, false);
         if (first) {
             first = false;
@@ -65,22 +66,22 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
     private TypeBuilderTreeNode makeGroupNode(Type.Repetition repetition) {
         return new TypeBuilderTreeNode(FAKE_PARENT_NAME_USED_BY_LIST,
-                Types.buildGroup(repetition), null, DataType.MAP);
+                Types.buildGroup(repetition), null, BaseDataType.MAP);
     }
 
     private void wrapperToRepeatedNode(BaseWrapper wrapper, TypeBuilderTreeNode root, String columnName) throws Exception {
-        DataType dataType = wrapper.getType();
-        if (dataType == DataType.LIST) {
+        DataType baseDataType = wrapper.getType();
+        if (baseDataType == BaseDataType.LIST) {
             ListWrapper listWrapper = (ListWrapper) wrapper;
             for (int i = 0; i < listWrapper.size(); ++i) {
                 BaseWrapper subWrapper = listWrapper.get(i);
                 // 这个Repetition无所谓的
                 TypeBuilderTreeNode tmpNode = makeGroupNode(Type.Repetition.REQUIRED);
-                getWrapperSetter(dataType).set(subWrapper, tmpNode, FAKE_PARENT_NAME_USED_BY_LIST, columnName, REPEATED);
+                getWrapperSetter(baseDataType).set(subWrapper, tmpNode, FAKE_PARENT_NAME_USED_BY_LIST, columnName, REPEATED);
                 ParquetSchemaUtils.unionMapTree(root, tmpNode, typeAutoUpgrade, true, true);
             }
         } else {
-            getWrapperSetter(dataType).set(wrapper, root, FAKE_PARENT_NAME_USED_BY_LIST, columnName, REPEATED);
+            getWrapperSetter(baseDataType).set(wrapper, root, FAKE_PARENT_NAME_USED_BY_LIST, columnName, REPEATED);
         }
     }
 
@@ -95,26 +96,26 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
         return root;
     }
 
-    private TypeBuilderTreeNode makeNode(String columnName, DataType dataType, TypeBuilderTreeNode parent, Type.Repetition repetition) {
-        return new TypeBuilderTreeNode(columnName, repetition, parent, dataType);
+    private TypeBuilderTreeNode makeNode(String columnName, DataType baseDataType, TypeBuilderTreeNode parent, Type.Repetition repetition) {
+        return new TypeBuilderTreeNode(columnName, repetition, parent, baseDataType);
     }
 
-    private TypeBuilderTreeNode makeNode(String columnName, DataType dataType, TypeBuilderTreeNode parent, boolean repeated) {
+    private TypeBuilderTreeNode makeNode(String columnName, DataType baseDataType, TypeBuilderTreeNode parent, boolean repeated) {
         Type.Repetition repetition;
         if (repeated) {
             repetition = Type.Repetition.REPEATED;
         } else {
             repetition = defaultRepetition;
         }
-        return makeNode(columnName, dataType, parent, repetition);
+        return makeNode(columnName, baseDataType, parent, repetition);
     }
 
     @Override
     protected WrapperSetter<TypeBuilderTreeNode> getByteSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.BYTE;
+            public BaseDataType getType() {
+                return BaseDataType.BYTE;
             }
         };
     }
@@ -123,8 +124,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getShortSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.SHORT;
+            public BaseDataType getType() {
+                return BaseDataType.SHORT;
             }
         };
     }
@@ -133,8 +134,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getIntegerSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.INTEGER;
+            public BaseDataType getType() {
+                return BaseDataType.INTEGER;
             }
         };
     }
@@ -143,8 +144,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getLongSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.LONG;
+            public BaseDataType getType() {
+                return BaseDataType.LONG;
             }
         };
     }
@@ -153,8 +154,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getLonglongSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.LONGLONG;
+            public BaseDataType getType() {
+                return BaseDataType.LONGLONG;
             }
         };
     }
@@ -163,8 +164,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getFloatSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.FLOAT;
+            public BaseDataType getType() {
+                return BaseDataType.FLOAT;
             }
         };
     }
@@ -173,8 +174,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getDoubleSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.DOUBLE;
+            public BaseDataType getType() {
+                return BaseDataType.DOUBLE;
             }
         };
     }
@@ -183,8 +184,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getDecimalSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.DECIMAL;
+            public BaseDataType getType() {
+                return BaseDataType.DECIMAL;
             }
         };
     }
@@ -193,8 +194,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getBooleanSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.BOOLEAN;
+            public BaseDataType getType() {
+                return BaseDataType.BOOLEAN;
             }
         };
     }
@@ -203,8 +204,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getStringSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.STRING;
+            public BaseDataType getType() {
+                return BaseDataType.STRING;
             }
         };
     }
@@ -213,8 +214,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getDateSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.DATE;
+            public BaseDataType getType() {
+                return BaseDataType.DATE;
             }
         };
     }
@@ -223,8 +224,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getTimeSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.TIME;
+            public BaseDataType getType() {
+                return BaseDataType.TIME;
             }
         };
     }
@@ -233,8 +234,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getDatetimeSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.DATETIME;
+            public BaseDataType getType() {
+                return BaseDataType.DATETIME;
             }
         };
     }
@@ -243,8 +244,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getBytesSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.BYTES;
+            public BaseDataType getType() {
+                return BaseDataType.BYTES;
             }
         };
     }
@@ -253,8 +254,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
     protected WrapperSetter<TypeBuilderTreeNode> getNullSetter() {
         return new ParquetSchemaWrapperSetter() {
             @Override
-            public DataType getType() {
-                return DataType.NULL;
+            public BaseDataType getType() {
+                return BaseDataType.NULL;
             }
         };
     }
@@ -274,7 +275,7 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
         return new ParquetSchemaWrapperSetter() {
             @Override
             public DataType getType() {
-                return DataType.MAP;
+                return BaseDataType.MAP;
             }
 
             @Override
@@ -295,7 +296,7 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
         @Override
         public void set(@NonNull BaseWrapper wrapper, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
             TypeBuilderTreeNode node;
-            if (wrapper.getType() != DataType.NULL) {
+            if (wrapper.getType() != BaseDataType.NULL) {
                 node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
                 TypeBuilderTreeNode child = row.addAndReturnChildren(node);
                 afterSet(wrapper, child, rowName, columnName);

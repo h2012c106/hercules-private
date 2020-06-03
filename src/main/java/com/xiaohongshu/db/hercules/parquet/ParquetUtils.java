@@ -1,12 +1,7 @@
 package com.xiaohongshu.db.hercules.parquet;
 
-import com.google.common.collect.Sets;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
-import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.Timestamp;
@@ -19,7 +14,6 @@ import org.apache.parquet.io.api.Binary;
 import org.apache.parquet.schema.GroupType;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
-import org.apache.parquet.schema.Types;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

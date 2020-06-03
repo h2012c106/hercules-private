@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.rdbms.schema;
 
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 
 import java.sql.ResultSet;
 import java.sql.Types;
@@ -11,29 +12,29 @@ import java.util.Map;
 public class RDBMSDataTypeConverter implements DataTypeConverter<Integer, ResultSet> {
 
     @Override
-    public DataType convertElementType(Integer standard) {
+    public BaseDataType convertElementType(Integer standard) {
         switch (standard) {
             case Types.NULL:
-                return DataType.NULL;
+                return BaseDataType.NULL;
             case Types.BIT:
             case Types.TINYINT:
-                return DataType.BYTE;
+                return BaseDataType.BYTE;
             case Types.SMALLINT:
-                return DataType.SHORT;
+                return BaseDataType.SHORT;
             case Types.INTEGER:
-                return DataType.INTEGER;
+                return BaseDataType.INTEGER;
             case Types.BIGINT:
-                return DataType.LONG;
+                return BaseDataType.LONG;
             case Types.BOOLEAN:
-                return DataType.BOOLEAN;
+                return BaseDataType.BOOLEAN;
             case Types.REAL:
             case Types.FLOAT:
-                return DataType.FLOAT;
+                return BaseDataType.FLOAT;
             case Types.DOUBLE:
-                return DataType.DOUBLE;
+                return BaseDataType.DOUBLE;
             case Types.NUMERIC:
             case Types.DECIMAL:
-                return DataType.DECIMAL;
+                return BaseDataType.DECIMAL;
             case Types.CHAR:
             case Types.NCHAR:
             case Types.VARCHAR:
@@ -42,18 +43,18 @@ public class RDBMSDataTypeConverter implements DataTypeConverter<Integer, Result
             case Types.LONGNVARCHAR:
             case Types.CLOB:
             case Types.NCLOB:
-                return DataType.STRING;
+                return BaseDataType.STRING;
             case Types.DATE:
-                return DataType.DATE;
+                return BaseDataType.DATE;
             case Types.TIME:
-                return DataType.TIME;
+                return BaseDataType.TIME;
             case Types.TIMESTAMP:
-                return DataType.DATETIME;
+                return BaseDataType.DATETIME;
             case Types.BINARY:
             case Types.VARBINARY:
             case Types.BLOB:
             case Types.LONGVARBINARY:
-                return DataType.BYTES;
+                return BaseDataType.BYTES;
             default:
                 throw new SchemaException("Unsupported sql type, type code: " + standard);
         }

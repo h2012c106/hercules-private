@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.BaseSplitter;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
@@ -28,31 +29,35 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
                                            BigDecimal maxSampleRow) {
         int singleByteSize;
         DataType dataType = columnTypeMap.get(splitBy);
-        switch (dataType) {
-            case BYTE:
-            case SHORT:
-            case INTEGER:
-            case LONG:
-            case FLOAT:
-            case DOUBLE:
-            case DECIMAL:
-                singleByteSize = 8;
-                break;
-            case BOOLEAN:
-                singleByteSize = 1;
-                break;
-            case DATE:
-            case TIME:
-            case DATETIME:
-                singleByteSize = 16;
-                break;
-            case STRING:
-                singleByteSize = 128;
-                LOG.warn(String.format("The string split-by column may cause oom when use balance mode, " +
-                        "if happened, try '--%s'", RDBMSInputOptionsConf.BALANCE_SPLIT_SAMPLE_MAX_ROW));
-                break;
-            default:
-                throw new UnsupportedOperationException();
+        if (!dataType.isCustom()) {
+            switch ((BaseDataType) dataType) {
+                case BYTE:
+                case SHORT:
+                case INTEGER:
+                case LONG:
+                case FLOAT:
+                case DOUBLE:
+                case DECIMAL:
+                    singleByteSize = 8;
+                    break;
+                case BOOLEAN:
+                    singleByteSize = 1;
+                    break;
+                case DATE:
+                case TIME:
+                case DATETIME:
+                    singleByteSize = 16;
+                    break;
+                case STRING:
+                    singleByteSize = 128;
+                    LOG.warn(String.format("The string split-by column may cause oom when use balance mode, " +
+                            "if happened, try '--%s'", RDBMSInputOptionsConf.BALANCE_SPLIT_SAMPLE_MAX_ROW));
+                    break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
+        } else {
+            throw new UnsupportedOperationException();
         }
 
         BigDecimal availableMemoryByte = BigDecimal.valueOf(Runtime.getRuntime().maxMemory()
