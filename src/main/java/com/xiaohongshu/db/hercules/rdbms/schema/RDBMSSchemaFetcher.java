@@ -112,7 +112,8 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
     @Override
     protected Map<String, DataType> innerGetColumnTypeMap(final Set<String> columnNameSet) {
         final Map<String, Integer> res = new HashMap<>();
-        String sql = SqlUtils.replaceSelectItem(baseSql, columnNameSet.toArray(new String[0]));
+        // 用嵌套查询，避免使用sql模式时select到不存在(as出来)的列
+        String sql = SqlUtils.replaceSelectItem(String.format("SELECT * from ( %s ) as t;", baseSql), columnNameSet.toArray(new String[0]));
         getSchemaInfo(sql, new BiFunction<String, Integer, Void>() {
             @Override
             public Void apply(String s, Integer integer) {
