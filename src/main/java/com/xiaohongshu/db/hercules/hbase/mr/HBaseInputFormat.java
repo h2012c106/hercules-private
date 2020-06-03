@@ -138,7 +138,7 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     }
 
     @Override
-    protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) {
         String rowKeyCol = sourceOptions.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if(rowKeyCol!=null){
             LOG.info("rowKeyCol name has been set to: "+rowKeyCol);

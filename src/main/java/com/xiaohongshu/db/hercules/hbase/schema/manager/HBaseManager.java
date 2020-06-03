@@ -9,6 +9,7 @@ import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -46,8 +47,8 @@ public class HBaseManager {
      */
     public void setBasicConf(){
 
-        conf.set(HBaseOptionsConf.HB_ZK_QUORUM, options.getString(HBaseOptionsConf.HB_ZK_QUORUM,null));
-        conf.set(HBaseOptionsConf.HB_ZK_PORT, options.getString(HBaseOptionsConf.HB_ZK_PORT,"2181"));
+        conf.set("hbase.zookeeper.quorum", options.getString(HBaseOptionsConf.HB_ZK_QUORUM,null));
+        conf.set("hbase.zookeeper.property.clientPort", options.getString(HBaseOptionsConf.HB_ZK_PORT,"2181"));
     }
 
     public Configuration getConf(){
@@ -116,9 +117,9 @@ public class HBaseManager {
         HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.COLUMN_FAMILY, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOptionsConf.TABLE, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOptionsConf.ROW_KEY_COL_NAME, targetOptions, true);
-        conf.setInt(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM,
+        conf.setInt("hbase.htable.threads.max",
                 targetOptions.getInteger(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_MAX_WRITE_THREAD_NUM));
-        conf.setLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,
+        conf.setLong("hbase.mapreduce.writebuffersize",
                 targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE));
     }
 
