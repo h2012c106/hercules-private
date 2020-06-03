@@ -99,7 +99,7 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
 
     @Override
     public byte[] asBytes() {
-        return getValue().toByteArray();
+        throw new SerializeException("Unsupported to convert number to bytes.");
     }
 
     @Override

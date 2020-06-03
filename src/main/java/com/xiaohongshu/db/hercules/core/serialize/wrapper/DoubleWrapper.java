@@ -78,7 +78,7 @@ public class DoubleWrapper extends BaseWrapper<BigDecimal> {
 
     @Override
     public byte[] asBytes() {
-        return asBigInteger().toByteArray();
+        throw new SerializeException("Unsupported to convert number to bytes.");
     }
 
     @Override
