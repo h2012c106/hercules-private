@@ -88,6 +88,4 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter> {
      */
     public void postNegotiate(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
     }
-
-    abstract  public Set<DataType> getSupportedDataTypeSet();
 }

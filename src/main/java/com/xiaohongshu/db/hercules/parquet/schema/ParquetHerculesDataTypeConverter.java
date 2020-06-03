@@ -82,28 +82,6 @@ public class ParquetHerculesDataTypeConverter extends ParquetDataTypeConverter {
     }
 
     @Override
-    public Set<DataType> getSupportedDataTypeSet() {
-        return Sets.newHashSet(
-                DataType.BYTE,
-                DataType.SHORT,
-                DataType.INTEGER,
-                DataType.LONG,
-                DataType.LONGLONG,
-                DataType.FLOAT,
-                DataType.DOUBLE,
-                DataType.DECIMAL,
-                DataType.BOOLEAN,
-                DataType.DATE,
-                DataType.TIME,
-                DataType.DATETIME,
-                DataType.STRING,
-                DataType.BYTES,
-                DataType.LIST,
-                DataType.MAP
-        );
-    }
-
-    @Override
     public DataType convertElementType(ParquetType standard) {
         Type type = standard.getType();
         boolean careRepeated = standard.careRepeated();

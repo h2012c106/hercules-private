@@ -167,10 +167,4 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
             }
         }
     }
-
-
-    @Override
-    public Set<DataType> getSupportedDataTypeSet() {
-        return converter.getSupportedDataTypeSet();
-    }
 }

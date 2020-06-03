@@ -115,25 +115,4 @@ public class ParquetSqoopDataTypeConverter extends ParquetDataTypeConverter {
                 throw new RuntimeException(String.format("The type [%s] cannot be expressed by parquet schema.", dataType));
         }
     }
-
-    @Override
-    public Set<DataType> getSupportedDataTypeSet() {
-        return Sets.newHashSet(
-                DataType.BYTE,
-                DataType.SHORT,
-                DataType.INTEGER,
-                DataType.LONG,
-                DataType.FLOAT,
-                DataType.DOUBLE,
-                DataType.DECIMAL,
-                DataType.BOOLEAN,
-                DataType.DATE,
-                DataType.TIME,
-                DataType.DATETIME,
-                DataType.STRING,
-                DataType.BYTES,
-                DataType.LIST,
-                DataType.MAP
-        );
-    }
 }

@@ -77,12 +77,4 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
             }
         }
     }
-
-    @Override
-    public Set<DataType> getSupportedDataTypeSet() {
-        return Sets.newHashSet(DataType.BOOLEAN, DataType.BYTES,
-                DataType.DECIMAL, DataType.DOUBLE,
-                DataType.FLOAT, DataType.INTEGER,
-                DataType.LONG, DataType.SHORT, DataType.STRING);
-    }
 }

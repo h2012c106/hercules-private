@@ -205,14 +205,4 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
             return res;
         }
     }
-
-
-    @Override
-    public Set<DataType> getSupportedDataTypeSet() {
-        return Sets.newHashSet(DataType.BYTE, DataType.BOOLEAN, DataType.BYTES,
-                DataType.DECIMAL, DataType.DOUBLE,
-                DataType.FLOAT, DataType.INTEGER,
-                DataType.LONG, DataType.SHORT, DataType.STRING,
-                DataType.DATE, DataType.TIME, DataType.DATETIME);
-    }
 }

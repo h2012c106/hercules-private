@@ -24,13 +24,4 @@ public class MongoDBSchemaFetcher extends BaseSchemaFetcher<MongoDBDataTypeConve
     protected Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet) {
         return null;
     }
-
-    @Override
-    public Set<DataType> getSupportedDataTypeSet() {
-        return Sets.newHashSet(DataType.BYTE, DataType.BOOLEAN,
-                DataType.DECIMAL, DataType.DOUBLE,
-                DataType.FLOAT, DataType.INTEGER,
-                DataType.LONG, DataType.SHORT, DataType.STRING,
-                DataType.DATETIME, DataType.LIST, DataType.MAP);
-    }
 }
