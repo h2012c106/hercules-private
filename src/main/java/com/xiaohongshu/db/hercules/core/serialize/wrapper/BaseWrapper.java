@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
+import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import lombok.NonNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -55,7 +56,7 @@ public abstract class BaseWrapper<T> {
         return byteSize;
     }
 
-    public boolean isNull(){
+    public boolean isNull() {
         return false;
     }
 
@@ -76,7 +77,23 @@ public abstract class BaseWrapper<T> {
         addParentByteSize(byteSize);
     }
 
+    public Byte asByte() {
+        return asBigDecimal().byteValueExact();
+    }
+
+    public Short asShort() {
+        return asBigDecimal().shortValueExact();
+    }
+
+    public Integer asInteger() {
+        return asBigDecimal().intValueExact();
+    }
+
     abstract public Long asLong();
+
+    public Float asFloat() {
+        return OverflowUtils.numberToFloat(asBigDecimal());
+    }
 
     abstract public Double asDouble();
 

@@ -1,7 +1,8 @@
 package com.xiaohongshu.db.hercules.hbase.schema;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import org.apache.hadoop.hbase.client.Result;
 
 import java.util.Map;
@@ -24,29 +25,29 @@ public class HBaseDataTypeConverter  implements DataTypeConverter<Integer, Resul
             case "short":
             case "tinyint":
             case "smallint":
-                dt = DataType.valueOf("SHORT");
+                dt = BaseDataType.valueOf("SHORT");
                 break;
             case "int":
-                dt = DataType.valueOf("INTEGER");
+                dt = BaseDataType.valueOf("INTEGER");
                 break;
             case "long":
-                dt = DataType.valueOf("LONG");
+                dt = BaseDataType.valueOf("LONG");
                 break;
             case "float":
-                dt = DataType.valueOf("FLOAT");
+                dt = BaseDataType.valueOf("FLOAT");
                 break;
             case "double":
-                dt = DataType.valueOf("DOUBLE");
+                dt = BaseDataType.valueOf("DOUBLE");
                 break;
             case "decimal":
-                dt = DataType.valueOf("DECIMAL");
+                dt = BaseDataType.valueOf("DECIMAL");
                 break;
             case "char":
             case "varchar":
-                dt = DataType.valueOf("STRING");
+                dt = BaseDataType.valueOf("STRING");
                 break;
             default:
-                dt = DataType.valueOf(type.toUpperCase());
+                dt = BaseDataType.valueOf(type.toUpperCase());
         }
         return dt;
     }

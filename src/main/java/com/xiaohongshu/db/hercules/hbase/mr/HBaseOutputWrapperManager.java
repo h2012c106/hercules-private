@@ -14,16 +14,16 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
     @Override
     protected WrapperSetter<Put> getShortSetter() {
         return (wrapper, put, columnFamily, name, seq) -> {
-            Long res = wrapper.asLong();
-            put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.shortValue()));
+            Short res = wrapper.asShort();
+            put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
     }
 
     @Override
     protected WrapperSetter<Put> getIntegerSetter() {
         return (wrapper, put, columnFamily, name, seq) -> {
-            Long res = wrapper.asLong();
-            put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res.intValue()));
+            Integer res = wrapper.asInteger();
+            put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(res));
         };
     }
 
@@ -43,36 +43,31 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
     @Override
     protected WrapperSetter<Put> getFloatSetter() {
         return (wrapper, put, columnFamily, name, seq) ->
-                put.addColumn(columnFamily.getBytes(), name.getBytes(),
-                        Bytes.toBytes(wrapper.asDouble().floatValue()));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asFloat()));
     }
 
     @Override
     protected WrapperSetter<Put> getDoubleSetter() {
         return (wrapper, put, columnFamily, name, seq) ->
-                put.addColumn(columnFamily.getBytes(),
-                        name.getBytes(), Bytes.toBytes(wrapper.asDouble()));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asDouble()));
     }
 
     @Override
     protected WrapperSetter<Put> getDecimalSetter() {
         return (wrapper, put, columnFamily, name, seq) ->
-                put.addColumn(columnFamily.getBytes(),
-                        name.getBytes(), Bytes.toBytes(wrapper.asBigDecimal()));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asBigDecimal()));
     }
 
     @Override
     protected WrapperSetter<Put> getBooleanSetter() {
         return (wrapper, put, columnFamily, name, seq) ->
-                put.addColumn(columnFamily.getBytes(),
-                        name.getBytes(), Bytes.toBytes(wrapper.asBoolean()));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asBoolean()));
     }
 
     @Override
     protected WrapperSetter<Put> getStringSetter() {
         return (wrapper, put, columnFamily, name, seq) ->
-                put.addColumn(columnFamily.getBytes(),
-                        name.getBytes(), Bytes.toBytes(wrapper.asString()==null? "":wrapper.asString()));
+                put.addColumn(columnFamily.getBytes(), name.getBytes(), Bytes.toBytes(wrapper.asString()));
     }
 
     @Override

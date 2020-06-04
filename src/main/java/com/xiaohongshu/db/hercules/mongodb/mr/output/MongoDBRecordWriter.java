@@ -416,7 +416,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
                 @Override
                 public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
                         throws Exception {
-                    if (wrapper.getType() == BaseDataType.NULL) {
+                    if (wrapper.isNull()) {
                         row.put(columnName, null);
                     } else {
                         row.put(columnName, wrapperToList(wrapper));
@@ -431,7 +431,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
                 @Override
                 public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
                         throws Exception {
-                    if (wrapper.getType() == BaseDataType.NULL) {
+                    if (wrapper.isNull()) {
                         // 有可能是个null，不处理else要NPE
                         row.put(columnName, null);
                     } else if (wrapper.getType() == BaseDataType.MAP) {

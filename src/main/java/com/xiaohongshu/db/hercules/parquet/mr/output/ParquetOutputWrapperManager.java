@@ -73,8 +73,9 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
         for (Type type : groupSonTypeList) {
             String columnName = type.getName();
             BaseWrapper value = wrapper.get(columnName);
-            if (value == null) {
+            if (value == null || value.isNull()) {
                 // 如果这列上游没有，那就不set，祈祷这列不是required吧
+                // 其实这里加了isNull判断，各个setter里的==null就全部木大了，之前脑子秀逗了
                 continue;
             }
             String fullColumnName = WritableUtils.concatColumn(columnPath, columnName);
@@ -203,7 +204,7 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
             @Override
             public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
                 // 如果是null，就不报错了，不置值
-                if (wrapper.getType() != BaseDataType.NULL) {
+                if (!wrapper.isNull()) {
                     String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
                     Group newGroup = row.addGroup(rowName);
                     // 如果上游不是一个Map，直接报错

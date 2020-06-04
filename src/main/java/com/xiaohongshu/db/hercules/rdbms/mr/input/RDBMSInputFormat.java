@@ -1,10 +1,14 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManagerGenerator;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
+import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
@@ -22,9 +26,10 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.List;
+import java.util.Map;
 
 public class RDBMSInputFormat extends HerculesInputFormat
-        implements RDBMSManagerGenerator, DataTypeConverterGenerator<RDBMSDataTypeConverter> {
+        implements RDBMSManagerGenerator, DataTypeConverterGenerator<RDBMSDataTypeConverter>, CustomDataTypeManagerGenerator {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
@@ -34,6 +39,7 @@ public class RDBMSInputFormat extends HerculesInputFormat
     private String baseSql;
     protected RDBMSSchemaFetcher schemaFetcher;
     protected RDBMSDataTypeConverter converter;
+    protected Map<String, DataType> columnTypeMap;
 
     protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options,
                                                          RDBMSDataTypeConverter converter,
@@ -50,7 +56,8 @@ public class RDBMSInputFormat extends HerculesInputFormat
         schemaFetcher = initializeSchemaFetcher(sourceOptions, converter, manager);
         baseSql = SqlUtils.makeBaseQuery(sourceOptions);
 
-        columnTypeMap = new StingyMap<>(super.columnTypeMap);
+        columnTypeMap = SchemaUtils.convert(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), generateCustomDataTypeManager());
+        columnTypeMap = new StingyMap<>(columnTypeMap);
     }
 
     protected SplitGetter getSplitGetter(GenericOptions options) {

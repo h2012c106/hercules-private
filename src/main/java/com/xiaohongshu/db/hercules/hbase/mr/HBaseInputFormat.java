@@ -4,12 +4,10 @@ import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
-import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import lombok.SneakyThrows;
@@ -26,12 +24,15 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 
 /**
  * 通过获取的regions list 来生成splits。最少一个region对应一个split
  */
-public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter> implements HBaseManagerInitializer {
+public class HBaseInputFormat extends HerculesInputFormat implements HBaseManagerInitializer {
 
     private static final Log LOG = LogFactory.getLog(HBaseInputFormat.class);
     private HBaseManager manager;
@@ -52,10 +53,10 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
         List<InputSplit> splits = new ArrayList<>();
         List<RegionInfo> rsInfo = manager.getRegionInfo(sourceOptions.getString(HBaseOptionsConf.TABLE, null));
-        for(RegionInfo r: rsInfo){
+        for (RegionInfo r : rsInfo) {
             String startKey = Bytes.toString(r.getStartKey());
             String endKey = Bytes.toString(r.getEndKey());
-            splits.add(new HBaseSplit(startKey,endKey));
+            splits.add(new HBaseSplit(startKey, endKey));
         }
         splits.sort((o1, o2) -> {
             HBaseSplit s1 = (HBaseSplit) o1;
@@ -63,28 +64,28 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
             return s1.getStartKey().compareTo(s2.getStartKey());
         });
         filterSplits(splits, sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_START, null),
-                sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_STOP,null));
+                sourceOptions.getString(HBaseInputOptionsConf.SCAN_ROW_STOP, null));
         int regionNum = splits.size();
         List<InputSplit> newSplits = new ArrayList<>();
-        if(numSplits<splits.size()){
-            if(numSplits==1){
+        if (numSplits < splits.size()) {
+            if (numSplits == 1) {
                 LOG.warn("Map set to 1, only use 1 map.");
             }
             int i = 0;
-            int regionsPerSplit = (int) Math.ceil((float)regionNum/(float)numSplits);
-            while(i<regionNum){
-                if(newSplits.size()+regionNum-i+1==numSplits){
-                    newSplits.addAll(splits.subList(i,splits.size()));
+            int regionsPerSplit = (int) Math.ceil((float) regionNum / (float) numSplits);
+            while (i < regionNum) {
+                if (newSplits.size() + regionNum - i + 1 == numSplits) {
+                    newSplits.addAll(splits.subList(i, splits.size()));
                     break;
                 }
                 HBaseSplit startRegion = (HBaseSplit) splits.get(i);
                 String startKey = startRegion.getStartKey();
-                i = i+regionsPerSplit-1;
+                i = i + regionsPerSplit - 1;
                 HBaseSplit endRegion;
-                if(i<regionNum){
+                if (i < regionNum) {
                     endRegion = (HBaseSplit) splits.get(i);
-                }else{
-                    endRegion = (HBaseSplit) splits.get(splits.size()-1);
+                } else {
+                    endRegion = (HBaseSplit) splits.get(splits.size() - 1);
                 }
                 String endKey = endRegion.getEndKey();
                 newSplits.add(new HBaseSplit(startKey, endKey));
@@ -99,39 +100,40 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
 
     /**
      * 若用户指定scan的起始rowkey，则根据指定的rowkey对splits列表进行过滤和重新设置。
+     *
      * @param rowStartKey （inclusive）
-     * @param rowStopKey （exclusive）
+     * @param rowStopKey  （exclusive）
      */
-    private void filterSplits(List<InputSplit> splits, String rowStartKey, String rowStopKey){
+    private void filterSplits(List<InputSplit> splits, String rowStartKey, String rowStopKey) {
         HBaseSplit theSplit;
-        if(null!=rowStartKey&&null!=rowStopKey){
-            if(rowStartKey.compareTo(rowStopKey)>=0){
+        if (null != rowStartKey && null != rowStopKey) {
+            if (rowStartKey.compareTo(rowStopKey) >= 0) {
                 throw new ParseException("rowStopKey must be larger than rowStartKey. Please check input.");
             }
         }
-        if(null!=rowStartKey){
-            LOG.info("Row start key is set to: "+rowStartKey+" (inclusive)");
+        if (null != rowStartKey) {
+            LOG.info("Row start key is set to: " + rowStartKey + " (inclusive)");
             theSplit = (HBaseSplit) splits.get(0);
-            while(rowStartKey.compareTo(theSplit.getEndKey())>0){
+            while (rowStartKey.compareTo(theSplit.getEndKey()) > 0) {
                 splits.remove(0);
                 theSplit = (HBaseSplit) splits.get(0);
             }
-            if(theSplit.getEndKey().equals(rowStartKey)){
+            if (theSplit.getEndKey().equals(rowStartKey)) {
                 splits.remove(0);
-            }else{
+            } else {
                 theSplit.setStartKey(rowStartKey);
             }
         }
-        if(null!=rowStopKey){
-            LOG.info("Row stop key is set to: "+rowStopKey+" (exclusive)");
-            theSplit = (HBaseSplit) splits.get(splits.size()-1);
-            while(rowStopKey.compareTo(theSplit.getStartKey())<0){
-                splits.remove(splits.size()-1);
-                theSplit = (HBaseSplit) splits.get(splits.size()-1);
+        if (null != rowStopKey) {
+            LOG.info("Row stop key is set to: " + rowStopKey + " (exclusive)");
+            theSplit = (HBaseSplit) splits.get(splits.size() - 1);
+            while (rowStopKey.compareTo(theSplit.getStartKey()) < 0) {
+                splits.remove(splits.size() - 1);
+                theSplit = (HBaseSplit) splits.get(splits.size() - 1);
             }
-            if(theSplit.getStartKey().equals(rowStopKey)){
-                splits.remove(splits.size()-1);
-            }else{
+            if (theSplit.getStartKey().equals(rowStopKey)) {
+                splits.remove(splits.size() - 1);
+            } else {
                 theSplit.setEndKey(rowStopKey);
             }
         }
@@ -140,22 +142,17 @@ public class HBaseInputFormat extends HerculesInputFormat<HBaseDataTypeConverter
     @Override
     protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         String rowKeyCol = sourceOptions.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        if(rowKeyCol!=null){
-            LOG.info("rowKeyCol name has been set to: "+rowKeyCol);
-        }else{
+        if (rowKeyCol != null) {
+            LOG.info("rowKeyCol name has been set to: " + rowKeyCol);
+        } else {
             LOG.info("rowKeyCol name not set. rowKey will be excluded.");
         }
-        return new HBaseRecordReader(manager, converter, rowKeyCol);
+        return new HBaseRecordReader(context, manager, rowKeyCol);
     }
 
     @Override
     public HBaseManager initializeManager(GenericOptions options) {
         return new HBaseManager(options);
-    }
-
-    @Override
-    public HBaseDataTypeConverter generateConverter() {
-        return new HBaseDataTypeConverter();
     }
 }
 
@@ -172,19 +169,19 @@ class HBaseSplit extends InputSplit implements Writable {
         this.endKey = endKey;
     }
 
-    public String getStartKey(){
+    public String getStartKey() {
         return startKey;
     }
 
-    public String getEndKey(){
+    public String getEndKey() {
         return endKey;
     }
 
-    public void setStartKey(String startKey){
+    public void setStartKey(String startKey) {
         this.startKey = startKey;
     }
 
-    public void setEndKey(String endKey){
+    public void setEndKey(String endKey) {
         this.endKey = endKey;
     }
 
@@ -212,11 +209,11 @@ class HBaseSplit extends InputSplit implements Writable {
 
     @Override
     public String toString() {
-        return '{'+startKey +" <=rowkey< " + endKey + '}';
+        return '{' + startKey + " <=rowkey< " + endKey + '}';
     }
 }
 
-class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> {
+class HBaseRecordReader extends HerculesRecordReader<byte[]> {
 
     private static final Log LOG = LogFactory.getLog(HBaseRecordReader.class);
     private final HBaseManager manager;
@@ -225,9 +222,8 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     private Result value;
 
     @SneakyThrows
-    public HBaseRecordReader(HBaseManager manager,  DataTypeConverter converter, String rowKeyCol){
-
-        super(converter, new HBaseInputWrapperManager());
+    public HBaseRecordReader(TaskAttemptContext context, HBaseManager manager, String rowKeyCol) {
+        super(context, new HBaseInputWrapperManager());
         this.manager = manager;
         this.rowKeyCol = rowKeyCol;
 
@@ -270,8 +266,8 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         int columnNum = columnNameList.size();
         HerculesWritable record = new HerculesWritable(columnNum);
         // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
-        if(rowKeyCol!=null){
-            record.put(rowKeyCol,  new BytesWrapper(value.getRow()));
+        if (rowKeyCol != null) {
+            record.put(rowKeyCol, BytesWrapper.get(value.getRow()));
         }
         getLatestRecord(record, columnNum);
         return record;
@@ -286,23 +282,17 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     /**
      * 获取 san 出来的 timestamp 范围中最新的一个版本
      */
-    private void  getLatestRecord(HerculesWritable record, int columnNum) throws Exception {
+    private void getLatestRecord(HerculesWritable record, int columnNum) throws Exception {
 
         // 利用getNoVersionMap可以获取包含最新版本的唯一数据。
         NavigableMap<byte[], NavigableMap<byte[], byte[]>> familyColMap = value.getNoVersionMap();
         for (byte[] family : familyColMap.keySet()) {
             NavigableMap<byte[], byte[]> colValMap = familyColMap.get(family);
-            for(int i=0;i<columnNum;i++){
+            for (int i = 0; i < columnNum; i++) {
                 String qualifier = columnNameList.get(i);
                 byte[] val = colValMap.get(Bytes.toBytes(qualifier));
-                if(null==val){
-                    if(LOG.isDebugEnabled()){
-                        LOG.debug("The Column "+qualifier+" has no content in the record, skipping.");
-                    }
-                    continue;
-                }
-                if(LOG.isDebugEnabled()){
-                    LOG.debug("QUALIFIER: "+qualifier);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("QUALIFIER: " + qualifier);
                 }
                 record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(val, qualifier, "", 0));
             }
@@ -320,8 +310,8 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
         int columnNum = columnNameList.size();
         HerculesWritable record = new HerculesWritable(columnNum);
         // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
-        if(rowKeyCol!=null){
-            record.put(rowKeyCol,  new BytesWrapper(value.getRow()));
+        if (rowKeyCol != null) {
+            record.put(rowKeyCol, BytesWrapper.get(value.getRow()));
         }
         for (byte[] family : map.keySet()) {
             NavigableMap<byte[], NavigableMap<Long, byte[]>> familyMap = map.get(family);//列簇作为key获取其中的列相关数据
@@ -329,7 +319,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
             for (String qualifier : columnNameList) {
                 NavigableMap<Long, byte[]> columnValueMap = familyMap.get(qualifier.getBytes());
                 if (columnValueMap == null) { // 上游没有该行数据，做忽略处理，并且做好log
-                    if(LOG.isDebugEnabled()){
+                    if (LOG.isDebugEnabled()) {
                         LOG.warn("The Column " + qualifier + " has no content in the record, skipping.");
                     }
                     continue;
@@ -345,7 +335,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[], DataTypeConverter> 
     }
 
     @Override
-    public float getProgress(){
+    public float getProgress() {
         return 0;
     }
 }

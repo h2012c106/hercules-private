@@ -36,7 +36,27 @@ public class NullWrapper extends BaseWrapper<String> {
     }
 
     @Override
+    public Byte asByte() {
+        return null;
+    }
+
+    @Override
+    public Short asShort() {
+        return null;
+    }
+
+    @Override
+    public Integer asInteger() {
+        return null;
+    }
+
+    @Override
     public Long asLong() {
+        return null;
+    }
+
+    @Override
+    public Float asFloat() {
         return null;
     }
 
@@ -77,6 +97,11 @@ public class NullWrapper extends BaseWrapper<String> {
 
     @Override
     public JSON asJson() {
+        return null;
+    }
+
+    @Override
+    public Object asDefault() {
         return null;
     }
 }

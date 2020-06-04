@@ -5,7 +5,6 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.logging.Log;
@@ -25,8 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @param <T> 数据源读入时用于表示一行的数据结构，详情可见{@link WrapperGetter}
  */
-public abstract class HerculesRecordReader<T, C extends DataTypeConverter<?, ?>>
-        extends RecordReader<NullWritable, HerculesWritable> {
+public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable, HerculesWritable> {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordReader.class);
 

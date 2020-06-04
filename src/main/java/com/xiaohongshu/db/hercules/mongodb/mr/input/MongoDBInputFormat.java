@@ -203,16 +203,11 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
 
     @Override
     protected HerculesRecordReader<Document, MongoDBDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new MongoDBRecordReader(context, generateCustomDataTypeManager(), manager);
+        return new MongoDBRecordReader(context, manager);
     }
 
     @Override
     public MongoDBManager generateManager(GenericOptions options) {
         return new MongoDBManager(options);
-    }
-
-    @Override
-    public MongoDBCustomDataTypeManager generateCustomDataTypeManager() {
-        return MongoDBCustomDataTypeManager.INSTANCE;
     }
 }

@@ -4,7 +4,6 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -21,7 +20,7 @@ import java.util.Stack;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
 
-public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInfo, ParquetDataTypeConverter> {
+public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInfo> {
 
     private static final Log LOG = LogFactory.getLog(ParquetRecordReader.class);
 

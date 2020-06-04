@@ -296,7 +296,7 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
         @Override
         public void set(@NonNull BaseWrapper wrapper, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
             TypeBuilderTreeNode node;
-            if (wrapper.getType() != BaseDataType.NULL) {
+            if (!wrapper.isNull()) {
                 node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
                 TypeBuilderTreeNode child = row.addAndReturnChildren(node);
                 afterSet(wrapper, child, rowName, columnName);

@@ -35,8 +35,7 @@ import java.util.*;
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST;
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST;
 
-public class MongoDBRecordReader
-        extends HerculesRecordReader<Document, MongoDBDataTypeConverter> {
+public class MongoDBRecordReader extends HerculesRecordReader<Document> {
 
     private static final Log LOG = LogFactory.getLog(MongoDBRecordReader.class);
 
@@ -55,6 +54,10 @@ public class MongoDBRecordReader
     private MongoDBDataTypeConverter converter;
 
     private final Document fakeDocument = new Document(FAKE_COLUMN_NAME_USED_BY_LIST, 0);
+
+    public MongoDBRecordReader(TaskAttemptContext context, MongoDBManager manager) {
+        this(context, MongoDBCustomDataTypeManager.INSTANCE, manager);
+    }
 
     public MongoDBRecordReader(TaskAttemptContext context,
                                MongoDBCustomDataTypeManager typeManager, MongoDBManager manager) {
