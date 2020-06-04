@@ -2,9 +2,11 @@ package com.xiaohongshu.db.hercules.core.mr.output;
 
 import com.google.common.util.concurrent.RateLimiter;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.logging.Log;
@@ -15,6 +17,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,14 +45,19 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
 
     private boolean emptyColumnNameList;
 
-    public HerculesRecordWriter(TaskAttemptContext context, WrapperSetterFactory<T> wrapperSetterFactory) {
+    protected BaseCustomDataTypeManager<?, ?> manager;
+
+    public HerculesRecordWriter(TaskAttemptContext context, WrapperSetterFactory<T> wrapperSetterFactory,
+                                BaseCustomDataTypeManager<?, ?> manager) {
         options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
 
-        columnNameList = Arrays.asList(options.getTargetOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-        columnTypeMap = SchemaUtils.convert(options.getTargetOptions().getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
+        this.manager = manager;
 
-        this.wrapperSetterFactory = wrapperSetterFactory;
+        columnNameList = Arrays.asList(options.getTargetOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+        columnTypeMap = SchemaUtils.convert(options.getTargetOptions().getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), this.manager);
+
+        setWrapperSetterFactory(wrapperSetterFactory);
 
         emptyColumnNameList = columnNameList.size() == 0;
 
@@ -60,6 +68,10 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         }
     }
 
+    public HerculesRecordWriter(TaskAttemptContext context, WrapperSetterFactory<T> wrapperSetterFactory) {
+        this(context, wrapperSetterFactory, NullCustomDataTypeManager.INSTANCE);
+    }
+
     /**
      * 子类有可能会有内部非静态类（如mongo），初始化无法new出来，留个口子
      *
@@ -67,6 +79,21 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
      */
     protected void setWrapperSetterFactory(WrapperSetterFactory<T> wrapperSetterFactory) {
         this.wrapperSetterFactory = wrapperSetterFactory;
+
+        if (wrapperSetterFactory != null) {
+            // 检查column type里是否有不支持的类型
+            Map<String, DataType> errorMap = new HashMap<>();
+            for (Map.Entry<String, DataType> entry : columnTypeMap.entrySet()) {
+                String columnName = entry.getKey();
+                DataType dataType = entry.getValue();
+                if (!dataType.isCustom() && !wrapperSetterFactory.contains(dataType)) {
+                    errorMap.put(columnName, dataType);
+                }
+            }
+            if (errorMap.size() > 0) {
+                throw new RuntimeException("Unsupported write base data types: " + errorMap);
+            }
+        }
     }
 
     protected final WrapperSetter<T> getWrapperSetter(DataType dataType) {

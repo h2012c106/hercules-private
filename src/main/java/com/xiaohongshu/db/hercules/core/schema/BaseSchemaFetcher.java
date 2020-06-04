@@ -1,7 +1,9 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -13,10 +15,8 @@ import java.util.Set;
 
 /**
  * 仅用于从数据源fetch schema，且全局仅允许fetch一次
- *
- * @param <T> 判断数据源类型的标准，例如sql为int，内部使用switch...case；mongo为Object，内部使用if...instance of
  */
-public abstract class BaseSchemaFetcher<T extends DataTypeConverter> {
+public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> {
 
     private static final Log LOG = LogFactory.getLog(BaseSchemaFetcher.class);
 
@@ -24,10 +24,21 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter> {
     private List<String> columnNameList;
     private Map<String, DataType> columnTypeMap;
     protected T converter;
+    protected BaseCustomDataTypeManager customDataTypeManager;
 
     public BaseSchemaFetcher(GenericOptions options, T converter) {
+        this(options, converter, NullCustomDataTypeManager.INSTANCE);
+    }
+
+    public BaseSchemaFetcher(GenericOptions options, T converter,
+                             BaseCustomDataTypeManager customDataTypeManager) {
         this.options = options;
         this.converter = converter;
+        this.customDataTypeManager = customDataTypeManager;
+    }
+
+    public BaseCustomDataTypeManager getCustomDataTypeManager() {
+        return customDataTypeManager;
     }
 
     protected GenericOptions getOptions() {
@@ -83,6 +94,7 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter> {
 
     /**
      * 获得最终的schema信息后可能会对生成/修改一些参数，如parquet的schema信息就需要在negotiate后生成
+     *
      * @param columnNameList
      * @param columnTypeMap
      */

@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.core.option;
 
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -70,7 +70,7 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(COLUMN_TYPE)
                 .needArg(true)
-                .description(String.format("The table column type map, formatted in json, type: %s.", Arrays.toString(DataType.values())))
+                .description(String.format("The table column type map, formatted in json, type: %s.", Arrays.toString(BaseDataType.values())))
                 .defaultStringValue(DEFAULT_COLUMN_TYPE.toJSONString())
                 .build());
         tmpList.add(SingleOptionConf.builder()

@@ -1,5 +1,8 @@
 package com.xiaohongshu.db.hercules.core.mr.output;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManagerGenerator;
+import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

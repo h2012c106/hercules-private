@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.mongodb.datatype.MongoDBCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManagerGenerator;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -21,7 +22,7 @@ public class MongoDBOutputFormat extends HerculesOutputFormat implements MongoDB
 
         GenericOptions targetOptions = options.getTargetOptions();
         try {
-            return new MongoDBRecordWriter(context, generateManager(targetOptions));
+            return new MongoDBRecordWriter(context, generateManager(targetOptions), MongoDBCustomDataTypeManager.INSTANCE);
         } catch (Exception e) {
             throw new IOException(e);
         }

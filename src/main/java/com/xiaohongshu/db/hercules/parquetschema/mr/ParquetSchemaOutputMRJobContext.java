@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.parquetschema.mr;
 import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
 import com.xiaohongshu.db.hercules.parquet.schema.*;
@@ -206,7 +206,7 @@ public class ParquetSchemaOutputMRJobContext implements MRJobContext {
             }
             LOG.info(String.format("Fetch %d schema file(s) in %s.", pathWithSchemaList.size(), targetDir.toString()));
 
-            TypeBuilderTreeNode resTree = new TypeBuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, DataType.MAP);
+            TypeBuilderTreeNode resTree = new TypeBuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, BaseDataType.MAP);
             List<TypeBuilderTreeNode> fileTreeList = pathWithSchemaList.stream()
                     .map(pathWithSchema -> {
                         MessageType messageType = pathWithSchema.getMessageType();

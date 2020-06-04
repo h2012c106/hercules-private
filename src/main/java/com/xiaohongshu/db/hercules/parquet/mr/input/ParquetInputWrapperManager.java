@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
@@ -73,7 +73,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
         return res;
     }
 
-    protected final boolean containsColumn(Group group, String columnName) {
+    private boolean containsColumn(Group group, String columnName) {
         // repeated允许长度为0
         return group.getType().getType(columnName).isRepetition(Type.Repetition.REPEATED)
                 || group.getFieldRepetitionCount(columnName) > 0;
@@ -81,74 +81,84 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getIntegerGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                return new IntegerWrapper(row.getGroup().getInteger(columnName, row.getValueSeq()));
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return IntegerWrapper.get(row.isEmpty()
+                        ? null
+                        : row.getGroup().getInteger(columnName, row.getValueSeq()));
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getLongGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                return new IntegerWrapper(row.getGroup().getLong(columnName, row.getValueSeq()));
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return IntegerWrapper.get(row.isEmpty()
+                        ? null
+                        : row.getGroup().getLong(columnName, row.getValueSeq()));
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getFloatGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                return new DoubleWrapper(row.getGroup().getFloat(columnName, row.getValueSeq()));
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return DoubleWrapper.get(row.isEmpty()
+                        ? null
+                        : row.getGroup().getFloat(columnName, row.getValueSeq()));
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getDoubleGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                if (!containsColumn(row.getGroup(), columnName)) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new DoubleWrapper(row.getGroup().getDouble(columnName, row.getValueSeq()));
-                }
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return DoubleWrapper.get(row.isEmpty()
+                        ? null
+                        : row.getGroup().getDouble(columnName, row.getValueSeq()));
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getBooleanGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                return new BooleanWrapper(row.getGroup().getBoolean(columnName, row.getValueSeq()));
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return BooleanWrapper.get(row.isEmpty()
+                        ? null
+                        : row.getGroup().getBoolean(columnName, row.getValueSeq()));
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getStringGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                return new StringWrapper(row.getGroup().getString(columnName, row.getValueSeq()));
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return StringWrapper.get(row.isEmpty()
+                        ? null
+                        : row.getGroup().getString(columnName, row.getValueSeq()));
             }
         };
     }
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getBytesGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) {
-                return new BytesWrapper(row.getGroup().getBinary(columnName, row.getValueSeq()).getBytes());
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return BytesWrapper.get(row.isEmpty()
+                        ? null
+                        : row.getGroup().getBinary(columnName, row.getValueSeq()).getBytes());
             }
         };
     }
@@ -172,11 +182,15 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
 
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getMapGetter() {
-        return new ParquetWrapperGetter() {
+        return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName) throws Exception {
-                return groupToMapWrapper(row.getGroup().getGroup(columnName, row.getValueSeq()),
-                        WritableUtils.concatColumn(rowName, columnName));
+            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                if (row.isEmpty()) {
+                    return MapWrapper.NULL_INSTANCE;
+                } else {
+                    return groupToMapWrapper(row.getGroup().getGroup(columnName, row.getValueSeq()),
+                            WritableUtils.concatColumn(rowName, columnName));
+                }
             }
         };
     }

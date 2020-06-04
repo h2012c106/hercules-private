@@ -8,7 +8,6 @@ import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -32,10 +31,10 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
 
     private MessageType messageType;
 
-    public ParquetRecordReader(ParquetDataTypeConverter converter, RecordReader<Void, Group> delegate,
+    public ParquetRecordReader(TaskAttemptContext context, RecordReader<Void, Group> delegate,
                                ParquetInputWrapperManager wrapperManager) {
         // 此时还没搞出columnTypeMap
-        super(converter, wrapperManager);
+        super(context, wrapperManager);
         this.delegate = delegate;
         this.wrapperManager = wrapperManager;
     }

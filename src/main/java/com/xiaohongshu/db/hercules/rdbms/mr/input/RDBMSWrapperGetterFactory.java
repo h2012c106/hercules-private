@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 
@@ -18,10 +18,9 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 Byte res = row.getByte(columnSeq);
                 if (row.wasNull()) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new IntegerWrapper(res);
+                    res = null;
                 }
+                return IntegerWrapper.get(res);
             }
         };
     }
@@ -33,10 +32,9 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 Short res = row.getShort(columnSeq);
                 if (row.wasNull()) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new IntegerWrapper(res);
+                    res = null;
                 }
+                return IntegerWrapper.get(res);
             }
         };
     }
@@ -48,10 +46,9 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 Integer res = row.getInt(columnSeq);
                 if (row.wasNull()) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new IntegerWrapper(res);
+                    res = null;
                 }
+                return IntegerWrapper.get(res);
             }
         };
     }
@@ -63,10 +60,9 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 Long res = row.getLong(columnSeq);
                 if (row.wasNull()) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new IntegerWrapper(res);
+                    res = null;
                 }
+                return IntegerWrapper.get(res);
             }
         };
     }
@@ -83,10 +79,9 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 Float res = row.getFloat(columnSeq);
                 if (row.wasNull()) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new DoubleWrapper(res);
+                    res = null;
                 }
+                return DoubleWrapper.get(res);
             }
         };
     }
@@ -98,10 +93,9 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 Double res = row.getDouble(columnSeq);
                 if (row.wasNull()) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new DoubleWrapper(res);
+                    res = null;
                 }
+                return DoubleWrapper.get(res);
             }
         };
     }
@@ -112,11 +106,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             @Override
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 BigDecimal res = row.getBigDecimal(columnSeq);
-                if (res == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new DoubleWrapper(res);
-                }
+                return DoubleWrapper.get(res);
             }
         };
     }
@@ -128,10 +118,9 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 Boolean res = row.getBoolean(columnSeq);
                 if (row.wasNull()) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new BooleanWrapper(res);
+                    res = null;
                 }
+                return BooleanWrapper.get(res);
             }
         };
     }
@@ -142,11 +131,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             @Override
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 String res = row.getString(columnSeq);
-                if (res == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new StringWrapper(res);
-                }
+                return StringWrapper.get(res);
             }
         };
     }
@@ -157,11 +142,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             @Override
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 java.sql.Date res = row.getDate(columnSeq);
-                if (res == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new DateWrapper(res, DataType.DATE);
-                }
+                return DateWrapper.get(res, BaseDataType.DATE);
             }
         };
     }
@@ -172,11 +153,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             @Override
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 java.sql.Time res = row.getTime(columnSeq);
-                if (res == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new DateWrapper(res, DataType.TIME);
-                }
+                return DateWrapper.get(res, BaseDataType.TIME);
             }
         };
     }
@@ -187,11 +164,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             @Override
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 String res = SqlUtils.getTimestamp(row, columnSeq);
-                if (res == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new DateWrapper(res, DataType.DATETIME);
-                }
+                return DateWrapper.get(res, BaseDataType.DATETIME);
             }
         };
     }
@@ -202,11 +175,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
             @Override
             public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 byte[] res = row.getBytes(columnSeq);
-                if (res == null) {
-                    return NullWrapper.INSTANCE;
-                } else {
-                    return new BytesWrapper(res);
-                }
+                return BytesWrapper.get(res);
             }
         };
     }

@@ -1,7 +1,8 @@
 package com.xiaohongshu.db.hercules.parquet;
 
 import com.google.common.collect.Sets;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
 import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
@@ -22,42 +23,42 @@ public final class ParquetSchemaUtils {
 
     static {
         TYPE_UPGRADE_MAP = new HashMap<>();
-        for (DataType dataType : DataType.values()) {
-            TYPE_UPGRADE_MAP.put(dataType, Sets.newHashSet(dataType));
+        for (BaseDataType baseDataType : BaseDataType.values()) {
+            TYPE_UPGRADE_MAP.put(baseDataType, Sets.newHashSet(baseDataType));
         }
-        TYPE_UPGRADE_MAP.get(DataType.BYTE).addAll(Sets.newHashSet(DataType.SHORT,
-                DataType.INTEGER,
-                DataType.LONG,
-                DataType.LONGLONG,
-                DataType.FLOAT,
-                DataType.DOUBLE,
-                DataType.DECIMAL));
-        TYPE_UPGRADE_MAP.get(DataType.SHORT).addAll(Sets.newHashSet(DataType.INTEGER,
-                DataType.LONG,
-                DataType.LONGLONG,
-                DataType.FLOAT,
-                DataType.DOUBLE,
-                DataType.DECIMAL));
-        TYPE_UPGRADE_MAP.get(DataType.INTEGER).addAll(Sets.newHashSet(DataType.LONG,
-                DataType.LONGLONG,
-                DataType.FLOAT,
-                DataType.DOUBLE,
-                DataType.DECIMAL));
-        TYPE_UPGRADE_MAP.get(DataType.LONG).addAll(Sets.newHashSet(DataType.LONGLONG,
-                DataType.DECIMAL));
-        TYPE_UPGRADE_MAP.get(DataType.FLOAT).addAll(Sets.newHashSet(DataType.DOUBLE,
-                DataType.DECIMAL));
-        TYPE_UPGRADE_MAP.get(DataType.DOUBLE).addAll(Sets.newHashSet(DataType.DECIMAL));
+        TYPE_UPGRADE_MAP.get(BaseDataType.BYTE).addAll(Sets.newHashSet(BaseDataType.SHORT,
+                BaseDataType.INTEGER,
+                BaseDataType.LONG,
+                BaseDataType.LONGLONG,
+                BaseDataType.FLOAT,
+                BaseDataType.DOUBLE,
+                BaseDataType.DECIMAL));
+        TYPE_UPGRADE_MAP.get(BaseDataType.SHORT).addAll(Sets.newHashSet(BaseDataType.INTEGER,
+                BaseDataType.LONG,
+                BaseDataType.LONGLONG,
+                BaseDataType.FLOAT,
+                BaseDataType.DOUBLE,
+                BaseDataType.DECIMAL));
+        TYPE_UPGRADE_MAP.get(BaseDataType.INTEGER).addAll(Sets.newHashSet(BaseDataType.LONG,
+                BaseDataType.LONGLONG,
+                BaseDataType.FLOAT,
+                BaseDataType.DOUBLE,
+                BaseDataType.DECIMAL));
+        TYPE_UPGRADE_MAP.get(BaseDataType.LONG).addAll(Sets.newHashSet(BaseDataType.LONGLONG,
+                BaseDataType.DECIMAL));
+        TYPE_UPGRADE_MAP.get(BaseDataType.FLOAT).addAll(Sets.newHashSet(BaseDataType.DOUBLE,
+                BaseDataType.DECIMAL));
+        TYPE_UPGRADE_MAP.get(BaseDataType.DOUBLE).addAll(Sets.newHashSet(BaseDataType.DECIMAL));
     }
 
     public static TypeBuilderTreeNode buildTree(GroupType groupType, TypeBuilderTreeNode parent, ParquetDataTypeConverter converter) {
-        TypeBuilderTreeNode res = new TypeBuilderTreeNode(groupType.getName(), groupType.getRepetition(), parent, DataType.MAP);
+        TypeBuilderTreeNode res = new TypeBuilderTreeNode(groupType.getName(), groupType.getRepetition(), parent, BaseDataType.MAP);
         for (Type type : groupType.getFields()) {
             String columnName = type.getName();
             Type.Repetition repetition = type.getRepetition();
-            DataType dataType = converter.convertElementType(new ParquetType(type, false));
+            DataType baseDataType = converter.convertElementType(new ParquetType(type, false));
             if (type.isPrimitive()) {
-                res.addAndReturnChildren(new TypeBuilderTreeNode(columnName, repetition, res, dataType));
+                res.addAndReturnChildren(new TypeBuilderTreeNode(columnName, repetition, res, baseDataType));
             } else {
                 res.addAndReturnChildren(buildTree((GroupType) type, res, converter));
             }
@@ -116,7 +117,7 @@ public final class ParquetSchemaUtils {
      */
     public static void unionMapTree(TypeBuilderTreeNode target, TypeBuilderTreeNode source,
                                     boolean typeAutoUpgrade, boolean allowTargetUnexist, boolean allowSourceUnexist) {
-        if (target.getType() != DataType.MAP || source.getType() != DataType.MAP) {
+        if (target.getType() != BaseDataType.MAP || source.getType() != BaseDataType.MAP) {
             throw new RuntimeException("Two sides of union must be MAP.");
         }
         Map<String, TypeBuilderTreeNode> targetChildren = target.getChildren();
@@ -157,7 +158,7 @@ public final class ParquetSchemaUtils {
                 }
 
                 // 如果存在子group需要合并子group
-                if (targetDataType == DataType.MAP) {
+                if (targetDataType == BaseDataType.MAP) {
                     // 目标、源node皆有此列，至少说明这列不论对于目标还是源都被正儿八经置过，故内部统统care少列
                     unionMapTree(targetChild, sourceChild, typeAutoUpgrade, false, false);
                 }

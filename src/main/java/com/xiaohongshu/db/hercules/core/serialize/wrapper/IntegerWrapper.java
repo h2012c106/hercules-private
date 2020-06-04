@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
 import java.math.BigDecimal;
@@ -16,28 +17,48 @@ import java.util.Date;
  */
 public class IntegerWrapper extends BaseWrapper<BigInteger> {
 
-    public IntegerWrapper(Byte value) {
-        this(BigInteger.valueOf(value), DataType.BYTE, 1);
+    private IntegerWrapper(Byte value) {
+        this(BigInteger.valueOf(value), BaseDataType.BYTE, 1);
     }
 
-    public IntegerWrapper(Short value) {
-        this(BigInteger.valueOf(value), DataType.SHORT, 2);
+    private IntegerWrapper(Short value) {
+        this(BigInteger.valueOf(value), BaseDataType.SHORT, 2);
     }
 
-    public IntegerWrapper(Integer value) {
-        this(BigInteger.valueOf(value), DataType.INTEGER, 4);
+    private IntegerWrapper(Integer value) {
+        this(BigInteger.valueOf(value), BaseDataType.INTEGER, 4);
     }
 
-    public IntegerWrapper(Long value) {
-        this(BigInteger.valueOf(value), DataType.LONG, 8);
+    private IntegerWrapper(Long value) {
+        this(BigInteger.valueOf(value), BaseDataType.LONG, 8);
     }
 
-    public IntegerWrapper(BigInteger value) {
-        this(value, DataType.LONGLONG, value.toByteArray().length);
+    private IntegerWrapper(BigInteger value) {
+        this(value, BaseDataType.LONGLONG, value.toByteArray().length);
     }
 
     private IntegerWrapper(BigInteger value, DataType type, int byteSize) {
         super(value, type, byteSize);
+    }
+
+    public static BaseWrapper get(Byte value) {
+        return value == null ? NullWrapper.get(BaseDataType.BYTE) : new IntegerWrapper(value);
+    }
+
+    public static BaseWrapper get(Short value) {
+        return value == null ? NullWrapper.get(BaseDataType.SHORT) : new IntegerWrapper(value);
+    }
+
+    public static BaseWrapper get(Integer value) {
+        return value == null ? NullWrapper.get(BaseDataType.INTEGER) : new IntegerWrapper(value);
+    }
+
+    public static BaseWrapper get(Long value) {
+        return value == null ? NullWrapper.get(BaseDataType.LONG) : new IntegerWrapper(value);
+    }
+
+    public static BaseWrapper get(BigInteger value) {
+        return value == null ? NullWrapper.get(BaseDataType.LONGLONG) : new IntegerWrapper(value);
     }
 
     @Override
@@ -78,7 +99,7 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
 
     @Override
     public byte[] asBytes() {
-        return getValue().toByteArray();
+        throw new SerializeException("Unsupported to convert number to bytes.");
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.parquetschema.schema;
 
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetSchemaFetcher;
 import org.apache.commons.lang3.StringUtils;

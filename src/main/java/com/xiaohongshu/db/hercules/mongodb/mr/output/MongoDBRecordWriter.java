@@ -6,11 +6,12 @@ import com.mongodb.MongoClient;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.MultiThreadAsyncWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
@@ -18,6 +19,7 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.mongodb.ExportType;
+import com.xiaohongshu.db.hercules.mongodb.datatype.MongoDBCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOutputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
@@ -27,13 +29,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
+import org.bson.types.Binary;
 import org.bson.types.Decimal128;
-import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST;
@@ -50,7 +55,6 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
     private final String dbName;
     private final String collectionName;
 
-    private final Set<String> objectIdColumnNameSet;
     private final ExportType exportType;
     private final boolean upsert;
     private final Long statementPerBulk;
@@ -60,27 +64,14 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
 
     private final MongoDBMultiThreadAsyncWriter writer;
 
-    public MongoDBRecordWriter(TaskAttemptContext context, MongoDBManager manager) throws Exception {
-        super(context, null);
+    public MongoDBRecordWriter(TaskAttemptContext context, MongoDBManager manager, MongoDBCustomDataTypeManager typeManager) throws Exception {
+        super(context, null, typeManager);
         setWrapperSetterFactory(new MongoDBWrapperSetterFactory());
 
         client = manager.getConnection();
 
         dbName = options.getTargetOptions().getString(MongoDBOptionsConf.DATABASE, null);
         collectionName = options.getTargetOptions().getString(MongoDBOptionsConf.COLLECTION, null);
-
-        objectIdColumnNameSet = Arrays
-                .stream(options.getTargetOptions().getStringArray(MongoDBOutputOptionsConf.OBJECT_ID, null))
-                .collect(Collectors.toSet());
-        // 保证objectId列为String型
-        for (String objectIdName : objectIdColumnNameSet) {
-            // objectId的列要么不定义，定义了必须是String
-            if (columnTypeMap.containsKey(objectIdName) && columnTypeMap.get(objectIdName) != DataType.STRING) {
-                LOG.warn(String.format("Unexpected column type [%s] of a objectId column: %s. Force to STRING.",
-                        columnTypeMap.get(objectIdName), objectIdName));
-            }
-            columnTypeMap.put(objectIdName, DataType.STRING);
-        }
 
         exportType = ExportType.valueOfIgnoreCase(options.getTargetOptions().getString(MongoDBOutputOptionsConf.EXPORT_TYPE, null));
         upsert = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.UPSERT, false);
@@ -113,7 +104,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
      */
     private ArrayList<Object> wrapperToList(BaseWrapper wrapper) throws Exception {
         ArrayList<Object> res;
-        if (wrapper.getType() == DataType.LIST) {
+        if (wrapper.getType() == BaseDataType.LIST) {
             ListWrapper listWrapper = (ListWrapper) wrapper;
             res = new ArrayList<>(listWrapper.size());
             for (int i = 0; i < listWrapper.size(); ++i) {
@@ -371,18 +362,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
                 @Override
                 public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
                         throws Exception {
-                    String res = wrapper.asString();
-                    if (res == null) {
-                        row.put(columnName, null);
-                    } else {
-                        String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
-                        // 配置为ObjectId的列，必须显式指定为String型
-                        if (objectIdColumnNameSet.contains(fullColumnName)) {
-                            row.put(columnName, new ObjectId(res));
-                        } else {
-                            row.put(columnName, res);
-                        }
-                    }
+                    row.put(columnName, wrapper.asString());
                 }
             };
         }
@@ -414,7 +394,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
                 @Override
                 public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
                         throws Exception {
-                    row.put(columnName, wrapper.asBytes());
+                    row.put(columnName, new Binary(wrapper.asBytes()));
                 }
             };
         }
@@ -436,7 +416,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
                 @Override
                 public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
                         throws Exception {
-                    if (wrapper.getType() == DataType.NULL) {
+                    if (wrapper.getType() == BaseDataType.NULL) {
                         row.put(columnName, null);
                     } else {
                         row.put(columnName, wrapperToList(wrapper));
@@ -451,10 +431,10 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
                 @Override
                 public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
                         throws Exception {
-                    if (wrapper.getType() == DataType.NULL) {
+                    if (wrapper.getType() == BaseDataType.NULL) {
                         // 有可能是个null，不处理else要NPE
                         row.put(columnName, null);
-                    } else if (wrapper.getType() == DataType.MAP) {
+                    } else if (wrapper.getType() == BaseDataType.MAP) {
                         // 确保尽可能不丢失类型信息
                         String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
                         row.put(columnName, mapWrapperToDocument((MapWrapper) wrapper, fullColumnName));

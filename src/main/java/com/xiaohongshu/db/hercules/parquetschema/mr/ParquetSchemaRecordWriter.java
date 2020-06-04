@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.parquetschema.mr;
 
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
@@ -37,7 +37,7 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
         super(context, wrapperSetterFactory);
         this.wrapperManager = wrapperSetterFactory;
         this.delegate = delegate;
-        this.result = new TypeBuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, DataType.MAP);
+        this.result = new TypeBuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, BaseDataType.MAP);
         wrapperManager.setColumnTypeMap(columnTypeMap);
     }
 

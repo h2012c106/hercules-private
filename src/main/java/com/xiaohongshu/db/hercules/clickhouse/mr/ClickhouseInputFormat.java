@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.clickhouse.mr;
 
 import com.xiaohongshu.db.hercules.clickhouse.schema.ClickhouseSchemaFetcher;
+import com.xiaohongshu.db.hercules.clickhouse.schema.manager.ClickhouseManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSFastSplitterGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
@@ -18,7 +19,7 @@ public class ClickhouseInputFormat extends RDBMSInputFormat {
 
     @Override
     public RDBMSManager generateManager(GenericOptions options) {
-        return super.generateManager(options);
+        return new ClickhouseManager(options);
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.tidb.mr;
 
-import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSBalanceSplitGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputSplit;
@@ -14,6 +13,7 @@ import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -34,8 +34,8 @@ public class TiDBRecordReader extends RDBMSRecordReader {
 
     private Integer fetchSize;
 
-    public TiDBRecordReader(RDBMSManager manager, RDBMSDataTypeConverter converter, RDBMSSchemaFetcher schemaFetcher) {
-        super(manager, converter);
+    public TiDBRecordReader(TaskAttemptContext context, RDBMSManager manager, RDBMSSchemaFetcher schemaFetcher) {
+        super(context, manager);
         this.schemaFetcher = schemaFetcher;
     }
 

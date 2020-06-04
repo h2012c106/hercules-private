@@ -37,8 +37,8 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSData
 
     protected RDBMSManager manager;
 
-    public RDBMSRecordReader(RDBMSManager manager, RDBMSDataTypeConverter converter) {
-        super(converter, new RDBMSWrapperGetterFactory());
+    public RDBMSRecordReader(TaskAttemptContext context, RDBMSManager manager) {
+        super(context, new RDBMSWrapperGetterFactory());
         this.manager = manager;
     }
 

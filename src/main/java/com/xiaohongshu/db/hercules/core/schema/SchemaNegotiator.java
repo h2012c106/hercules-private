@@ -5,11 +5,13 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -118,7 +120,8 @@ public final class SchemaNegotiator {
         needTypeColumnNameSet.addAll(additionalNeedTypeColumnNameSet);
         needTypeColumnNameSet.addAll(columnNameList);
 
-        Map<String, DataType> res = SchemaUtils.convert(datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()));
+        Map<String, DataType> res = SchemaUtils.convert(datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()),
+                schemaFetcher.getCustomDataTypeManager());
         // 如果用户全部指定，则返回就完事儿了
         if (res.keySet().containsAll(needTypeColumnNameSet)) {
             return res;
@@ -146,19 +149,29 @@ public final class SchemaNegotiator {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * @param source
+     * @param target
+     * @param columnMap
+     * @param role      表示谁是抄袭者
+     * @return
+     */
     private Map<String, DataType> copyTypeMap(Map<String, DataType> source, Map<String, DataType> target,
                                               BiMap<String, String> columnMap, DataSourceRole role) {
         // 被抄袭的
         Map<String, DataType> tmpSource;
         // 抄袭的
         Map<String, DataType> tmpTarget;
+        BaseCustomDataTypeManager targetManager;
         if (role == DataSourceRole.SOURCE) {
             columnMap = columnMap.inverse();
             tmpSource = new HashMap<>(target);
             tmpTarget = new HashMap<>(source);
+            targetManager = sourceSchemaFetcher.getCustomDataTypeManager();
         } else {
             tmpSource = new HashMap<>(source);
             tmpTarget = new HashMap<>(target);
+            targetManager = targetSchemaFetcher.getCustomDataTypeManager();
         }
         final BiMap<String, String> finalColumnMap = columnMap;
         // 被抄袭的列名先转一下
@@ -166,8 +179,19 @@ public final class SchemaNegotiator {
                 .stream()
                 .collect(Collectors.toMap(entry -> finalColumnMap.getOrDefault(entry.getKey(), entry.getKey()),
                         Map.Entry::getValue));
-        // 抄袭者自己的答案优先
-        tmpSource.putAll(tmpTarget);
+        for (Map.Entry<String, DataType> entry : tmpSource.entrySet()) {
+            String columnName = entry.getKey();
+            DataType dataType = entry.getValue();
+            // 抄袭者自己的答案优先
+            if (!tmpTarget.containsKey(columnName)) {
+                // 若抄袭者的custom type中包含被抄的类型，则可以抄，否则抄关联基础类型
+                if (dataType.isCustom() && targetManager.contains(dataType.getClass())) {
+                    tmpTarget.put(columnName, dataType);
+                } else {
+                    tmpTarget.put(columnName, dataType.getBaseDataType());
+                }
+            }
+        }
         return tmpSource;
     }
 

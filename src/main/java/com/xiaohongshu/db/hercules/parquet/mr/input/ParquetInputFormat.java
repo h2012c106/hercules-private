@@ -29,7 +29,7 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.ORIGINAL_SPLIT;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
-public class ParquetInputFormat extends HerculesInputFormat<ParquetDataTypeConverter> {
+public class ParquetInputFormat extends HerculesInputFormat {
 
     private static final Log LOG = LogFactory.getLog(ParquetInputFormat.class);
 
@@ -101,23 +101,9 @@ public class ParquetInputFormat extends HerculesInputFormat<ParquetDataTypeConve
 
     @Override
     protected HerculesRecordReader<?, ParquetDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new ParquetRecordReader(converter,
+        return new ParquetRecordReader(context,
                 delegate.createRecordReader(split, context),
                 generateWrapperManager(options));
-    }
-
-    @Override
-    public ParquetDataTypeConverter generateConverter() {
-        switch (schemaStyle) {
-            case SQOOP:
-                return ParquetSqoopDataTypeConverter.getInstance();
-            case HIVE:
-                return ParquetHiveDataTypeConverter.getInstance();
-            case ORIGINAL:
-                return ParquetHerculesDataTypeConverter.getInstance();
-            default:
-                throw new RuntimeException();
-        }
     }
 
     private ParquetInputWrapperManager generateWrapperManager(GenericOptions options) {

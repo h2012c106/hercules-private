@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.*;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
@@ -25,39 +26,43 @@ public final class SplitUtils {
 
     private static BaseSplitter getSplitter(ResultSet minMaxCountResult,
                                             DataType dataType, int sqlDataType, boolean hexString) throws SQLException {
-        switch (dataType) {
-            case BYTE:
-            case SHORT:
-            case INTEGER:
-            case LONG:
-                return new IntegerSplitter(minMaxCountResult);
-            case FLOAT:
-            case DOUBLE:
-            case DECIMAL:
-                return new DoubleSplitter(minMaxCountResult);
-            case BOOLEAN:
-                return new BooleanSplitter(minMaxCountResult);
-            case DATE:
-            case TIME:
-            case DATETIME:
-                return new DateSplitter(minMaxCountResult);
-            case STRING:
-                boolean nvarchar;
-                switch (sqlDataType) {
-                    case Types.NVARCHAR:
-                    case Types.NCHAR:
-                        nvarchar = true;
-                        break;
-                    default:
-                        nvarchar = false;
-                }
-                if (hexString) {
-                    return new HexTextSplitter(minMaxCountResult, nvarchar);
-                } else {
-                    return new TextSplitter(minMaxCountResult, nvarchar);
-                }
-            default:
-                throw new UnsupportedOperationException("Unsupported data type to split: " + dataType.name());
+        if (!dataType.isCustom()) {
+            switch ((BaseDataType) dataType) {
+                case BYTE:
+                case SHORT:
+                case INTEGER:
+                case LONG:
+                    return new IntegerSplitter(minMaxCountResult);
+                case FLOAT:
+                case DOUBLE:
+                case DECIMAL:
+                    return new DoubleSplitter(minMaxCountResult);
+                case BOOLEAN:
+                    return new BooleanSplitter(minMaxCountResult);
+                case DATE:
+                case TIME:
+                case DATETIME:
+                    return new DateSplitter(minMaxCountResult);
+                case STRING:
+                    boolean nvarchar;
+                    switch (sqlDataType) {
+                        case Types.NVARCHAR:
+                        case Types.NCHAR:
+                            nvarchar = true;
+                            break;
+                        default:
+                            nvarchar = false;
+                    }
+                    if (hexString) {
+                        return new HexTextSplitter(minMaxCountResult, nvarchar);
+                    } else {
+                        return new TextSplitter(minMaxCountResult, nvarchar);
+                    }
+                default:
+                    throw new UnsupportedOperationException("Unsupported data type to split: " + dataType.toString());
+            }
+        } else {
+            throw new UnsupportedOperationException("Unsupported data type to split: " + dataType.toString());
         }
     }
 

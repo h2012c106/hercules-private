@@ -1,8 +1,9 @@
 package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -10,18 +11,22 @@ import java.util.Date;
 
 public class BooleanWrapper extends BaseWrapper<Boolean> {
 
-    private final static DataType DATA_TYPE = DataType.BOOLEAN;
+    private final static DataType DATA_TYPE = BaseDataType.BOOLEAN;
 
-    public BooleanWrapper(Long value) {
-        this(value != 0);
-    }
-
-    public BooleanWrapper(String value) {
+    private BooleanWrapper(String value) {
         this(Boolean.parseBoolean(value));
     }
 
-    public BooleanWrapper(Boolean value) {
+    private BooleanWrapper(Boolean value) {
         super(value, DATA_TYPE, 1);
+    }
+
+    public static BaseWrapper get(String value) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new BooleanWrapper(value);
+    }
+
+    public static BaseWrapper get(Boolean value) {
+        return value == null ? NullWrapper.get(DATA_TYPE) : new BooleanWrapper(value);
     }
 
     @Override

@@ -1,7 +1,8 @@
 package com.xiaohongshu.db.hercules.parquet.schema;
 
 import com.google.common.base.Objects;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import lombok.NonNull;
 import org.apache.parquet.schema.Type;
@@ -25,7 +26,7 @@ public class TypeBuilderTreeNode {
         this.type = type;
         this.repetition = repetition;
         this.parent = parent;
-        this.children = type == DataType.MAP ? new LinkedHashMap<>() : null;
+        this.children = type == BaseDataType.MAP ? new LinkedHashMap<>() : null;
     }
 
     public TypeBuilderTreeNode(String columnName, Types.Builder<?, ? extends Type> value,
@@ -34,7 +35,7 @@ public class TypeBuilderTreeNode {
         this.type = type;
         this.repetition = value.named(columnName).getRepetition();
         this.parent = parent;
-        this.children = type == DataType.MAP ? new LinkedHashMap<>() : null;
+        this.children = type == BaseDataType.MAP ? new LinkedHashMap<>() : null;
     }
 
     public String getColumnName() {
@@ -71,7 +72,7 @@ public class TypeBuilderTreeNode {
     }
 
     public TypeBuilderTreeNode addAndReturnChildren(@NonNull TypeBuilderTreeNode newChildren) {
-        if (type != DataType.MAP) {
+        if (type != BaseDataType.MAP) {
             throw new RuntimeException("Unexpected to add children to a ungroup tree node.");
         }
         TypeBuilderTreeNode storedValue = children.get(newChildren.getColumnName());

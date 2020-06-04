@@ -2,8 +2,9 @@ package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
  */
 public class ListWrapper extends BaseWrapper<List<BaseWrapper>> {
 
-    private final static DataType DATA_TYPE = DataType.LIST;
+    private final static DataType DATA_TYPE = BaseDataType.LIST;
     private final static String UNSUPPORTED_MESSAGE = "Unsupported to convert list wrapper to any basic data type, except string.";
 
     public ListWrapper() {
@@ -28,6 +29,8 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper>> {
     public ListWrapper(int initialSize) {
         super(new ArrayList<>(initialSize), DATA_TYPE, 0);
     }
+
+    public static final NullWrapper NULL_INSTANCE = NullWrapper.get(DATA_TYPE);
 
     public void add(BaseWrapper item) {
         item.setParent(this);

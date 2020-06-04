@@ -4,14 +4,16 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.mongodb.datatype.MongoDBCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBDataTypeConverter;
@@ -24,6 +26,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
+import org.bson.types.Binary;
 import org.bson.types.Decimal128;
 
 import java.io.IOException;
@@ -49,10 +52,19 @@ public class MongoDBRecordReader
     private MongoClient client = null;
     private HerculesWritable value;
 
+    private MongoDBDataTypeConverter converter;
+
     private final Document fakeDocument = new Document(FAKE_COLUMN_NAME_USED_BY_LIST, 0);
 
-    public MongoDBRecordReader(MongoDBDataTypeConverter converter, MongoDBManager manager) {
-        super(converter, null);
+    public MongoDBRecordReader(TaskAttemptContext context,
+                               MongoDBCustomDataTypeManager typeManager, MongoDBManager manager) {
+        this(context, new MongoDBDataTypeConverter(), typeManager, manager);
+    }
+
+    public MongoDBRecordReader(TaskAttemptContext context, MongoDBDataTypeConverter converter,
+                               MongoDBCustomDataTypeManager typeManager, MongoDBManager manager) {
+        super(context, typeManager, null);
+        this.converter = converter;
         setWrapperGetterFactory(new MongoDBWrapperGetterFactory());
         this.manager = manager;
     }
@@ -196,11 +208,7 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Byte value = row.get(columnName, Byte.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new IntegerWrapper(value);
-                    }
+                    return IntegerWrapper.get(value);
                 }
             };
         }
@@ -211,11 +219,7 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Short value = row.get(columnName, Short.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new IntegerWrapper(value);
-                    }
+                    return IntegerWrapper.get(value);
                 }
             };
         }
@@ -226,11 +230,7 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Integer value = row.get(columnName, Integer.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new IntegerWrapper(value);
-                    }
+                    return IntegerWrapper.get(value);
                 }
             };
         }
@@ -241,11 +241,7 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Long value = row.get(columnName, Long.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new IntegerWrapper(value);
-                    }
+                    return IntegerWrapper.get(value);
                 }
             };
         }
@@ -261,11 +257,7 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Float value = row.get(columnName, Float.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new DoubleWrapper(value);
-                    }
+                    return DoubleWrapper.get(value);
                 }
             };
         }
@@ -276,11 +268,7 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Double value = row.get(columnName, Double.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new DoubleWrapper(value);
-                    }
+                    return DoubleWrapper.get(value);
                 }
             };
         }
@@ -291,11 +279,7 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Decimal128 value = row.get(columnName, Decimal128.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new DoubleWrapper(value.bigDecimalValue());
-                    }
+                    return DoubleWrapper.get(value.bigDecimalValue());
                 }
             };
         }
@@ -306,11 +290,7 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Boolean value = row.get(columnName, Boolean.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new BooleanWrapper(value);
-                    }
+                    return BooleanWrapper.get(value);
                 }
             };
         }
@@ -320,12 +300,8 @@ public class MongoDBRecordReader
             return new WrapperGetter<Document>() {
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
-                    Object value = row.get(columnName);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new StringWrapper(value.toString());
-                    }
+                    String value = row.get(columnName, String.class);
+                    return StringWrapper.get(value);
                 }
             };
         }
@@ -346,18 +322,20 @@ public class MongoDBRecordReader
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
                     Date value = row.get(columnName, Date.class);
-                    if (value == null) {
-                        return NullWrapper.INSTANCE;
-                    } else {
-                        return new DateWrapper(value, DataType.DATETIME);
-                    }
+                    return DateWrapper.get(value, BaseDataType.DATETIME);
                 }
             };
         }
 
         @Override
         protected WrapperGetter<Document> getBytesGetter() {
-            throw new UnsupportedOperationException();
+            return new WrapperGetter<Document>() {
+                @Override
+                public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                    Binary value = row.get(columnName, Binary.class);
+                    return BytesWrapper.get(value.getData());
+                }
+            };
         }
 
         @Override
@@ -375,11 +353,11 @@ public class MongoDBRecordReader
             return new WrapperGetter<Document>() {
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
-                    Object value = row.get(columnName);
+                    ArrayList value = row.get(columnName, ArrayList.class);
                     if (value == null) {
-                        return NullWrapper.INSTANCE;
+                        return ListWrapper.NULL_INSTANCE;
                     } else {
-                        return listToListWrapper((ArrayList) value);
+                        return listToListWrapper(value);
                     }
                 }
             };
@@ -390,12 +368,12 @@ public class MongoDBRecordReader
             return new WrapperGetter<Document>() {
                 @Override
                 public BaseWrapper get(Document row, String rowName, String columnName, int columnSeq) throws Exception {
-                    Object value = row.get(columnName);
+                    Document value = row.get(columnName, Document.class);
                     if (value == null) {
-                        return NullWrapper.INSTANCE;
+                        return MapWrapper.NULL_INSTANCE;
                     } else {
                         String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
-                        return documentToMapWrapper((Document) value, fullColumnName);
+                        return documentToMapWrapper(value, fullColumnName);
                     }
                 }
             };

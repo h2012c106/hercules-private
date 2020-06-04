@@ -4,7 +4,7 @@ import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import java.text.ParseException;
@@ -38,7 +38,7 @@ public final class DateUtils {
         return targetDateFormat;
     }
 
-    public static Date stringToDate(String value, DataType dateType, DateFormatWrapper dateFormatWrapper) {
+    public static Date stringToDate(String value, BaseDataType dateType, DateFormatWrapper dateFormatWrapper) {
         try {
             switch (dateType) {
                 case DATE:
@@ -72,7 +72,7 @@ public final class DateUtils {
         throw new SerializeException("Unparsable formatted date: " + value);
     }
 
-    public static String timestampToString(long value, DataType dateType, DateFormatWrapper dateFormatWrapper) {
+    public static String timestampToString(long value, BaseDataType dateType, DateFormatWrapper dateFormatWrapper) {
         SimpleDateFormat format;
         switch (dateType) {
             case DATE:
@@ -90,7 +90,7 @@ public final class DateUtils {
         return format.format(value);
     }
 
-    public static String dateToString(Date value, DataType dateType, DateFormatWrapper dateFormatWrapper) {
+    public static String dateToString(Date value, BaseDataType dateType, DateFormatWrapper dateFormatWrapper) {
         SimpleDateFormat format;
         switch (dateType) {
             case DATE:
@@ -110,9 +110,9 @@ public final class DateUtils {
 
     public static class DateResult {
         private Date value;
-        private DataType type;
+        private BaseDataType type;
 
-        public DateResult(Date value, DataType type) {
+        public DateResult(Date value, BaseDataType type) {
             this.value = value;
             this.type = type;
         }
@@ -121,7 +121,7 @@ public final class DateUtils {
             return value;
         }
 
-        public DataType getType() {
+        public BaseDataType getType() {
             return type;
         }
     }
