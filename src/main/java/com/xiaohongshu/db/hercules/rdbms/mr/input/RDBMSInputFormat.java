@@ -84,7 +84,7 @@ public class RDBMSInputFormat extends HerculesInputFormat
     }
 
     @Override
-    public HerculesRecordReader<ResultSet, RDBMSDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
+    public HerculesRecordReader<ResultSet> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
         return new RDBMSRecordReader(context, manager);
     }

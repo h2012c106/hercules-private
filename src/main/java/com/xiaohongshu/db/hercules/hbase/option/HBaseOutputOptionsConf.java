@@ -57,8 +57,8 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
     public void innerValidateOptions(GenericOptions options) {
         String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-        if(columnNameList.size()>0&&!columnNameList.contains(rowKeyCol)){
-            throw new RuntimeException("Missing row key col in column name list: "+columnNameList);
+        if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {
+            throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
         }
     }
 }

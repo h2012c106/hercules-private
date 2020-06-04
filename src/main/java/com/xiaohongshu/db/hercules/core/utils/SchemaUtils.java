@@ -2,8 +2,8 @@ package com.xiaohongshu.db.hercules.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import lombok.NonNull;
 
 import java.util.ArrayList;
@@ -35,6 +35,10 @@ public final class SchemaUtils {
             res.add(sourceNameToSeq.getOrDefault(columnName, null));
         }
         return res;
+    }
+
+    public static Map<String, DataType> convert(@NonNull JSONObject jsonObject) {
+        return convert(jsonObject, NullCustomDataTypeManager.INSTANCE);
     }
 
     public static Map<String, DataType> convert(@NonNull JSONObject jsonObject, final BaseCustomDataTypeManager manager) {

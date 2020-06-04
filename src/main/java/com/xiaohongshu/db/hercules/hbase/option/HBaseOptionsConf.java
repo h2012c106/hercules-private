@@ -1,11 +1,12 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
-import com.xiaohongshu.db.hercules.core.serialize.DataType;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 
@@ -18,14 +19,14 @@ import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.
 
 public final class HBaseOptionsConf extends BaseOptionsConf {
 
-    public final static String HB_ZK_QUORUM="hbase.zookeeper.quorum";
-    public final static String HB_ZK_PORT="hbase.zookeeper.port";
-    public final static String TABLE="hbase.table";
+    public final static String HB_ZK_QUORUM = "hbase.zookeeper.quorum";
+    public final static String HB_ZK_PORT = "hbase.zookeeper.port";
+    public final static String TABLE = "hbase.table";
 
-    public final static String HIVE_METASTORE_URL="hbase.column.type.map";
-    public final static String HIVE_USER="hbase.hive.user";
-    public final static String HIVE_PASSWD="hbase.hive.passwd";
-    public final static String HIVE_TABLE ="hbase.hive.table";
+    public final static String HIVE_METASTORE_URL = "hbase.column.type.map";
+    public final static String HIVE_USER = "hbase.hive.user";
+    public final static String HIVE_PASSWD = "hbase.hive.passwd";
+    public final static String HIVE_TABLE = "hbase.hive.table";
 
     public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
 
@@ -91,7 +92,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
         ParseUtils.validateDependency(options,
                 HIVE_METASTORE_URL,
                 null,
-                Lists.newArrayList(HIVE_USER,HIVE_PASSWD, HIVE_TABLE),
+                Lists.newArrayList(HIVE_USER, HIVE_PASSWD, HIVE_TABLE),
                 null);
     }
 
@@ -100,11 +101,11 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
         super.processOptions(options);
 
         String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        if(rowKeyCol==null){
+        if (rowKeyCol == null) {
             return;
         }
         Map<String, DataType> columnTypeMap = SchemaUtils.convert(options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
-        columnTypeMap.put(rowKeyCol, DataType.BYTES);
+        columnTypeMap.put(rowKeyCol, BaseDataType.BYTES);
         options.set(BaseDataSourceOptionsConf.COLUMN_TYPE, SchemaUtils.convert(columnTypeMap).toJSONString());
     }
 }

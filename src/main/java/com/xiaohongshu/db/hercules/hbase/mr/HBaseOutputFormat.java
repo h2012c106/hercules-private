@@ -8,7 +8,6 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;

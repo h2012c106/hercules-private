@@ -13,12 +13,9 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
-
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 public class HBaseManager {
 
@@ -34,7 +31,7 @@ public class HBaseManager {
 
     public Connection getConnection() throws IOException {
         // return connection if connection already established and not closed
-        if(conn!=null && !conn.isClosed()){
+        if (conn != null && !conn.isClosed()) {
             return conn;
         }
         conn = ConnectionFactory.createConnection(getConf());
@@ -44,15 +41,15 @@ public class HBaseManager {
     /**
      * 配置基本的链接数据库的参数，后续通过{@link #genScan}来进行详细的配置Scan
      */
-    public void setBasicConf(){
+    public void setBasicConf() {
 
-        conf.set(HBaseOptionsConf.HB_ZK_QUORUM, options.getString(HBaseOptionsConf.HB_ZK_QUORUM,null));
-        conf.set(HBaseOptionsConf.HB_ZK_PORT, options.getString(HBaseOptionsConf.HB_ZK_PORT,"2181"));
+        conf.set(HBaseOptionsConf.HB_ZK_QUORUM, options.getString(HBaseOptionsConf.HB_ZK_QUORUM, null));
+        conf.set(HBaseOptionsConf.HB_ZK_PORT, options.getString(HBaseOptionsConf.HB_ZK_PORT, "2181"));
     }
 
-    public Configuration getConf(){
+    public Configuration getConf() {
 
-        if(conf != null){
+        if (conf != null) {
             return conf;
         }
         conf = new Configuration();
@@ -69,40 +66,40 @@ public class HBaseManager {
     }
 
     public void closeConnection() throws IOException {
-        if(conn!=null&& !conn.isClosed()){
+        if (conn != null && !conn.isClosed()) {
             conn.close();
         }
     }
 
     public Table getHtable() throws IOException {
         Connection conn = getConnection();
-        System.out.println(options.getString(HBaseOptionsConf.TABLE,null));
-        return conn.getTable(TableName.valueOf(options.getString(HBaseOptionsConf.TABLE,null)));
+        System.out.println(options.getString(HBaseOptionsConf.TABLE, null));
+        return conn.getTable(TableName.valueOf(options.getString(HBaseOptionsConf.TABLE, null)));
     }
 
     public Scan genScan(Scan scan, String startKey, String endKey) throws IOException {
 
         scan.withStartRow(Bytes.toBytes(startKey))
                 .withStopRow(Bytes.toBytes(endKey));
-        String scanColumnFamily = options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY,null);
-        if(null==scanColumnFamily){
+        String scanColumnFamily = options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, null);
+        if (null == scanColumnFamily) {
             throw new ParseException("Scan column family can't be null.");
         }
         scan.addFamily(Bytes.toBytes(scanColumnFamily));
-        if((null!=options.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null))
-                &&(null!=options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null))){
+        if ((null != options.getString(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null))
+                && (null != options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null))) {
             scan.setTimeRange(options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_START, null),
                     options.getLong(HBaseInputOptionsConf.SCAN_TIMERANGE_END, null));
         }
-        if(null!=options.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, null)){
+        if (null != options.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, null)) {
             scan.setCaching(options.getInteger(HBaseInputOptionsConf.SCAN_CACHEDROWS, null));
         }
-        if(null!=options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)){
+        if (null != options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)) {
             scan.setBatch(options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null));
         }
         List<String> scanColumns = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, new String[]{}));
-        if(scanColumns.size()!=0){
-            for(String qualifier: scanColumns){
+        if (scanColumns.size() != 0) {
+            for (String qualifier : scanColumns) {
                 scan.addColumn(Bytes.toBytes(scanColumnFamily), Bytes.toBytes(qualifier));
             }
         }
@@ -111,7 +108,7 @@ public class HBaseManager {
         return scan;
     }
 
-    public static void setTargetConf(Configuration conf, GenericOptions targetOptions){
+    public static void setTargetConf(Configuration conf, GenericOptions targetOptions) {
 
         HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.COLUMN_FAMILY, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOptionsConf.TABLE, targetOptions, true);
@@ -122,10 +119,10 @@ public class HBaseManager {
                 targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE));
     }
 
-    public static void setConfParam(Configuration conf, String paramName, GenericOptions options, boolean notNull){
+    public static void setConfParam(Configuration conf, String paramName, GenericOptions options, boolean notNull) {
         conf.set(paramName, options.getString(paramName, null));
-        if(notNull&&(conf.get(paramName)==null)){
-            throw new ParseException("The param should not be null: "+paramName);
+        if (notNull && (conf.get(paramName) == null)) {
+            throw new ParseException("The param should not be null: " + paramName);
         }
     }
 
@@ -154,13 +151,13 @@ public class HBaseManager {
     }
 
     public static void closeAdmin(Admin admin) throws IOException {
-        if(null!=admin){
+        if (null != admin) {
             admin.close();
         }
     }
 
     public static void closeConnection(Connection conn) throws IOException {
-        if(null!=conn){
+        if (null != conn) {
             conn.close();
         }
     }

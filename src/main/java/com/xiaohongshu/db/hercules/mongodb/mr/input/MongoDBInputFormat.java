@@ -9,10 +9,8 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.mongodb.datatype.MongoDBCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
-import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBDataTypeConverter;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManagerGenerator;
 import org.apache.commons.lang3.StringUtils;
@@ -202,7 +200,7 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
     }
 
     @Override
-    protected HerculesRecordReader<Document, MongoDBDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    protected HerculesRecordReader<Document> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         return new MongoDBRecordReader(context, manager);
     }
 

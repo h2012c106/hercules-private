@@ -7,7 +7,7 @@ import org.apache.hadoop.hbase.client.Result;
 
 import java.util.Map;
 
-public class HBaseDataTypeConverter  implements DataTypeConverter<Integer, Result> {
+public class HBaseDataTypeConverter implements DataTypeConverter<Integer, Result> {
     @Override
     public DataType convertElementType(Integer standard) {
         return null;
@@ -19,9 +19,9 @@ public class HBaseDataTypeConverter  implements DataTypeConverter<Integer, Resul
     }
 
     // 该函数用于处理从hive metastore中取出的为String的DataType
-    public DataType hbaseConvertElementType(String type){
+    public DataType hbaseConvertElementType(String type) {
         DataType dt;
-        switch(type.toLowerCase().split("\\(")[0]){
+        switch (type.toLowerCase().split("\\(")[0]) {
             case "short":
             case "tinyint":
             case "smallint":

@@ -4,7 +4,6 @@ import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.OptionsType;
-import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,7 +68,7 @@ public abstract class HerculesInputFormat extends InputFormat<NullWritable, Herc
     }
 
     @Override
-    public HerculesRecordReader<?, ? extends DataTypeConverter<?, ?>> createRecordReader(InputSplit split, TaskAttemptContext context)
+    public HerculesRecordReader<?> createRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
 
         Configuration configuration = context.getConfiguration();
@@ -82,6 +81,6 @@ public abstract class HerculesInputFormat extends InputFormat<NullWritable, Herc
         return innerCreateRecordReader(split, context);
     }
 
-    abstract protected HerculesRecordReader<?, ? extends DataTypeConverter<?, ?>> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
+    abstract protected HerculesRecordReader<?> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException;
 }

@@ -100,7 +100,7 @@ public class ParquetInputFormat extends HerculesInputFormat {
     }
 
     @Override
-    protected HerculesRecordReader<?, ParquetDataTypeConverter> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    protected HerculesRecordReader<?> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         return new ParquetRecordReader(context,
                 delegate.createRecordReader(split, context),
                 generateWrapperManager(options));
