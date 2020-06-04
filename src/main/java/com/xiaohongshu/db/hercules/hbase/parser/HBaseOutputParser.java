@@ -12,16 +12,7 @@ public class HBaseOutputParser extends BaseParser {
 //    }
 
     public HBaseOutputParser() {
-        super(new HBaseOutputOptionsConf());
+        super(new HBaseOutputOptionsConf(), DataSource.HBase, DataSourceRole.TARGET);
     }
 
-    @Override
-    public DataSourceRole getDataSourceRole() {
-        return DataSourceRole.TARGET;
-    }
-
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.HBase;
-    }
 }

@@ -6,11 +6,6 @@ import com.xiaohongshu.db.hercules.tidb.option.TiDBInputOptionsConf;
 
 public class TiDBInputParser extends MysqlInputParser {
     public TiDBInputParser() {
-        super(new TiDBInputOptionsConf());
-    }
-
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.TiDB;
+        super(new TiDBInputOptionsConf(), DataSource.TiDB);
     }
 }

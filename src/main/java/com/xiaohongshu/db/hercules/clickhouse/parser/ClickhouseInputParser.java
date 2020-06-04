@@ -6,12 +6,6 @@ import com.xiaohongshu.db.hercules.rdbms.parser.RDBMSInputParser;
 
 public class ClickhouseInputParser extends RDBMSInputParser {
     public ClickhouseInputParser() {
-        super(new ClickhouseInputOptionsConf());
+        super(new ClickhouseInputOptionsConf(), DataSource.Clickhouse);
     }
-
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.Clickhouse;
-    }
-
 }

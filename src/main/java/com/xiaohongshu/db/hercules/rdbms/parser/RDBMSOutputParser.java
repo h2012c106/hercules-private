@@ -9,20 +9,11 @@ import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 public class RDBMSOutputParser extends BaseParser {
 
     public RDBMSOutputParser() {
-        super(new RDBMSOutputOptionsConf());
+        this(new RDBMSOutputOptionsConf(), DataSource.RDBMS);
     }
 
-    public RDBMSOutputParser(BaseOptionsConf optionsConf) {
-        super(optionsConf);
+    public RDBMSOutputParser(BaseOptionsConf optionsConf, DataSource dataSource) {
+        super(optionsConf, dataSource, DataSourceRole.TARGET);
     }
 
-    @Override
-    public DataSourceRole getDataSourceRole() {
-        return DataSourceRole.TARGET;
-    }
-
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.RDBMS;
-    }
 }

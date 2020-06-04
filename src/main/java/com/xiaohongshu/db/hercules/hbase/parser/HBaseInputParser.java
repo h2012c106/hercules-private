@@ -7,21 +7,8 @@ import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 
 public class HBaseInputParser extends BaseParser {
 
-//    public HBaseInputParser(BaseOptionsConf optionsConf) {
-//        super(optionsConf);
-//    }
-
     public HBaseInputParser() {
-        super(new HBaseInputOptionsConf());
+        super(new HBaseInputOptionsConf(), DataSource.HBase, DataSourceRole.SOURCE);
     }
 
-    @Override
-    public DataSourceRole getDataSourceRole() {
-        return DataSourceRole.SOURCE;
-    }
-
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.HBase;
-    }
 }

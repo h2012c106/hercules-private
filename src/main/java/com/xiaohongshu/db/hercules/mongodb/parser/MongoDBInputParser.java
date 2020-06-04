@@ -7,16 +7,6 @@ import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 
 public class MongoDBInputParser extends BaseParser {
     public MongoDBInputParser() {
-        super(new MongoDBInputOptionsConf());
-    }
-
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.MongoDB;
-    }
-
-    @Override
-    public DataSourceRole getDataSourceRole() {
-        return DataSourceRole.SOURCE;
+        super(new MongoDBInputOptionsConf(), DataSource.MongoDB, DataSourceRole.SOURCE);
     }
 }
