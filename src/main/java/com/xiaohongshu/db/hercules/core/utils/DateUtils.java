@@ -6,6 +6,8 @@ import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,11 +15,27 @@ import java.util.Date;
 
 public final class DateUtils {
 
+    private static final Log LOG = LogFactory.getLog(DateUtils.class);
+
+
     /**
      * 用于应对上下游时间格式不一致
      */
     private static DateUtils.DateFormatWrapper sourceDateFormat;
     private static DateUtils.DateFormatWrapper targetDateFormat;
+
+    private static ThreadLocal<DateFormatterWrapper> sourceDateFormatterWrapper = new ThreadLocal<DateFormatterWrapper>(){
+        @Override
+        protected DateFormatterWrapper initialValue() {
+            return new DateFormatterWrapper(sourceDateFormat);
+        }
+    };
+    private static ThreadLocal<DateFormatterWrapper> targetDateFormatterWrapper = new ThreadLocal<DateFormatterWrapper>(){
+        @Override
+        protected DateFormatterWrapper initialValue() {
+            return new DateFormatterWrapper(targetDateFormat);
+        }
+    };
 
     public static void setFormats(GenericOptions sourceOptions, GenericOptions targetOptions) {
         DateUtils.sourceDateFormat = new DateUtils.DateFormatWrapper(
@@ -30,23 +48,23 @@ public final class DateUtils {
                 targetOptions.getString(BaseDataSourceOptionsConf.DATETIME_FORMAT, null));
     }
 
-    public static DateFormatWrapper getSourceDateFormat() {
-        return sourceDateFormat;
+    public static DateFormatterWrapper getSourceDateFormat() {
+        return sourceDateFormatterWrapper.get();
     }
 
-    public static DateFormatWrapper getTargetDateFormat() {
-        return targetDateFormat;
+    public static DateFormatterWrapper getTargetDateFormat() {
+        return targetDateFormatterWrapper.get();
     }
 
-    public static Date stringToDate(String value, BaseDataType dateType, DateFormatWrapper dateFormatWrapper) {
+    public static Date stringToDate(String value, BaseDataType dateType, DateFormatterWrapper dateFormatterWrapper) {
         try {
             switch (dateType) {
                 case DATE:
-                    return dateFormatWrapper.getDateFormat().parse(value);
+                    return dateFormatterWrapper.getDateFormat().parse(value);
                 case TIME:
-                    return dateFormatWrapper.getTimeFormat().parse(value);
+                    return dateFormatterWrapper.getTimeFormat().parse(value);
                 case DATETIME:
-                    return dateFormatWrapper.getDatetimeFormat().parse(value);
+                    return dateFormatterWrapper.getDatetimeFormat().parse(value);
                 default:
                     throw new RuntimeException("Unknown date type: " + dateType);
             }
@@ -56,33 +74,33 @@ public final class DateUtils {
         }
     }
 
-    public static Date stringToDate(String value, DateFormatWrapper dateFormatWrapper) {
+    public static Date stringToDate(String value, DateFormatterWrapper dateFormatterWrapper) {
         try {
-            return dateFormatWrapper.getDatetimeFormat().parse(value);
+            return dateFormatterWrapper.getDatetimeFormat().parse(value);
         } catch (ParseException ignored) {
         }
         try {
-            return dateFormatWrapper.getDateFormat().parse(value);
+            return dateFormatterWrapper.getDateFormat().parse(value);
         } catch (ParseException ignored) {
         }
         try {
-            return dateFormatWrapper.getTimeFormat().parse(value);
+            return dateFormatterWrapper.getTimeFormat().parse(value);
         } catch (ParseException ignored) {
         }
         throw new SerializeException("Unparsable formatted date: " + value);
     }
 
-    public static String timestampToString(long value, BaseDataType dateType, DateFormatWrapper dateFormatWrapper) {
+    public static String timestampToString(long value, BaseDataType dateType, DateFormatterWrapper dateFormatterWrapper) {
         SimpleDateFormat format;
         switch (dateType) {
             case DATE:
-                format = dateFormatWrapper.getDateFormat();
+                format = dateFormatterWrapper.getDateFormat();
                 break;
             case TIME:
-                format = dateFormatWrapper.getTimeFormat();
+                format = dateFormatterWrapper.getTimeFormat();
                 break;
             case DATETIME:
-                format = dateFormatWrapper.getDatetimeFormat();
+                format = dateFormatterWrapper.getDatetimeFormat();
                 break;
             default:
                 throw new RuntimeException("Unknown date type: " + dateType);
@@ -90,17 +108,17 @@ public final class DateUtils {
         return format.format(value);
     }
 
-    public static String dateToString(Date value, BaseDataType dateType, DateFormatWrapper dateFormatWrapper) {
+    public static String dateToString(Date value, BaseDataType dateType, DateFormatterWrapper dateFormatterWrapper) {
         SimpleDateFormat format;
         switch (dateType) {
             case DATE:
-                format = dateFormatWrapper.getDateFormat();
+                format = dateFormatterWrapper.getDateFormat();
                 break;
             case TIME:
-                format = dateFormatWrapper.getTimeFormat();
+                format = dateFormatterWrapper.getTimeFormat();
                 break;
             case DATETIME:
-                format = dateFormatWrapper.getDatetimeFormat();
+                format = dateFormatterWrapper.getDatetimeFormat();
                 break;
             default:
                 throw new RuntimeException("Unknown date type: " + dateType);
@@ -126,15 +144,54 @@ public final class DateUtils {
         }
     }
 
-    public static class DateFormatWrapper {
+    private static class DateFormatWrapper {
+        private String dateFormat;
+        private String timeFormat;
+        private String datetimeFormat;
+
+        public DateFormatWrapper(String dateFormat, String timeFormat, String datetimeFormat) {
+            this.dateFormat = dateFormat;
+            this.timeFormat = timeFormat;
+            this.datetimeFormat = datetimeFormat;
+        }
+
+        public String getDateFormat() {
+            return dateFormat;
+        }
+
+        public String getTimeFormat() {
+            return timeFormat;
+        }
+
+        public String getDatetimeFormat() {
+            return datetimeFormat;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            DateFormatWrapper that = (DateFormatWrapper) o;
+            return Objects.equal(dateFormat, that.dateFormat) &&
+                    Objects.equal(timeFormat, that.timeFormat) &&
+                    Objects.equal(datetimeFormat, that.datetimeFormat);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(dateFormat, timeFormat, datetimeFormat);
+        }
+    }
+
+    public static class DateFormatterWrapper {
         private SimpleDateFormat dateFormat;
         private SimpleDateFormat timeFormat;
         private SimpleDateFormat datetimeFormat;
 
-        public DateFormatWrapper(String dateFormat, String timeFormat, String datetimeFormat) {
-            this.dateFormat = new SimpleDateFormat(dateFormat);
-            this.timeFormat = new SimpleDateFormat(timeFormat);
-            this.datetimeFormat = new SimpleDateFormat(datetimeFormat);
+        public DateFormatterWrapper(DateFormatWrapper dateFormatWrapper) {
+            this.dateFormat = new SimpleDateFormat(dateFormatWrapper.getDateFormat());
+            this.timeFormat = new SimpleDateFormat(dateFormatWrapper.getTimeFormat());
+            this.datetimeFormat = new SimpleDateFormat(dateFormatWrapper.getDatetimeFormat());
 
             this.dateFormat.setLenient(false);
             this.timeFormat.setLenient(false);
@@ -151,21 +208,6 @@ public final class DateUtils {
 
         public SimpleDateFormat getDatetimeFormat() {
             return datetimeFormat;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            DateFormatWrapper that = (DateFormatWrapper) o;
-            return Objects.equal(dateFormat.toPattern(), that.dateFormat.toPattern()) &&
-                    Objects.equal(timeFormat.toPattern(), that.timeFormat.toPattern()) &&
-                    Objects.equal(datetimeFormat.toPattern(), that.datetimeFormat.toPattern());
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(dateFormat.toPattern(), timeFormat.toPattern(), datetimeFormat.toPattern());
         }
     }
 }
