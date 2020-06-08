@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
+import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN;
+
 /**
  * 千万不能出现以"source-"或"target-"开头的通用配置，大多数情况没问题，但是万一和源或目标端的参数碰了
  */
@@ -20,6 +22,7 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String ALLOW_SOURCE_MORE_COLUMN = "allow-source-more-column";
     public static final String ALLOW_TARGET_MORE_COLUMN = "allow-target-more-column";
     public static final String COLUMN_MAP = "column-map";
+    public static final String RELIABLE_COLUMN_MAP = "reliable-column-map";
     public static final String MAX_WRITE_QPS = "max-write-qps";
     public static final String ALLOW_COPY_COLUMN_NAME = "allow-copy-column-name";
     public static final String ALLOW_COPY_COLUMN_TYPE = "allow-copy-column-type";
@@ -71,6 +74,11 @@ public class CommonOptionsConf extends BaseOptionsConf {
                         "key is for source and value is for target. " +
                         "It will convert to a BiMap, make sure that either key or value cannot be duplicate.")
                 .defaultStringValue(DEFAULT_COLUMN_MAP.toJSONString())
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(RELIABLE_COLUMN_MAP)
+                .needArg(false)
+                .description(String.format("If specified, '--%s''s key and value will add to source and target '--%s' param value.", COLUMN_MAP, COLUMN))
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(MAX_WRITE_QPS)
