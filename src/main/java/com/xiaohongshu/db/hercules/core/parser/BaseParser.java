@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
-import com.xiaohongshu.db.hercules.core.datasource.DataSourceGetter;
-import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -13,9 +13,8 @@ import java.util.Map;
 
 /**
  * parser基类，除了common每个parser实现应当向{@link ParserFactory}注册自己的实现对象
- *
  */
-public abstract class BaseParser implements DataSourceGetter, DataSourceRoleGetter {
+public abstract class BaseParser {
 
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";
@@ -23,9 +22,21 @@ public abstract class BaseParser implements DataSourceGetter, DataSourceRoleGett
     private boolean help;
 
     private BaseOptionsConf optionsConf;
+    private DataSource dataSource;
+    private DataSourceRole dataSourceRole;
 
-    public BaseParser(BaseOptionsConf optionsConf) {
+    public BaseParser(BaseOptionsConf optionsConf, DataSource dataSource, DataSourceRole dataSourceRole) {
         this.optionsConf = optionsConf;
+        this.dataSource = dataSource;
+        this.dataSourceRole = dataSourceRole;
+    }
+
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public DataSourceRole getDataSourceRole() {
+        return dataSourceRole;
     }
 
     private OptionsType getRole() {

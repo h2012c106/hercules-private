@@ -8,16 +8,7 @@ import com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf;
 public class ParquetOutputParser extends BaseParser {
 
     public ParquetOutputParser() {
-        super(new ParquetOutputOptionsConf());
+        super(new ParquetOutputOptionsConf(), DataSource.Parquet, DataSourceRole.TARGET);
     }
 
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.Parquet;
-    }
-
-    @Override
-    public DataSourceRole getDataSourceRole() {
-        return DataSourceRole.TARGET;
-    }
 }

@@ -6,7 +6,6 @@ import com.google.common.collect.HashBiMap;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
@@ -15,7 +14,6 @@ import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.parquet.format.DateType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,15 +38,22 @@ public final class SchemaNegotiator {
         this.targetSchemaFetcher = targetSchemaFetcher;
     }
 
+    private List<String> getColumnNameListFromOptions(GenericOptions dataSourceOptions) {
+        return Arrays.asList(dataSourceOptions.getStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0]));
+    }
+
+    private List<String> getColumnNameListFromDataSource(BaseSchemaFetcher schemaFetcher) {
+        List<String> res = schemaFetcher.getColumnNameList();
+        return res == null ? new ArrayList<>(0) : res;
+    }
+
     private List<String> getColumnNameList(GenericOptions dataSourceOptions, BaseSchemaFetcher schemaFetcher) {
-        List<String> configuredColumnList
-                = Arrays.asList(dataSourceOptions.getStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0]));
+        List<String> configuredColumnList = getColumnNameListFromOptions(dataSourceOptions);
         // 若用户有配置，则直接使用用户配置的
         if (configuredColumnList.size() != 0) {
             return configuredColumnList;
         }
-        List<String> columnName = schemaFetcher.getColumnNameList();
-        return columnName == null ? new ArrayList<>(0) : columnName;
+        return getColumnNameListFromDataSource(schemaFetcher);
     }
 
     /**
@@ -195,19 +200,43 @@ public final class SchemaNegotiator {
         return tmpSource;
     }
 
+    private void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {
+        for (String columnName : columnNameList) {
+            columnMap.putIfAbsent(columnName, columnName);
+        }
+    }
+
     public void negotiate() {
         GenericOptions sourceOptions = options.getSourceOptions();
         GenericOptions targetOptions = options.getTargetOptions();
         GenericOptions commonOptions = options.getCommonOptions();
 
-        List<String> sourceColumnNameList = getColumnNameList(sourceOptions, sourceSchemaFetcher);
-        List<String> targetColumnNameList = getColumnNameList(targetOptions, targetSchemaFetcher);
         JSONObject columnMap = commonOptions.getJson(CommonOptionsConf.COLUMN_MAP, null);
         // 源列名->目标列名
         BiMap<String, String> biColumnMap = HashBiMap.create(columnMap.size());
         for (String key : columnMap.keySet()) {
             // 如果存在相同的value则bimap会报错
             biColumnMap.put(key, columnMap.getString(key));
+        }
+
+        boolean fullColumnMap = commonOptions.getBoolean(CommonOptionsConf.RELIABLE_COLUMN_MAP, false);
+        List<String> sourceColumnNameList;
+        List<String> targetColumnNameList;
+        if (fullColumnMap) {
+            // 都说好要依靠map来导了就不允许为空
+            if (biColumnMap.size() == 0) {
+                throw new RuntimeException(String.format("Why given a empty column map and specify it as a 'full column map'? " +
+                        "If you want to transport full table, please not specify '--%s'.", CommonOptionsConf.RELIABLE_COLUMN_MAP));
+            }
+            sourceColumnNameList = getColumnNameListFromOptions(sourceOptions);
+            targetColumnNameList = getColumnNameListFromOptions(targetOptions);
+            fillMapWithColumnList(sourceColumnNameList, biColumnMap);
+            fillMapWithColumnList(targetColumnNameList, biColumnMap);
+            sourceColumnNameList = new ArrayList<>(biColumnMap.keySet());
+            targetColumnNameList = new ArrayList<>(biColumnMap.values());
+        } else {
+            sourceColumnNameList = getColumnNameList(sourceOptions, sourceSchemaFetcher);
+            targetColumnNameList = getColumnNameList(targetOptions, targetSchemaFetcher);
         }
 
         if (sourceColumnNameList.size() > 0 && targetColumnNameList.size() > 0) {

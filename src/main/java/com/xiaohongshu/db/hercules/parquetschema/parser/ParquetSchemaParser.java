@@ -8,16 +8,7 @@ import com.xiaohongshu.db.hercules.parquetschema.option.ParquetSchemaOptionsConf
 public class ParquetSchemaParser extends BaseParser {
 
     public ParquetSchemaParser() {
-        super(new ParquetSchemaOptionsConf());
+        super(new ParquetSchemaOptionsConf(), DataSource.ParquetSchema, DataSourceRole.TARGET);
     }
 
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.ParquetSchema;
-    }
-
-    @Override
-    public DataSourceRole getDataSourceRole() {
-        return DataSourceRole.TARGET;
-    }
 }

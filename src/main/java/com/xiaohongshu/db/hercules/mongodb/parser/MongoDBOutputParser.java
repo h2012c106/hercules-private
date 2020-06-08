@@ -7,16 +7,6 @@ import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOutputOptionsConf;
 
 public class MongoDBOutputParser extends BaseParser {
     public MongoDBOutputParser() {
-        super(new MongoDBOutputOptionsConf());
-    }
-
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.MongoDB;
-    }
-
-    @Override
-    public DataSourceRole getDataSourceRole() {
-        return DataSourceRole.TARGET;
+        super(new MongoDBOutputOptionsConf(), DataSource.MongoDB, DataSourceRole.TARGET);
     }
 }

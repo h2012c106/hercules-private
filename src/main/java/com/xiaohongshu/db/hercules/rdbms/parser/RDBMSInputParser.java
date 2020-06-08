@@ -9,21 +9,11 @@ import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 public class RDBMSInputParser extends BaseParser {
 
     public RDBMSInputParser() {
-        super(new RDBMSInputOptionsConf());
+        this(new RDBMSInputOptionsConf(), DataSource.RDBMS);
     }
 
-    public RDBMSInputParser(BaseOptionsConf optionsConf) {
-        super(optionsConf);
-    }
-
-    @Override
-    public DataSourceRole getDataSourceRole() {
-        return DataSourceRole.SOURCE;
-    }
-
-    @Override
-    public DataSource getDataSource() {
-        return DataSource.RDBMS;
+    public RDBMSInputParser(BaseOptionsConf optionsConf, DataSource dataSource) {
+        super(optionsConf, dataSource, DataSourceRole.SOURCE);
     }
 
 }

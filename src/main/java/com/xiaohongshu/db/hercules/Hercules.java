@@ -64,8 +64,6 @@ public class Hercules {
                 targetParser.parse(args),
                 commonParser.parse(args));
 
-        LOG.debug("Options: " + wrappingOptions);
-
         // 处理log-level
         Logger.getRootLogger().setLevel(
                 Level.toLevel(
@@ -74,6 +72,8 @@ public class Hercules {
                         )
                 )
         );
+
+        LOG.debug("Options: " + wrappingOptions);
 
         // 需要打help，则不运行导数行为
         if (commonParser.isHelp() || sourceParser.isHelp() || targetParser.isHelp()) {
