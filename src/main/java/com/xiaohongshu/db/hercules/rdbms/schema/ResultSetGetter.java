@@ -10,11 +10,10 @@ public abstract class ResultSetGetter<T> {
         public Long get(ResultSet resultSet, int seq) throws SQLException {
             return resultSet.getLong(seq);
         }
-    };
-    public static final ResultSetGetter<BigDecimal> DOUBLE_GETTER = new ResultSetGetter<BigDecimal>() {
+
         @Override
-        public BigDecimal get(ResultSet resultSet, int seq) throws SQLException {
-            return resultSet.getBigDecimal(seq);
+        public Long get(ResultSet resultSet, String name) throws SQLException {
+            return resultSet.getLong(name);
         }
     };
     public static final ResultSetGetter<String> STRING_GETTER = new ResultSetGetter<String>() {
@@ -22,25 +21,14 @@ public abstract class ResultSetGetter<T> {
         public String get(ResultSet resultSet, int seq) throws SQLException {
             return resultSet.getString(seq);
         }
-    };
-    public static final ResultSetGetter<Boolean> BOOLEAN_GETTER = new ResultSetGetter<Boolean>() {
+
         @Override
-        public Boolean get(ResultSet resultSet, int seq) throws SQLException {
-            return resultSet.getBoolean(seq);
-        }
-    };
-    public static final ResultSetGetter<String> DATE_GETTER = new ResultSetGetter<String>() {
-        @Override
-        public String get(ResultSet resultSet, int seq) throws SQLException {
-            return SqlUtils.getTimestamp(resultSet, seq);
-        }
-    };
-    public static final ResultSetGetter<byte[]> BYTES_GETTER = new ResultSetGetter<byte[]>() {
-        @Override
-        public byte[] get(ResultSet resultSet, int seq) throws SQLException {
-            return resultSet.getBytes(seq);
+        public String get(ResultSet resultSet, String name) throws SQLException {
+            return resultSet.getString(name);
         }
     };
 
     abstract public T get(ResultSet resultSet, int seq) throws SQLException;
+
+    abstract public T get(ResultSet resultSet, String name) throws SQLException;
 }

@@ -11,6 +11,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
+import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBSchemaFetcher;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManagerGenerator;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +28,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK;
 
 public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBManagerGenerator {
 
@@ -145,6 +148,12 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
 
                 int skipCount = chunkDocCount;
                 MongoCollection<Document> col = database.getCollection(collectionStr);
+
+                // 检查key上是否有索引
+                boolean ignoreCheckKey = options.getSourceOptions().getBoolean(IGNORE_SPLIT_KEY_CHECK, false);
+                if (!ignoreCheckKey && !MongoDBSchemaFetcher.isIndex(col, splitBy)) {
+                    throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, IGNORE_SPLIT_KEY_CHECK));
+                }
 
                 for (int i = 0; i < splitPointCount; i++) {
                     Document doc = col.find(findQuery)

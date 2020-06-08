@@ -14,6 +14,7 @@ public final class MongoDBInputOptionsConf extends BaseOptionsConf {
 
     public static final String QUERY = "query";
     public static final String SPLIT_BY = "split-by";
+    public static final String IGNORE_SPLIT_KEY_CHECK = "ignore-split-key-check";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -37,6 +38,11 @@ public final class MongoDBInputOptionsConf extends BaseOptionsConf {
                 .description(String.format("The column that splitting map will depend on. " +
                         "If not set, default to [%s].", MongoDBManager.ID))
                 .defaultStringValue(MongoDBManager.ID)
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(IGNORE_SPLIT_KEY_CHECK)
+                .needArg(false)
+                .description("If specified, will not abandon the situation that specifying a non-key column as split key.")
                 .build());
         return tmpList;
     }

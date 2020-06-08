@@ -165,25 +165,42 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
      */
     public String getPrimaryKey() throws SQLException {
         if (getOptions().hasProperty(RDBMSOptionsConf.TABLE)) {
-            Connection connection = manager.getConnection();
-            DatabaseMetaData databaseMetaData = connection.getMetaData();
-            String schemaName = connection.getSchema();
-            String tableName = getOptions().getString(RDBMSOptionsConf.TABLE, null);
-            ResultSet resultSet = databaseMetaData.getPrimaryKeys(null, schemaName, tableName);
-            int i = 0;
-            String res = null;
-            while (resultSet.next()) {
-                res = resultSet.getString(4);
-                ++i;
-            }
-            if (i == 0) {
-                return null;
-            } else if (i > 1) {
-                LOG.warn(String.format("There are %d table found with the name of [%s.%s], unable to fetch primary key.",
-                        i, schemaName, tableName));
-                return null;
-            } else {
-                return res;
+            Connection connection = null;
+            ResultSet resultSet = null;
+            try {
+                connection = manager.getConnection();
+                DatabaseMetaData databaseMetaData = connection.getMetaData();
+                String schemaName = connection.getSchema();
+                String tableName = getOptions().getString(RDBMSOptionsConf.TABLE, null);
+                resultSet = databaseMetaData.getPrimaryKeys(schemaName, schemaName, tableName);
+                int i = 0;
+                String res = null;
+                while (resultSet.next()) {
+                    res = resultSet.getString(4);
+                    ++i;
+                }
+                if (i == 0) {
+                    return null;
+                } else if (i > 1) {
+                    LOG.warn(String.format("There are %d table found with the name of [%s.%s], unable to fetch primary key.",
+                            i, schemaName, tableName));
+                    return null;
+                } else {
+                    return res;
+                }
+            } finally {
+                if (resultSet != null) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException ignore) {
+                    }
+                }
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (SQLException ignore) {
+                    }
+                }
             }
         } else {
             return null;
@@ -207,6 +224,50 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
             throw new SchemaException(String.format("Unable to fetch column [%s] sql type with sql: %s", column, baseSql));
         } else {
             return res;
+        }
+    }
+
+    public boolean isIndex(String columnName) throws SQLException {
+        if (getOptions().hasProperty(RDBMSOptionsConf.TABLE)) {
+            Connection connection = null;
+            ResultSet resultSet = null;
+            try {
+                connection = manager.getConnection();
+                DatabaseMetaData databaseMetaData = connection.getMetaData();
+                String schemaName = connection.getSchema();
+                String tableName = getOptions().getString(RDBMSOptionsConf.TABLE, null);
+                resultSet = databaseMetaData.getIndexInfo(schemaName, schemaName, tableName, false, true);
+                while (resultSet.next()) {
+                    int order = resultSet.getInt("ORDINAL_POSITION");
+                    String name = resultSet.getString("COLUMN_NAME");
+                    if (StringUtils.equalsIgnoreCase(name, columnName)) {
+                        if (order <= 1) {
+                            return true;
+                        } else {
+                            LOG.error(String.format("Though column [%s] is the member of [%s], but it's not the first one.",
+                                    name, resultSet.getString("INDEX_NAME")));
+                            return false;
+                        }
+                    }
+                }
+                return false;
+            } finally {
+                if (resultSet != null) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException ignore) {
+                    }
+                }
+                if (connection != null) {
+                    try {
+                        connection.close();
+                    } catch (SQLException ignore) {
+                    }
+                }
+            }
+        } else {
+            LOG.warn("Cannot get the index information from sql, ignore key check.");
+            return true;
         }
     }
 }

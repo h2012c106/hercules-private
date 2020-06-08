@@ -25,6 +25,7 @@ public final class RDBMSInputOptionsConf extends BaseOptionsConf {
     public static final String RANDOM_FUNC_NAME = "random-func-name";
     public static final String BALANCE_SPLIT_SAMPLE_MAX_ROW = "balance-sample-max-row";
     public static final String FETCH_SIZE = "fetch-size";
+    public static final String IGNORE_SPLIT_KEY_CHECK = "ignore-split-key-check";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -95,6 +96,11 @@ public final class RDBMSInputOptionsConf extends BaseOptionsConf {
                 .name(FETCH_SIZE)
                 .needArg(true)
                 .description("The select fetch size, if not specified will not use this feature.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(IGNORE_SPLIT_KEY_CHECK)
+                .needArg(false)
+                .description("If specified, will not abandon the situation that specifying a non-key column as split key.")
                 .build());
         return tmpList;
     }

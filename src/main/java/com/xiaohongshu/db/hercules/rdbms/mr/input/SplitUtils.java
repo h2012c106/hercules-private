@@ -10,6 +10,7 @@ import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -19,6 +20,8 @@ import java.math.BigDecimal;
 import java.sql.*;
 import java.util.List;
 import java.util.Map;
+
+import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.IGNORE_SPLIT_KEY_CHECK;
 
 public final class SplitUtils {
 
@@ -88,6 +91,16 @@ public final class SplitUtils {
         if (numSplits == 1) {
             LOG.warn("Map set to 1, only use 1 map.");
             return new SplitResult(BaseSplitter.generateAllSplit(), 0);
+        }
+
+        // 检查key上是否有索引
+        boolean ignoreCheckKey = options.getSourceOptions().getBoolean(IGNORE_SPLIT_KEY_CHECK, false);
+        try {
+            if (!ignoreCheckKey && !schemaFetcher.isIndex(splitBy)) {
+                throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, IGNORE_SPLIT_KEY_CHECK));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Fail to fetch key information, due to: " + ExceptionUtils.getStackTrace(e));
         }
 
         ResultSet minMaxCountResult = null;

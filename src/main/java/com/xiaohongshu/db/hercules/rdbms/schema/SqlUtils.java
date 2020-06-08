@@ -13,10 +13,14 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import lombok.NonNull;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -24,6 +28,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class SqlUtils {
+
+    private static final Log LOG = LogFactory.getLog(SqlUtils.class);
 
     private static final String COLUMN_NAME_ENCLOSING = "`";
     private static final Pattern COLUMN_ENCLOSED_PATTERN = Pattern.compile(COLUMN_NAME_ENCLOSING + "\\S+" + COLUMN_NAME_ENCLOSING);
@@ -214,5 +220,63 @@ public final class SqlUtils {
         }
     }
 
+    /**
+     * 由于迭代器特性，且会关闭资源，故是一次性的，再想执行需要重新生成resultSet
+     *
+     * @param in
+     * @param seq
+     * @param resultSetGetter
+     * @param <T>
+     * @return
+     * @throws SQLException
+     */
+    public static <T> List<T> resultSetToList(@NonNull ResultSet in, int seq, ResultSetGetter<T> resultSetGetter, boolean close)
+            throws SQLException {
+        List<T> out = new ArrayList<>();
+        try {
+            while (in.next()) {
+                // 不可能出现null
+                out.add(resultSetGetter.get(in, seq));
+            }
+            return out;
+        } finally {
+            if (close) {
+                try {
+                    in.close();
+                } catch (SQLException e) {
+                    LOG.warn("SQLException closing resultset: " + ExceptionUtils.getStackTrace(e));
+                }
+            }
+        }
+    }
 
+    /**
+     * 由于迭代器特性，且会关闭资源，故是一次性的，再想执行需要重新生成resultSet
+     *
+     * @param in
+     * @param name
+     * @param resultSetGetter
+     * @param <T>
+     * @return
+     * @throws SQLException
+     */
+    public static <T> List<T> resultSetToList(@NonNull ResultSet in, String name, ResultSetGetter<T> resultSetGetter, boolean close)
+            throws SQLException {
+        List<T> out = new ArrayList<>();
+        try {
+            while (in.next()) {
+                // 不可能出现null
+                out.add(resultSetGetter.get(in, name));
+            }
+            return out;
+        } finally {
+            if (close) {
+                try {
+                    in.close();
+                } catch (SQLException e) {
+                    LOG.warn("SQLException closing resultset: " + ExceptionUtils.getStackTrace(e));
+                }
+            }
+        }
+    }
 }

@@ -20,7 +20,13 @@ public class ClickhouseSchemaFetcher extends RDBMSSchemaFetcher {
 
     @Override
     public String getPrimaryKey() throws SQLException {
-        LOG.warn("Clickhouse does't support the primary key.");
+        LOG.warn("Clickhouse does't support primary key.");
         return null;
+    }
+
+    @Override
+    public boolean isIndex(String columnName) throws SQLException {
+        LOG.warn("Clickhouse does't support index.");
+        return true;
     }
 }

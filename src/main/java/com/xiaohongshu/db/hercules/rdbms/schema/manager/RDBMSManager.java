@@ -104,35 +104,6 @@ public class RDBMSManager {
         return DriverManager.getConnection(connectString, props);
     }
 
-
-    /**
-     * 由于迭代器特性，且会关闭资源，故是一次性的，再想执行需要重新生成resultSet
-     *
-     * @param in
-     * @param seq
-     * @param resultSetGetter
-     * @param <T>
-     * @return
-     * @throws SQLException
-     */
-    private <T> List<T> resultSetToList(@NonNull ResultSet in, int seq, ResultSetGetter<T> resultSetGetter)
-            throws SQLException {
-        List<T> out = new ArrayList<>();
-        try {
-            while (in.next()) {
-                // 不可能出现null
-                out.add(resultSetGetter.get(in, seq));
-            }
-            return out;
-        } finally {
-            try {
-                in.close();
-            } catch (SQLException e) {
-                LOG.warn("SQLException closing resultset: " + ExceptionUtils.getStackTrace(e));
-            }
-        }
-    }
-
     public <T> List<T> executeSelect(String sql, int seq, ResultSetGetter<T> resultSetGetter) throws SQLException {
         Connection connection = null;
         PreparedStatement statement = null;
@@ -145,7 +116,7 @@ public class RDBMSManager {
                 statement.setFetchSize(fetchSize);
             }
             LOG.debug("Executing SQL statement: " + sql);
-            return resultSetToList(statement.executeQuery(), seq, resultSetGetter);
+            return SqlUtils.resultSetToList(statement.executeQuery(), seq, resultSetGetter, true);
         } finally {
             if (statement != null) {
                 try {
