@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
-import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -13,27 +13,31 @@ import java.util.Map;
 
 /**
  * parser基类，除了common每个parser实现应当向{@link ParserFactory}注册自己的实现对象
- *
- * @param <T> optionsConf类
  */
-public abstract class BaseParser<T extends BaseOptionsConf> {
+public abstract class BaseParser {
 
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";
 
     private boolean help;
 
-    abstract public DataSourceRole getDataSourceRole();
+    private BaseOptionsConf optionsConf;
+    private DataSource dataSource;
+    private DataSourceRole dataSourceRole;
 
-    abstract public DataSource getDataSource();
+    public BaseParser(BaseOptionsConf optionsConf, DataSource dataSource, DataSourceRole dataSourceRole) {
+        this.optionsConf = optionsConf;
+        this.dataSource = dataSource;
+        this.dataSourceRole = dataSourceRole;
+    }
 
-    /**
-     * 获得一个{@link BaseOptionsConf}子类对象用于{@link #getCliOptions()}、
-     * {@link #parseCommandLine(CommandLine)}、{@link #validateOptions(GenericOptions)}
-     *
-     * @return
-     */
-    abstract protected T getOptionsConf();
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public DataSourceRole getDataSourceRole() {
+        return dataSourceRole;
+    }
 
     private OptionsType getRole() {
         if (getDataSourceRole() == null) {
@@ -68,7 +72,7 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
     private Options getCliOptions() {
         String prefix = getOptionsPrefix();
         Options options = new Options();
-        for (SingleOptionConf optionConf : getOptionsConf().getOptionsMap().values()) {
+        for (SingleOptionConf optionConf : optionsConf.getOptionsMap().values()) {
             Option option = new Option(null,
                     prefix + optionConf.getName(),
                     optionConf.isNeedArg(),
@@ -91,7 +95,7 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
     private GenericOptions parseCommandLine(CommandLine cli) {
         String prefix = getOptionsPrefix();
         GenericOptions options = new GenericOptions();
-        for (Map.Entry<String, SingleOptionConf> entry : getOptionsConf().getOptionsMap().entrySet()) {
+        for (Map.Entry<String, SingleOptionConf> entry : optionsConf.getOptionsMap().entrySet()) {
             String paramName = entry.getKey();
             String optionName = prefix + paramName;
             SingleOptionConf optionConf = entry.getValue();
@@ -114,13 +118,6 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
         }
         return options;
     }
-
-    /**
-     * 检查options，包括类型、参数间依赖关系等一切需要检查的东西，遇错直接抛
-     *
-     * @param options
-     */
-    abstract protected void validateOptions(GenericOptions options);
 
     private void help(Options cliOptions) {
         String helpHeader;
@@ -189,10 +186,13 @@ public abstract class BaseParser<T extends BaseOptionsConf> {
 
         // validate
         try {
-            validateOptions(options);
+            optionsConf.validateOptions(options);
         } catch (Exception e) {
             throw new ParseException(e);
         }
+
+        // 处理一些options的转换
+        optionsConf.processOptions(options);
 
         return options;
     }

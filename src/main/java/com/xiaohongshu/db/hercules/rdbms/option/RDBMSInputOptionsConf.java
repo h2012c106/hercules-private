@@ -1,10 +1,20 @@
 package com.xiaohongshu.db.hercules.rdbms.option;
 
+import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class RDBMSInputOptionsConf extends RDBMSOptionsConf {
+import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN;
+import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
+import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf.TABLE;
+
+public final class RDBMSInputOptionsConf extends BaseOptionsConf {
 
     public static final String CONDITION = "condition";
     public static final String QUERY = "query";
@@ -17,8 +27,16 @@ public class RDBMSInputOptionsConf extends RDBMSOptionsConf {
     public static final String FETCH_SIZE = "fetch-size";
 
     @Override
-    protected List<SingleOptionConf> setOptionConf() {
-        List<SingleOptionConf> tmpList = super.setOptionConf();
+    protected List<BaseOptionsConf> generateAncestorList() {
+        return Lists.newArrayList(
+                new BaseInputOptionsConf(),
+                new RDBMSOptionsConf()
+        );
+    }
+
+    @Override
+    protected List<SingleOptionConf> innerGenerateOptionConf() {
+        List<SingleOptionConf> tmpList = new ArrayList<>();
         tmpList.add(SingleOptionConf.builder()
                 .name(TABLE)
                 .needArg(true)
@@ -76,8 +94,52 @@ public class RDBMSInputOptionsConf extends RDBMSOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(FETCH_SIZE)
                 .needArg(true)
-                .description("The select fetch size.")
+                .description("The select fetch size, if not specified will not use this feature.")
                 .build());
         return tmpList;
+    }
+
+    @Override
+    public void innerValidateOptions(GenericOptions options) {
+        ParseUtils.validateDependency(options,
+                null,
+                null,
+                null,
+                Lists.newArrayList(TABLE, QUERY));
+        ParseUtils.validateDependency(options,
+                CONDITION,
+                null,
+                Lists.newArrayList(TABLE),
+                null);
+        ParseUtils.validateDependency(options,
+                BALANCE_SPLIT_SAMPLE_MAX_ROW,
+                null,
+                Lists.newArrayList(BALANCE_SPLIT),
+                null);
+
+        Integer splitMaxRow = options.getInteger(BALANCE_SPLIT_SAMPLE_MAX_ROW, null);
+        if (splitMaxRow != null) {
+            ParseUtils.assertTrue(splitMaxRow > 0,
+                    "Illegal balance split max row num: " + splitMaxRow);
+        }
+
+        Integer fetchSize = options.getInteger(FETCH_SIZE, null);
+        if (fetchSize != null) {
+            ParseUtils.assertTrue(fetchSize > 0,
+                    "Illegal fetch size value: " + fetchSize);
+        }
+
+        String splitBy = options.getString(SPLIT_BY, null);
+        if (splitBy != null) {
+            ParseUtils.assertTrue(!splitBy.contains(","),
+                    "Unsupported to use multiple split-by key.");
+        }
+
+        if (options.getBoolean(BALANCE_SPLIT, false)) {
+            ParseUtils.assertTrue(options.hasProperty(RANDOM_FUNC_NAME),
+                    String.format("If you are using balance mode, " +
+                                    "please use '--%s' to specify the random function name to enable random sampling.",
+                            RANDOM_FUNC_NAME));
+        }
     }
 }

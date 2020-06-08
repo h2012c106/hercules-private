@@ -1,10 +1,14 @@
 package com.xiaohongshu.db.hercules.core.assembly;
 
 import com.xiaohongshu.db.hercules.clickhouse.ClickhouseAssemblySupplier;
-import com.xiaohongshu.db.hercules.core.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.hbase.HBaseAssemblySupplier;
+import com.xiaohongshu.db.hercules.mongodb.MongoDBAssemblySupplier;
 import com.xiaohongshu.db.hercules.mysql.MysqlAssemblySupplier;
+import com.xiaohongshu.db.hercules.parquet.ParquetAssemblySupplier;
+import com.xiaohongshu.db.hercules.parquetschema.ParquetSchemaAssemblySupplier;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
 import com.xiaohongshu.db.hercules.tidb.TiDBAssemblySupplier;
 
@@ -12,8 +16,8 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AssemblySupplierFactory {
-    private static Map<DataSource, Class<? extends BaseAssemblySupplier>> registerCenter
+public final class AssemblySupplierFactory {
+    private static final Map<DataSource, Class<? extends BaseAssemblySupplier>> REGISTER_CENTER
             = new HashMap<>(DataSource.values().length);
 
     static {
@@ -23,20 +27,24 @@ public class AssemblySupplierFactory {
         register(DataSource.MySQL, MysqlAssemblySupplier.class);
         register(DataSource.TiDB, TiDBAssemblySupplier.class);
         register(DataSource.Clickhouse, ClickhouseAssemblySupplier.class);
+        register(DataSource.HBase, HBaseAssemblySupplier.class);
+        register(DataSource.MongoDB, MongoDBAssemblySupplier.class);
+        register(DataSource.Parquet, ParquetAssemblySupplier.class);
+        register(DataSource.ParquetSchema, ParquetSchemaAssemblySupplier.class);
     }
 
     private static void register(DataSource dataSource, Class<? extends BaseAssemblySupplier> assemblySupplierClass) {
-        if (registerCenter.containsKey(dataSource)) {
+        if (REGISTER_CENTER.containsKey(dataSource)) {
             throw new RuntimeException(String.format("Duplicate assembly supplier register of %s",
                     dataSource.name()));
         } else {
-            registerCenter.put(dataSource, assemblySupplierClass);
+            REGISTER_CENTER.put(dataSource, assemblySupplierClass);
         }
     }
 
     public static BaseAssemblySupplier getAssemblySupplier(DataSource dataSource, GenericOptions options) {
-        if (registerCenter.containsKey(dataSource)) {
-            Class<? extends BaseAssemblySupplier> assemblySupplierClass = registerCenter.get(dataSource);
+        if (REGISTER_CENTER.containsKey(dataSource)) {
+            Class<? extends BaseAssemblySupplier> assemblySupplierClass = REGISTER_CENTER.get(dataSource);
             try {
                 Constructor<? extends BaseAssemblySupplier> constructor
                         = assemblySupplierClass.getConstructor(GenericOptions.class);

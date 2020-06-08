@@ -56,7 +56,7 @@ public class DateSplitter extends BaseSplitter<Date> {
     }
 
     @Override
-    protected String[] quote() {
-        return new String[]{"'", "'"};
+    protected Enclosing quote() {
+        return new Enclosing("'", "'");
     }
 }

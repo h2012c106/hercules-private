@@ -1,10 +1,13 @@
 package com.xiaohongshu.db.hercules.rdbms.schema.manager;
 
+import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
+import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,6 +16,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
+import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf.*;
 
 public class RDBMSManager {
 
@@ -50,9 +55,9 @@ public class RDBMSManager {
                     + driverClass);
         }
 
-        String username = options.getString(RDBMSInputOptionsConf.USERNAME, null);
-        String password = options.getString(RDBMSInputOptionsConf.PASSWORD, null);
-        String connectString = options.getString(RDBMSInputOptionsConf.CONNECTION, null);
+        String username = options.getString(USERNAME, null);
+        String password = options.getString(PASSWORD, null);
+        String connectString = options.getString(CONNECTION, null);
 
         if (username == null) {
             connection = DriverManager.getConnection(connectString);
@@ -82,9 +87,9 @@ public class RDBMSManager {
                     + driverClass);
         }
 
-        String username = options.getString(RDBMSInputOptionsConf.USERNAME, null);
-        String password = options.getString(RDBMSInputOptionsConf.PASSWORD, null);
-        String connectString = options.getString(RDBMSInputOptionsConf.CONNECTION, null);
+        String username = options.getString(USERNAME, null);
+        String password = options.getString(PASSWORD, null);
+        String connectString = options.getString(CONNECTION, null);
 
         Properties props = new Properties();
         if (username != null) {

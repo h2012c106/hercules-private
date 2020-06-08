@@ -1,13 +1,10 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.mr.SchemaFetcherGetter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
+import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherPair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -20,48 +17,70 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class HerculesInputFormat<S extends BaseSchemaFetcher>
-        extends InputFormat<NullWritable, HerculesWritable>
-        implements SchemaFetcherGetter<S> {
+public abstract class HerculesInputFormat extends InputFormat<NullWritable, HerculesWritable> {
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
     public HerculesInputFormat() {
     }
 
-    abstract protected List<InputSplit> innerGetSplits(JobContext context) throws IOException, InterruptedException;
+    protected GenericOptions options;
+
+    protected void initializeContext(GenericOptions sourceOptions) {
+        options = sourceOptions;
+    }
+
+    abstract protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException;
 
     @Override
     public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
-
-        List<InputSplit> res = innerGetSplits(context);
-
         Configuration configuration = context.getConfiguration();
 
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(configuration);
 
+        initializeContext(options.getSourceOptions());
+
+        int numSplits = options.getCommonOptions().getInteger(CommonOptionsConf.NUM_MAPPER,
+                CommonOptionsConf.DEFAULT_NUM_MAPPER);
+
+        List<InputSplit> res = innerGetSplits(context, numSplits);
+
+        long actualNumSplits = res.size();
+        if (actualNumSplits < numSplits) {
+            LOG.warn(String.format("Actual map size is less than configured: %d vs %d", actualNumSplits, numSplits));
+        } else if (actualNumSplits > numSplits) {
+            LOG.warn(String.format("Actual map size is more than configured: %d vs %d", actualNumSplits, numSplits));
+        }
+
         // 换算各个mapper实际的qps
         if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
             double maxWriteQps = options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
-            double numMapper = res.size();
-            double maxWriteQpsPerMap = maxWriteQps / numMapper;
+            double maxWriteQpsPerMap = maxWriteQps / (double) actualNumSplits;
             LOG.info("Max write qps per map is: " + maxWriteQpsPerMap);
-            options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
+            // 在这里设置options吊用没有，这里的和别的地方的是深拷贝关系，要设置Configuration
+            // options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
+            configuration.setDouble(GenericOptions.getConfigurationName(CommonOptionsConf.MAX_WRITE_QPS, OptionsType.COMMON),
+                    maxWriteQpsPerMap);
         }
 
         return res;
     }
 
     @Override
-    abstract public HerculesRecordReader<?, S> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException;
+    public HerculesRecordReader<?> createRecordReader(InputSplit split, TaskAttemptContext context)
+            throws IOException, InterruptedException {
 
-    abstract protected S innerGetSchemaFetcher(GenericOptions options);
+        Configuration configuration = context.getConfiguration();
 
-    @Override
-    public final S getSchemaFetcher(GenericOptions options) {
-        S res = innerGetSchemaFetcher(options);
-        SchemaFetcherPair.set(res, DataSourceRole.SOURCE);
-        return res;
+        WrappingOptions options = new WrappingOptions();
+        options.fromConfiguration(configuration);
+
+        initializeContext(options.getSourceOptions());
+
+        return innerCreateRecordReader(split, context);
     }
+
+    abstract protected HerculesRecordReader<?> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
+            throws IOException, InterruptedException;
 }

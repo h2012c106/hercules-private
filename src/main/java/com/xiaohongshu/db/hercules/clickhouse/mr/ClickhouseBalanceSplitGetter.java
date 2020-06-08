@@ -1,11 +1,12 @@
 package com.xiaohongshu.db.hercules.clickhouse.mr;
 
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSBalanceSplitGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.SplitGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.BaseSplitter;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -17,6 +18,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -44,13 +46,13 @@ public class ClickhouseBalanceSplitGetter implements SplitGetter {
     }
 
     @Override
-    public List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits,
-                                      String splitBy, RDBMSSchemaFetcher schemaFetcher,
-                                      BaseSplitter splitter, BigDecimal maxSampleRow) throws SQLException {
-        String quantileSql = makeQuantileSql(schemaFetcher.getQuerySql(), numSplits, splitBy);
+    public List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits, String splitBy,
+                                      Map<String, DataType> columnTypeMap, String baseSql, BaseSplitter splitter,
+                                      BigDecimal maxSampleRow, RDBMSManager manager) throws SQLException {
+        String quantileSql = makeQuantileSql(baseSql, numSplits, splitBy);
         LOG.info("Quantile sql is: " + quantileSql);
         try {
-            Object[] quantileResult = (Object[]) schemaFetcher.getManager().executeSelect(quantileSql, 1, new ResultSetGetter<Array>() {
+            Object[] quantileResult = (Object[]) manager.executeSelect(quantileSql, 1, new ResultSetGetter<Array>() {
                 @Override
                 public Array get(ResultSet resultSet, int seq) throws SQLException {
                     return resultSet.getArray(seq);
@@ -66,7 +68,8 @@ public class ClickhouseBalanceSplitGetter implements SplitGetter {
                 LOG.warn(String.format("The type '%s' cannot be applied to clickhouse 'quatiles' method, " +
                         "use sample balance method instead, exception message is: %s", matcher.group(1), errorMessage));
                 // 降级成普通sample balance
-                return new RDBMSBalanceSplitGetter().getSplits(minMaxCountResult, numSplits, splitBy, schemaFetcher, splitter, maxSampleRow);
+                return new RDBMSBalanceSplitGetter().getSplits(minMaxCountResult, numSplits, splitBy,
+                        columnTypeMap, baseSql, splitter, maxSampleRow, manager);
             } else {
                 throw e;
             }

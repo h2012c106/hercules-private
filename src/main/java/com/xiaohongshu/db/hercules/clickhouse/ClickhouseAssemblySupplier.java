@@ -4,13 +4,13 @@ import com.xiaohongshu.db.hercules.clickhouse.mr.ClickhouseInputFormat;
 import com.xiaohongshu.db.hercules.clickhouse.mr.ClickhouseOutputFormat;
 import com.xiaohongshu.db.hercules.clickhouse.mr.ClickhouseOutputMRContext;
 import com.xiaohongshu.db.hercules.clickhouse.schema.ClickhouseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
+import com.xiaohongshu.db.hercules.clickhouse.schema.manager.ClickhouseManager;
+import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
-import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
+import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 
 public class ClickhouseAssemblySupplier extends RDBMSAssemblySupplier {
     public ClickhouseAssemblySupplier(GenericOptions options) {
@@ -23,17 +23,22 @@ public class ClickhouseAssemblySupplier extends RDBMSAssemblySupplier {
     }
 
     @Override
-    protected Class<? extends HerculesOutputFormat> setOutputFormatClass() {
+    protected Class<ClickhouseOutputFormat> setOutputFormatClass() {
         return ClickhouseOutputFormat.class;
     }
 
     @Override
     protected BaseSchemaFetcher setSchemaFetcher() {
-        return SchemaFetcherFactory.getSchemaFetcher(options, ClickhouseSchemaFetcher.class);
+        return new ClickhouseSchemaFetcher(options, generateConverter(), generateManager(options));
     }
 
     @Override
     protected MRJobContext setJobContextAsTarget() {
         return new ClickhouseOutputMRContext();
+    }
+
+    @Override
+    public RDBMSManager generateManager(GenericOptions options) {
+        return new ClickhouseManager(options);
     }
 }

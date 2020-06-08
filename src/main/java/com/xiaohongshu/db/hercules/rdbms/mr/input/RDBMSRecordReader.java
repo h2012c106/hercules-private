@@ -1,65 +1,54 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.WrapperGetter;
-import com.xiaohongshu.db.hercules.core.serialize.datatype.*;
+import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSchemaFetcher> {
+public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordReader.class);
 
-    private Long pos = 0L;
+    protected Long pos = 0L;
     /**
      * 用于估算进度
      */
     private Long mapAverageRowNum;
-    private Connection connection = null;
-    private PreparedStatement statement = null;
-    private ResultSet resultSet = null;
-    private HerculesWritable value;
+    protected Connection connection = null;
+    protected PreparedStatement statement = null;
+    protected ResultSet resultSet = null;
+    protected HerculesWritable value;
 
-    private AtomicBoolean hasClosed = new AtomicBoolean(false);
+    protected RDBMSManager manager;
 
-    public RDBMSRecordReader(RDBMSSchemaFetcher schemaFetcher) {
-        super(schemaFetcher);
+    public RDBMSRecordReader(TaskAttemptContext context, RDBMSManager manager) {
+        super(context, new RDBMSWrapperGetterFactory());
+        this.manager = manager;
     }
 
-    @Override
-    protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
+    protected final String makeSql(GenericOptions sourceOptions, RDBMSInputSplit split) {
+        String querySql = SqlUtils.makeBaseQuery(sourceOptions);
+        String splitBoundary = String.format("%s AND %s", split.getLowerClause(),
+                split.getUpperClause());
+        return SqlUtils.addWhere(querySql, splitBoundary);
+    }
 
-        mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
-
-        RDBMSManager manager = schemaFetcher.getManager();
-
-        String querySql = schemaFetcher.getQuerySql();
-        RDBMSInputSplit rdbmsInputSplit = (RDBMSInputSplit) split;
-        String splitBoundary = String.format("%s AND %s", rdbmsInputSplit.getLowerClause(),
-                rdbmsInputSplit.getUpperClause());
-        querySql = SqlUtils.addWhere(querySql, splitBoundary);
-
-        Integer fetchSize = options.getSourceOptions().getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
-
+    protected void start(String querySql, Integer fetchSize) throws IOException {
         try {
             connection = manager.getConnection();
             statement = connection.prepareStatement(querySql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -76,19 +65,38 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
     }
 
     @Override
-    public boolean nextKeyValue() throws IOException, InterruptedException {
+    protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+        Configuration configuration = context.getConfiguration();
+
+        columnTypeMap = new StingyMap<>(super.columnTypeMap);
+
+        mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
+
+        String querySql = makeSql(options.getSourceOptions(), (RDBMSInputSplit) split);
+
+        Integer fetchSize = options.getSourceOptions().getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
+
+        start(querySql, fetchSize);
+    }
+
+    protected boolean hasNext() throws SQLException {
+        return resultSet.next();
+    }
+
+    @Override
+    public boolean innerNextKeyValue() throws IOException, InterruptedException {
         try {
-            if (!resultSet.next()) {
-                LOG.info(String.format("Selected %d records.", pos));
+            if (!hasNext()) {
                 return false;
             }
 
             ++pos;
 
-            int columnNum = wrapperGetterList.size();
+            int columnNum = columnNameList.size();
             value = new HerculesWritable(columnNum);
             for (int i = 0; i < columnNum; ++i) {
-                value.append(wrapperGetterList.get(i).get(resultSet, null, i + 1));
+                String columnName = columnNameList.get(i);
+                value.put(columnName, getWrapperGetter(columnTypeMap.get(columnName)).get(resultSet, null, null, i + 1));
             }
 
             return true;
@@ -99,12 +107,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
     }
 
     @Override
-    public NullWritable getCurrentKey() throws IOException, InterruptedException {
-        return NullWritable.get();
-    }
-
-    @Override
-    public HerculesWritable getCurrentValue() throws IOException, InterruptedException {
+    public HerculesWritable innerGetCurrentValue() throws IOException, InterruptedException {
         return value;
     }
 
@@ -130,129 +133,28 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet, RDBMSSche
     }
 
     @Override
-    public void close() throws IOException {
-        if (!hasClosed.getAndSet(true)) {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing resultSet: " + ExceptionUtils.getStackTrace(e));
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
-                }
-            }
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing connection: " + ExceptionUtils.getStackTrace(e));
-                }
+    public void innerClose() throws IOException {
+        LOG.info(String.format("Selected %d records.", pos));
+        if (resultSet != null) {
+            try {
+                resultSet.close();
+            } catch (SQLException e) {
+                LOG.warn("SQLException closing resultSet: " + ExceptionUtils.getStackTrace(e));
             }
         }
-    }
-
-    @Override
-    protected WrapperGetter<ResultSet> getIntegerGetter() {
-        return new WrapperGetter<ResultSet>() {
-            @Override
-            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
-                Long res = resultSet.getLong(seq);
-                if (resultSet.wasNull()) {
-                    return new NullWrapper();
-                } else {
-                    return new IntegerWrapper(res);
-                }
+        if (statement != null) {
+            try {
+                statement.close();
+            } catch (SQLException e) {
+                LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
             }
-        };
-    }
-
-    @Override
-    protected WrapperGetter<ResultSet> getDoubleGetter() {
-        return new WrapperGetter<ResultSet>() {
-            @Override
-            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
-                BigDecimal res = resultSet.getBigDecimal(seq);
-                if (res == null) {
-                    return new NullWrapper();
-                } else {
-                    return new DoubleWrapper(res);
-                }
+        }
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                LOG.warn("SQLException closing connection: " + ExceptionUtils.getStackTrace(e));
             }
-        };
-    }
-
-    @Override
-    protected WrapperGetter<ResultSet> getBooleanGetter() {
-        return new WrapperGetter<ResultSet>() {
-            @Override
-            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
-                Boolean res = resultSet.getBoolean(seq);
-                if (resultSet.wasNull()) {
-                    return new NullWrapper();
-                } else {
-                    return new BooleanWrapper(res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperGetter<ResultSet> getStringGetter() {
-        return new WrapperGetter<ResultSet>() {
-            @Override
-            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
-                String res = resultSet.getString(seq);
-                if (res == null) {
-                    return new NullWrapper();
-                } else {
-                    return new StringWrapper(res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperGetter<ResultSet> getDateGetter() {
-        return new WrapperGetter<ResultSet>() {
-            @Override
-            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
-                String res = SqlUtils.getTimestamp(resultSet, seq);
-                if (res == null) {
-                    return new NullWrapper();
-                } else {
-                    return new DateWrapper(res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperGetter<ResultSet> getBytesGetter() {
-        return new WrapperGetter<ResultSet>() {
-            @Override
-            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
-                byte[] res = resultSet.getBytes(seq);
-                if (res == null) {
-                    return new NullWrapper();
-                } else {
-                    return new BytesWrapper(res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperGetter<ResultSet> getNullGetter() {
-        return new WrapperGetter<ResultSet>() {
-            @Override
-            public BaseWrapper get(ResultSet row, String name, int seq) throws Exception {
-                return NullWrapper.INSTANCE;
-            }
-        };
+        }
     }
 }

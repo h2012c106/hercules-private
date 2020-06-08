@@ -1,18 +1,25 @@
 package com.xiaohongshu.db.hercules.clickhouse.mr;
 
 import com.xiaohongshu.db.hercules.clickhouse.schema.ClickhouseSchemaFetcher;
+import com.xiaohongshu.db.hercules.clickhouse.schema.manager.ClickhouseManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSFastSplitterGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.SplitGetter;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 
 public class ClickhouseInputFormat extends RDBMSInputFormat {
     @Override
-    public RDBMSSchemaFetcher innerGetSchemaFetcher(GenericOptions options) {
-        return SchemaFetcherFactory.getSchemaFetcher(options, ClickhouseSchemaFetcher.class);
+    protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options, RDBMSDataTypeConverter converter, RDBMSManager manager) {
+        return new ClickhouseSchemaFetcher(options, converter, manager);
+    }
+
+    @Override
+    public RDBMSManager generateManager(GenericOptions options) {
+        return new ClickhouseManager(options);
     }
 
     @Override

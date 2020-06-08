@@ -2,11 +2,15 @@ package com.xiaohongshu.db.hercules.common.option;
 
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+
+import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN;
 
 /**
  * 千万不能出现以"source-"或"target-"开头的通用配置，大多数情况没问题，但是万一和源或目标端的参数碰了
@@ -18,14 +22,22 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String ALLOW_SOURCE_MORE_COLUMN = "allow-source-more-column";
     public static final String ALLOW_TARGET_MORE_COLUMN = "allow-target-more-column";
     public static final String COLUMN_MAP = "column-map";
+    public static final String RELIABLE_COLUMN_MAP = "reliable-column-map";
     public static final String MAX_WRITE_QPS = "max-write-qps";
+    public static final String ALLOW_COPY_COLUMN_NAME = "allow-copy-column-name";
+    public static final String ALLOW_COPY_COLUMN_TYPE = "allow-copy-column-type";
 
     public static final int DEFAULT_NUM_MAPPER = 4;
     public static final Level DEFAULT_LOG_LEVEL = Level.INFO;
     public static final JSONObject DEFAULT_COLUMN_MAP = new JSONObject();
 
     @Override
-    protected List<SingleOptionConf> setOptionConf() {
+    protected List<BaseOptionsConf> generateAncestorList() {
+        return null;
+    }
+
+    @Override
+    protected List<SingleOptionConf> innerGenerateOptionConf() {
         List<SingleOptionConf> tmpList = new ArrayList<>();
         tmpList.add(SingleOptionConf.builder()
                 .name(NUM_MAPPER)
@@ -64,6 +76,11 @@ public class CommonOptionsConf extends BaseOptionsConf {
                 .defaultStringValue(DEFAULT_COLUMN_MAP.toJSONString())
                 .build());
         tmpList.add(SingleOptionConf.builder()
+                .name(RELIABLE_COLUMN_MAP)
+                .needArg(false)
+                .description(String.format("If specified, '--%s''s key and value will add to source and target '--%s' param value.", COLUMN_MAP, COLUMN))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
                 .name(MAX_WRITE_QPS)
                 .needArg(true)
                 .description(String.format("The OVERALL write qps limit applied to target data source, " +
@@ -75,6 +92,33 @@ public class CommonOptionsConf extends BaseOptionsConf {
                 .needArg(false)
                 .description("")
                 .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(ALLOW_COPY_COLUMN_NAME)
+                .needArg(false)
+                .description("If one side of datasource doesn't define the column name list, " +
+                        "and unable to fetch it from datasource, " +
+                        "this option will allow it to copy the information from the other side.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(ALLOW_COPY_COLUMN_TYPE)
+                .needArg(false)
+                .description("This option will allow datasource to copy " +
+                        "the additional column type information which it doesn't has from the other side.")
+                .build());
         return tmpList;
+    }
+
+    @Override
+    public void innerValidateOptions(GenericOptions options) {
+        Integer numMapper = options.getInteger(CommonOptionsConf.NUM_MAPPER, CommonOptionsConf.DEFAULT_NUM_MAPPER);
+        ParseUtils.assertTrue(numMapper > 0, "Illegal num mapper: " + numMapper);
+
+        if (options.hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
+            ParseUtils.assertTrue(options.getDouble(CommonOptionsConf.MAX_WRITE_QPS, null) > 0,
+                    "Illegal max write qps: " + numMapper);
+        }
+
+        // parse一下看看是不是json
+        options.getJson(CommonOptionsConf.COLUMN_MAP, null);
     }
 }

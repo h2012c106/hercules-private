@@ -1,19 +1,23 @@
 package com.xiaohongshu.db.hercules.rdbms;
 
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
-import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
-import com.xiaohongshu.db.hercules.core.assembly.NullMRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.NullMRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
+import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputMRJobContext;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
 
-public class RDBMSAssemblySupplier extends BaseAssemblySupplier {
+public class RDBMSAssemblySupplier extends BaseAssemblySupplier
+        implements RDBMSManagerGenerator, DataTypeConverterGenerator<RDBMSDataTypeConverter> {
     public RDBMSAssemblySupplier(GenericOptions options) {
         super(options);
     }
@@ -30,7 +34,7 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier {
 
     @Override
     protected BaseSchemaFetcher setSchemaFetcher() {
-        return SchemaFetcherFactory.getSchemaFetcher(options, RDBMSSchemaFetcher.class);
+        return new RDBMSSchemaFetcher(options, generateConverter(), generateManager(options));
     }
 
     @Override
@@ -41,5 +45,15 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier {
     @Override
     protected MRJobContext setJobContextAsTarget() {
         return new RDBMSOutputMRJobContext();
+    }
+
+    @Override
+    public RDBMSManager generateManager(GenericOptions options) {
+        return new RDBMSManager(options);
+    }
+
+    @Override
+    public RDBMSDataTypeConverter generateConverter() {
+        return new RDBMSDataTypeConverter();
     }
 }

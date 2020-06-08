@@ -1,16 +1,15 @@
 package com.xiaohongshu.db.hercules.mysql;
 
-import com.xiaohongshu.db.hercules.core.assembly.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.serialize.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaFetcherFactory;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlInputFormat;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlOutputFormat;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlOutputMRJobContext;
-import com.xiaohongshu.db.hercules.mysql.schema.MysqlSchemaFetcher;
+import com.xiaohongshu.db.hercules.mysql.schema.manager.MysqlManager;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 
 public class MysqlAssemblySupplier extends RDBMSAssemblySupplier {
     public MysqlAssemblySupplier(GenericOptions options) {
@@ -28,12 +27,12 @@ public class MysqlAssemblySupplier extends RDBMSAssemblySupplier {
     }
 
     @Override
-    protected BaseSchemaFetcher setSchemaFetcher() {
-        return SchemaFetcherFactory.getSchemaFetcher(options, MysqlSchemaFetcher.class);
+    protected MRJobContext setJobContextAsTarget() {
+        return new MysqlOutputMRJobContext();
     }
 
     @Override
-    protected MRJobContext setJobContextAsTarget() {
-        return new MysqlOutputMRJobContext();
+    public RDBMSManager generateManager(GenericOptions options) {
+        return new MysqlManager(options);
     }
 }

@@ -2,18 +2,18 @@ package com.xiaohongshu.db.hercules;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.common.parser.CommonParser;
-import com.xiaohongshu.db.hercules.core.DataSource;
-import com.xiaohongshu.db.hercules.core.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplierFactory;
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.parser.BaseDataSourceParser;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
 import com.xiaohongshu.db.hercules.core.parser.ParserFactory;
-import com.xiaohongshu.db.hercules.core.serialize.SchemaChecker;
+import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
+import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import lombok.SneakyThrows;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -41,6 +41,8 @@ public class Hercules {
     }
 
     public static void main(String[] args) {
+        LogUtils.configureLog4J();
+
         printVersionInfo();
 
         // 获得 dataFlow 参数，模式为 SOURCE_TYPE::TARGET_TYPE
@@ -55,14 +57,12 @@ public class Hercules {
 
         // 获得target、source、common对应的parser
         BaseParser commonParser = new CommonParser();
-        BaseDataSourceParser sourceParser = ParserFactory.getParser(sourceDataSource, DataSourceRole.SOURCE);
-        BaseDataSourceParser targetParser = ParserFactory.getParser(targetDataSource, DataSourceRole.TARGET);
+        BaseParser sourceParser = ParserFactory.getParser(sourceDataSource, DataSourceRole.SOURCE);
+        BaseParser targetParser = ParserFactory.getParser(targetDataSource, DataSourceRole.TARGET);
 
         WrappingOptions wrappingOptions = new WrappingOptions(sourceParser.parse(args),
                 targetParser.parse(args),
                 commonParser.parse(args));
-
-        LOG.debug("Options: " + wrappingOptions);
 
         // 处理log-level
         Logger.getRootLogger().setLevel(
@@ -72,6 +72,8 @@ public class Hercules {
                         )
                 )
         );
+
+        LOG.debug("Options: " + wrappingOptions);
 
         // 需要打help，则不运行导数行为
         if (commonParser.isHelp() || sourceParser.isHelp() || targetParser.isHelp()) {
@@ -83,19 +85,9 @@ public class Hercules {
         BaseAssemblySupplier targetAssemblySupplier
                 = AssemblySupplierFactory.getAssemblySupplier(targetDataSource, wrappingOptions.getTargetOptions());
 
-        SchemaChecker checker = new SchemaChecker(sourceAssemblySupplier.getSchemaFetcher(),
-                targetAssemblySupplier.getSchemaFetcher(), wrappingOptions);
-        checker.validate();
-
-        // 以下为部分配置项的特殊逻辑，暂时放在主线程，TODO 放在一个看上去更美观的地方
-
-        // 将schema fetcher获得的列名列表写死在columns属性中，保证全局只获得一次
-        wrappingOptions.getSourceOptions().set(BaseDataSourceOptionsConf.COLUMN,
-                sourceAssemblySupplier.getSchemaFetcher().getColumnNameList().toArray(new String[0]));
-        wrappingOptions.getTargetOptions().set(BaseDataSourceOptionsConf.COLUMN,
-                targetAssemblySupplier.getSchemaFetcher().getColumnNameList().toArray(new String[0]));
-
-        // 以上为部分配置项的特殊逻辑，暂时放在主线程，TODO 放在一个看上去更美观的地方
+        SchemaNegotiator negotiator = new SchemaNegotiator(wrappingOptions, sourceAssemblySupplier.getSchemaFetcher(),
+                targetAssemblySupplier.getSchemaFetcher());
+        negotiator.negotiate();
 
         MRJob job = new MRJob(sourceAssemblySupplier, targetAssemblySupplier, wrappingOptions);
 
