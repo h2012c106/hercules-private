@@ -279,4 +279,16 @@ public final class SqlUtils {
             }
         }
     }
+
+    public static void release(List<AutoCloseable> closeableList) {
+        for (AutoCloseable item : closeableList) {
+            if (item != null) {
+                try {
+                    item.close();
+                } catch (Exception e) {
+                    LOG.warn("Exception when releasing: " + ExceptionUtils.getStackTrace(e));
+                }
+            }
+        }
+    }
 }

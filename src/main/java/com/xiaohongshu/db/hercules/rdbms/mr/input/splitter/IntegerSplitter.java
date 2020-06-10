@@ -14,12 +14,7 @@ public class IntegerSplitter extends BaseSplitter<Long> {
 
     @Override
     public ResultSetGetter<Long> getResultSetGetter() {
-        return new ResultSetGetter<Long>() {
-            @Override
-            public Long get(ResultSet resultSet, int seq) throws SQLException {
-                return resultSet.getLong(seq);
-            }
-        };
+        return ResultSetGetter.LONG_GETTER;
     }
 
     @Override

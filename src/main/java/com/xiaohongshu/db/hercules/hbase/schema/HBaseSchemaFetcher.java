@@ -65,16 +65,4 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
         }
         return columnTypeMap;
     }
-
-    @Override
-    public void postNegotiate(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
-        super.postNegotiate(columnNameList, columnTypeMap);
-
-        String rowKeyCol = getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        if (rowKeyCol != null) {
-            if (!columnNameList.contains(rowKeyCol)) {
-                throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
-            }
-        }
-    }
 }

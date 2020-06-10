@@ -1,9 +1,11 @@
 package com.xiaohongshu.db.hercules.mysql.schema.manager;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.mysql.option.MysqlInputOptionsConf;
 import com.xiaohongshu.db.hercules.mysql.option.MysqlOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,9 +44,7 @@ public class MysqlManager extends RDBMSManager {
                 statement = res.createStatement();
                 statement.execute(ALLOW_ZERO_DATE_SQL);
             } finally {
-                if (statement != null) {
-                    statement.close();
-                }
+                SqlUtils.release(Lists.newArrayList(statement));
             }
         }
         return res;

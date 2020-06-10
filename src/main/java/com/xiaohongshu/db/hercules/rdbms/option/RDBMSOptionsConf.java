@@ -16,6 +16,8 @@ public final class RDBMSOptionsConf extends BaseOptionsConf {
 
     public static final String TABLE = "table";
 
+    public static final String IGNORE_AUTOINCREMENT = "ignore-autoincrement";
+
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
         return null;
@@ -45,6 +47,11 @@ public final class RDBMSOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("The jdbc driver class name, e.g. 'com.mysql.jdbc.Driver'.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(IGNORE_AUTOINCREMENT)
+                .needArg(false)
+                .description("If specified, the AUTO_INCREMENT column will not be covered.")
                 .build());
         return tmpList;
     }

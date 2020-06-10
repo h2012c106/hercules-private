@@ -8,11 +8,13 @@ import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
+import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputFormat;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputMRJobContext;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
 
@@ -55,5 +57,15 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier
     @Override
     public RDBMSDataTypeConverter generateConverter() {
         return new RDBMSDataTypeConverter();
+    }
+
+    @Override
+    protected SchemaNegotiatorContext setSchemaNegotiatorContextAsSource() {
+        return new RDBMSSchemaNegotiatorContext(options);
+    }
+
+    @Override
+    protected SchemaNegotiatorContext setSchemaNegotiatorContextAsTarget() {
+        return new RDBMSSchemaNegotiatorContext(options);
     }
 }

@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.tidb.mr;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -10,6 +11,7 @@ import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFactory;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -82,20 +84,7 @@ public class TiDBOutputMRJobContext extends MysqlOutputMRJobContext {
                 LOG.error("Something went wrong when execute pre migrate sql");
                 throw new MapReduceException(e);
             } finally {
-                if (statement != null) {
-                    try {
-                        statement.close();
-                    } catch (SQLException e) {
-                        LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
-                    }
-                }
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException e) {
-                        LOG.warn("SQLException closing connection: " + ExceptionUtils.getStackTrace(e));
-                    }
-                }
+                SqlUtils.release(Lists.newArrayList(statement, connection));
             }
         }
     }

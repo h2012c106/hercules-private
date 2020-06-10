@@ -7,14 +7,12 @@ import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
+import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetHerculesDataTypeConverter;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetHiveDataTypeConverter;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetSqoopDataTypeConverter;
+import com.xiaohongshu.db.hercules.parquet.schema.*;
 import com.xiaohongshu.db.hercules.parquetschema.mr.ParquetSchemaOutputFormat;
 import com.xiaohongshu.db.hercules.parquetschema.mr.ParquetSchemaOutputMRJobContext;
-import com.xiaohongshu.db.hercules.parquetschema.schema.ParquetSchemaSchemaFetcher;
+import com.xiaohongshu.db.hercules.parquetschema.schema.ParquetSchemaSchemaNegotiatorContext;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
@@ -36,7 +34,7 @@ public class ParquetSchemaAssemblySupplier extends BaseAssemblySupplier implemen
 
     @Override
     protected BaseSchemaFetcher setSchemaFetcher() {
-        return new ParquetSchemaSchemaFetcher(options, generateConverter());
+        return new ParquetSchemaFetcher(options, generateConverter());
     }
 
     @Override
@@ -62,5 +60,10 @@ public class ParquetSchemaAssemblySupplier extends BaseAssemblySupplier implemen
             default:
                 throw new RuntimeException();
         }
+    }
+
+    @Override
+    protected SchemaNegotiatorContext setSchemaNegotiatorContextAsTarget() {
+        return new ParquetSchemaSchemaNegotiatorContext(options);
     }
 }

@@ -20,26 +20,40 @@ public class DateSplitter extends BaseSplitter<Date> {
     @Override
     public ResultSetGetter<Date> getResultSetGetter() {
         return new ResultSetGetter<Date>() {
+
+            private SQLException throwException(SQLException e) throws SQLException {
+                String regex = "^Value '(.+)' can not be represented as java.sql.Timestamp$";
+                Pattern pattern = Pattern.compile(regex);
+                Matcher matcher = pattern.matcher(e.getMessage());
+                if (matcher.find()) {
+                    throw new MapReduceException(
+                            String.format("The unparsable & uncomparable timestamp value [%s] will cause split error, " +
+                                            "please change the split-by col or if you insist using this column, " +
+                                            "set '--%s 1' and try again. " +
+                                            "(Don't worry, the illegal time value will only be restricted when used to split, " +
+                                            "the value will be safe and sound when transferred as a part of row)",
+                                    matcher.group(1), CommonOptionsConf.NUM_MAPPER), e
+                    );
+                } else {
+                    return e;
+                }
+            }
+
             @Override
             public Date get(ResultSet resultSet, int seq) throws SQLException {
                 try {
                     return resultSet.getTimestamp(seq);
                 } catch (SQLException e) {
-                    String regex = "^Value '(.+)' can not be represented as java.sql.Timestamp$";
-                    Pattern pattern = Pattern.compile(regex);
-                    Matcher matcher = pattern.matcher(e.getMessage());
-                    if (matcher.find()) {
-                        throw new MapReduceException(
-                                String.format("The unparsable & uncomparable timestamp value [%s] will cause split error, " +
-                                                "please change the split-by col or if you insist using this column, " +
-                                                "set '--%s 1' and try again. " +
-                                                "(Don't worry, the illegal time value will only be restricted when used to split, " +
-                                                "the value will be safe and sound when transferred as a part of row)",
-                                        matcher.group(1), CommonOptionsConf.NUM_MAPPER), e
-                        );
-                    } else {
-                        throw e;
-                    }
+                    throw throwException(e);
+                }
+            }
+
+            @Override
+            public Date get(ResultSet resultSet, String name) throws SQLException {
+                try {
+                    return resultSet.getTimestamp(name);
+                } catch (SQLException e) {
+                    throw throwException(e);
                 }
             }
         };

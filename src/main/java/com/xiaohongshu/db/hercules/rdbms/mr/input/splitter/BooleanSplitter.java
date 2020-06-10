@@ -20,6 +20,11 @@ public class BooleanSplitter extends BaseSplitter<Boolean> {
             public Boolean get(ResultSet resultSet, int seq) throws SQLException {
                 return resultSet.getBoolean(seq);
             }
+
+            @Override
+            public Boolean get(ResultSet resultSet, String name) throws SQLException {
+                return resultSet.getBoolean(name);
+            }
         };
     }
 

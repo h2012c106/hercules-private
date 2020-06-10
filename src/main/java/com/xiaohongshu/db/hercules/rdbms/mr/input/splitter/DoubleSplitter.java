@@ -18,6 +18,11 @@ public class DoubleSplitter extends BaseSplitter<BigDecimal> {
             public BigDecimal get(ResultSet resultSet, int seq) throws SQLException {
                 return resultSet.getBigDecimal(seq);
             }
+
+            @Override
+            public BigDecimal get(ResultSet resultSet, String name) throws SQLException {
+                return resultSet.getBigDecimal(name);
+            }
         };
     }
 

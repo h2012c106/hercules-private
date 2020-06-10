@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.schema;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -49,8 +50,10 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
         String sql = getNoneLineSql(baseSql);
         ResultSet resultSet = null;
         Statement statement = null;
+        Connection connection = null;
         try {
-            statement = manager.getConnection().createStatement();
+            connection = manager.getConnection();
+            statement = connection.createStatement();
             LOG.info("Execute sql to fetch column and column type: " + sql);
             resultSet = statement.executeQuery(sql);
             ResultSetMetaData metadata = resultSet.getMetaData();
@@ -75,20 +78,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
         } catch (SQLException e) {
             throw new SchemaException(e);
         } finally {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing resultset: " + ExceptionUtils.getStackTrace(e));
-                }
-            }
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
-                }
-            }
+            SqlUtils.release(Lists.newArrayList(resultSet, statement, connection));
         }
     }
 
@@ -189,18 +179,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
                     return res;
                 }
             } finally {
-                if (resultSet != null) {
-                    try {
-                        resultSet.close();
-                    } catch (SQLException ignore) {
-                    }
-                }
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException ignore) {
-                    }
-                }
+                SqlUtils.release(Lists.newArrayList(resultSet, connection));
             }
         } else {
             return null;
@@ -252,22 +231,37 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
                 }
                 return false;
             } finally {
-                if (resultSet != null) {
-                    try {
-                        resultSet.close();
-                    } catch (SQLException ignore) {
-                    }
-                }
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException ignore) {
-                    }
-                }
+                SqlUtils.release(Lists.newArrayList(resultSet, connection));
             }
         } else {
             LOG.warn("Cannot get the index information from sql, ignore key check.");
             return true;
+        }
+    }
+
+    public Set<String> getAutoincrementColumn() {
+        String sql = getNoneLineSql(baseSql);
+        ResultSet resultSet = null;
+        Statement statement = null;
+        Connection connection = null;
+        Set<String> res = new HashSet<>(1);
+        try {
+            connection = manager.getConnection();
+            statement = connection.createStatement();
+            LOG.info("Execute sql to fetch column and column type: " + sql);
+            resultSet = statement.executeQuery(sql);
+            ResultSetMetaData metadata = resultSet.getMetaData();
+            for (int i = 1; i <= metadata.getColumnCount(); ++i) {
+                if (metadata.isAutoIncrement(i)) {
+                    res.add(metadata.getColumnName(i));
+                }
+            }
+            LOG.info("Autoincrement columns: " + res);
+            return res;
+        } catch (SQLException e) {
+            throw new SchemaException(e);
+        } finally {
+            SqlUtils.release(Lists.newArrayList(resultSet, statement, connection));
         }
     }
 }

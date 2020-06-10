@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
+import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.parquet.mr.input.ParquetInputFormat;
 import com.xiaohongshu.db.hercules.parquet.mr.input.ParquetInputMRJobContext;
 import com.xiaohongshu.db.hercules.parquet.mr.output.ParquetOutputFormat;
@@ -17,8 +18,11 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHE
 
 public class ParquetAssemblySupplier extends BaseAssemblySupplier implements DataTypeConverterGenerator<ParquetDataTypeConverter> {
 
+    private ParquetDataTypeConverter converter;
+
     public ParquetAssemblySupplier(GenericOptions options) {
         super(options);
+        converter = generateConverter();
     }
 
     @Override
@@ -33,7 +37,7 @@ public class ParquetAssemblySupplier extends BaseAssemblySupplier implements Dat
 
     @Override
     protected BaseSchemaFetcher setSchemaFetcher() {
-        return new ParquetSchemaFetcher(options, generateConverter());
+        return new ParquetSchemaFetcher(options, converter);
     }
 
     @Override
@@ -59,5 +63,10 @@ public class ParquetAssemblySupplier extends BaseAssemblySupplier implements Dat
             default:
                 throw new RuntimeException();
         }
+    }
+
+    @Override
+    protected SchemaNegotiatorContext setSchemaNegotiatorContextAsTarget() {
+        return new ParqeutSchemaNegotiatorContext(options, converter);
     }
 }

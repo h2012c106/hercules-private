@@ -57,6 +57,11 @@ public class ClickhouseBalanceSplitGetter implements SplitGetter {
                 public Array get(ResultSet resultSet, int seq) throws SQLException {
                     return resultSet.getArray(seq);
                 }
+
+                @Override
+                public Array get(ResultSet resultSet, String name) throws SQLException {
+                    return resultSet.getArray(name);
+                }
             }).get(0).getArray();
             return splitter.generateInputSplitList(splitBy, Arrays.asList(quantileResult));
         } catch (SQLException e) {

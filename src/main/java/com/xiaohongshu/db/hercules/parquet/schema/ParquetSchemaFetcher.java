@@ -155,17 +155,4 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
             return null;
         }
     }
-
-    @Override
-    public void postNegotiate(List<String> columnNameList, Map<String, DataType> columnTypeMap) {
-        // 自动装配一个schema
-        if (StringUtils.isEmpty(getOptions().getString(MESSAGE_TYPE, null))) {
-            MessageType generatedMessageType = converter.convertTypeMap(columnNameList, columnTypeMap);
-            if (generatedMessageType != null) {
-                String messageTypeStr = generatedMessageType.toString();
-                LOG.info("Generate the parquet schema from negotiated column name list and column type map: " + messageTypeStr);
-                getOptions().set(MESSAGE_TYPE, messageTypeStr);
-            }
-        }
-    }
 }

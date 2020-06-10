@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
@@ -135,26 +136,6 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
     @Override
     public void innerClose() throws IOException {
         LOG.info(String.format("Selected %d records.", pos));
-        if (resultSet != null) {
-            try {
-                resultSet.close();
-            } catch (SQLException e) {
-                LOG.warn("SQLException closing resultSet: " + ExceptionUtils.getStackTrace(e));
-            }
-        }
-        if (statement != null) {
-            try {
-                statement.close();
-            } catch (SQLException e) {
-                LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
-            }
-        }
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                LOG.warn("SQLException closing connection: " + ExceptionUtils.getStackTrace(e));
-            }
-        }
+        SqlUtils.release(Lists.newArrayList(resultSet, statement, connection));
     }
 }

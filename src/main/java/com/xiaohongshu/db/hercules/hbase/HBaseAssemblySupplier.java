@@ -8,11 +8,13 @@ import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
+import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseInputFormat;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseOutputFormat;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseOutputMRJobContext;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseSchemaFetcher;
+import com.xiaohongshu.db.hercules.hbase.schema.HBaseSchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 
@@ -56,6 +58,16 @@ public class HBaseAssemblySupplier extends BaseAssemblySupplier
     @Override
     public HBaseDataTypeConverter generateConverter() {
         return new HBaseDataTypeConverter();
+    }
+
+    @Override
+    protected SchemaNegotiatorContext setSchemaNegotiatorContextAsSource() {
+        return new HBaseSchemaNegotiatorContext(options);
+    }
+
+    @Override
+    protected SchemaNegotiatorContext setSchemaNegotiatorContextAsTarget() {
+        return new HBaseSchemaNegotiatorContext(options);
     }
 }
 

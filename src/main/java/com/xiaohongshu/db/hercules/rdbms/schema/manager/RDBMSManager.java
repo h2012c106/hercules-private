@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.schema.manager;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
@@ -118,20 +119,7 @@ public class RDBMSManager {
             LOG.debug("Executing SQL statement: " + sql);
             return SqlUtils.resultSetToList(statement.executeQuery(), seq, resultSetGetter, true);
         } finally {
-            if (statement != null) {
-                try {
-                    statement.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
-                }
-            }
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    LOG.warn("SQLException closing connection: " + ExceptionUtils.getStackTrace(e));
-                }
-            }
+            SqlUtils.release(Lists.newArrayList(statement, connection));
         }
     }
 

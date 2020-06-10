@@ -31,11 +31,19 @@ public final class SchemaNegotiator {
     private WrappingOptions options;
     private BaseSchemaFetcher sourceSchemaFetcher;
     private BaseSchemaFetcher targetSchemaFetcher;
+    private SchemaNegotiatorContext sourceContext;
+    private SchemaNegotiatorContext targetContext;
 
-    public SchemaNegotiator(WrappingOptions options, BaseSchemaFetcher sourceSchemaFetcher, BaseSchemaFetcher targetSchemaFetcher) {
+    public SchemaNegotiator(WrappingOptions options,
+                            BaseSchemaFetcher sourceSchemaFetcher, BaseSchemaFetcher targetSchemaFetcher,
+                            SchemaNegotiatorContext sourceContext, SchemaNegotiatorContext targetContext) {
         this.options = options;
         this.sourceSchemaFetcher = sourceSchemaFetcher;
         this.targetSchemaFetcher = targetSchemaFetcher;
+        this.sourceContext = sourceContext;
+        this.sourceContext.setSchemaFetcher(this.sourceSchemaFetcher);
+        this.targetContext = targetContext;
+        this.targetContext.setSchemaFetcher(this.targetSchemaFetcher);
     }
 
     private List<String> getColumnNameListFromOptions(GenericOptions dataSourceOptions) {
@@ -239,7 +247,13 @@ public final class SchemaNegotiator {
             targetColumnNameList = getColumnNameList(targetOptions, targetSchemaFetcher);
         }
 
+        sourceContext.afterReadColumnNameList(sourceColumnNameList);
+        targetContext.afterReadColumnNameList(targetColumnNameList);
+
         if (sourceColumnNameList.size() > 0 && targetColumnNameList.size() > 0) {
+            List<String> beforeChangedSourceColumnNameList = new ArrayList<>(sourceColumnNameList);
+            List<String> beforeChangedTargetColumnNameList = new ArrayList<>(targetColumnNameList);
+
             // 检查上下游多列少列，并取交集
             Set<String> intersectTargetColumnNameSet
                     = validateAndGetIntersection(sourceColumnNameList, targetColumnNameList, biColumnMap);
@@ -251,15 +265,21 @@ public final class SchemaNegotiator {
             targetColumnNameList = targetColumnNameList.stream()
                     .filter(intersectTargetColumnNameSet::contains)
                     .collect(Collectors.toList());
+
+            sourceContext.afterIntersectColumnNameList(beforeChangedSourceColumnNameList, sourceColumnNameList);
+            targetContext.afterIntersectColumnNameList(beforeChangedTargetColumnNameList, targetColumnNameList);
         }
+
 
         if (commonOptions.getBoolean(CommonOptionsConf.ALLOW_COPY_COLUMN_NAME, false)) {
             if (sourceColumnNameList.size() == 0 && targetColumnNameList.size() != 0) {
                 LOG.info("The source data source copy the column name list.");
                 sourceColumnNameList = copyNameList(targetColumnNameList, biColumnMap, DataSourceRole.SOURCE);
+                sourceContext.afterCopyColumnNameList(sourceColumnNameList);
             } else if (sourceColumnNameList.size() != 0 && targetColumnNameList.size() == 0) {
                 LOG.info("The target data source copy the column name list.");
                 targetColumnNameList = copyNameList(sourceColumnNameList, biColumnMap, DataSourceRole.TARGET);
+                targetContext.afterCopyColumnNameList(targetColumnNameList);
             }
         }
 
@@ -271,13 +291,29 @@ public final class SchemaNegotiator {
         Map<String, DataType> targetColumnTypeMap
                 = getColumnTypeMap(targetOptions, targetSchemaFetcher, targetColumnNameList);
 
+        sourceContext.afterReadColumnTypeMap(sourceColumnNameList, sourceColumnTypeMap);
+        targetContext.afterReadColumnTypeMap(targetColumnNameList, targetColumnTypeMap);
+
         if (commonOptions.getBoolean(CommonOptionsConf.ALLOW_COPY_COLUMN_TYPE, false)) {
+            Map<String, DataType> beforeChangedSourceColumnTypeMap = new HashMap<>(sourceColumnTypeMap);
+            Map<String, DataType> beforeChangedTargetColumnTypeMap = new HashMap<>(sourceColumnTypeMap);
+
+            // 临时变量用于在source给target抄的时候处于无污染状态
             Map<String, DataType> tmpSourceColumnTypeMap = copyTypeMap(sourceColumnTypeMap, targetColumnTypeMap,
                     biColumnMap, DataSourceRole.SOURCE);
             Map<String, DataType> tmpTargetColumnTypeMap = copyTypeMap(sourceColumnTypeMap,
                     targetColumnTypeMap, biColumnMap, DataSourceRole.TARGET);
+
             sourceColumnTypeMap = tmpSourceColumnTypeMap;
             targetColumnTypeMap = tmpTargetColumnTypeMap;
+
+            // copy必是添加元素，故只需要比大小便可分辨是否copy
+            if (beforeChangedSourceColumnTypeMap.size() != sourceColumnTypeMap.size()) {
+                sourceContext.afterCopyColumnTypeMap(sourceColumnNameList, beforeChangedSourceColumnTypeMap, sourceColumnTypeMap);
+            }
+            if (beforeChangedTargetColumnTypeMap.size() != targetColumnTypeMap.size()) {
+                targetContext.afterCopyColumnTypeMap(targetColumnNameList, beforeChangedTargetColumnTypeMap, targetColumnTypeMap);
+            }
         }
 
         LOG.info("The source column type map is: " + sourceColumnTypeMap);
@@ -293,7 +329,7 @@ public final class SchemaNegotiator {
         targetOptions.set(BaseDataSourceOptionsConf.COLUMN_TYPE,
                 SchemaUtils.convert(targetColumnTypeMap).toJSONString());
 
-        sourceSchemaFetcher.postNegotiate(sourceColumnNameList, sourceColumnTypeMap);
-        targetSchemaFetcher.postNegotiate(targetColumnNameList, targetColumnTypeMap);
+        sourceContext.afterAll(sourceColumnNameList, sourceColumnTypeMap);
+        targetContext.afterAll(targetColumnNameList, targetColumnTypeMap);
     }
 }

@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
@@ -13,9 +14,9 @@ import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFact
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
+import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.Job;
@@ -116,20 +117,7 @@ public class RDBMSOutputMRJobContext implements MRJobContext, RDBMSManagerGenera
                 LOG.error("Something went wrong when execute pre migrate sql");
                 throw new MapReduceException(e);
             } finally {
-                if (statement != null) {
-                    try {
-                        statement.close();
-                    } catch (SQLException e) {
-                        LOG.warn("SQLException closing statement: " + ExceptionUtils.getStackTrace(e));
-                    }
-                }
-                if (connection != null) {
-                    try {
-                        connection.close();
-                    } catch (SQLException e) {
-                        LOG.warn("SQLException closing connection: " + ExceptionUtils.getStackTrace(e));
-                    }
-                }
+                SqlUtils.release(Lists.newArrayList(statement, connection));
             }
         }
     }

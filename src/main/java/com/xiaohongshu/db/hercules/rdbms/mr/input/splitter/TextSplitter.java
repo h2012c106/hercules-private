@@ -19,12 +19,7 @@ public class TextSplitter extends BaseSplitter<String> {
 
     @Override
     public ResultSetGetter<String> getResultSetGetter() {
-        return new ResultSetGetter<String>() {
-            @Override
-            public String get(ResultSet resultSet, int seq) throws SQLException {
-                return resultSet.getString(seq);
-            }
-        };
+        return ResultSetGetter.STRING_GETTER;
     }
 
     /**
