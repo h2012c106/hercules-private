@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.rdbms.schema;
 
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
@@ -10,7 +9,6 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class RDBMSSchemaNegotiatorContext extends BaseSchemaNegotiatorContext {

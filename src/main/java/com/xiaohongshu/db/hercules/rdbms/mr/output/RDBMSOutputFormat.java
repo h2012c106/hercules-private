@@ -39,12 +39,12 @@ public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSMana
             }
 
             if (ExportType.valueOfIgnoreCase(targetOptions.getString(RDBMSOutputOptionsConf.EXPORT_TYPE, null)).isUpdate()) {
-                return new RDBMSUpdateRecordWriter(context, tableName, exportType, manager,wrapperSetterFactory);
+                return new RDBMSUpdateRecordWriter(context, tableName, exportType, manager, wrapperSetterFactory);
             }
             if (targetOptions.getBoolean(RDBMSOutputOptionsConf.BATCH, false)) {
-                return new RDBMSBatchRecordWriter(context, tableName, exportType, manager,wrapperSetterFactory);
+                return new RDBMSBatchRecordWriter(context, tableName, exportType, manager, wrapperSetterFactory);
             } else {
-                return new RDBMSRichLineRecordWriter(context, tableName, exportType, manager,wrapperSetterFactory);
+                return new RDBMSRichLineRecordWriter(context, tableName, exportType, manager, wrapperSetterFactory);
             }
         } catch (Exception e) {
             throw new IOException(e);

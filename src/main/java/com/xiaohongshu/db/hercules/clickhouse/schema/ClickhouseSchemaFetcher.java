@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.clickhouse.schema;
 
-import com.xiaohongshu.db.hercules.clickhouse.schema.manager.ClickhouseManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;

@@ -1,12 +1,10 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output.statement;
 
-import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public abstract class StatementGetter {
     private static final Log LOG = LogFactory.getLog(StatementGetter.class);

@@ -2,7 +2,6 @@ package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.parquet.example.data.Group;

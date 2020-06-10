@@ -6,16 +6,9 @@ import com.xiaohongshu.db.hercules.core.option.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 
 public class ParquetSchemaOptionsConf extends BaseOptionsConf {
 

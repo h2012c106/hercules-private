@@ -33,13 +33,13 @@ public class WrappingOptions {
         return commonOptions;
     }
 
-    public void toConfiguration(Configuration configuration){
+    public void toConfiguration(Configuration configuration) {
         sourceOptions.toConfiguration(configuration, OptionsType.SOURCE);
         targetOptions.toConfiguration(configuration, OptionsType.TARGET);
         commonOptions.toConfiguration(configuration, OptionsType.COMMON);
     }
 
-    public void fromConfiguration(Configuration configuration){
+    public void fromConfiguration(Configuration configuration) {
         sourceOptions.fromConfiguration(configuration, OptionsType.SOURCE);
         targetOptions.fromConfiguration(configuration, OptionsType.TARGET);
         commonOptions.fromConfiguration(configuration, OptionsType.COMMON);

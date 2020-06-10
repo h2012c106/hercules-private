@@ -10,7 +10,7 @@ public interface WrapperGetter<T> {
      * 从一行中拿出某一列的方法
      *
      * @param row
-     * @param rowName 当前row的完整列名，主要用于Map结构
+     * @param rowName    当前row的完整列名，主要用于Map结构
      * @param columnName
      * @param columnSeq
      * @return

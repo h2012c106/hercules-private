@@ -9,19 +9,19 @@ public enum ExportType {
     UPDATE_MANY,
     REPLACE_ONE;
 
-    public boolean isInsert(){
+    public boolean isInsert() {
         return INSERT.equals(this);
     }
 
-    public boolean isUpdateOne(){
+    public boolean isUpdateOne() {
         return UPDATE_ONE.equals(this);
     }
 
-    public boolean isUpdateMany(){
+    public boolean isUpdateMany() {
         return UPDATE_MANY.equals(this);
     }
 
-    public boolean isReplaceOne(){
+    public boolean isReplaceOne() {
         return REPLACE_ONE.equals(this);
     }
 

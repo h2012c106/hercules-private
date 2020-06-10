@@ -5,7 +5,6 @@ import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSBalanceSplitGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputSplit;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSRecordReader;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.SplitUtils;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;

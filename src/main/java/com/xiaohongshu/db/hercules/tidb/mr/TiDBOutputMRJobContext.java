@@ -12,7 +12,6 @@ import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFact
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

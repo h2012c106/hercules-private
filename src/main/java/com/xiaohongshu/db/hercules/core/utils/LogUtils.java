@@ -1,8 +1,5 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
-import com.xiaohongshu.db.hercules.Hercules;
-import org.apache.log4j.*;
-
 /**
  * 由于hadoop jar死活读不了我的log4j.properties，只能来硬的
  */

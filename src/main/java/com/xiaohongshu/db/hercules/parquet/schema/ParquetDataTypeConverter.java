@@ -1,9 +1,9 @@
 package com.xiaohongshu.db.hercules.parquet.schema;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import org.apache.commons.logging.Log;

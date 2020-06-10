@@ -6,8 +6,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.parquet.schema.*;
 
-import java.util.Set;
-
 import static com.xiaohongshu.db.hercules.parquet.ParquetUtils.DEFAULT_PRECISION;
 import static com.xiaohongshu.db.hercules.parquet.ParquetUtils.DEFAULT_SCALE;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;

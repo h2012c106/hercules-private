@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.parquetschema.mr;
 
-import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;

@@ -4,14 +4,10 @@ import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.parquet.hadoop.ParquetInputFormat;
 import org.apache.parquet.hadoop.example.ExampleInputFormat;
-import org.apache.parquet.hadoop.example.GroupReadSupport;
 
 import java.io.IOException;
 
-import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.TASK_SIDE_METADATA;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 

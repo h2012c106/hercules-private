@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
-import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import lombok.NonNull;
 
 import java.math.BigDecimal;

@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.rdbms.schema;
 
-import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 

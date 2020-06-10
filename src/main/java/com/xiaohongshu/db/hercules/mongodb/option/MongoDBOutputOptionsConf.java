@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
-import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_TYPE;
 
 public final class MongoDBOutputOptionsConf extends BaseOptionsConf {
 

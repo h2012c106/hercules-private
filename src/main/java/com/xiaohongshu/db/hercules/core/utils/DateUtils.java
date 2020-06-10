@@ -1,10 +1,10 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
 import com.google.common.base.Objects;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,13 +24,13 @@ public final class DateUtils {
     private static DateUtils.DateFormatWrapper sourceDateFormat;
     private static DateUtils.DateFormatWrapper targetDateFormat;
 
-    private static ThreadLocal<DateFormatterWrapper> sourceDateFormatterWrapper = new ThreadLocal<DateFormatterWrapper>(){
+    private static ThreadLocal<DateFormatterWrapper> sourceDateFormatterWrapper = new ThreadLocal<DateFormatterWrapper>() {
         @Override
         protected DateFormatterWrapper initialValue() {
             return new DateFormatterWrapper(sourceDateFormat);
         }
     };
-    private static ThreadLocal<DateFormatterWrapper> targetDateFormatterWrapper = new ThreadLocal<DateFormatterWrapper>(){
+    private static ThreadLocal<DateFormatterWrapper> targetDateFormatterWrapper = new ThreadLocal<DateFormatterWrapper>() {
         @Override
         protected DateFormatterWrapper initialValue() {
             return new DateFormatterWrapper(targetDateFormat);

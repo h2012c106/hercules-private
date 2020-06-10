@@ -213,7 +213,7 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
     }
 
     private String quotedValue(String value) {
-        Enclosing enclosing=quote();
+        Enclosing enclosing = quote();
         return enclosing.getLeft() + value + enclosing.getRight();
     }
 
@@ -259,7 +259,7 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
         return splits;
     }
 
-    public static class Enclosing{
+    public static class Enclosing {
         private String left;
         private String right;
 

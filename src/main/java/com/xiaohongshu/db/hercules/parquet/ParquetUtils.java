@@ -17,7 +17,7 @@ import org.apache.parquet.schema.Type;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Date;
 
 public final class ParquetUtils {
 

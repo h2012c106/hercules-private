@@ -7,7 +7,7 @@ import java.util.Map;
 
 public interface SchemaNegotiatorContext {
 
-    public static final SchemaNegotiatorContext NULL_INSTANCE=new SchemaNegotiatorContext(){
+    public static final SchemaNegotiatorContext NULL_INSTANCE = new SchemaNegotiatorContext() {
 
         @Override
         public void afterReadColumnNameList(List<String> columnName) {
@@ -45,6 +45,7 @@ public interface SchemaNegotiatorContext {
 
     /**
      * 由于copy一定是之前没有值，故只给一个list
+     *
      * @param columnName
      */
     public void afterCopyColumnNameList(List<String> columnName);

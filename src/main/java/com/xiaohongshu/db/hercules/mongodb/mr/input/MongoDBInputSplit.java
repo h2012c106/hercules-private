@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.mongodb.mr.input;
 
 import com.mongodb.BasicDBObjectBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.bson.*;

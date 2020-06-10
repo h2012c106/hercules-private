@@ -10,23 +10,23 @@ public enum ExportType {
     UPSERT,
     REPLACE;
 
-    public boolean isInsert(){
+    public boolean isInsert() {
         return INSERT.equals(this);
     }
 
-    public boolean isUpdate(){
+    public boolean isUpdate() {
         return UPDATE.equals(this);
     }
 
-    public boolean isInsertIgnore(){
+    public boolean isInsertIgnore() {
         return INSERT_IGNORE.equals(this);
     }
 
-    public boolean isUpsert(){
+    public boolean isUpsert() {
         return UPSERT.equals(this);
     }
 
-    public boolean isReplace(){
+    public boolean isReplace() {
         return REPLACE.equals(this);
     }
 
