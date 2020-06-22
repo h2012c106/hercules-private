@@ -9,12 +9,12 @@ import java.util.List;
 
 public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
-    public final static String COLUMN_FAMILY = "hbase.mapreduce.column.family";
+    public final static String COLUMN_FAMILY = "column-family";
 
-    public static final String MAX_WRITE_THREAD_NUM = "hbase.htable.threads.max";
+    public static final String MAX_WRITE_THREAD_NUM = "max-threads";
     public static final int DEFAULT_MAX_WRITE_THREAD_NUM = 5;
 
-    public static final String WRITE_BUFFER_SIZE = "hbase.mapreduce.writebuffersize";
+    public static final String WRITE_BUFFER_SIZE = "writebuffersize";
     public static final long DEFAULT_WRITE_BUFFER_SIZE = 8 * 1024 * 1024;
 
     @Override

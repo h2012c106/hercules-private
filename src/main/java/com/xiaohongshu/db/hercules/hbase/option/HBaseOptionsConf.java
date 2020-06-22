@@ -19,16 +19,16 @@ import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.
 
 public final class HBaseOptionsConf extends BaseOptionsConf {
 
-    public final static String HB_ZK_QUORUM = "hbase.zookeeper.quorum";
-    public final static String HB_ZK_PORT = "hbase.zookeeper.port";
-    public final static String TABLE = "hbase.table";
+    public final static String HB_ZK_QUORUM="zookeeper-quorum";
+    public final static String HB_ZK_PORT="zookeeper-port";
+    public final static String TABLE="hbase-table";
 
-    public final static String HIVE_METASTORE_URL = "hbase.column.type.map";
-    public final static String HIVE_USER = "hbase.hive.user";
-    public final static String HIVE_PASSWD = "hbase.hive.passwd";
-    public final static String HIVE_TABLE = "hbase.hive.table";
+    public final static String HIVE_METASTORE_URL="hive-metastore-url";
+    public final static String HIVE_USER="hive-user";
+    public final static String HIVE_PASSWD="hive-passwd";
+    public final static String HIVE_TABLE ="hbase-table";
 
-    public static final String ROW_KEY_COL_NAME = "hbase.mapreduce.rowkeycolname";
+    public static final String ROW_KEY_COL_NAME = "rowkeycolname";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -66,12 +66,12 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(HIVE_USER)
                 .needArg(true)
-                .description("User name used to connect Hive database.")
+                .description("User name used to connect Hive metastore.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(HIVE_PASSWD)
                 .needArg(true)
-                .description("Password use to connect Hive database")
+                .description("Password use to connect Hive metastore")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(HIVE_TABLE)
