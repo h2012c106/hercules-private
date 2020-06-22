@@ -18,6 +18,7 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHE
 
 
 public class ParquetSchemaAssemblySupplier extends BaseAssemblySupplier implements DataTypeConverterGenerator<ParquetDataTypeConverter> {
+
     public ParquetSchemaAssemblySupplier(GenericOptions options) {
         super(options);
     }

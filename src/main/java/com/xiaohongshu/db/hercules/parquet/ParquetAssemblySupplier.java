@@ -22,6 +22,10 @@ public class ParquetAssemblySupplier extends BaseAssemblySupplier implements Dat
 
     public ParquetAssemblySupplier(GenericOptions options) {
         super(options);
+    }
+
+    @Override
+    protected void initialize() {
         converter = generateConverter();
     }
 
