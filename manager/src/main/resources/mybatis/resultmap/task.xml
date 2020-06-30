@@ -1,0 +1,26 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaohongshu.db.hercules.manager.dao.mapper.TaskMapper">
+    <resultMap id="taskResultMap" type="com.xiaohongshu.db.share.entity.Task">
+        <id property="id" column="id"/>
+        <result property="jobId" column="job_id"/>
+        <result property="nodeId" column="node_id"/>
+        <result property="command" column="command"/>
+        <result property="submitTime" column="submit_time"/>
+        <result property="startTime" column="start_time"/>
+        <result property="totalTimeMs" column="total_time_ms"/>
+        <result property="mrTimeMs" column="mr_time_ms"/>
+        <result property="mapNum" column="map_num"/>
+        <result property="recordNum" column="record_num"/>
+        <result property="estimatedByteSize" column="estimated_byte_size"/>
+        <result property="status" column="status" javaType="com.xiaohongshu.db.share.entity.Task$TaskStatus"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.TaskStatusTypeHandler"/>
+        <result property="applicationId" column="application_id"/>
+        <result property="mrLogUrl" column="mr_log_url"/>
+        <result property="mrProgress" column="mr_progress"/>
+        <result property="caller" column="caller" javaType="com.xiaohongshu.db.share.entity.Task$Caller"
+                jdbcType="VARCHAR" typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.CallerTypeHandler"/>
+    </resultMap>
+</mapper>

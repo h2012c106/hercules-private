@@ -1,0 +1,13 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaohongshu.db.hercules.manager.dao.mapper.ClusterMapper">
+    <resultMap id="clusterResultMap" type="com.xiaohongshu.db.share.entity.Cluster">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="desc" column="desc"/>
+        <result property="cloud" column="cloud" javaType="com.xiaohongshu.db.share.entity.Cluster$Cloud"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.CloudTypeHandler"/>
+    </resultMap>
+</mapper>
