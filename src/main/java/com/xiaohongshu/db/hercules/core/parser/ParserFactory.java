@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.hbase.parser.HBaseInputParser;
 import com.xiaohongshu.db.hercules.hbase.parser.HBaseOutputParser;
+import com.xiaohongshu.db.hercules.kafka.parser.KafkaOutputParser;
 import com.xiaohongshu.db.hercules.mongodb.parser.MongoDBInputParser;
 import com.xiaohongshu.db.hercules.mongodb.parser.MongoDBOutputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlInputParser;
@@ -42,6 +43,7 @@ public final class ParserFactory {
         register(DataSource.Parquet, DataSourceRole.SOURCE, new ParquetInputParser());
         register(DataSource.Parquet, DataSourceRole.TARGET, new ParquetOutputParser());
         register(DataSource.ParquetSchema, DataSourceRole.TARGET, new ParquetSchemaParser());
+        register(DataSource.Kafka, DataSourceRole.TARGET, new KafkaOutputParser());
     }
 
     private static void register(DataSource dataSource, DataSourceRole dataSourceRole, BaseParser instance) {
