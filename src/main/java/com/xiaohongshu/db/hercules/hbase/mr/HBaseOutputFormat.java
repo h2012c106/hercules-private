@@ -155,7 +155,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
 
     @Override
     protected void innerClose(TaskAttemptContext context) throws IOException {
-        mutator.flush();
+//        mutator.flush();
         mutator.close();
         manager.closeConnection();
     }

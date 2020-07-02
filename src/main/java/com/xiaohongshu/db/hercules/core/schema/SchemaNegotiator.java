@@ -210,7 +210,9 @@ public final class SchemaNegotiator {
 
     private void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {
         for (String columnName : columnNameList) {
-            columnMap.putIfAbsent(columnName, columnName);
+//            if (!columnMap.containsValue(columnName)) {
+                columnMap.putIfAbsent(columnName, columnName);
+//            }
         }
     }
 
@@ -239,7 +241,7 @@ public final class SchemaNegotiator {
             sourceColumnNameList = getColumnNameListFromOptions(sourceOptions);
             targetColumnNameList = getColumnNameListFromOptions(targetOptions);
             fillMapWithColumnList(sourceColumnNameList, biColumnMap);
-            fillMapWithColumnList(targetColumnNameList, biColumnMap);
+            fillMapWithColumnList(targetColumnNameList, biColumnMap.inverse());
             sourceColumnNameList = new ArrayList<>(biColumnMap.keySet());
             targetColumnNameList = new ArrayList<>(biColumnMap.values());
         } else {
