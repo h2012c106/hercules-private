@@ -12,7 +12,21 @@ public enum DataSource {
     MongoDB,
     Parquet,
     ParquetSchema,
-    Kafka;
+    Kafka(true);
+
+    DataSource() {
+        this(false);
+    }
+
+    DataSource(boolean hasKvConverter) {
+        this.hasKvConverter = hasKvConverter;
+    }
+
+    private boolean hasKvConverter;
+
+    public boolean hasKvConverter() {
+        return hasKvConverter;
+    }
 
     public static DataSource valueOfIgnoreCase(String value) {
         for (DataSource dataSource : DataSource.values()) {

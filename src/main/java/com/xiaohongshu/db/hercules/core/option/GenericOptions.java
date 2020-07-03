@@ -9,9 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public final class GenericOptions {
     private static final String PREFIX = "hercules";
@@ -34,6 +32,15 @@ public final class GenericOptions {
 
     public void set(String key, Object value) {
         properties.put(key, value.toString());
+    }
+
+    public void addAll(GenericOptions options) {
+        Set<String> set = new HashSet<>(options.properties.keySet());
+        set.retainAll(this.properties.keySet());
+        if (set.size() != 0) {
+            throw new RuntimeException("Duplicated options between datasource and converter: " + set);
+        }
+        this.properties.putAll(options.properties);
     }
 
     public void set(String key, String[] value) {

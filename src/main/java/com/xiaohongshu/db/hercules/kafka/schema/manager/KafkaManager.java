@@ -2,7 +2,6 @@ package com.xiaohongshu.db.hercules.kafka.schema.manager;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.kafka.option.KafkaOptionConf;
-import com.xiaohongshu.db.hercules.kafka.option.KafkaOutputOptionConf;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;

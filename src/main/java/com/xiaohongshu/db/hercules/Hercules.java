@@ -2,17 +2,21 @@ package com.xiaohongshu.db.hercules;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.common.parser.CommonParser;
+import com.xiaohongshu.db.hercules.converter.CanalOutputOptionConf;
+import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplierFactory;
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
 import com.xiaohongshu.db.hercules.core.parser.ParserFactory;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.kafka.option.KvOptionsConf;
 import lombok.SneakyThrows;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -39,7 +43,7 @@ public class Hercules {
         LOG.info(String.format("Current HERCULES version is [%s], built at [%s]", version, buildTime));
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         LogUtils.configureLog4J();
 
         printVersionInfo();
@@ -71,6 +75,20 @@ public class Hercules {
                         )
                 )
         );
+
+        if (sourceDataSource.hasKvConverter()){
+            // check converter
+            // check converter options
+            KvConverterSupplier sourceKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getSourceOptions().getString(KvOptionsConf.SUPPLIER,"")).newInstance();
+            GenericOptions kvConverterOutputOptions = new BaseParser(sourceKvConverterSupplier.getOptionsConf(), sourceDataSource, DataSourceRole.SOURCE).parse(args);
+            wrappingOptions.getSourceOptions().addAll(kvConverterOutputOptions);
+        }
+
+        if (targetDataSource.hasKvConverter()){
+            KvConverterSupplier targetKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getTargetOptions().getString(KvOptionsConf.SUPPLIER,"")).newInstance();
+            GenericOptions kvConverterOutputOptions = new BaseParser(targetKvConverterSupplier.getOptionsConf(), targetDataSource, DataSourceRole.TARGET).parse(args);
+            wrappingOptions.getTargetOptions().addAll(kvConverterOutputOptions);
+        }
 
         LOG.debug("Options: " + wrappingOptions);
 

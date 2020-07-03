@@ -1,19 +1,23 @@
-package com.xiaohongshu.db.hercules.kafka.option;
+package com.xiaohongshu.db.hercules.converter;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.kafka.option.KafkaOptionConf;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class KafkaOutputOptionConf extends BaseOptionsConf {
+public class CanalOutputOptionConf extends BaseOptionsConf {
 
-    public final static String SCHEMA_NAME = "canal.schemaName";
-    public final static String TABLE_NAME = "canal.tableName";
-    public final static String KEY = "canal.key";
+    public final static String SCHEMA_NAME = "canal-schemaName";
+    public final static String TABLE_NAME = "canal-tableName";
+    public final static String KEY = "canal-key";
+
+    public final static String COLLECTION = "canal-collection";
+    public final static String KV_CONVERTER = "kv-converter";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -49,6 +53,9 @@ public class KafkaOutputOptionConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
+        switch (options.getString(KV_CONVERTER,"")){
+            case "MysqlConverter":
 
+        }
     }
 }

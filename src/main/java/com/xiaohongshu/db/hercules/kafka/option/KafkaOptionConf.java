@@ -8,7 +8,7 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import java.util.ArrayList;
 import java.util.List;
 
-public class KafkaOptionConf extends BaseOptionsConf {
+public class KafkaOptionConf extends KvOptionsConf {
 
     public final static String BOOTSTRAP_SERVERS = ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
     public final static String RETRIES_CONFIG = ProducerConfig.RETRIES_CONFIG;
@@ -18,7 +18,6 @@ public class KafkaOptionConf extends BaseOptionsConf {
     public final static String LINGER_MS_DEFAULT = "5";
     public final static String BATCH_SIZE_DEFAULT = "50000";
     public final static String RETRIES_DEFAULT = "3";
-
 
     public final static String TOPIC = "kafka-topic";
 
