@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.converter;
+package com.xiaohongshu.db.hercules.converter.mysql;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;

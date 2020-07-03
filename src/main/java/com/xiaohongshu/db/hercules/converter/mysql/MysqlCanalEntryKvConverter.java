@@ -1,6 +1,7 @@
-package com.xiaohongshu.db.hercules.converter;
+package com.xiaohongshu.db.hercules.converter.mysql;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xiaohongshu.db.hercules.converter.KvConverter;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -14,6 +15,7 @@ import java.util.Map;
 
 public class MysqlCanalEntryKvConverter extends KvConverter {
 
+    @Override
     public String convertValue(BaseWrapper wrapper) {
         BaseDataType type = wrapper.getType().getBaseDataType();
         switch (type) {
@@ -46,6 +48,7 @@ public class MysqlCanalEntryKvConverter extends KvConverter {
         }
     }
 
+    @Override
     public int getColumnType(DataType type) {
         switch (type.getBaseDataType()) {
             case BYTES:
@@ -84,7 +87,9 @@ public class MysqlCanalEntryKvConverter extends KvConverter {
         CanalEntry.RowChange.Builder rowChangeBuilder = CanalEntry.RowChange.newBuilder();
         rowChangeBuilder.setEventType(CanalEntry.EventType.INSERT);
         CanalEntry.Header.Builder headerBuilder = CanalEntry.Header.newBuilder();
+        headerBuilder.setEventType(CanalEntry.EventType.INSERT);
         headerBuilder.setSourceType(CanalEntry.Type.MYSQL);
+
         headerBuilder.setSchemaName(options.getString(CanalMysqlOptionConf.SCHEMA_NAME, ""));
         headerBuilder.setTableName(options.getString(CanalMysqlOptionConf.TABLE_NAME, ""));
 

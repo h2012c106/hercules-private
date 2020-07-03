@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.kafka.mr;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
 import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -65,12 +66,17 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
         this.kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
     }
 
+    // 若给定columnType，则以给定的为准，否则以wrapper的DataType为准。
     @Override
     protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
+        value.entrySet().forEach(entry -> {
+            DataType dt = columnTypeMap.get(entry.getKey());
+            if (dt != null) {
+                entry.getValue().setType(dt);
+            }
+        });
         manager.send("", kvConverterSupplier.getKvConverter().generateCanalEntry(value, targetOptions));
     }
-
-
 
     @Override
     protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
