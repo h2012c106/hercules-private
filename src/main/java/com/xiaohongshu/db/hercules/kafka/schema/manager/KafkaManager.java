@@ -26,10 +26,10 @@ public class KafkaManager {
 
     public Map<String, Object> producerConfigs() {
         Map<String, Object> props = new HashMap<>();
-        props.put(KafkaOptionConf.BOOTSTRAP_SERVERS, options.getString(KafkaOptionConf.BOOTSTRAP_SERVERS, ""));
-        props.put(KafkaOptionConf.RETRIES_CONFIG, options.getString(KafkaOptionConf.RETRIES_CONFIG, ""));
-        props.put(KafkaOptionConf.BATCH_SIZE_CONFIG, options.getString(KafkaOptionConf.BATCH_SIZE_CONFIG, ""));
-        props.put(KafkaOptionConf.LINGER_MS_CONFIG, options.getInteger(KafkaOptionConf.LINGER_MS_CONFIG, 5));
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, options.getString(KafkaOptionConf.BOOTSTRAP_SERVERS, ""));
+        props.put(ProducerConfig.RETRIES_CONFIG, options.getString(KafkaOptionConf.RETRIES_CONFIG, ""));
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, options.getString(KafkaOptionConf.BATCH_SIZE_CONFIG, ""));
+        props.put(ProducerConfig.LINGER_MS_CONFIG, options.getInteger(KafkaOptionConf.LINGER_MS_CONFIG, 5));
 //        props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, bufferMemory);
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);

@@ -3,7 +3,9 @@ package com.xiaohongshu.db.hercules.core.parser;
 public enum OptionsType {
     SOURCE,
     TARGET,
-    COMMON;
+    COMMON,
+    SOURCE_CONVERTER,
+    TARGET_CONVERTER;
 
     public boolean isSource() {
         return SOURCE.equals(this);

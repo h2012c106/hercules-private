@@ -2,7 +2,6 @@ package com.xiaohongshu.db.hercules;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.common.parser.CommonParser;
-import com.xiaohongshu.db.hercules.converter.CanalOutputOptionConf;
 import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplierFactory;
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
@@ -12,6 +11,7 @@ import com.xiaohongshu.db.hercules.core.mr.MRJob;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.BaseParser;
+import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import com.xiaohongshu.db.hercules.core.parser.ParserFactory;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
@@ -80,13 +80,13 @@ public class Hercules {
             // check converter
             // check converter options
             KvConverterSupplier sourceKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getSourceOptions().getString(KvOptionsConf.SUPPLIER,"")).newInstance();
-            GenericOptions kvConverterOutputOptions = new BaseParser(sourceKvConverterSupplier.getOptionsConf(), sourceDataSource, DataSourceRole.SOURCE).parse(args);
+            GenericOptions kvConverterOutputOptions = new BaseParser(sourceKvConverterSupplier.getOptionsConf(), sourceDataSource, OptionsType.SOURCE_CONVERTER).parse(args);
             wrappingOptions.getSourceOptions().addAll(kvConverterOutputOptions);
         }
 
         if (targetDataSource.hasKvConverter()){
             KvConverterSupplier targetKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getTargetOptions().getString(KvOptionsConf.SUPPLIER,"")).newInstance();
-            GenericOptions kvConverterOutputOptions = new BaseParser(targetKvConverterSupplier.getOptionsConf(), targetDataSource, DataSourceRole.TARGET).parse(args);
+            GenericOptions kvConverterOutputOptions = new BaseParser(targetKvConverterSupplier.getOptionsConf(), targetDataSource, OptionsType.TARGET_CONVERTER).parse(args);
             wrappingOptions.getTargetOptions().addAll(kvConverterOutputOptions);
         }
 

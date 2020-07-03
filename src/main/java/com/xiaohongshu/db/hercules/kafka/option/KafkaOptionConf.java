@@ -1,19 +1,22 @@
 package com.xiaohongshu.db.hercules.kafka.option;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import org.apache.kafka.clients.producer.ProducerConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class KafkaOptionConf extends KvOptionsConf {
+public class KafkaOptionConf extends BaseOptionsConf {
 
-    public final static String BOOTSTRAP_SERVERS = ProducerConfig.BOOTSTRAP_SERVERS_CONFIG;
-    public final static String RETRIES_CONFIG = ProducerConfig.RETRIES_CONFIG;
-    public final static String BATCH_SIZE_CONFIG = ProducerConfig.BATCH_SIZE_CONFIG;
-    public final static String LINGER_MS_CONFIG = ProducerConfig.LINGER_MS_CONFIG;
+    public final static String BOOTSTRAP_SERVERS = "bootstrap-servers";
+    public final static String RETRIES_CONFIG = "retries";
+    public final static String BATCH_SIZE_CONFIG = "batch-size";
+    public final static String LINGER_MS_CONFIG = "linger";
 
     public final static String LINGER_MS_DEFAULT = "5";
     public final static String BATCH_SIZE_DEFAULT = "50000";
@@ -23,7 +26,9 @@ public class KafkaOptionConf extends KvOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return null;
+        return Lists.newArrayList(
+                new KvOptionsConf()
+        );
     }
 
     @Override
@@ -52,6 +57,12 @@ public class KafkaOptionConf extends KvOptionsConf {
                 .needArg(true)
                 .defaultStringValue(LINGER_MS_DEFAULT)
                 .description("Kafka producer linger time. Default: "+LINGER_MS_DEFAULT)
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(TOPIC)
+                .needArg(true)
+                .necessary(true)
+                .description("Kafka topic to send message.")
                 .build());
         return tmpList;
     }

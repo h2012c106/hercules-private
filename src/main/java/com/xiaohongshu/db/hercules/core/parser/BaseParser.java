@@ -18,17 +18,27 @@ public class BaseParser {
 
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";
+    public static final String CONVERTER_TARGET_OPTIONS_PREFIX = "converter-target-";
+    public static final String CONVERTER_SOURCE_OPTIONS_PREFIX = "converter-source-";
 
     private boolean help;
 
     private BaseOptionsConf optionsConf;
     private DataSource dataSource;
     private DataSourceRole dataSourceRole;
+    private OptionsType optionsType;
+
 
     public BaseParser(BaseOptionsConf optionsConf, DataSource dataSource, DataSourceRole dataSourceRole) {
         this.optionsConf = optionsConf;
         this.dataSource = dataSource;
         this.dataSourceRole = dataSourceRole;
+    }
+
+    public BaseParser(BaseOptionsConf optionsConf, DataSource dataSource, OptionsType optionsType) {
+        this.optionsConf = optionsConf;
+        this.dataSource = dataSource;
+        this.optionsType = optionsType;
     }
 
     public DataSource getDataSource() {
@@ -40,6 +50,9 @@ public class BaseParser {
     }
 
     private OptionsType getRole() {
+        if (optionsType!=null){
+            return optionsType;
+        }
         if (getDataSourceRole() == null) {
             return OptionsType.COMMON;
         }
@@ -59,6 +72,10 @@ public class BaseParser {
                 return SOURCE_OPTIONS_PREFIX;
             case TARGET:
                 return TARGET_OPTIONS_PREFIX;
+            case SOURCE_CONVERTER:
+                return CONVERTER_SOURCE_OPTIONS_PREFIX;
+            case TARGET_CONVERTER:
+                return CONVERTER_TARGET_OPTIONS_PREFIX;
             default:
                 return "";
         }
@@ -137,6 +154,12 @@ public class BaseParser {
                 break;
             case COMMON:
                 helpHeader = "Common param:\n\n";
+                break;
+            case SOURCE_CONVERTER:
+                helpHeader = "Source converter param:\n\n";
+                break;
+            case TARGET_CONVERTER:
+                helpHeader = "Target converter param:\n\n";
                 break;
             default:
                 throw new RuntimeException("Unknown option type: " + type);

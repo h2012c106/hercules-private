@@ -7,10 +7,11 @@ public class MysqlCanalKvConverterSupplier implements KvConverterSupplier{
     @Override
     public KvConverter getKvConverter() {
         return new MysqlCanalEntryKvConverter();
+
     }
 
     @Override
     public BaseOptionsConf getOptionsConf() {
-        return new CanalOutputOptionConf();
+        return new CanalMysqlOptionConf();
     }
 }

@@ -82,13 +82,14 @@ public class MysqlCanalEntryKvConverter extends KvConverter {
     @Override
     public byte[] generateCanalEntry(HerculesWritable value, GenericOptions options) {
         CanalEntry.RowChange.Builder rowChangeBuilder = CanalEntry.RowChange.newBuilder();
+        rowChangeBuilder.setEventType(CanalEntry.EventType.INSERT);
         CanalEntry.Header.Builder headerBuilder = CanalEntry.Header.newBuilder();
         headerBuilder.setSourceType(CanalEntry.Type.MYSQL);
-        headerBuilder.setSchemaName(options.getString(CanalOutputOptionConf.SCHEMA_NAME, ""));
-        headerBuilder.setTableName(options.getString(CanalOutputOptionConf.TABLE_NAME, ""));
+        headerBuilder.setSchemaName(options.getString(CanalMysqlOptionConf.SCHEMA_NAME, ""));
+        headerBuilder.setTableName(options.getString(CanalMysqlOptionConf.TABLE_NAME, ""));
 
         CanalEntry.RowData.Builder rowDataBuilder = CanalEntry.RowData.newBuilder();
-        String keyCol = options.getString(CanalOutputOptionConf.KEY, "");
+        String keyCol = options.getString(CanalMysqlOptionConf.KEY, "");
 
         for (Map.Entry<String, BaseWrapper> entry : value.entrySet()) {
             BaseWrapper wrapper = entry.getValue();

@@ -22,7 +22,7 @@ public enum DataSource {
         this.hasKvConverter = hasKvConverter;
     }
 
-    private boolean hasKvConverter;
+    private final boolean hasKvConverter;
 
     public boolean hasKvConverter() {
         return hasKvConverter;
