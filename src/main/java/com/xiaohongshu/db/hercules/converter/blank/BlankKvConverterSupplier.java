@@ -9,7 +9,6 @@ public class BlankKvConverterSupplier implements KvConverterSupplier {
     @Override
     public KvConverter getKvConverter() {
         return new BlankKvConverter();
-
     }
 
     @Override

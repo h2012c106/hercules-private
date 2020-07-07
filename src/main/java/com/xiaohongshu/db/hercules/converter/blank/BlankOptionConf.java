@@ -13,9 +13,7 @@ public class BlankOptionConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return Lists.newArrayList(
-                new BaseOutputOptionsConf()
-        );
+        return null;
     }
 
     @Override

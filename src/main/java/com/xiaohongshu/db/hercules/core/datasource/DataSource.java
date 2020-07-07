@@ -8,7 +8,7 @@ public enum DataSource {
     MySQL,
     TiDB,
     Clickhouse,
-    HBase,
+    HBase(true),
     MongoDB,
     Parquet,
     ParquetSchema,

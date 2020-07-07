@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.common.parser.CommonParser;
 import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplierFactory;
 import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
@@ -79,13 +80,13 @@ public class Hercules {
         if (sourceDataSource.hasKvConverter()){
             // check converter
             // check converter options
-            KvConverterSupplier sourceKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getSourceOptions().getString(KvOptionsConf.SUPPLIER,"")).newInstance();
+            KvConverterSupplier sourceKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
             GenericOptions kvConverterOutputOptions = new BaseParser(sourceKvConverterSupplier.getOptionsConf(), sourceDataSource, OptionsType.SOURCE_CONVERTER).parse(args);
             wrappingOptions.getSourceOptions().addAll(kvConverterOutputOptions);
         }
 
         if (targetDataSource.hasKvConverter()){
-            KvConverterSupplier targetKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getTargetOptions().getString(KvOptionsConf.SUPPLIER,"")).newInstance();
+            KvConverterSupplier targetKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
             GenericOptions kvConverterOutputOptions = new BaseParser(targetKvConverterSupplier.getOptionsConf(), targetDataSource, OptionsType.TARGET_CONVERTER).parse(args);
             wrappingOptions.getTargetOptions().addAll(kvConverterOutputOptions);
         }

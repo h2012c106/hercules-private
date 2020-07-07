@@ -17,9 +17,10 @@ public class CanalMysqlOptionConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return Lists.newArrayList(
-                new BaseOutputOptionsConf()
-        );
+//        return Lists.newArrayList(
+//                new BaseOutputOptionsConf()
+//        );
+        return null;
     }
 
     @Override
