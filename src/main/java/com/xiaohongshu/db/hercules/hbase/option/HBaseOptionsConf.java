@@ -20,14 +20,14 @@ import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.
 
 public final class HBaseOptionsConf extends BaseOptionsConf {
 
-    public final static String HB_ZK_QUORUM="zookeeper-quorum";
-    public final static String HB_ZK_PORT="zookeeper-port";
-    public final static String TABLE="hbase-table";
+    public final static String HB_ZK_QUORUM = "zookeeper-quorum";
+    public final static String HB_ZK_PORT = "zookeeper-port";
+    public final static String TABLE = "hbase-table";
 
-    public final static String HIVE_METASTORE_URL="hive-metastore-url";
-    public final static String HIVE_USER="hive-user";
-    public final static String HIVE_PASSWD="hive-passwd";
-    public final static String HIVE_TABLE ="hbase-table";
+    public final static String HIVE_METASTORE_URL = "hive-metastore-url";
+    public final static String HIVE_USER = "hive-user";
+    public final static String HIVE_PASSWD = "hive-passwd";
+    public final static String HIVE_TABLE = "hive-table";
 
     public static final String ROW_KEY_COL_NAME = "rowkeycolname";
 
