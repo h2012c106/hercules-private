@@ -205,7 +205,7 @@ public final class SchemaNegotiator {
                 }
             }
         }
-        return tmpSource;
+        return tmpTarget;
     }
 
     private void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {

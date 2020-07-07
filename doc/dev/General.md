@@ -6,9 +6,7 @@
 在运行机器上执行:  
 ```
 tar -zxvf hercules-xxx.tar.gz -C ./
-vim /etc/profile
-# 最后一行追加 export PATH="{hercules文件夹位置}/hercules/bin:$PATH"
-source /etc/profile
+ln -s `pwd`/hercules/bin/hercules /usr/local/bin/hercules
 ```
 2. 仅打fatjar  
 根目录下执行`mvn clean package`，可执行jar包位于`./target/`。  
