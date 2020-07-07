@@ -9,5 +9,5 @@ public abstract class KvConverter {
 
     public abstract String convertValue(BaseWrapper wrapper);
     public abstract int getColumnType(DataType type);
-    public abstract byte[] generateCanalEntry(HerculesWritable value, GenericOptions options);
+    public abstract byte[] generateValue(HerculesWritable value, GenericOptions options);
 }

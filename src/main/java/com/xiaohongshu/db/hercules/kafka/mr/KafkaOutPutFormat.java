@@ -3,13 +3,14 @@ package com.xiaohongshu.db.hercules.kafka.mr;
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
 import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.kafka.option.KvOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import com.xiaohongshu.db.hercules.kafka.schema.manager.KafkaManager;
 import com.xiaohongshu.db.hercules.kafka.schema.manager.KafkaManagerInitializer;
 import lombok.SneakyThrows;
@@ -20,7 +21,6 @@ import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 public class KafkaOutPutFormat extends HerculesOutputFormat implements KafkaManagerInitializer {
 
@@ -56,14 +56,15 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
     private final KafkaManager manager;
     private final GenericOptions targetOptions;
     private final KvConverterSupplier kvConverterSupplier;
-    private Charset charset = Charset.defaultCharset();
-
 
     public KafkaRecordWriter(KafkaManager manager, TaskAttemptContext context) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
         super(context, new KafkaOutputWrapperManager());
         this.targetOptions = options.getTargetOptions();
         this.manager = manager;
         this.kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
+        if (this.kvConverterSupplier instanceof BlankKvConverterSupplier){
+            throw new RuntimeException("BlankKvConverterSupplier is not supported in kafka writer.");
+        }
     }
 
     // 若给定columnType，则以给定的为准，否则以wrapper的DataType为准。
@@ -75,7 +76,7 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
                 entry.getValue().setType(dt);
             }
         });
-        manager.send("", kvConverterSupplier.getKvConverter().generateCanalEntry(value, targetOptions));
+        manager.send("", kvConverterSupplier.getKvConverter().generateValue(value, targetOptions));
     }
 
     @Override

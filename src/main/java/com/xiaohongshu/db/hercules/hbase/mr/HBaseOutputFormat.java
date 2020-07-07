@@ -1,6 +1,8 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
+import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
@@ -8,10 +10,12 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
+import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +29,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +38,9 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
     /**
      * 配置 conf 并返回 HerculesRecordWriter
      */
+    @SneakyThrows
     @Override
-    public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+    public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) {
 
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
@@ -67,17 +73,17 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     private final String columnFamily;
     private final String rowKeyCol;
     private final HBaseManager manager;
-
+    private final KvConverterSupplier kvConverterSupplier;
     private final BufferedMutator mutator;
 
-    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException {
+    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
         super(context, new HBaseOutputWrapperManager());
         this.manager = manager;
         Configuration conf = manager.getConf();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
         rowKeyCol = conf.get(HBaseOptionsConf.ROW_KEY_COL_NAME);
         mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
-
+        kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
         List<String> temp = new ArrayList<>(columnNameList);
         temp.remove(rowKeyCol);
         columnNameList = temp;
@@ -149,8 +155,22 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     @SneakyThrows
     @Override
     protected void innerMapWrite(HerculesWritable record) {
-        Put put = generatePut(record);
+        Put put;
+        if (kvConverterSupplier instanceof BlankKvConverterSupplier){
+            put = generatePut(record);
+        } else {
+            put = getConvertedPut(record);
+        }
         mutator.mutate(put);
+    }
+
+    protected Put getConvertedPut(HerculesWritable record){
+        String qualifier = options.getTargetOptions().getString(HBaseOutputOptionsConf.CONVERT_COLUMN_NAME, "");
+        Put put = new Put(Bytes.toBytes(record.get(rowKeyCol).asString()));
+        WritableUtils.remove(record.getRow(), Collections.singletonList(rowKeyCol));
+        byte[] value = kvConverterSupplier.getKvConverter().generateValue(record, options.getTargetOptions());
+        put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
+        return put;
     }
 
     @Override

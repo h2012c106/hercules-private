@@ -2,14 +2,15 @@ package com.xiaohongshu.db.hercules.kafka.option;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
-import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
-import org.apache.kafka.clients.producer.ProducerConfig;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.xiaohongshu.db.hercules.core.option.KvOptionsConf.DEFAULT_SUPPLIER;
+import static com.xiaohongshu.db.hercules.core.option.KvOptionsConf.SUPPLIER;
 
 public class KafkaOptionConf extends BaseOptionsConf {
 
@@ -63,6 +64,13 @@ public class KafkaOptionConf extends BaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("Kafka topic to send message.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(SUPPLIER)
+                .needArg(true)
+                .necessary(true)
+                .defaultStringValue(DEFAULT_SUPPLIER)
+                .description("The supplier to provide key value converter and options.")
                 .build());
         return tmpList;
     }

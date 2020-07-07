@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.*;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +17,8 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
     public static final String WRITE_BUFFER_SIZE = "writebuffersize";
     public static final long DEFAULT_WRITE_BUFFER_SIZE = 8 * 1024 * 1024;
+
+    public static final String CONVERT_COLUMN_NAME = "converted-column-name";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -49,6 +52,11 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
                 .name(MAX_WRITE_THREAD_NUM)
                 .needArg(true)
                 .description(String.format("The write maximum threads num, default %d threads.", DEFAULT_MAX_WRITE_THREAD_NUM))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(CONVERT_COLUMN_NAME)
+                .needArg(true)
+                .description(String.format("The qualifier to put converted bytes. Note that only one qualifier is supported for a converted value."))
                 .build());
         return tmpList;
     }

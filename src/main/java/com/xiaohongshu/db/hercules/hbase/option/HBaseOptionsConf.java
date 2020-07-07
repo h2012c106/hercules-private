@@ -9,6 +9,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
+import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,9 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return null;
+        return Lists.newArrayList(
+                new KvOptionsConf()
+        );
     }
 
     @Override

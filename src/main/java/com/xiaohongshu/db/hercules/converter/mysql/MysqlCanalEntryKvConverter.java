@@ -83,7 +83,7 @@ public class MysqlCanalEntryKvConverter extends KvConverter {
     }
 
     @Override
-    public byte[] generateCanalEntry(HerculesWritable value, GenericOptions options) {
+    public byte[] generateValue(HerculesWritable value, GenericOptions options) {
         CanalEntry.RowChange.Builder rowChangeBuilder = CanalEntry.RowChange.newBuilder();
         rowChangeBuilder.setEventType(CanalEntry.EventType.INSERT);
         CanalEntry.Header.Builder headerBuilder = CanalEntry.Header.newBuilder();
