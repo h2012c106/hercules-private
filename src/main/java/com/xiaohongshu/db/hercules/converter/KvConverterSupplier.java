@@ -5,18 +5,24 @@ import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 public abstract class KvConverterSupplier {
 
     private KvConverter kvConverter;
-    private BaseOptionsConf baseOptionsConf;
+    private BaseOptionsConf outputOptionsConf;
+    private BaseOptionsConf inputOptionsConf;
 
-    public KvConverterSupplier(KvConverter kvConverter, BaseOptionsConf baseOptionsConf) {
+    public KvConverterSupplier(KvConverter kvConverter, BaseOptionsConf outputOptionsConf, BaseOptionsConf inputOptionsConf) {
         this.kvConverter = kvConverter;
-        this.baseOptionsConf = baseOptionsConf;
+        this.outputOptionsConf = outputOptionsConf;
+        this.inputOptionsConf = inputOptionsConf;
     }
 
     public KvConverter getKvConverter(){
         return kvConverter;
     }
 
-    public BaseOptionsConf getOptionsConf(){
-        return baseOptionsConf;
+    public BaseOptionsConf getOutputOptionsConf(){
+        return outputOptionsConf;
+    }
+
+    public BaseOptionsConf getInputOptionsConf(){
+        return inputOptionsConf;
     }
 }

@@ -25,11 +25,11 @@ public class MysqlCanalEntryKvConverter extends KvConverter<Integer> {
         headerBuilder.setEventType(CanalEntry.EventType.INSERT);
         headerBuilder.setSourceType(CanalEntry.Type.MYSQL);
 
-        headerBuilder.setSchemaName(options.getString(CanalMysqlOptionConf.SCHEMA_NAME, ""));
-        headerBuilder.setTableName(options.getString(CanalMysqlOptionConf.TABLE_NAME, ""));
+        headerBuilder.setSchemaName(options.getString(CanalMysqlOutputOptionConf.SCHEMA_NAME, ""));
+        headerBuilder.setTableName(options.getString(CanalMysqlOutputOptionConf.TABLE_NAME, ""));
 
         CanalEntry.RowData.Builder rowDataBuilder = CanalEntry.RowData.newBuilder();
-        String keyCol = options.getString(CanalMysqlOptionConf.KEY, "");
+        String keyCol = options.getString(CanalMysqlOutputOptionConf.KEY, "");
 
         for (String columnName : columnNameList) {
 

@@ -7,6 +7,6 @@ import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 public class BlankKvConverterSupplier extends KvConverterSupplier {
 
     public BlankKvConverterSupplier() {
-        super(null, null);
+        super(null, null, null);
     }
 }

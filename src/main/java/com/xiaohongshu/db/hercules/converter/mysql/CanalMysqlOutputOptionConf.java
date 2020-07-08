@@ -9,7 +9,7 @@ import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CanalMysqlOptionConf extends BaseOptionsConf {
+public class CanalMysqlOutputOptionConf extends BaseOptionsConf {
 
     public final static String SCHEMA_NAME = "canal-schema-name";
     public final static String TABLE_NAME = "canal-table-name";
