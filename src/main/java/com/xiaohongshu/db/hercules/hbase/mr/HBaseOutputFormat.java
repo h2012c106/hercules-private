@@ -90,6 +90,10 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         if (columnNameList.size() == 0) {
             throw new RuntimeException("Column name list failed to fetch(no column name found).");
         }
+        if (!options.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "").contains("BlankKvConverterSupplier")) {
+            columnNameList.clear();
+            columnNameList.addAll(columnTypeMap.keySet());
+        }
     }
 
     /**
@@ -156,7 +160,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     @Override
     protected void innerMapWrite(HerculesWritable record) {
         Put put;
-        if (kvConverterSupplier instanceof BlankKvConverterSupplier){
+        if (kvConverterSupplier instanceof BlankKvConverterSupplier) {
             put = generatePut(record);
         } else {
             put = getConvertedPut(record);
@@ -164,11 +168,11 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         mutator.mutate(put);
     }
 
-    protected Put getConvertedPut(HerculesWritable record){
+    protected Put getConvertedPut(HerculesWritable record) {
         String qualifier = options.getTargetOptions().getString(HBaseOutputOptionsConf.CONVERT_COLUMN_NAME, "");
         Put put = new Put(Bytes.toBytes(record.get(rowKeyCol).asString()));
         WritableUtils.remove(record.getRow(), Collections.singletonList(rowKeyCol));
-        byte[] value = kvConverterSupplier.getKvConverter().generateValue(record, options.getTargetOptions());
+        byte[] value = kvConverterSupplier.getKvConverter().generateValue(record, options.getTargetOptions(), columnTypeMap, columnNameList);
         put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
         return put;
     }

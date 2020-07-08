@@ -77,18 +77,22 @@ public class Hercules {
                 )
         );
 
-        if (sourceDataSource.hasKvConverter()){
+        if (sourceDataSource.hasKvConverter()) {
             // check converter
             // check converter options
             KvConverterSupplier sourceKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
-            GenericOptions kvConverterOutputOptions = new BaseParser(sourceKvConverterSupplier.getOptionsConf(), sourceDataSource, OptionsType.SOURCE_CONVERTER).parse(args);
-            wrappingOptions.getSourceOptions().addAll(kvConverterOutputOptions);
+            if (!(sourceKvConverterSupplier.getOptionsConf() == null)) {
+                GenericOptions kvConverterOutputOptions = new BaseParser(sourceKvConverterSupplier.getOptionsConf(), sourceDataSource, OptionsType.SOURCE_CONVERTER).parse(args);
+                wrappingOptions.getSourceOptions().addAll(kvConverterOutputOptions);
+            }
         }
 
-        if (targetDataSource.hasKvConverter()){
+        if (targetDataSource.hasKvConverter()) {
             KvConverterSupplier targetKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
-            GenericOptions kvConverterOutputOptions = new BaseParser(targetKvConverterSupplier.getOptionsConf(), targetDataSource, OptionsType.TARGET_CONVERTER).parse(args);
-            wrappingOptions.getTargetOptions().addAll(kvConverterOutputOptions);
+            if (!(targetKvConverterSupplier.getOptionsConf() == null)) {
+                GenericOptions kvConverterOutputOptions = new BaseParser(targetKvConverterSupplier.getOptionsConf(), targetDataSource, OptionsType.TARGET_CONVERTER).parse(args);
+                wrappingOptions.getTargetOptions().addAll(kvConverterOutputOptions);
+            }
         }
 
         LOG.debug("Options: " + wrappingOptions);

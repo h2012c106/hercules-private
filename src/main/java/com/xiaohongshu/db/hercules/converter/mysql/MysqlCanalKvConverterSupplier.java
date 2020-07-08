@@ -4,16 +4,9 @@ import com.xiaohongshu.db.hercules.converter.KvConverter;
 import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 
-public class MysqlCanalKvConverterSupplier implements KvConverterSupplier {
+public class MysqlCanalKvConverterSupplier extends KvConverterSupplier {
 
-    @Override
-    public KvConverter getKvConverter() {
-        return new MysqlCanalEntryKvConverter();
-
-    }
-
-    @Override
-    public BaseOptionsConf getOptionsConf() {
-        return new CanalMysqlOptionConf();
+    public MysqlCanalKvConverterSupplier() {
+        super(new MysqlCanalEntryKvConverter(), new CanalMysqlOptionConf());
     }
 }

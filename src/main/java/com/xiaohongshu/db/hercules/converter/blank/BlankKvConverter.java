@@ -4,23 +4,24 @@ import com.xiaohongshu.db.hercules.converter.KvConverter;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+
+import java.util.List;
+import java.util.Map;
 
 
 public class BlankKvConverter extends KvConverter {
 
-    @Override
-    public String convertValue(BaseWrapper wrapper) {
-        return null;
+    public BlankKvConverter() {
+        super(null, null, null);
     }
 
     @Override
-    public int getColumnType(DataType type) {
-        return 0;
+    public byte[] generateValue(HerculesWritable value, GenericOptions options, Map columnTypeMap, List columnNameList) {
+        return new byte[0];
     }
 
     @Override
-    public byte[] generateValue(HerculesWritable value, GenericOptions options) {
+    public HerculesWritable generateHerculesWritable(byte[] data, GenericOptions options) {
         return null;
     }
 }

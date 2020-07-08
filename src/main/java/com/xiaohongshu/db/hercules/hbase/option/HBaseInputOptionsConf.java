@@ -25,6 +25,7 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
     public static final String SCAN_CACHEDROWS = "scan-cachedrows";
     /** Set the maximum number of values to return for each call to next(). */
     public static final String SCAN_BATCHSIZE = "scan-batchsize";
+    public static final String KV_COLUMN = "kv-column";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -82,6 +83,11 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
                 .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
                 .needArg(true)
                 .description("Specify the name of the row key col passed to the recordWriter.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(KV_COLUMN)
+                .needArg(true)
+                .description("Specify key-value column if a converter is used.")
                 .build());
         return tmpList;
     }

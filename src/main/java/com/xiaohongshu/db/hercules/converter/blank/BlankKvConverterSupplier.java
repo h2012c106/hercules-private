@@ -4,15 +4,9 @@ import com.xiaohongshu.db.hercules.converter.KvConverter;
 import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 
-public class BlankKvConverterSupplier implements KvConverterSupplier {
+public class BlankKvConverterSupplier extends KvConverterSupplier {
 
-    @Override
-    public KvConverter getKvConverter() {
-        return new BlankKvConverter();
-    }
-
-    @Override
-    public BaseOptionsConf getOptionsConf() {
-        return new BlankOptionConf();
+    public BlankKvConverterSupplier() {
+        super(null, null);
     }
 }

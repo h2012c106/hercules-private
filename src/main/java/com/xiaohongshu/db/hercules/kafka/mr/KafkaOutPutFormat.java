@@ -69,23 +69,17 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
 
     // 若给定columnType，则以给定的为准，否则以wrapper的DataType为准。
     @Override
-    protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
-        value.entrySet().forEach(entry -> {
-            DataType dt = columnTypeMap.get(entry.getKey());
-            if (dt != null) {
-                entry.getValue().setType(dt);
-            }
-        });
-        manager.send("", kvConverterSupplier.getKvConverter().generateValue(value, targetOptions));
+    protected void innerColumnWrite(HerculesWritable value) {
+        manager.send("", kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
     }
 
     @Override
-    protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
+    protected void innerMapWrite(HerculesWritable value) {
         innerColumnWrite(value);
     }
 
     @Override
-    protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
+    protected void innerClose(TaskAttemptContext context) {
         manager.close();
     }
 }
