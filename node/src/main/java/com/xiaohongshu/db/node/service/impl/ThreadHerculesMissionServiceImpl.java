@@ -82,6 +82,7 @@ public class ThreadHerculesMissionServiceImpl implements HerculesMissionService,
 
     @Override
     public void destroy() throws Exception {
+        LOG.info("Killing hercules mission service...");
         for (HerculesMission mission : missionMap.values()) {
             kill(mission);
         }
@@ -94,7 +95,9 @@ public class ThreadHerculesMissionServiceImpl implements HerculesMissionService,
         Long taskId = null;
         try {
             HerculesMission mission = new HerculesMission(new HerculesExecutor(task, jobName, replyService, yarnService));
-            // TODO 这里加了一把傻逼锁，目的是在于避免在insert行为结束后，put map行为开始前突然插入zombie检查，加锁能避免这两步之间突然插入zombie检查，保证检查时取到的map keys已经包括了数据库里置为RUNNING/PENDING的task了，其实要做的应该是submit之间不block，check zombie之间不block，这两者之间block
+            // TODO 这里加了一把傻逼锁，目的是在于避免在insert行为结束后，put map行为开始前突然插入zombie检查，
+            //  加锁能避免这两步之间突然插入zombie检查，保证检查时取到的map keys已经包括了数据库里置为RUNNING/PENDING的task了，
+            //  其实要做的应该是submit之间不block，check zombie之间不block，这两者之间block
             synchronized (sbInsertZombieCheckLock) {
                 // 插完数据库再真正起任务，避免万一系统崩溃，还能从数据库追溯出起了哪些任务
                 taskId = replyService.insert(task);
@@ -120,6 +123,7 @@ public class ThreadHerculesMissionServiceImpl implements HerculesMissionService,
     }
 
     private void kill(HerculesMission mission) throws IOException {
+        LOG.info(String.format("Killing hercules mission [%d]...", mission.getExecutor().getTask().getId()));
         mission.getExecutor().close();
         mission.getFuture().cancel(true);
     }
@@ -148,7 +152,7 @@ public class ThreadHerculesMissionServiceImpl implements HerculesMissionService,
      */
     @Override
     public Exception kill(long taskId, String jobName) {
-        HerculesMission mission = missionMap.remove(taskId);
+        HerculesMission mission = missionMap.get(taskId);
         if (mission == null) {
             LOG.info(String.format("Dealing with a non-exist task killing (possibly zombie): %s[%d].", jobName, taskId));
             List<String> suspectList = Collections.emptyList();
@@ -170,6 +174,7 @@ public class ThreadHerculesMissionServiceImpl implements HerculesMissionService,
             try {
                 // 由HerculesExecutor负责杀application
                 kill(mission);
+                missionMap.remove(taskId);
                 return null;
             } catch (IOException e) {
                 return new IOException(String.format("Kill mission [%d] failed.", taskId), e);
@@ -197,6 +202,11 @@ public class ThreadHerculesMissionServiceImpl implements HerculesMissionService,
             }
         }
         return res;
+    }
+
+    @Override
+    public List<Long> getMissionList() {
+        return new LinkedList<>(missionMap.keySet());
     }
 
     private static class HerculesMission {

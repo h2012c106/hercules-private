@@ -56,4 +56,9 @@ public class TaskManagerController {
         response.flushBuffer();
     }
 
+    @GetMapping("/getMissionList")
+    public List<Long> getMissionList() {
+        return herculesMissionService.getMissionList();
+    }
+
 }

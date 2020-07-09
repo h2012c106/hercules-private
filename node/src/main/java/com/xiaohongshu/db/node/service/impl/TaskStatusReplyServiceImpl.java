@@ -1,9 +1,9 @@
 package com.xiaohongshu.db.node.service.impl;
 
 import com.xiaohongshu.db.node.service.TaskStatusReplyService;
-import com.xiaohongshu.db.share.utils.RestUtils;
 import com.xiaohongshu.db.share.entity.Task;
 import com.xiaohongshu.db.share.utils.Constant;
+import com.xiaohongshu.db.share.utils.RestUtils;
 import com.xiaohongshu.db.share.vo.JsonResult;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +23,7 @@ import java.math.BigInteger;
 @Service
 public class TaskStatusReplyServiceImpl implements TaskStatusReplyService, InitializingBean {
 
-    @Value("${hercules.node.manager.service.host}")
-    private String managerHost;
-    @Value("${hercules.node.manager.service.port}")
-    private long managerPort;
+    @Value("${hercules.node.manager.service.url}")
     private String managerBaseUrl;
 
     @Autowired
@@ -34,7 +31,7 @@ public class TaskStatusReplyServiceImpl implements TaskStatusReplyService, Initi
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        managerBaseUrl = Constant.managerRestBaseUrl(managerHost, managerPort);
+        managerBaseUrl = Constant.managerRestBaseUrl(managerBaseUrl);
         managerBaseUrl = UriComponentsBuilder.fromHttpUrl(managerBaseUrl).pathSegment("task").build().encode().toString();
     }
 

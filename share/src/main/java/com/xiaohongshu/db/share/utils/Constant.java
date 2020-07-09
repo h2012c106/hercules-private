@@ -13,8 +13,12 @@ public final class Constant {
         return String.format("http://%s:%d/rest/node", nodeHost, nodePort);
     }
 
+    public static String managerRestBaseUrl(String url) {
+        return String.format("http://%s/rest/manager", url);
+    }
+
     public static String managerRestBaseUrl(String managerHost, long managerPort) {
-        return String.format("http://%s:%d/rest/manager", managerHost, managerPort);
+        return managerRestBaseUrl(String.format("%s:%d", managerHost, managerPort));
     }
 
 }

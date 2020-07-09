@@ -19,4 +19,6 @@ public interface HerculesMissionService {
      */
     public List<Task> getZombie(List<Task> taskList);
 
+    public List<Long> getMissionList();
+
 }
