@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.converter.mysql;
 
+import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 

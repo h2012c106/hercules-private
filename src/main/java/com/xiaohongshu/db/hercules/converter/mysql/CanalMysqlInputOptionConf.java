@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import java.util.List;
 
 public class CanalMysqlInputOptionConf extends BaseOptionsConf {
+
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
         return null;

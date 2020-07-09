@@ -8,10 +8,11 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 
-public class MysqlCanalEntryKvConverter extends KvConverter<Integer> {
+public class MysqlCanalEntryKvConverter extends KvConverter<Integer, ResultSet, CanalEntry.Column, CanalEntry.Column.Builder> {
 
     public MysqlCanalEntryKvConverter() {
         super(new MysqlCanalEntryDataTypeConverter(), new CanalMysqlWrapperGetterFactory(), new CanalMysqlWrapperSetterFactory());

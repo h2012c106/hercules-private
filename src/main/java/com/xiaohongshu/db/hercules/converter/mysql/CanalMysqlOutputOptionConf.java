@@ -1,8 +1,6 @@
 package com.xiaohongshu.db.hercules.converter.mysql;
 
-import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 
@@ -17,9 +15,6 @@ public class CanalMysqlOutputOptionConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-//        return Lists.newArrayList(
-//                new BaseOutputOptionsConf()
-//        );
         return null;
     }
 
