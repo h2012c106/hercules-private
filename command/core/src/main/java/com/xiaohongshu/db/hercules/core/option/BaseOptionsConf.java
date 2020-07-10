@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
  * 配置options，例如各个option名以及帮助命令行option的建立
  * 继承完全通过组合来做，子类自觉final
  */
-public abstract class BaseOptionsConf {
+public abstract class BaseOptionsConf implements OptionsConf {
 
     public static final String HELP = "help";
 
@@ -98,6 +98,7 @@ public abstract class BaseOptionsConf {
         return null;
     }
 
+    @Override
     public void validateOptions(GenericOptions options) {
         for (BaseOptionsConf ancestor : ancestorList) {
             ancestor.validateOptions(options);
@@ -113,6 +114,7 @@ public abstract class BaseOptionsConf {
      */
     abstract public void innerValidateOptions(GenericOptions options);
 
+    @Override
     public void processOptions(GenericOptions options) {
         for (BaseOptionsConf ancestor : ancestorList) {
             ancestor.processOptions(options);
@@ -134,6 +136,7 @@ public abstract class BaseOptionsConf {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public Map<String, SingleOptionConf> getOptionsMap() {
         Map<String, SingleOptionConf> optionConfMap = new HashMap<>();
         for (SingleOptionConf conf : optionConfList) {

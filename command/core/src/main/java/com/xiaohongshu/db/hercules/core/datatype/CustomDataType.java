@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.datatype;
 
 import com.google.common.base.Objects;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 

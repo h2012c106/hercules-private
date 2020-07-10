@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.core.mr;
 
 import com.cloudera.sqoop.config.ConfigurationHelper;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
+import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
@@ -37,12 +37,12 @@ public class MRJob {
     private static final String[] MAPREDUCE_USER_CLASSPATH_FIRST
             = new String[]{"mapreduce.user.classpath.first", "mapreduce.task.classpath.user.precedence"};
 
-    private BaseAssemblySupplier sourceAssemblySupplier;
-    private BaseAssemblySupplier targetAssemblySupplier;
+    private AssemblySupplier sourceAssemblySupplier;
+    private AssemblySupplier targetAssemblySupplier;
     private WrappingOptions options;
 
-    public MRJob(BaseAssemblySupplier sourceAssemblySupplier,
-                 BaseAssemblySupplier targetAssemblySupplier,
+    public MRJob(AssemblySupplier sourceAssemblySupplier,
+                 AssemblySupplier targetAssemblySupplier,
                  WrappingOptions options) {
         this.sourceAssemblySupplier = sourceAssemblySupplier;
         this.targetAssemblySupplier = targetAssemblySupplier;

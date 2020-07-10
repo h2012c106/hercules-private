@@ -4,60 +4,32 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsConf;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import org.apache.commons.cli.*;
 
 import java.util.ListIterator;
 import java.util.Map;
 
-/**
- * parser基类，除了common每个parser实现应当向{@link ParserFactory}注册自己的实现对象
- */
-public abstract class BaseParser {
+public class CmdParser implements Parser<String[]> {
 
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";
 
     private boolean help;
 
-    private BaseOptionsConf optionsConf;
+    private OptionsConf optionsConf;
     private DataSource dataSource;
-    private DataSourceRole dataSourceRole;
+    private  OptionsType optionsType;
 
-    public BaseParser(BaseOptionsConf optionsConf, DataSource dataSource, DataSourceRole dataSourceRole) {
+    public CmdParser(OptionsConf optionsConf, DataSource dataSource, OptionsType optionsType) {
         this.optionsConf = optionsConf;
         this.dataSource = dataSource;
-        this.dataSourceRole = dataSourceRole;
-    }
-
-    public BaseOptionsConf getOptionsConf() {
-        return optionsConf;
-    }
-
-    public DataSource getDataSource() {
-        return dataSource;
-    }
-
-    public DataSourceRole getDataSourceRole() {
-        return dataSourceRole;
-    }
-
-    private OptionsType getRole() {
-        if (getDataSourceRole() == null) {
-            return OptionsType.COMMON;
-        }
-        switch (getDataSourceRole()) {
-            case SOURCE:
-                return OptionsType.SOURCE;
-            case TARGET:
-                return OptionsType.TARGET;
-            default:
-                throw new com.xiaohongshu.db.hercules.core.exception.ParseException("Unknown data source role: " + getDataSourceRole().name());
-        }
+        this.optionsType = optionsType;
     }
 
     private String getOptionsPrefix() {
-        switch (getRole()) {
+        switch (optionsType) {
             case SOURCE:
                 return SOURCE_OPTIONS_PREFIX;
             case TARGET:
@@ -131,28 +103,27 @@ public abstract class BaseParser {
 
     private void help(Options cliOptions) {
         String helpHeader;
-        OptionsType type = getRole();
-        switch (type) {
+        switch (optionsType) {
             case SOURCE:
                 helpHeader = String.format("Datasource [%s]'s param as source:\n" +
                                 "(if datasource name doesn't match the actual one, relax, " +
                                 "just because they share the same param parser, definitely not a bug)\n\n",
-                        getDataSource().name());
+                        dataSource.name());
                 break;
             case TARGET:
                 helpHeader = String.format("Datasource [%s]'s param as target:\n" +
                                 "(if datasource name doesn't match the actual one, relax, " +
                                 "just because they share the same param parser, definitely not a bug)\n\n",
-                        getDataSource().name());
+                        dataSource.name());
                 break;
             case COMMON:
                 helpHeader = "Common param:\n\n";
                 break;
             default:
-                throw new RuntimeException("Unknown option type: " + type);
+                throw new RuntimeException("Unknown option type: " + optionsType);
         }
         HelpFormatter helpFormatter = new HelpFormatter();
-        helpFormatter.printHelp(String.format("%s USAGE: ", type.name()), helpHeader, cliOptions, "", true);
+        helpFormatter.printHelp(String.format("%s USAGE: ", optionsType.name()), helpHeader, cliOptions, "", true);
     }
 
     private void help(GenericOptions options, Options cliOptions) {
@@ -172,10 +143,11 @@ public abstract class BaseParser {
      * @param args
      * @return
      */
+    @Override
     public final GenericOptions parse(String[] args) {
         // 解析
         CommandLineParser cliParser;
-        if (getRole() == OptionsType.COMMON) {
+        if (optionsType == OptionsType.COMMON) {
             cliParser = new IgnorableParser(getOptionsPrefix(), true);
         } else {
             cliParser = new IgnorableParser(getOptionsPrefix(), false);

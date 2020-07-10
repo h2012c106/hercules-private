@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# 不太会写bash，反正至少确立用bash启动的路子
-
-self=$(readlink -f "$0")
-selfDir=$(cd "$(dirname "$self")" || exit 1;pwd)
-echo "Hercules shell at ${selfDir}"
-exec yarn jar "${selfDir}/../${project.artifactId}-${project.version}.jar" "$@"

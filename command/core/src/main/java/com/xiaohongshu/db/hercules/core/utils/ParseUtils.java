@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
-import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import org.apache.commons.lang3.StringUtils;
@@ -29,17 +28,14 @@ public final class ParseUtils {
      * @param arg
      * @return 一个长度为2的array，#0为source，#1为target
      */
-    public static DataSource[] getDataSources(String arg) {
+    public static String[] getDataSourceNames(String arg) {
         String regex = String.format("^(.+?)%s(.+?)$", DATA_SOURCE_SEPARATOR);
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(arg);
         if (matcher.find()) {
             String sourceStr = matcher.group(1);
             String targetStr = matcher.group(2);
-            return new DataSource[]{
-                    DataSource.valueOfIgnoreCase(sourceStr),
-                    DataSource.valueOfIgnoreCase(targetStr)
-            };
+            return new String[]{sourceStr, targetStr};
         } else {
             throw new ParseException(String.format("Wrong definitive format, should be like 'xxx%syyy', now: %s.", DATA_SOURCE_SEPARATOR, arg));
         }
