@@ -253,6 +253,12 @@
             <artifactId>parquet-hadoop</artifactId>
             <version>1.11.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.12.1</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-exec -->
         <!--这个依赖必须晚于parquet-hadoop申明，不然会以hive-exec的parquet(这逼直接复制源码进项目的，maven管不了)覆盖掉parquet-hadoop-->
         <dependency>
