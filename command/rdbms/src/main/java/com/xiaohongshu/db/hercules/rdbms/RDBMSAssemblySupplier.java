@@ -51,7 +51,7 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier
     }
 
     @Override
-    public BaseSchemaFetcher getSchemaFetcher() {
+    public BaseSchemaFetcher<?> getSchemaFetcher() {
         return new RDBMSSchemaFetcher(options, generateConverter(), generateManager(options));
     }
 

@@ -23,7 +23,7 @@ public interface AssemblySupplier {
 
     public Class<? extends HerculesOutputFormat> getOutputFormatClass();
 
-    public BaseSchemaFetcher getSchemaFetcher();
+    public BaseSchemaFetcher<?> getSchemaFetcher();
 
     public MRJobContext getJobContextAsSource();
 

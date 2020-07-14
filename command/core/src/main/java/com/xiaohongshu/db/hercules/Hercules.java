@@ -8,6 +8,7 @@ import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.CmdParser;
 import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
+import com.xiaohongshu.db.hercules.core.utils.ConfigUtils;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import lombok.SneakyThrows;
@@ -29,43 +30,10 @@ public class Hercules {
 
     private static final Log LOG = LogFactory.getLog(Hercules.class);
 
-    private static final String CONFIG_FILE = "hercules.properties";
-
-    private static final String MODULE_DIR = "hercules-module";
-    private static final String MODULE_ASSEMBLY_CLASS_PROPERTY_NAME = "hercules.assembly.class";
-
-    @SneakyThrows
-    private static void printVersionInfo() {
-        PropertiesConfiguration configuration = new PropertiesConfiguration();
-        configuration.read(new FileReader(Hercules.class.getClassLoader().getResource(CONFIG_FILE).getPath()));
-        String version = configuration.getString("hercules.version");
-        String buildTime = configuration.getString("hercules.build.time");
-        LOG.info(String.format("Current HERCULES version is [%s], built at [%s]", version, buildTime));
-    }
-
-    private static AssemblySupplier getAssemblySupplier(String dataSourceName) {
-        String propertyFile = String.format("/%s/%s.properties", MODULE_DIR, dataSourceName.toLowerCase());
-        InputStream is = Hercules.class.getResourceAsStream(propertyFile);
-        Properties properties = new Properties();
-        try {
-            properties.load(is);
-        } catch (IOException e) {
-            throw new RuntimeException("Please create the config file to specify the assembly supplier, which should be stored as: " + propertyFile, e);
-        }
-        String assemblyClassName = properties.getProperty(MODULE_ASSEMBLY_CLASS_PROPERTY_NAME);
-        try {
-            return (AssemblySupplier) Class.forName(assemblyClassName).newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(String.format("The class [%s] defined in [%s] not exist, please check.", assemblyClassName, propertyFile), e);
-        } catch (IllegalAccessException | InstantiationException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static void main(String[] args) {
         LogUtils.configureLog4J();
 
-        printVersionInfo();
+        ConfigUtils.printVersionInfo();
 
         // 获得 dataFlow 参数，模式为 SOURCE_TYPE::TARGET_TYPE
         // e.g., MYSQL::TIDB，表示 mysql 导入 tidb
@@ -77,8 +45,8 @@ public class Hercules {
         String sourceDataSourceName = dataSourceNames[0];
         String targetDataSourceName = dataSourceNames[1];
 
-        AssemblySupplier sourceSupplier = getAssemblySupplier(sourceDataSourceName);
-        AssemblySupplier targetSupplier = getAssemblySupplier(targetDataSourceName);
+        AssemblySupplier sourceSupplier = ConfigUtils.getAssemblySupplier(sourceDataSourceName);
+        AssemblySupplier targetSupplier = ConfigUtils.getAssemblySupplier(targetDataSourceName);
 
         DataSource sourceDataSource = sourceSupplier.getDataSource();
         DataSource targetDataSource = targetSupplier.getDataSource();
@@ -87,7 +55,7 @@ public class Hercules {
         CmdParser commonParser = new CmdParser(
                 new CommonOptionsConf(),
                 null,
-                null
+                OptionsType.COMMON
         );
         CmdParser sourceParser = new CmdParser(
                 sourceSupplier.getInputOptionsConf(),

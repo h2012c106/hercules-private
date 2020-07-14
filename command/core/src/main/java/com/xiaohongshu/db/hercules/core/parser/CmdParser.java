@@ -1,12 +1,11 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
-import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsConf;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
-import org.apache.commons.cli.*;
+import hercules.shaded.org.apache.commons.cli.*;
 
 import java.util.ListIterator;
 import java.util.Map;
@@ -20,7 +19,7 @@ public class CmdParser implements Parser<String[]> {
 
     private OptionsConf optionsConf;
     private DataSource dataSource;
-    private  OptionsType optionsType;
+    private OptionsType optionsType;
 
     public CmdParser(OptionsConf optionsConf, DataSource dataSource, OptionsType optionsType) {
         this.optionsConf = optionsConf;
