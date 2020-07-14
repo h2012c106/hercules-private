@@ -6,7 +6,7 @@ import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 
 import java.sql.Types;
 
-public class MysqlCanalEntryDataTypeConverter extends RDBMSDataTypeConverter {
+public class CanalEntryDataTypeConverter extends RDBMSDataTypeConverter {
 
     @Override
     public Integer convertElementType(DataType type) {

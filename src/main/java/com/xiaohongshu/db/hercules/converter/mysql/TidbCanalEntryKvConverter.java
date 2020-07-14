@@ -5,12 +5,11 @@ import com.xiaohongshu.db.xlog.canal.CanalSerDe;
 import com.xiaohongshu.db.xlog.core.codec.Codec;
 import com.xiaohongshu.db.xlog.core.exception.SerDeException;
 
-public class MysqlCanalEntryKvConverter extends CanalEntryKvConverter{
-
+public class TidbCanalEntryKvConverter extends CanalEntryKvConverter{
     @Override
     public byte[] serializeCanalEntry(CanalEntry.Entry entry) {
         try {
-            return CanalSerDe.serialize(entry, Codec.CODEC_CANAL_BL01);
+            return CanalSerDe.serialize(entry, Codec.CODEC_CANAL_BL02);
         } catch (SerDeException e){
             return null;
         }
