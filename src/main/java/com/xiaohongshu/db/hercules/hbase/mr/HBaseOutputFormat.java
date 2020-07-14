@@ -152,20 +152,24 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
      * innerColumnWrite 和 innerMapWrite 处理逻辑暂设一致。hbase 写入是遍历 HerculesWritable 中的 map
      */
     @Override
-    protected void innerColumnWrite(HerculesWritable record) {
+    protected void innerColumnWrite(HerculesWritable record) throws IOException {
         innerMapWrite(record);
     }
 
-    @SneakyThrows
     @Override
-    protected void innerMapWrite(HerculesWritable record) {
+    protected void innerMapWrite(HerculesWritable record) throws IOException {
         Put put;
-        if (kvConverterSupplier instanceof BlankKvConverterSupplier) {
-            put = generatePut(record);
-        } else {
-            put = getConvertedPut(record);
+
+        try {
+            if (kvConverterSupplier instanceof BlankKvConverterSupplier) {
+                put = generatePut(record);
+            } else {
+                put = getConvertedPut(record);
+            }
+            mutator.mutate(put);
+        } catch (Exception e) {
+            throw new IOException(e);
         }
-        mutator.mutate(put);
     }
 
     protected Put getConvertedPut(HerculesWritable record) {
@@ -178,9 +182,12 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     }
 
     @Override
-    protected void innerClose(TaskAttemptContext context) throws IOException {
-//        mutator.flush();
-        mutator.close();
-        manager.closeConnection();
+    protected void innerClose(TaskAttemptContext context) throws IOException{
+        try {
+            mutator.close();
+            manager.closeConnection();
+        } catch (IOException e) {
+            throw new IOException();
+        }
     }
 }

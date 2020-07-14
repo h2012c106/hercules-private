@@ -46,6 +46,7 @@ public class HBaseManager {
 
         conf.set("hbase.zookeeper.quorum", options.getString(HBaseOptionsConf.HB_ZK_QUORUM,null));
         conf.set("hbase.zookeeper.property.clientPort", options.getString(HBaseOptionsConf.HB_ZK_PORT,"2181"));
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
     }
 
     public Configuration getConf() {

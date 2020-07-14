@@ -6,6 +6,8 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.xlog.canal.CanalSerDe;
+import com.xiaohongshu.db.xlog.core.exception.SerDeException;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -52,15 +54,21 @@ public class MysqlCanalEntryKvConverter extends KvConverter<Integer, ResultSet, 
             rowDataBuilder.addAfterColumns(columnBuilder.build());
         }
         rowChangeBuilder.addRowDatas(rowDataBuilder.build());
-        return CanalEntry.Entry.newBuilder()
+        CanalEntry.Entry entry =  CanalEntry.Entry.newBuilder()
                 .setHeader(headerBuilder.build())
                 .setEntryType(CanalEntry.EntryType.ROWDATA)
                 .setStoreValue(rowChangeBuilder.build().toByteString())
-                .build().toByteArray();
+                .build();
+        try {
+            return CanalSerDe.serialize(entry);
+        } catch (SerDeException e) {
+            return null;
+        }
     }
 
     @Override
     public HerculesWritable generateHerculesWritable(byte[] data, GenericOptions options) throws IOException {
+
         CanalEntry.Entry entry = CanalEntry.Entry.parseFrom(data);
         if (entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONBEGIN ||
                 entry.getEntryType() == CanalEntry.EntryType.TRANSACTIONEND ||

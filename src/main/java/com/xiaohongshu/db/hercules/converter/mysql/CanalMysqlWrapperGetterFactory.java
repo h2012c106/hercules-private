@@ -7,6 +7,8 @@ import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 
 public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEntry.Column> {
@@ -14,7 +16,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getByteGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return IntegerWrapper.get(Byte.valueOf(res));
+            return IntegerWrapper.get(Short.valueOf(res));
         };
     }
 
@@ -22,7 +24,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getShortGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return IntegerWrapper.get(Short.valueOf(res));
+            return IntegerWrapper.get(Integer.valueOf(res));
         };
     }
 
@@ -30,7 +32,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getIntegerGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return IntegerWrapper.get(Integer.valueOf(res));
+            return IntegerWrapper.get(Long.valueOf(res));
         };
     }
 
@@ -38,7 +40,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getLongGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return IntegerWrapper.get(Long.valueOf(res));
+            return IntegerWrapper.get(new BigInteger(res));
         };
     }
 
@@ -51,7 +53,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getFloatGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return DoubleWrapper.get(Float.valueOf(res));
+            return DoubleWrapper.get(Double.valueOf(res));
         };
     }
 
@@ -59,7 +61,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getDoubleGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return DoubleWrapper.get(Double.valueOf(res));
+            return DoubleWrapper.get(new BigDecimal(res));
         };
     }
 
@@ -67,7 +69,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getDecimalGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return DoubleWrapper.get(Double.valueOf(res));
+            return DoubleWrapper.get(new BigDecimal(res));
         };
     }
 
@@ -116,7 +118,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
             // TODO 确定合适的decoder
-            return BytesWrapper.get(res.getBytes(StandardCharsets.ISO_8859_1));
+            return BytesWrapper.get(res.getBytes(StandardCharsets.UTF_8));
         };
     }
 

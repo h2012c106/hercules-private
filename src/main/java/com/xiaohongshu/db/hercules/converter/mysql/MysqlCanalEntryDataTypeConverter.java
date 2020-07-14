@@ -12,7 +12,7 @@ public class MysqlCanalEntryDataTypeConverter extends RDBMSDataTypeConverter {
     public Integer convertElementType(DataType type) {
         switch (type.getBaseDataType()) {
             case BYTES:
-                return Types.BINARY;
+                return Types.CLOB;
             case BYTE:
                 return Types.TINYINT;
             case SHORT:

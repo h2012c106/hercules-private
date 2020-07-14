@@ -85,6 +85,13 @@
         </resources>
     </build>
 
+    <repositories>
+        <repository>
+            <id>xhs-snapshot</id>
+            <url>http://mvn.devops.xiaohongshu.com/repository/maven-public/</url>
+        </repository>
+    </repositories>
+
     <properties>
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:00'Z'</maven.build.timestamp.format>
@@ -270,6 +277,11 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>2.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xiaohongshu.db</groupId>
+            <artifactId>xlog</artifactId>
+            <version>0.2.0</version>
         </dependency>
     </dependencies>
 </project>

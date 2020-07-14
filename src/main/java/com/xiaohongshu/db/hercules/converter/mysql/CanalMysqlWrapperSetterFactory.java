@@ -11,7 +11,7 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getByteSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigInteger().byteValueExact());
+            String res = String.valueOf(wrapper.asBigInteger().shortValueExact());
             builder.setValue(res);
         };
     }
@@ -19,7 +19,7 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getShortSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigInteger().shortValueExact());
+            String res = String.valueOf(wrapper.asBigInteger().intValueExact());
             builder.setValue(res);
         };
     }
@@ -27,7 +27,7 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getIntegerSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigInteger().intValueExact());
+            String res = String.valueOf(wrapper.asBigInteger().longValueExact());
             builder.setValue(res);
         };
     }
@@ -35,7 +35,7 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getLongSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigInteger().longValueExact());
+            String res = String.valueOf(wrapper.asBigInteger());
             builder.setValue(res);
         };
     }
@@ -112,7 +112,7 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getBytesSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = new String(wrapper.asBytes(), StandardCharsets.ISO_8859_1);
+            String res = new String(wrapper.asBytes(), StandardCharsets.UTF_8);
             builder.setValue(res);
         };
     }
