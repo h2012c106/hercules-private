@@ -53,7 +53,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getFloatGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return DoubleWrapper.get(Double.valueOf(res));
+            return DoubleWrapper.get(Float.valueOf(res));
         };
     }
 
@@ -61,7 +61,7 @@ public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEn
     protected WrapperGetter<CanalEntry.Column> getDoubleGetter() {
         return (row, rowName, columnName, columnSeq) -> {
             String res = row.getValue();
-            return DoubleWrapper.get(new BigDecimal(res));
+            return DoubleWrapper.get(Double.valueOf(res));
         };
     }
 

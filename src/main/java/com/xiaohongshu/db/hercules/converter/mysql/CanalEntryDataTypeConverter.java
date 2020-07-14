@@ -14,11 +14,10 @@ public class CanalEntryDataTypeConverter extends RDBMSDataTypeConverter {
             case BYTES:
                 return Types.CLOB;
             case BYTE:
-                return Types.TINYINT;
-            case SHORT:
                 return Types.SMALLINT;
-            case INTEGER:
+            case SHORT:
                 return Types.INTEGER;
+            case INTEGER:
             case LONG:
                 return Types.BIGINT;
             case FLOAT:
