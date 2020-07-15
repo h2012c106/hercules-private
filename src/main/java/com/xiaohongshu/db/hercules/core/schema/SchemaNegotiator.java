@@ -205,7 +205,7 @@ public final class SchemaNegotiator {
                 }
             }
         }
-        return tmpSource;
+        return tmpTarget;
     }
 
     private void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {
@@ -239,7 +239,7 @@ public final class SchemaNegotiator {
             sourceColumnNameList = getColumnNameListFromOptions(sourceOptions);
             targetColumnNameList = getColumnNameListFromOptions(targetOptions);
             fillMapWithColumnList(sourceColumnNameList, biColumnMap);
-            fillMapWithColumnList(targetColumnNameList, biColumnMap);
+            fillMapWithColumnList(targetColumnNameList, biColumnMap.inverse());
             sourceColumnNameList = new ArrayList<>(biColumnMap.keySet());
             targetColumnNameList = new ArrayList<>(biColumnMap.values());
         } else {
