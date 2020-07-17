@@ -63,6 +63,14 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
     }
 
     private void recursiveGetMessageType(Map<String, DataType> res, Type type, String parentName) {
+        // 如果是MessageType，无脑转GroupType，继续递归
+        if (type instanceof MessageType) {
+            MessageType groupType = (MessageType) type;
+            for (Type child : groupType.getFields()) {
+                recursiveGetMessageType(res, child, null);
+            }
+            return;
+        }
         String fullColumnName = WritableUtils.concatColumn(parentName, type.getName());
         if (type.isRepetition(Type.Repetition.REPEATED)) {
             res.put(fullColumnName, BaseDataType.LIST);

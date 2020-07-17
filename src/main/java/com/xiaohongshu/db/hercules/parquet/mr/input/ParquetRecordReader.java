@@ -10,11 +10,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.api.ReadSupport;
+import org.apache.parquet.hadoop.example.ExampleInputFormat;
 import org.apache.parquet.schema.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -26,19 +30,28 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
 
     private final ParquetInputWrapperManager wrapperManager;
 
-    private final RecordReader<Void, Group> delegate;
+    private RecordReader<Void, Group> delegate = null;
+    /**
+     * 负责生成delegate reader
+     */
+    private final ExampleInputFormat delegateInputFormat;
 
     private MessageType messageType;
 
-    public ParquetRecordReader(TaskAttemptContext context, RecordReader<Void, Group> delegate,
+    private int combinedSplitSeq = 0;
+    private List<FileSplit> combinedSplitList = new ArrayList<>(0);
+    private TaskAttemptContext context = null;
+
+    public ParquetRecordReader(TaskAttemptContext context, ExampleInputFormat delegateInputFormat,
                                ParquetInputWrapperManager wrapperManager) {
         // 此时还没搞出columnTypeMap
         super(context, wrapperManager);
-        this.delegate = delegate;
+        this.delegateInputFormat = delegateInputFormat;
         this.wrapperManager = wrapperManager;
     }
 
     /**
+     * 依次把单列映射成MessageType，再在外面拼装。
      * 由于GroupType本身不支持就地地加Type，所以用栈做类似的效果
      * 先把沿途Group压栈，随后依次出栈，并构建一个拷贝GroupType，值仅有一个为上一个出栈的元素
      *
@@ -81,11 +94,23 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
         return Types.buildMessage().addField(tmpValue).named(messageType.getName());
     }
 
+    private void initializeDelegate() throws IOException, InterruptedException {
+        LOG.info("Combined split seq: " + combinedSplitSeq);
+        LOG.info("Combined split: " + combinedSplitList.get(combinedSplitSeq));
+        if (delegate != null) {
+            delegate.close();
+        }
+        delegate = delegateInputFormat.createRecordReader(combinedSplitList.get(combinedSplitSeq), context);
+        delegate.initialize(combinedSplitList.get(combinedSplitSeq), context);
+    }
+
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         Configuration configuration = context.getConfiguration();
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(configuration);
+
+        context.getTaskAttemptID().getTaskID();
 
         // 补赋columnTypeMap
         wrapperManager.setColumnTypeMap(columnTypeMap);
@@ -108,12 +133,24 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
         }
         configuration.set(ReadSupport.PARQUET_READ_SCHEMA, messageType.toString());
 
-        delegate.initialize(split, context);
+        this.context = context;
+        this.combinedSplitList = ((ParquetCombinedInputSplit) split).getCombinedInputSplitList();
+        initializeDelegate();
     }
 
     @Override
     public boolean innerNextKeyValue() throws IOException, InterruptedException {
-        return delegate.nextKeyValue();
+        if (delegate.nextKeyValue()) {
+            return true;
+        } else {
+            if (++combinedSplitSeq < combinedSplitList.size()) {
+                initializeDelegate();
+                // 防止下一个split无数据
+                return innerNextKeyValue();
+            } else {
+                return false;
+            }
+        }
     }
 
     @Override
@@ -127,7 +164,12 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
 
     @Override
     public float getProgress() throws IOException, InterruptedException {
-        return delegate.getProgress();
+        BigDecimal splitSeq = BigDecimal.valueOf(combinedSplitSeq);
+        BigDecimal splitSize = BigDecimal.valueOf(combinedSplitList.size());
+        BigDecimal tmpDelegateProgress = BigDecimal.valueOf(delegate.getProgress());
+        BigDecimal base = splitSeq.divide(splitSize, 5, BigDecimal.ROUND_DOWN);
+        BigDecimal add = tmpDelegateProgress.divide(splitSize, 5, BigDecimal.ROUND_DOWN);
+        return base.add(add).floatValue();
     }
 
     @Override
