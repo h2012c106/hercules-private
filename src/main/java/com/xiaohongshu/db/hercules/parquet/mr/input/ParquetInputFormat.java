@@ -19,7 +19,9 @@ import org.apache.parquet.hadoop.example.ExampleInputFormat;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.EMPTY_AS_NULL;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.ORIGINAL_SPLIT;
@@ -84,9 +86,25 @@ public class ParquetInputFormat extends HerculesInputFormat {
         if (!options.getSourceOptions().getBoolean(ORIGINAL_SPLIT, false)) {
             configureNumMapper(context, numSplits);
         }
-        List<InputSplit> res = delegate.getSplits(context);
-        LOG.info(String.format("Actually split to %d splits: %s", res.size(), res.toString()));
-        return res;
+        List<InputSplit> tmpRes = delegate.getSplits(context);
+        if (tmpRes.size() > numSplits) {
+            List<InputSplit> res = new ArrayList<>(numSplits);
+            for (int i = 0; i < numSplits; ++i) {
+                res.add(new ParquetCombinedInputSplit());
+            }
+            // 发牌
+            int i = 0;
+            for (InputSplit inputSplit : tmpRes) {
+                ((ParquetCombinedInputSplit) res.get(i)).add(inputSplit);
+                i = ++i < numSplits ? i : 0;
+            }
+            return res;
+        } else if (tmpRes.size() < numSplits) {
+            LOG.warn(String.format("Unable to split more than %d split(s).", tmpRes.size()));
+            return tmpRes.stream().map(ParquetCombinedInputSplit::new).collect(Collectors.toList());
+        } else {
+            return tmpRes.stream().map(ParquetCombinedInputSplit::new).collect(Collectors.toList());
+        }
     }
 
     @Override
@@ -98,7 +116,7 @@ public class ParquetInputFormat extends HerculesInputFormat {
     @Override
     protected HerculesRecordReader<?> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         return new ParquetRecordReader(context,
-                delegate.createRecordReader(split, context),
+                delegate,
                 generateWrapperManager(options));
     }
 
