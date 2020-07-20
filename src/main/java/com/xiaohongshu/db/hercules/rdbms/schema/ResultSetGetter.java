@@ -4,6 +4,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public abstract class ResultSetGetter<T> {
+    public static final ResultSetGetter<Integer> INT_GETTER = new ResultSetGetter<Integer>() {
+        @Override
+        public Integer get(ResultSet resultSet, int seq) throws SQLException {
+            return resultSet.getInt(seq);
+        }
+
+        @Override
+        public Integer get(ResultSet resultSet, String name) throws SQLException {
+            return resultSet.getInt(name);
+        }
+    };
     public static final ResultSetGetter<Long> LONG_GETTER = new ResultSetGetter<Long>() {
         @Override
         public Long get(ResultSet resultSet, int seq) throws SQLException {

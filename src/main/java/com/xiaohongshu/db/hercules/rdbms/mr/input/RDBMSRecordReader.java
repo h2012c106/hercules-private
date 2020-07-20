@@ -41,10 +41,10 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
         this.manager = manager;
     }
 
-    protected final String makeSql(GenericOptions sourceOptions, RDBMSInputSplit split) {
+    protected String makeSql(GenericOptions sourceOptions, InputSplit split) {
         String querySql = SqlUtils.makeBaseQuery(sourceOptions);
-        String splitBoundary = String.format("%s AND %s", split.getLowerClause(),
-                split.getUpperClause());
+        String splitBoundary = String.format("%s AND %s", ((RDBMSInputSplit) split).getLowerClause(),
+                ((RDBMSInputSplit) split).getUpperClause());
         return SqlUtils.addWhere(querySql, splitBoundary);
     }
 

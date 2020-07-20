@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * parser基类，除了common每个parser实现应当向{@link ParserFactory}注册自己的实现对象
  */
-public abstract class BaseParser {
+public class BaseParser {
 
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";

@@ -9,6 +9,8 @@ import com.xiaohongshu.db.hercules.hbase.parser.HBaseInputParser;
 import com.xiaohongshu.db.hercules.hbase.parser.HBaseOutputParser;
 import com.xiaohongshu.db.hercules.mongodb.parser.MongoDBInputParser;
 import com.xiaohongshu.db.hercules.mongodb.parser.MongoDBOutputParser;
+import com.xiaohongshu.db.hercules.myhub.option.MyhubOutputOptionsConf;
+import com.xiaohongshu.db.hercules.mysql.option.MysqlInputOptionsConf;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlInputParser;
 import com.xiaohongshu.db.hercules.mysql.parser.MysqlOutputParser;
 import com.xiaohongshu.db.hercules.parquet.parser.ParquetInputParser;
@@ -42,6 +44,8 @@ public final class ParserFactory {
         register(DataSource.Parquet, DataSourceRole.SOURCE, new ParquetInputParser());
         register(DataSource.Parquet, DataSourceRole.TARGET, new ParquetOutputParser());
         register(DataSource.ParquetSchema, DataSourceRole.TARGET, new ParquetSchemaParser());
+        register(DataSource.Myhub, DataSourceRole.SOURCE, new BaseParser(new MysqlInputOptionsConf(), DataSource.Myhub, DataSourceRole.SOURCE));
+        // register(DataSource.Myhub, DataSourceRole.TARGET, new BaseParser(new MyhubOutputOptionsConf(), DataSource.Myhub, DataSourceRole.TARGET));
     }
 
     private static void register(DataSource dataSource, DataSourceRole dataSourceRole, BaseParser instance) {

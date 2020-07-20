@@ -1,4 +1,41 @@
-package com.xiaohongshu.db.hercules.myhub.mr.input;
+package com.xiaohongshu.db.hercules.myhub.option;
 
-public class MyhubInputOptionsConf {
+import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.mysql.option.MysqlOutputOptionsConf;
+import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
+
+import java.util.List;
+
+public final class MyhubOutputOptionsConf extends BaseOptionsConf {
+
+    @Override
+    protected List<BaseOptionsConf> generateAncestorList() {
+        return Lists.newArrayList(
+                new MysqlOutputOptionsConf()
+        );
+    }
+
+    @Override
+    protected List<String> deleteOptions() {
+        return Lists.newArrayList(
+                RDBMSOutputOptionsConf.AUTOCOMMIT
+        );
+    }
+
+    @Override
+    protected List<SingleOptionConf> innerGenerateOptionConf() {
+        return null;
+    }
+
+    @Override
+    protected void innerValidateOptions(GenericOptions options) {
+    }
+
+    @Override
+    protected void innerProcessOptions(GenericOptions options) {
+        options.set(RDBMSOutputOptionsConf.AUTOCOMMIT, true);
+    }
 }

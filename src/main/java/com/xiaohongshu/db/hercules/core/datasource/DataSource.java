@@ -11,7 +11,8 @@ public enum DataSource {
     HBase,
     MongoDB,
     Parquet,
-    ParquetSchema;
+    ParquetSchema,
+    Myhub;
 
     public static DataSource valueOfIgnoreCase(String value) {
         for (DataSource dataSource : DataSource.values()) {
