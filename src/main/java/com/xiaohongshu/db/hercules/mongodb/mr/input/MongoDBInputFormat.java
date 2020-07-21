@@ -53,18 +53,6 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
         manager = generateManager(sourceOptions);
     }
 
-    private Object group(MongoCollection<Document> collection, String groupType, String columnName) {
-        Document groupDocument = new Document();
-        groupDocument.put("_id", "");
-        groupDocument.put(groupType, new Document("$" + groupType, "$" + columnName));
-        MongoCursor<Document> resultCursor = collection.aggregate(Collections.singletonList(new Document("$group", groupDocument)), Document.class).iterator();
-        if (!resultCursor.hasNext()) {
-            throw new RuntimeException(String.format("Cannot find [%s] of [%s].", groupType, columnName));
-        } else {
-            return resultCursor.next().get(groupType);
-        }
-    }
-
     /**
      * 逻辑抄的DataX mongo CollectionSplitUtil，但是这个策略会无视配置的Query，整表地split，看性能表现如何再考虑改
      *
@@ -173,8 +161,18 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
                 }
 
                 // 直接按ObjectId的时间戳切分，没辙了，如果_id不是ObjectId，那只能`--num-mapper 1`
-                ObjectId min = (ObjectId) group(col, "min", splitBy);
-                ObjectId max = (ObjectId) group(col, "max", splitBy);
+                ObjectId min = col.find(findQuery)
+                        .projection(projectionQuery)
+                        .sort(new Document(splitBy, 1))
+                        .limit(1)
+                        .first()
+                        .getObjectId(splitBy);
+                ObjectId max = col.find(findQuery)
+                        .projection(projectionQuery)
+                        .sort(new Document(splitBy, -1))
+                        .limit(1)
+                        .first()
+                        .getObjectId(splitBy);
                 LOG.info(String.format("Min objectId is: %s; Max objectId is: %s.", min, max));
                 Date minTs = min.getDate();
                 Date maxTs = max.getDate();
