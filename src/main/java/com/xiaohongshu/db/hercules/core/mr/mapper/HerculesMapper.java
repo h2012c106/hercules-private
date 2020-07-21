@@ -35,6 +35,8 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     private Map<String, String> columnMap;
     private List<String> blackColumnList;
 
+    private long readRecordNum = 0L;
+
     public HerculesMapper() {
     }
 
@@ -90,6 +92,7 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
         value = rowTransfer(value);
         time += (System.currentTimeMillis() - start);
+        ++readRecordNum;
         context.write(key, value);
     }
 
@@ -98,6 +101,9 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         long start = System.currentTimeMillis();
         super.cleanup(context);
         time += (System.currentTimeMillis() - start);
-        LOG.info(String.format("Spent %.3fs on mapping.", (double) time / 1000.0));
+        LOG.info(String.format("Map %s transferred %d record(s) using %.3fs.",
+                context.getTaskAttemptID().getTaskID().toString(),
+                readRecordNum,
+                (double) time / 1000.0));
     }
 }

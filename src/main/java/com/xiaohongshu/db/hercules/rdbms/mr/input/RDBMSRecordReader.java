@@ -28,7 +28,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
     /**
      * 用于估算进度
      */
-    private Long mapAverageRowNum;
+    protected Long mapAverageRowNum;
     protected Connection connection = null;
     protected PreparedStatement statement = null;
     protected ResultSet resultSet = null;
@@ -72,7 +72,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
-        String querySql = makeSql(options.getSourceOptions(), (RDBMSInputSplit) split);
+        String querySql = makeSql(options.getSourceOptions(), split);
 
         Integer fetchSize = options.getSourceOptions().getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
 
@@ -111,7 +111,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
         return value;
     }
 
-    private boolean isDone() {
+    protected boolean isDone() {
         try {
             return resultSet != null && (resultSet.isClosed() || resultSet.isAfterLast());
         } catch (SQLException sqlE) {

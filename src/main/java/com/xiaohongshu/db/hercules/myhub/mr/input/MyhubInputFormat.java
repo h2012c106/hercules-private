@@ -1,13 +1,15 @@
 package com.xiaohongshu.db.hercules.myhub.mr.input;
 
-import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
-import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
-import com.alibaba.druid.sql.parser.SQLStatementParser;
-import com.alibaba.druid.stat.TableStat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.myhub.MyhubUtils;
+import com.xiaohongshu.db.hercules.myhub.schema.MyhubSchemaFetcher;
 import com.xiaohongshu.db.hercules.mysql.mr.MysqlInputFormat;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
+import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -21,10 +23,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-
-import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.QUERY;
-import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf.TABLE;
 
 public class MyhubInputFormat extends MysqlInputFormat {
 
@@ -32,48 +30,11 @@ public class MyhubInputFormat extends MysqlInputFormat {
 
     private static final String IS_SHARD_PROPERTY_NAME = "hercules.myhub.table.shard";
 
-    /**
-     * @return 0代表非shard表，否则为shard表shard数
-     */
-    private int getShardNum() throws SQLException {
-        String table;
-        if (options.hasProperty(TABLE)) {
-            table = options.getString(TABLE, null);
-            table = "`" + table + "`";
-        } else {
-            // 从sql里把表名撸出来
-            String sql = options.getString(QUERY, null);
-            SQLStatementParser parser = new MySqlStatementParser(sql);
-            SQLStatement statement = parser.parseStatement();
-            MySqlSchemaStatVisitor visitor = new MySqlSchemaStatVisitor();
-            statement.accept(visitor);
-            Map<TableStat.Name, ?> tableStats = visitor.getTables();
-            if (tableStats.size() != 1) {
-                throw new SQLException(String.format("The sql [%s] contains more than one table, hercules cannot deal this sql on myhub: %s", sql, tableStats.keySet()));
-            }
-            table = tableStats.keySet().iterator().next().getName();
-            LOG.info(String.format("The sql [%s]'s table is: %s", sql, table));
-        }
-        String shardInfoSql = String.format("show shard_info %s;", table);
-        LOG.info("Execute sql to fetch myhub shard info: " + shardInfoSql);
-        try {
-            return manager.executeSelect(shardInfoSql, 3, ResultSetGetter.INT_GETTER).get(0);
-        } catch (SQLException e) {
-            // 目前只能通过catch到SQLException的error code来断言是否shard表，若将来不会抛错了，那这个逻辑要改。
-            if (e.getErrorCode() == 1146 && "42s02".equals(e.getSQLState())) {
-                LOG.warn("The shard info sql failed, the table will be treated as non-shard table, error message: ERROR 1146 (42s02) " + e.getMessage());
-                return 0;
-            } else {
-                throw e;
-            }
-        }
-    }
-
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
         int shardNum;
         try {
-            shardNum = getShardNum();
+            shardNum = MyhubUtils.getShardNum(options, manager);
         } catch (SQLException e) {
             throw new IOException(e);
         }
@@ -85,7 +46,7 @@ public class MyhubInputFormat extends MysqlInputFormat {
             LOG.info("The table is a non-shard table, split as normal mysql table.");
             return super.innerGetSplits(context, numSplits);
         } else {
-            LOG.info("The table is a non-shard table, split by shard.");
+            LOG.info("The table is a shard table, split by shard.");
             List<InputSplit> res;
             if (shardNum < numSplits) {
                 // 如果shard数量不到split数量，则不再切了，虽然可以再根据where条件切，但是I.懒;II.muhub本身分表就是为了把大表拆小，分表不会再出现巨大的数据量，再细拆有点伪命题的意思。
@@ -107,6 +68,19 @@ public class MyhubInputFormat extends MysqlInputFormat {
                     i = ++i < numSplits ? i : 0;
                 }
             }
+
+            String countSql = "/*MYHUB SHARD_NODES:0; SLAVE_PREFER */" + SqlUtils.replaceSelectItem(baseSql, SqlUtils.makeItem("COUNT", 1));
+            LOG.info("Use sql to count the first shard size: " + countSql);
+            long size;
+            try {
+                size = manager.executeSelect(countSql, 1, ResultSetGetter.LONG_GETTER).get(0);
+            } catch (SQLException e) {
+                throw new IOException(e);
+            }
+            LOG.info("Count size for shard 0 is: " + size);
+            // 只是借这个名字一用，实际存储的值为每个shard的size而非每个map的size
+            context.getConfiguration().setLong(AVERAGE_MAP_ROW_NUM, size);
+
             return res;
         }
     }
@@ -119,9 +93,14 @@ public class MyhubInputFormat extends MysqlInputFormat {
         }
         boolean isShard = configuration.getBoolean(IS_SHARD_PROPERTY_NAME, false);
         if (!isShard) {
-            return super.innerCreateRecordReader(split, context);
-        } else {
             return new MyhubRecordReader(context, manager);
+        } else {
+            return new MyhubShardRecordReader(context, manager);
         }
+    }
+
+    @Override
+    protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options, RDBMSDataTypeConverter converter, RDBMSManager manager) {
+        return new MyhubSchemaFetcher(options, converter, manager);
     }
 }
