@@ -6,6 +6,8 @@ import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.sql.Types;
+import java.util.Date;
 
 public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEntry.Column.Builder> {
     @Override
@@ -96,8 +98,12 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getTimeSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = wrapper.asDate().toString();
-            builder.setValue(res);
+            Date res = wrapper.asDate();
+            if (res == null) {
+                builder.setValue("");
+            } else {
+                builder.setValue(new java.sql.Time(res.getTime()).toString());
+            }
         };
     }
 
@@ -105,7 +111,11 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     protected WrapperSetter<CanalEntry.Column.Builder> getDatetimeSetter() {
         return (wrapper, builder, cf, name, seq) -> {
             String res = wrapper.asString();
-            builder.setValue(res);
+            if (res == null) {
+                builder.setValue("");
+            } else {
+                builder.setValue(res);
+            }
         };
     }
 

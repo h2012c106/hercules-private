@@ -2,7 +2,9 @@ package com.xiaohongshu.db.hercules.mongodb.mr.input;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
+import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
@@ -19,15 +21,20 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.ql.QueryProperties;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK;
 
@@ -47,6 +54,7 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
         super.initializeContext(sourceOptions);
         manager = generateManager(sourceOptions);
     }
+
 
     /**
      * 逻辑抄的DataX mongo CollectionSplitUtil，但是这个策略会无视配置的Query，整表地split，看性能表现如何再考虑改
@@ -71,7 +79,7 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
         MongoClient client = null;
         try {
             client = manager.getConnection();
-            MongoDatabase database = client.getDatabase(databaseStr);
+            MongoDatabase database = client.getDatabase(databaseStr).withReadPreference(ReadPreference.secondaryPreferred());
             List<InputSplit> res = new ArrayList<>(numSplits);
             if (numSplits == 1) {
                 LOG.warn("Map set to 1, only use 1 map.");
@@ -79,7 +87,7 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
             }
 
             Document result = database.runCommand(new Document("collStats", collectionStr));
-            int docCount = result.getInteger("count");
+            int docCount = new BigDecimal(result.get("count").toString()).intValueExact();
             if (docCount == 0) {
                 return res;
             }
@@ -92,7 +100,7 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
             }
             int splitPointCount = numSplits - 1;
             int chunkDocCount = docCount / numSplits;
-            ArrayList<Object> splitPoints = new ArrayList<Object>();
+            List<Object> splitPoints = new ArrayList<>();
 
             // test if user has splitVector role(clusterManager)
             boolean supportSplitVector = true;
@@ -146,26 +154,76 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
                 projectionQuery.put(MongoDBManager.ID, 0);
                 projectionQuery.put(splitBy, 1);
 
-                int skipCount = chunkDocCount;
-                MongoCollection<Document> col = database.getCollection(collectionStr);
+                // 优先读从库
+                MongoCollection<Document> col = database.withReadPreference(ReadPreference.secondaryPreferred()).getCollection(collectionStr);
 
                 // 检查key上是否有索引
                 boolean ignoreCheckKey = options.getSourceOptions().getBoolean(IGNORE_SPLIT_KEY_CHECK, false);
                 if (!ignoreCheckKey && !MongoDBSchemaFetcher.isIndex(col, splitBy)) {
                     throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, IGNORE_SPLIT_KEY_CHECK));
                 }
-
-                for (int i = 0; i < splitPointCount; i++) {
-                    Document doc = col.find(findQuery)
-                            .projection(projectionQuery)
-                            .sort(new Document(splitBy, 1))
-                            .skip(skipCount)
-                            .limit(1)
-                            .first();
-                    Object id = doc.get(splitBy);
-                    splitPoints.add(id);
-                    skipCount += chunkDocCount;
+                // 直接按ObjectId的时间戳切分，没辙了，如果_id不是ObjectId，那只能`--num-mapper 1`
+                Object minObj = col.find(findQuery)
+                        .projection(projectionQuery)
+                        .sort(new Document(splitBy, 1))
+                        .limit(1)
+                        .first()
+                        .get(splitBy);
+                Object maxObj = col.find(findQuery)
+                        .projection(projectionQuery)
+                        .sort(new Document(splitBy, -1))
+                        .limit(1)
+                        .first()
+                        .get(splitBy);
+                if (minObj.getClass() != maxObj.getClass()) {
+                    throw new RuntimeException(String.format("The column [%s] has more than one type, not capable to be a split-by column, min vs max: %s vs %s.",
+                            splitBy, minObj.getClass().getCanonicalName(), maxObj.getClass().getCanonicalName()));
                 }
+                if (minObj.getClass() != ObjectId.class) {
+                    throw new RuntimeException("Temporarily only support object id to be a split-by key, other than, use `num-mapper 1`.");
+                }
+                ObjectId min = (ObjectId) minObj;
+                ObjectId max = (ObjectId) maxObj;
+                LOG.info(String.format("Min objectId is: %s; Max objectId is: %s.", min, max));
+                Date minTs = min.getDate();
+                Date maxTs = max.getDate();
+
+                // 从RDBMS复制过来的
+                List<BigDecimal> splits = new ArrayList<>();
+
+                BigDecimal decimalMinVal = new BigDecimal(minTs.getTime());
+                BigDecimal decimalMaxVal = new BigDecimal(maxTs.getTime());
+                BigDecimal decimalNumSplits = BigDecimal.valueOf(numSplits);
+
+                BigDecimal splitSize = tryDivide(decimalMaxVal.subtract(decimalMinVal), (decimalNumSplits));
+                if (splitSize.compareTo(MIN_INCREMENT) < 0) {
+                    splitSize = MIN_INCREMENT;
+                    LOG.warn("Set BigDecimal splitSize to MIN_INCREMENT: " + MIN_INCREMENT.toPlainString());
+                }
+
+                BigDecimal curVal = decimalMinVal;
+
+                // min值不可能大于max值，所以数组里至少有一个min
+                while (curVal.compareTo(decimalMaxVal) <= 0) {
+                    splits.add(curVal);
+                    curVal = curVal.add(splitSize);
+                }
+                // 转换回来
+                splitPoints = splits
+                        .stream()
+                        .map(item -> new ObjectId(new Date(item.toBigInteger().longValueExact())))
+                        .collect(Collectors.toList());
+                // 确保不漏
+                splitPoints.add(0, min);
+                splitPoints.add(max);
+                // 去掉界外值+去重+排序
+                splitPoints = splitPoints.stream()
+                        .filter(item -> ((ObjectId) item).compareTo(min) >= 0 && ((ObjectId) item).compareTo(max) <= 0)
+                        .distinct()
+                        .sorted()
+                        .collect(Collectors.toList());
+
+
             }
 
             Object lastObjectId = null;
@@ -216,5 +274,17 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
     @Override
     public MongoDBManager generateManager(GenericOptions options) {
         return new MongoDBManager(options);
+    }
+
+    private static final BigDecimal MIN_INCREMENT =
+            new BigDecimal(10000 * Double.MIN_VALUE);
+
+    protected BigDecimal tryDivide(BigDecimal numerator, BigDecimal denominator) {
+        try {
+            return numerator.divide(denominator);
+        } catch (ArithmeticException ae) {
+            // 由于ROUND_UP，不可能取到0值
+            return numerator.divide(denominator, BigDecimal.ROUND_UP);
+        }
     }
 }

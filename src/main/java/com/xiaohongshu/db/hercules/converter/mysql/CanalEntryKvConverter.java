@@ -8,14 +8,13 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 
-public abstract class CanalEntryKvConverter extends KvConverter<Integer, ResultSet, CanalEntry.Column, CanalEntry.Column.Builder> {
+public abstract class CanalEntryKvConverter extends KvConverter<Integer, CanalEntry.Column, CanalEntry.Column.Builder> {
 
-    public CanalEntryKvConverter() {
-        super(new CanalEntryDataTypeConverter(), new CanalMysqlWrapperGetterFactory(), new CanalMysqlWrapperSetterFactory());
+    public CanalEntryKvConverter(GenericOptions options) {
+        super(new CanalEntryDataTypeConverter(), new CanalMysqlWrapperGetterFactory(), new CanalMysqlWrapperSetterFactory(), options);
     }
 
     @Override
@@ -32,6 +31,7 @@ public abstract class CanalEntryKvConverter extends KvConverter<Integer, ResultS
         CanalEntry.Header.Builder headerBuilder = CanalEntry.Header.newBuilder();
         headerBuilder.setEventType(CanalEntry.EventType.INSERT);
         headerBuilder.setSourceType(CanalEntry.Type.MYSQL);
+        headerBuilder.setExecuteTime(System.currentTimeMillis());
 
         headerBuilder.setSchemaName(options.getString(CanalMysqlOutputOptionConf.SCHEMA_NAME, ""));
         headerBuilder.setTableName(options.getString(CanalMysqlOutputOptionConf.TABLE_NAME, ""));
@@ -49,7 +49,7 @@ public abstract class CanalEntryKvConverter extends KvConverter<Integer, ResultS
 
             CanalEntry.Column.Builder columnBuilder = CanalEntry.Column.newBuilder()
                     .setName(columnName)
-                    .setSqlType((Integer) dataTypeConverter.convertElementType(type));
+                    .setSqlType(dataTypeConverter.convertElementType(type));
             try {
                 getWrapperSetter(type).set(wrapper, columnBuilder, "", "", 0);
             } catch (Exception e) {

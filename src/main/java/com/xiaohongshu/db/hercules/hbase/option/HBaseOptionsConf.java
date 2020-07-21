@@ -61,7 +61,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(COLUMN)
                 .needArg(true)
-                .necessary(true)
+//                .necessary(true)
                 .description(String.format("The table column name list, delimited by %s.", COLUMN_DELIMITER))
                 .list(true)
                 .listDelimiter(COLUMN_DELIMITER)

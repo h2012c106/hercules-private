@@ -21,17 +21,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
 
@@ -74,7 +73,10 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     private final String rowKeyCol;
     private final HBaseManager manager;
     private final KvConverterSupplier kvConverterSupplier;
-    private final BufferedMutator mutator;
+    //    private final BufferedMutator mutator;
+    private final Table table;
+    private final List<Put> putsBuffer = new LinkedList<>();
+    private final int PUT_BUFFER_SIZE = 10000;
 
     public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
         super(context, new HBaseOutputWrapperManager());
@@ -82,7 +84,8 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         Configuration conf = manager.getConf();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
         rowKeyCol = conf.get(HBaseOptionsConf.ROW_KEY_COL_NAME);
-        mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
+//        mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
+        table = HBaseManager.getTable(manager.getConf(), manager);
         kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
         List<String> temp = new ArrayList<>(columnNameList);
         temp.remove(rowKeyCol);
@@ -166,7 +169,14 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             } else {
                 put = getConvertedPut(record);
             }
-            mutator.mutate(put);
+//            mutator.mutate(put);
+            put.setDurability(Durability.SKIP_WAL);
+            putsBuffer.add(put);
+            if (putsBuffer.size() > PUT_BUFFER_SIZE) {
+                table.batch(putsBuffer, null);
+//                table.put(putsBuffer);
+                putsBuffer.clear();
+            }
         } catch (Exception e) {
             throw new IOException(e);
         }
@@ -182,9 +192,10 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     }
 
     @Override
-    protected void innerClose(TaskAttemptContext context) throws IOException{
+    protected void innerClose(TaskAttemptContext context) throws IOException {
         try {
-            mutator.close();
+//            mutator.close();
+            table.close();
             manager.closeConnection();
         } catch (IOException e) {
             throw new IOException();

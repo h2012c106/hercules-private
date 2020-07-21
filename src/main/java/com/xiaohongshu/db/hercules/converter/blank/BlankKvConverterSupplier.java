@@ -5,6 +5,6 @@ import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
 public class BlankKvConverterSupplier extends KvConverterSupplier {
 
     public BlankKvConverterSupplier() {
-        super(null, null, null);
+        super(null, null, null, null, null);
     }
 }

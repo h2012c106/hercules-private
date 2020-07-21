@@ -128,6 +128,12 @@ public class HBaseManager {
         }
     }
 
+    public static Table getTable(Configuration conf, HBaseManager manager) throws IOException {
+        String userTable = conf.get(HBaseOptionsConf.TABLE);
+        TableName hTableName = TableName.valueOf(userTable);
+        return manager.getConnection().getTable(hTableName);
+    }
+
     /**
      * 通过配置好的conf以及manager来获取BufferedMutator(Async).
      */

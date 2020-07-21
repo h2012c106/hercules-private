@@ -13,16 +13,18 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public abstract class KvConverter<T, R, K, L> {
+public abstract class KvConverter<T, K, L> {
 
-    protected DataTypeConverter<T, R> dataTypeConverter;
+    protected DataTypeConverter<T, ?> dataTypeConverter;
     protected WrapperGetterFactory<K> wrapperGetterFactory;
     protected WrapperSetterFactory<L> wrapperSetterFactory;
+    protected GenericOptions options;
 
-    public KvConverter(DataTypeConverter<T, R> dataTypeConverter, WrapperGetterFactory<K> wrapperGetterFactory, WrapperSetterFactory<L> wrapperSetterFactory) {
+    public KvConverter(DataTypeConverter<T, ?> dataTypeConverter, WrapperGetterFactory<K> wrapperGetterFactory, WrapperSetterFactory<L> wrapperSetterFactory, GenericOptions options) {
         this.dataTypeConverter = dataTypeConverter;
         this.wrapperGetterFactory = wrapperGetterFactory;
         this.wrapperSetterFactory = wrapperSetterFactory;
+        this.options = options;
     }
 
     public abstract byte[] generateValue(HerculesWritable value, GenericOptions options, Map<String, DataType> columnTypeMap, List<String> columnNameList);

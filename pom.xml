@@ -31,7 +31,8 @@
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.xiaohongshu.db.hercules.Hercules</mainClass>
                                 </transformer>
                             </transformers>
@@ -39,6 +40,10 @@
                                 <relocation>
                                     <pattern>com.google.common</pattern>
                                     <shadedPattern>hercules.shaded.com.google.common</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>com.google.protobuf</pattern>
+                                    <shadedPattern>hercules.shaded.com.google.protobuf</shadedPattern>
                                 </relocation>
                             </relocations>
                             <filters>
@@ -90,6 +95,18 @@
             <id>xhs-snapshot</id>
             <url>http://mvn.devops.xiaohongshu.com/repository/maven-public/</url>
         </repository>
+<!--        <repository>-->
+<!--            <id>central</id>-->
+<!--            <url>repo.maven.apache.org/maven2</url>-->
+<!--            <snapshots>-->
+<!--                <enabled>true</enabled>-->
+<!--                <updatePolicy>never</updatePolicy>-->
+<!--            </snapshots>-->
+<!--            <releases>-->
+<!--                <enabled>true</enabled>-->
+<!--                <updatePolicy>never</updatePolicy>-->
+<!--            </releases>-->
+<!--        </repository>-->
     </repositories>
 
     <properties>
@@ -98,6 +115,12 @@
     </properties>
 
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.12.1</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/commons-cli/commons-cli -->
         <dependency>
             <groupId>commons-cli</groupId>
@@ -122,6 +145,20 @@
             <artifactId>hadoop-mapreduce-client-core</artifactId>
             <version>3.1.2</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>hadoop-yarn-api</artifactId>
+                    <groupId>org.apache.hadoop</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>protobuf-java</artifactId>
+                    <groupId>com.google.protobuf</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>hadoop-yarn-client</artifactId>
+                    <groupId>org.apache.hadoop</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-mapreduce-client-jobclient -->
         <dependency>
@@ -253,19 +290,6 @@
             <artifactId>parquet-hadoop</artifactId>
             <version>1.11.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>3.12.1</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-exec -->
-        <!--这个依赖必须晚于parquet-hadoop申明，不然会以hive-exec的parquet(这逼直接复制源码进项目的，maven管不了)覆盖掉parquet-hadoop-->
-        <dependency>
-            <groupId>org.apache.hive</groupId>
-            <artifactId>hive-exec</artifactId>
-            <version>3.1.2</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/com.alibaba.otter/canal.protocol -->
         <dependency>
             <groupId>com.alibaba.otter</groupId>
@@ -287,7 +311,20 @@
         <dependency>
             <groupId>com.xiaohongshu.db</groupId>
             <artifactId>xlog</artifactId>
-            <version>0.2.0</version>
+            <version>0.9.0-SNAPSHOT</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-exec -->
+        <!--这个依赖必须晚于parquet-hadoop申明，不然会以hive-exec的parquet(这逼直接复制源码进项目的，maven管不了)覆盖掉parquet-hadoop-->
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-exec</artifactId>
+            <version>3.1.2</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>protobuf-java</artifactId>
+                    <groupId>com.google.protobuf</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 </project>

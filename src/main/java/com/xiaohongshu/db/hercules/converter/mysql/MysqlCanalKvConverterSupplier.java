@@ -2,12 +2,11 @@ package com.xiaohongshu.db.hercules.converter.mysql;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xiaohongshu.db.hercules.converter.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 
-import java.sql.ResultSet;
+public class MysqlCanalKvConverterSupplier extends KvConverterSupplier<Integer, CanalEntry.Column, CanalEntry.Column.Builder>  {
 
-public class MysqlCanalKvConverterSupplier extends KvConverterSupplier<Integer, ResultSet, CanalEntry.Column, CanalEntry.Column.Builder>  {
-
-    public MysqlCanalKvConverterSupplier() {
-        super(new MysqlCanalEntryKvConverter(), new CanalMysqlOutputOptionConf(), new CanalMysqlInputOptionConf());
+    public MysqlCanalKvConverterSupplier(GenericOptions options) {
+        super(new MysqlCanalEntryKvConverter(options), new CanalMysqlOutputOptionConf(), new CanalMysqlInputOptionConf(), new CanalMysqlWrapperSetterFactory(), new CanalMysqlWrapperGetterFactory());
     }
 }

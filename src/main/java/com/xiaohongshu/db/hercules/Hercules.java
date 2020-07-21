@@ -26,6 +26,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.FileReader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 
 public class Hercules {
@@ -43,7 +44,7 @@ public class Hercules {
         LOG.info(String.format("Current HERCULES version is [%s], built at [%s]", version, buildTime));
     }
 
-    public static void main(String[] args) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+    public static void main(String[] args) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
         LogUtils.configureLog4J();
 
         printVersionInfo();
@@ -77,13 +78,17 @@ public class Hercules {
         );
 
         if (sourceDataSource.hasKvConverter() && !wrappingOptions.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "").contains("BlankKvConverterSupplier")) {
-            KvConverterSupplier sourceKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
+
+            KvConverterSupplier sourceKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getSourceOptions().getString(KvOptionsConf.SUPPLIER, ""))
+                    .getConstructor(GenericOptions.class).newInstance(wrappingOptions.getSourceOptions());
             GenericOptions kvConverterOutputOptions = new BaseParser(sourceKvConverterSupplier.getInputOptionsConf(), sourceDataSource, OptionsType.SOURCE_CONVERTER).parse(args);
             wrappingOptions.getSourceOptions().addAll(kvConverterOutputOptions);
         }
 
         if (targetDataSource.hasKvConverter() && !wrappingOptions.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "").contains("BlankKvConverterSupplier")) {
-            KvConverterSupplier targetKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
+
+            KvConverterSupplier targetKvConverterSupplier = (KvConverterSupplier) Class.forName(wrappingOptions.getTargetOptions().getString(KvOptionsConf.SUPPLIER, ""))
+                    .getConstructor(GenericOptions.class).newInstance(wrappingOptions.getTargetOptions());
             GenericOptions kvConverterOutputOptions = new BaseParser(targetKvConverterSupplier.getOutputOptionsConf(), targetDataSource, OptionsType.TARGET_CONVERTER).parse(args);
             wrappingOptions.getTargetOptions().addAll(kvConverterOutputOptions);
         }

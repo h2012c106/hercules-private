@@ -135,7 +135,7 @@ public final class SchemaNegotiator {
 
         Map<String, DataType> res = SchemaUtils.convert(datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()),
                 schemaFetcher.getCustomDataTypeManager());
-        LOG.info("!!!:"+datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()).toJSONString());
+//        LOG.info("!!!:"+datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()).toJSONString());
         // 如果用户全部指定，则返回就完事儿了
         if (res.keySet().containsAll(needTypeColumnNameSet)) {
             return res;
@@ -307,10 +307,8 @@ public final class SchemaNegotiator {
             Map<String, DataType> tmpTargetColumnTypeMap = copyTypeMap(sourceColumnTypeMap,
                     targetColumnTypeMap, biColumnMap, DataSourceRole.TARGET);
 
-            LOG.info("###1: "+sourceColumnTypeMap);
             sourceColumnTypeMap = tmpSourceColumnTypeMap;
             targetColumnTypeMap = tmpTargetColumnTypeMap;
-            LOG.info("###2: "+sourceColumnTypeMap);
             // copy必是添加元素，故只需要比大小便可分辨是否copy
             if (beforeChangedSourceColumnTypeMap.size() != sourceColumnTypeMap.size()) {
                 sourceContext.afterCopyColumnTypeMap(sourceColumnNameList, beforeChangedSourceColumnTypeMap, sourceColumnTypeMap);

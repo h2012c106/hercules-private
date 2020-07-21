@@ -11,6 +11,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
+import com.xiaohongshu.db.hercules.kafka.option.KafkaOptionConf;
 import com.xiaohongshu.db.hercules.kafka.schema.manager.KafkaManager;
 import com.xiaohongshu.db.hercules.kafka.schema.manager.KafkaManagerInitializer;
 import lombok.SneakyThrows;
@@ -21,6 +22,7 @@ import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 public class KafkaOutPutFormat extends HerculesOutputFormat implements KafkaManagerInitializer {
 
@@ -31,7 +33,9 @@ public class KafkaOutPutFormat extends HerculesOutputFormat implements KafkaMana
         options.fromConfiguration(context.getConfiguration());
         GenericOptions targetOptions = options.getTargetOptions();
         KafkaManager manager = initializeManager(targetOptions);
-        return new KafkaRecordWriter(manager, context);
+        KvConverterSupplier kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, ""))
+                .getConstructor(GenericOptions.class).newInstance(options.getTargetOptions());
+        return new KafkaRecordWriter(manager, context, kvConverterSupplier);
     }
 
     @Override
@@ -56,12 +60,15 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
     private final KafkaManager manager;
     private final GenericOptions targetOptions;
     private final KvConverterSupplier kvConverterSupplier;
+    private final String kafkaKeyCol;
 
-    public KafkaRecordWriter(KafkaManager manager, TaskAttemptContext context) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        super(context, new KafkaOutputWrapperManager());
+
+    public KafkaRecordWriter(KafkaManager manager, TaskAttemptContext context, KvConverterSupplier kvConverterSupplier) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+        super(context, kvConverterSupplier.getWrapperSetterFactory());
         this.targetOptions = options.getTargetOptions();
+        this.kafkaKeyCol = this.targetOptions.getString(KafkaOptionConf.KAFKA_KEY, "");
         this.manager = manager;
-        this.kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
+        this.kvConverterSupplier = kvConverterSupplier;
         if (this.kvConverterSupplier instanceof BlankKvConverterSupplier){
             throw new RuntimeException("BlankKvConverterSupplier is not supported in kafka writer.");
         }
@@ -70,7 +77,9 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
     // 若给定columnType，则以给定的为准，否则以wrapper的DataType为准。
     @Override
     protected void innerColumnWrite(HerculesWritable value) {
-        manager.send("", kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
+        String key = value.get(kafkaKeyCol).asString();
+//        manager.send(Thread.currentThread().getName(), kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
+        manager.send(key, kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
     }
 
     @Override
