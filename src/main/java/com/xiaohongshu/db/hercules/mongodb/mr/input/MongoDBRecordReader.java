@@ -54,8 +54,6 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
     private HerculesWritable value;
 
     private MongoDBDataTypeConverter converter;
-    private List<String> objectIdCols;
-    private boolean passObjectId;
 
     private final Document fakeDocument = new Document(FAKE_COLUMN_NAME_USED_BY_LIST, 0);
 
@@ -101,8 +99,6 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
 
         MongoDBInputSplit mongoDBInputSplit = (MongoDBInputSplit) split;
         Document splitQuery = mongoDBInputSplit.getSplitQuery();
-        passObjectId = options.getSourceOptions().getBoolean(MongoDBInputOptionsConf.PASS_OBJECT_ID, false);
-        objectIdCols = Arrays.asList(options.getSourceOptions().getStringArray(MongoDBInputOptionsConf.OBJECT_ID_COL, null));
         try {
             client = manager.getConnection();
             MongoCollection<Document> collection = client.getDatabase(databaseStr).withReadPreference(ReadPreference.secondaryPreferred()).getCollection(collectionStr);
@@ -135,16 +131,6 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
             Object columnValue = entry.getValue();
             DataType columnType = columnTypeMap.getOrDefault(fullColumnName, converter.convertElementType(columnValue));
             res.put(columnName, getWrapperGetter(columnType).get(document, documentPosition, columnName, -1));
-        }
-        // TODO 排查问题
-        if (passObjectId){
-            for(String idCol: objectIdCols){
-                ObjectId theId = document.getObjectId(idCol);
-                if (theId!=null){
-                    String _id = theId.toString();
-                    res.put(idCol, StringWrapper.get(_id));
-                }
-            }
         }
         return res;
     }

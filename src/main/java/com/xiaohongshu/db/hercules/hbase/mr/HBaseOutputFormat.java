@@ -195,9 +195,10 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     protected void innerClose(TaskAttemptContext context) throws IOException {
         try {
 //            mutator.close();
+            table.batch(putsBuffer, null);
             table.close();
             manager.closeConnection();
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             throw new IOException();
         }
     }

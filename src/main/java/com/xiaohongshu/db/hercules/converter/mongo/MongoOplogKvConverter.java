@@ -32,11 +32,10 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, JSONObj
     @Override
     public byte[] generateValue(HerculesWritable value, GenericOptions options, Map<String, DataType> columnTypeMap, List<String> columnNameList) {
 
-        List<String> objectIdCols = Arrays.asList(options.getStringArray(MongoOplogOutputOptionConf.OBJECT_ID_COL, null));
         OplogManagerPB.Oplog.Builder builder = OplogManagerPB.Oplog.newBuilder();
         builder.setNs(options.getString(MongoOplogOutputOptionConf.NS, ""));
         // TODO 后续增加用设置column取ts的逻辑
-        builder.setTimestamp(System.currentTimeMillis());
+        builder.setTimestamp(System.currentTimeMillis()/1000);
         builder.setOp(OperatorPB.Op.INSERT);
         builder.setFromMigrate(false);
         JSONObject doc = new JSONObject();
@@ -49,7 +48,7 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, JSONObj
                 if (type == null) {
                     type = wrapper.getType();
                 }
-                constructDoc(doc, columnName, wrapper, type, objectIdCols);
+                constructDoc(doc, columnName, wrapper, type);
             }
         } else {
             for (String columnName : columnNameList) {
@@ -59,7 +58,7 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, JSONObj
                 if (type == null) {
                     type = wrapper.getType();
                 }
-                constructDoc(doc, columnName, wrapper, type, objectIdCols);
+                constructDoc(doc, columnName, wrapper, type);
             }
         }
         builder.setDoc(doc.toString());
@@ -70,11 +69,9 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, JSONObj
         return null;
     }
 
-    private void constructDoc(JSONObject doc, String columnName, BaseWrapper wrapper, DataType type, List<String> objectIdCol) {
+    private void constructDoc(JSONObject doc, String columnName, BaseWrapper wrapper, DataType type) {
         try {
-            if (objectIdCol.contains(columnName)) {
-//                MongoOplogCustomDataTypeManager.INSTANCE.getIgnoreCase(ObjectIdCustomDataType.INSTANCE.getName())
-//                        .write(wrapper, doc, "", columnName, 0);
+            if (type instanceof com.xiaohongshu.db.hercules.mongodb.datatype.ObjectIdCustomDataType) {
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("$oid", wrapper.asString());
                 doc.put(columnName, jsonObject);
