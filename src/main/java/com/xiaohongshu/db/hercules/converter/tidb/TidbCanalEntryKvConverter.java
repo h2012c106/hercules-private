@@ -1,8 +1,9 @@
-package com.xiaohongshu.db.hercules.converter.mysql;
+package com.xiaohongshu.db.hercules.converter.tidb;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xiaohongshu.db.hercules.converter.mongo.MongoOplogWrapperGetterFactory;
 import com.xiaohongshu.db.hercules.converter.mongo.MongoOplogWrapperSetterFactory;
+import com.xiaohongshu.db.hercules.converter.mysql.CanalEntryKvConverter;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
@@ -14,7 +15,7 @@ import com.xiaohongshu.db.xlog.core.exception.SerDeException;
 
 import java.util.Map;
 
-public class TidbCanalEntryKvConverter extends CanalEntryKvConverter{
+public class TidbCanalEntryKvConverter extends CanalEntryKvConverter {
 
     public TidbCanalEntryKvConverter(GenericOptions options) {
         super(options);

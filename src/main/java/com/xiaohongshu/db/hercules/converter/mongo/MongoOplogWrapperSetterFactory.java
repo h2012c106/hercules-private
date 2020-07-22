@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.converter.mongo;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
@@ -12,20 +13,19 @@ import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import lombok.NonNull;
 import org.apache.commons.codec.binary.Hex;
-import org.bson.types.Binary;
 import org.bson.types.Decimal128;
-import org.json.JSONObject;
+import org.bson.Document;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map;
 
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST;
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST;
 
-public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObject> {
+// TODO 后续 MongoOplogWrapperSetterFactory 直接继承 mongoWriter 的 setterFactory，根据需求override相关函数即可
+public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<Document> {
 
     protected Map<String, DataType> columnTypeMap;
 
@@ -34,10 +34,10 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getByteSetter() {
+    protected WrapperSetter<Document> getByteSetter() {
         return (wrapper, doc, cf, name, seq) -> {
             BigInteger res = wrapper.asBigInteger();
-            if (res == null) {
+            if (wrapper.isNull() || res == null) {
                 doc.put(name, null);
             } else {
                 doc.put(name, res.byteValueExact());
@@ -46,10 +46,10 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getShortSetter() {
+    protected WrapperSetter<Document> getShortSetter() {
         return (wrapper, doc, cf, name, seq) -> {
             BigInteger res = wrapper.asBigInteger();
-            if (res == null) {
+            if (wrapper.isNull() || res == null) {
                 doc.put(name, null);
             } else {
                 doc.put(name, res.shortValueExact());
@@ -58,10 +58,10 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getIntegerSetter() {
+    protected WrapperSetter<Document> getIntegerSetter() {
         return (wrapper, doc, cf, name, seq) -> {
             BigInteger res = wrapper.asBigInteger();
-            if (res == null) {
+            if (wrapper.isNull() || res == null) {
                 doc.put(name, null);
             } else {
                 doc.put(name, res.intValueExact());
@@ -70,10 +70,10 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getLongSetter() {
+    protected WrapperSetter<Document> getLongSetter() {
         return (wrapper, doc, cf, name, seq) -> {
             BigInteger res = wrapper.asBigInteger();
-            if (res == null) {
+            if (wrapper.isNull() || res == null) {
                 doc.put(name, null);
             } else {
                 doc.put(name, res.longValueExact());
@@ -82,15 +82,15 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getLonglongSetter() {
+    protected WrapperSetter<Document> getLonglongSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getFloatSetter() {
+    protected WrapperSetter<Document> getFloatSetter() {
         return (wrapper, doc, cf, name, seq) -> {
             BigDecimal res = wrapper.asBigDecimal();
-            if (res == null) {
+            if (wrapper.isNull() || res == null) {
                 doc.put(name, null);
             } else {
                 doc.put(name, OverflowUtils.numberToFloat(res));
@@ -99,10 +99,10 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getDoubleSetter() {
+    protected WrapperSetter<Document> getDoubleSetter() {
         return (wrapper, doc, cf, name, seq) -> {
             BigDecimal res = wrapper.asBigDecimal();
-            if (res == null) {
+            if (wrapper.isNull() || res == null) {
                 doc.put(name, null);
             } else {
                 doc.put(name, OverflowUtils.numberToDouble(res));
@@ -111,11 +111,11 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getDecimalSetter() {
+    protected WrapperSetter<Document> getDecimalSetter() {
         return (wrapper, doc, cf, name, seq) -> {
             BigDecimal res = wrapper.asBigDecimal();
             // 由于能走到这一步的一定存在对应列名，故不用纠结上游为null时需要无视还是置null
-            if (res == null) {
+            if (wrapper.isNull() || res == null) {
                 doc.put(name, null);
             } else {
                 doc.put(name, new Decimal128(res));
@@ -124,48 +124,70 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getBooleanSetter() {
-        return (wrapper, doc, cf, name, seq) -> doc.put(name, wrapper.asBoolean());
-    }
-
-    @Override
-    protected WrapperSetter<JSONObject> getStringSetter() {
-        return (wrapper, doc, cf, name, seq) -> doc.put(name, wrapper.asString());
-    }
-
-    @Override
-    protected WrapperSetter<JSONObject> getDateSetter() {
-        return null;
-    }
-
-    @Override
-    protected WrapperSetter<JSONObject> getTimeSetter() {
-        return null;
-    }
-
-    @Override
-    protected WrapperSetter<JSONObject> getDatetimeSetter() {
+    protected WrapperSetter<Document> getBooleanSetter() {
         return (wrapper, doc, cf, name, seq) -> {
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("$date", wrapper.asDate().getTime());
-            doc.put(name, jsonObject);
+            if (wrapper.isNull()) {
+                doc.put(name, null);
+            } else {
+                doc.put(name, wrapper.asBoolean());
+            }
         };
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getBytesSetter() {
-//        return (wrapper, doc, cf, name, seq) -> doc.put(name, new String(wrapper.asBytes(), StandardCharsets.UTF_8)); // canal entry 实现
-        return (wrapper, doc, cf, name, seq) -> doc.put(name, Hex.encodeHexString(wrapper.asBytes())); // hexString 实现
+    protected WrapperSetter<Document> getStringSetter() {
+        return (wrapper, doc, cf, name, seq) -> {
+            if (wrapper.isNull()) {
+                doc.put(name, null);
+            } else {
+                doc.put(name, wrapper.asString());
+            }
+        };
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getNullSetter() {
+    protected WrapperSetter<Document> getDateSetter() {
+        return null;
+    }
+
+    @Override
+    protected WrapperSetter<Document> getTimeSetter() {
+        return null;
+    }
+
+    @Override
+    protected WrapperSetter<Document> getDatetimeSetter() {
+        return (wrapper, doc, cf, name, seq) -> {
+            if (wrapper.isNull()) {
+                doc.put(name, null);
+            } else {
+//                Document dateDoc = new Document();
+//                dateDoc.put("$date", wrapper.asDate().getTime());
+                doc.put(name, wrapper.asDate());
+            }
+        };
+    }
+
+    @Override
+    protected WrapperSetter<Document> getBytesSetter() {
+//        return (wrapper, doc, cf, name, seq) -> doc.put(name, new String(wrapper.asBytes(), StandardCharsets.UTF_8)); // canal entry 实现
+        return (wrapper, doc, cf, name, seq) -> {
+            if (wrapper.isNull()) {
+                doc.put(name, null);
+            } else {
+                doc.put(name, Hex.encodeHexString(wrapper.asBytes())); // hexString 实现
+            }
+        };
+    }
+
+    @Override
+    protected WrapperSetter<Document> getNullSetter() {
         return (wrapper, doc, cf, name, seq) -> doc.put(name, null);
     }
 
 
     @Override
-    protected WrapperSetter<JSONObject> getListSetter() {
+    protected WrapperSetter<Document> getListSetter() {
         return (wrapper, doc, cf, name, seq) -> {
             if (wrapper.isNull()) {
                 doc.put(name, null);
@@ -176,10 +198,10 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
     }
 
     @Override
-    protected WrapperSetter<JSONObject> getMapSetter() {
-        return new WrapperSetter<JSONObject>() {
+    protected WrapperSetter<Document> getMapSetter() {
+        return new WrapperSetter<Document>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, JSONObject row, String rowName, String columnName, int columnSeq)
+            public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
                     throws Exception {
                 if (wrapper.isNull()) {
                     // 有可能是个null，不处理else要NPE
@@ -189,7 +211,7 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
                     String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
                     row.put(columnName, mapWrapperToDocument((MapWrapper) wrapper, fullColumnName));
                 } else {
-                    row.put(columnName, ((com.alibaba.fastjson.JSONObject) wrapper.asJson()).getInnerMap());
+                    row.put(columnName, ((JSONObject) wrapper.asJson()).getInnerMap());
                 }
             }
         };
@@ -205,23 +227,23 @@ public class MongoOplogWrapperSetterFactory extends WrapperSetterFactory<JSONObj
                 // 由于不能指定list下的类型故只能抄作业
                 DataType dataType = subWrapper.getType();
                 // 不能像reader一样共享一个，写会有多线程情况，要慎重
-                JSONObject jsonObject = new JSONObject();
-                getWrapperSetter(dataType).set(subWrapper, jsonObject, FAKE_PARENT_NAME_USED_BY_LIST, FAKE_COLUMN_NAME_USED_BY_LIST, -1);
-                Object convertedValue = jsonObject.get(FAKE_COLUMN_NAME_USED_BY_LIST);
+                Document idDoc = new Document();
+                getWrapperSetter(dataType).set(subWrapper, idDoc, FAKE_PARENT_NAME_USED_BY_LIST, FAKE_COLUMN_NAME_USED_BY_LIST, -1);
+                Object convertedValue = idDoc.get(FAKE_COLUMN_NAME_USED_BY_LIST);
                 res.add(convertedValue);
             }
         } else {
             DataType dataType = wrapper.getType();
-            JSONObject jsonObject = new JSONObject();
-            getWrapperSetter(dataType).set(wrapper, jsonObject, FAKE_PARENT_NAME_USED_BY_LIST, FAKE_COLUMN_NAME_USED_BY_LIST, -1);
-            Object convertedValue = jsonObject.get(FAKE_COLUMN_NAME_USED_BY_LIST);
+            Document doc = new Document();
+            getWrapperSetter(dataType).set(wrapper, doc, FAKE_PARENT_NAME_USED_BY_LIST, FAKE_COLUMN_NAME_USED_BY_LIST, -1);
+            Object convertedValue = doc.get(FAKE_COLUMN_NAME_USED_BY_LIST);
             res = Lists.newArrayList(convertedValue);
         }
         return res;
     }
 
-    private JSONObject mapWrapperToDocument(MapWrapper wrapper, String columnPath) throws Exception {
-        JSONObject res = new JSONObject();
+    private Document mapWrapperToDocument(MapWrapper wrapper, String columnPath) throws Exception {
+        Document res = new Document();
         for (Map.Entry<String, BaseWrapper> entry : wrapper.entrySet()) {
             String columnName = entry.getKey();
             String fullColumnName = WritableUtils.concatColumn(columnPath, columnName);

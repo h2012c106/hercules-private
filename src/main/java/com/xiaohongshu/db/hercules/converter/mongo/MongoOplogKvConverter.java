@@ -13,14 +13,24 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.xlog.oplog.OplogSerDe;
-import org.json.JSONObject;
+import org.bson.Document;
+import org.bson.json.JsonMode;
+import org.bson.json.JsonWriterSettings;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class MongoOplogKvConverter extends KvConverter<Integer, Integer, JSONObject> {
+public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Document> {
+
+    private static final JsonWriterSettings jsonWriterSettings = JsonWriterSettings.builder()
+        .outputMode(JsonMode.RELAXED)
+//        .dateTimeConverter((time, writer)->{
+//            writer.writeStartObject();
+//            writer.writeString("$date", String.valueOf(time));
+//            writer.writeEndObject();
+//        })
+        .build();
 
     public MongoOplogKvConverter(GenericOptions options) {
         super(null, new MongoOplogWrapperGetterFactory(), new MongoOplogWrapperSetterFactory(), options);
@@ -38,7 +48,7 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, JSONObj
         builder.setTimestamp(System.currentTimeMillis()/1000);
         builder.setOp(OperatorPB.Op.INSERT);
         builder.setFromMigrate(false);
-        JSONObject doc = new JSONObject();
+        Document doc = new Document();
         if (columnNameList.size() == 0) {
             for (Map.Entry<String, BaseWrapper> entry : value.entrySet()) {
 
@@ -61,7 +71,7 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, JSONObj
                 constructDoc(doc, columnName, wrapper, type);
             }
         }
-        builder.setDoc(doc.toString());
+        builder.setDoc(doc.toJson(jsonWriterSettings));
         try {
             return OplogSerDe.serialize(builder.build(), Codec.CODEC_OPLOG_PB01);
         } catch (SerDeException ignored) {
@@ -69,17 +79,12 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, JSONObj
         return null;
     }
 
-    private void constructDoc(JSONObject doc, String columnName, BaseWrapper wrapper, DataType type) {
+    private void constructDoc(Document doc, String columnName, BaseWrapper wrapper, DataType type) {
+
         try {
-            if (type instanceof com.xiaohongshu.db.hercules.mongodb.datatype.ObjectIdCustomDataType) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("$oid", wrapper.asString());
-                doc.put(columnName, jsonObject);
-            } else {
-                getWrapperSetter(type).set(wrapper, doc, "", columnName, 0);
-            }
+            getWrapperSetter(type).set(wrapper, doc, "", columnName, 0);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
