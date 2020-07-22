@@ -23,7 +23,7 @@ public class HBaseManager {
     private static final Log LOG = LogFactory.getLog(HBaseManager.class);
 
     private final GenericOptions options;
-    private Connection conn = null;
+    private volatile static Connection conn;
     private Configuration conf = null;
 
     public HBaseManager(GenericOptions options) {
@@ -31,11 +31,13 @@ public class HBaseManager {
     }
 
     public Connection getConnection() throws IOException {
-        // return connection if connection already established and not closed
-        if (conn != null && !conn.isClosed()) {
-            return conn;
+        if (null == conn) {
+            synchronized (Connection.class) {
+                if (null == conn) {
+                    conn = ConnectionFactory.createConnection(getConf());
+                }
+            }
         }
-        conn = ConnectionFactory.createConnection(getConf());
         return conn;
     }
 
@@ -44,8 +46,8 @@ public class HBaseManager {
      */
     public void setBasicConf() {
 
-        conf.set("hbase.zookeeper.quorum", options.getString(HBaseOptionsConf.HB_ZK_QUORUM,null));
-        conf.set("hbase.zookeeper.property.clientPort", options.getString(HBaseOptionsConf.HB_ZK_PORT,"2181"));
+        conf.set("hbase.zookeeper.quorum", options.getString(HBaseOptionsConf.HB_ZK_QUORUM, null));
+        conf.set("hbase.zookeeper.property.clientPort", options.getString(HBaseOptionsConf.HB_ZK_PORT, "2181"));
         conf.set("zookeeper.znode.parent", "/hbase-unsecure");
     }
 
