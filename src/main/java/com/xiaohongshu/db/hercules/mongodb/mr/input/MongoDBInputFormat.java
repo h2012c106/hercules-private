@@ -30,10 +30,7 @@ import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK;
@@ -163,18 +160,21 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
                     throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, IGNORE_SPLIT_KEY_CHECK));
                 }
                 // 直接按ObjectId的时间戳切分，没辙了，如果_id不是ObjectId，那只能`--num-mapper 1`
-                Object minObj = col.find(findQuery)
+                LOG.info(String.format("Finding min with findQuery: %s; projectionQuery: %s", findQuery, projectionQuery));
+                Object minObj = Objects.requireNonNull(col.find(findQuery)
                         .projection(projectionQuery)
                         .sort(new Document(splitBy, 1))
                         .limit(1)
-                        .first()
+                        .first())
                         .get(splitBy);
-                Object maxObj = col.find(findQuery)
+                LOG.info(String.format("Finding max with findQuery: %s; projectionQuery: %s", findQuery, projectionQuery));
+                Object maxObj = Objects.requireNonNull(col.find(findQuery)
                         .projection(projectionQuery)
                         .sort(new Document(splitBy, -1))
                         .limit(1)
-                        .first()
+                        .first())
                         .get(splitBy);
+
                 if (minObj.getClass() != maxObj.getClass()) {
                     throw new RuntimeException(String.format("The column [%s] has more than one type, not capable to be a split-by column, min vs max: %s vs %s.",
                             splitBy, minObj.getClass().getCanonicalName(), maxObj.getClass().getCanonicalName()));

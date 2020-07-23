@@ -24,13 +24,13 @@ import java.util.Map;
 public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Document> {
 
     private static final JsonWriterSettings jsonWriterSettings = JsonWriterSettings.builder()
-        .outputMode(JsonMode.RELAXED)
+            .outputMode(JsonMode.RELAXED)
 //        .dateTimeConverter((time, writer)->{
 //            writer.writeStartObject();
 //            writer.writeString("$date", String.valueOf(time));
 //            writer.writeEndObject();
 //        })
-        .build();
+            .build();
 
     public MongoOplogKvConverter(GenericOptions options) {
         super(null, new MongoOplogWrapperGetterFactory(), new MongoOplogWrapperSetterFactory(), options);
@@ -45,7 +45,7 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Documen
         OplogManagerPB.Oplog.Builder builder = OplogManagerPB.Oplog.newBuilder();
         builder.setNs(options.getString(MongoOplogOutputOptionConf.NS, ""));
         // TODO 后续增加用设置column取ts的逻辑
-        builder.setTimestamp(System.currentTimeMillis()/1000);
+        builder.setTimestamp(System.currentTimeMillis() / 1000);
         builder.setOp(OperatorPB.Op.INSERT);
         builder.setFromMigrate(false);
         Document doc = new Document();
@@ -64,6 +64,9 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Documen
             for (String columnName : columnNameList) {
 
                 BaseWrapper wrapper = value.get(columnName);
+                if (wrapper == null) {
+                    continue;
+                }
                 DataType type = columnTypeMap.get(columnName);
                 if (type == null) {
                     type = wrapper.getType();

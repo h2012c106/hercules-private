@@ -70,7 +70,7 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
         this.manager = manager;
         this.kvConverterSupplier = kvConverterSupplier;
         if (this.kvConverterSupplier instanceof BlankKvConverterSupplier){
-            throw new RuntimeException("BlankKvConverterSupplier is not supported in kafka writer.");
+            throw new RuntimeException("BlankKvConverterSupplier is not supported in kafka writer. Please specify a valid kvConverter.");
         }
     }
 
