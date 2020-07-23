@@ -53,7 +53,7 @@ public abstract class CanalEntryKvConverter extends KvConverter<Integer, CanalEn
             try {
                 getWrapperSetter(type).set(wrapper, columnBuilder, "", "", 0);
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
             columnBuilder.setIsKey(columnName.equals(keyCol)).setIsNull(false);
             rowDataBuilder.addAfterColumns(columnBuilder.build());

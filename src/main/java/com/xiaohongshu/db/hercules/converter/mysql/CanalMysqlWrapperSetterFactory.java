@@ -5,6 +5,8 @@ import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.sql.Types;
 import java.util.Date;
@@ -13,32 +15,52 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getByteSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigInteger().shortValueExact());
-            builder.setValue(res);
+            BigInteger res = wrapper.asBigInteger();
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                String val = String.valueOf(res.shortValueExact());
+                builder.setValue(val);
+            }
         };
     }
 
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getShortSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigInteger().intValueExact());
-            builder.setValue(res);
+            BigInteger res = wrapper.asBigInteger();
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                String val = String.valueOf(res.intValueExact());
+                builder.setValue(val);
+            }
         };
     }
 
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getIntegerSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigInteger().longValueExact());
-            builder.setValue(res);
+            BigInteger res = wrapper.asBigInteger();
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                String val = String.valueOf(res.longValueExact());
+                builder.setValue(val);
+            }
         };
     }
 
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getLongSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigInteger());
-            builder.setValue(res);
+            BigInteger res = wrapper.asBigInteger();
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                String val = String.valueOf(res);
+                builder.setValue(val);
+            }
         };
     }
 
@@ -50,32 +72,52 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getFloatSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(OverflowUtils.numberToFloat(wrapper.asBigDecimal()));
-            builder.setValue(res);
+            BigDecimal res = wrapper.asBigDecimal();
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                String val = String.valueOf(OverflowUtils.numberToFloat(res));
+                builder.setValue(val);
+            }
         };
     }
 
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getDoubleSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(OverflowUtils.numberToDouble(wrapper.asBigDecimal()));
-            builder.setValue(res);
+            BigDecimal res = wrapper.asBigDecimal();
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                String val = String.valueOf(OverflowUtils.numberToDouble(res));
+                builder.setValue(val);
+            }
         };
     }
 
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getDecimalSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBigDecimal());
-            builder.setValue(res);
+            BigDecimal res = wrapper.asBigDecimal();
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                String val = String.valueOf(res);
+                builder.setValue(val);
+            }
         };
     }
 
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getBooleanSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = String.valueOf(wrapper.asBoolean());
-            builder.setValue(res);
+            Boolean res = wrapper.asBoolean();
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                String val = String.valueOf(res);
+                builder.setValue(val);
+            }
         };
     }
 
@@ -83,7 +125,11 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     protected WrapperSetter<CanalEntry.Column.Builder> getStringSetter() {
         return (wrapper, builder, cf, name, seq) -> {
             String res = wrapper.asString();
-            builder.setValue(res);
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                builder.setValue(res);
+            }
         };
     }
 
@@ -91,7 +137,11 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     protected WrapperSetter<CanalEntry.Column.Builder> getDateSetter() {
         return (wrapper, builder, cf, name, seq) -> {
             String res = wrapper.asString();
-            builder.setValue(res);
+            if (res == null){
+                builder.setIsNull(true);
+            } else {
+                builder.setValue(res);
+            }
         };
     }
 
@@ -122,8 +172,13 @@ public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEn
     @Override
     protected WrapperSetter<CanalEntry.Column.Builder> getBytesSetter() {
         return (wrapper, builder, cf, name, seq) -> {
-            String res = new String(wrapper.asBytes(), StandardCharsets.UTF_8);
-            builder.setValue(res);
+            byte[] res = wrapper.asBytes();
+            if (res == null) {
+                builder.setValue("");
+            } else {
+                String val = new String(res, StandardCharsets.UTF_8);
+                builder.setValue(val);
+            }
         };
     }
 
