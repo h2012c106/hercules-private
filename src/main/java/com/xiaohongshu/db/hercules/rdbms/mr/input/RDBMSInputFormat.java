@@ -36,7 +36,7 @@ public class RDBMSInputFormat extends HerculesInputFormat
     public static final String AVERAGE_MAP_ROW_NUM = "hercules.average.map.row.num";
 
     protected RDBMSManager manager;
-    private String baseSql;
+    protected String baseSql;
     protected RDBMSSchemaFetcher schemaFetcher;
     protected RDBMSDataTypeConverter converter;
     protected Map<String, DataType> columnTypeMap;

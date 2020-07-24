@@ -100,7 +100,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     }
 
     @Override
-    public void processOptions(GenericOptions options) {
+    protected void innerProcessOptions(GenericOptions options) {
         super.processOptions(options);
 
         String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);

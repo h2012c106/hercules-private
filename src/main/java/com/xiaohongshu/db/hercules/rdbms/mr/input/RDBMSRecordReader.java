@@ -28,7 +28,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
     /**
      * 用于估算进度
      */
-    private Long mapAverageRowNum;
+    protected Long mapAverageRowNum;
     protected Connection connection = null;
     protected PreparedStatement statement = null;
     protected ResultSet resultSet = null;
@@ -41,10 +41,10 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
         this.manager = manager;
     }
 
-    protected final String makeSql(GenericOptions sourceOptions, RDBMSInputSplit split) {
+    protected String makeSql(GenericOptions sourceOptions, InputSplit split) {
         String querySql = SqlUtils.makeBaseQuery(sourceOptions);
-        String splitBoundary = String.format("%s AND %s", split.getLowerClause(),
-                split.getUpperClause());
+        String splitBoundary = String.format("%s AND %s", ((RDBMSInputSplit) split).getLowerClause(),
+                ((RDBMSInputSplit) split).getUpperClause());
         return SqlUtils.addWhere(querySql, splitBoundary);
     }
 
@@ -72,7 +72,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
-        String querySql = makeSql(options.getSourceOptions(), (RDBMSInputSplit) split);
+        String querySql = makeSql(options.getSourceOptions(), split);
 
         Integer fetchSize = options.getSourceOptions().getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
 
@@ -111,7 +111,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
         return value;
     }
 
-    private boolean isDone() {
+    protected boolean isDone() {
         try {
             return resultSet != null && (resultSet.isClosed() || resultSet.isAfterLast());
         } catch (SQLException sqlE) {

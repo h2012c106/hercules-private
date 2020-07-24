@@ -27,6 +27,7 @@ public enum DataSource {
     public boolean hasKvConverter() {
         return hasKvConverter;
     }
+    Myhub;
 
     public static DataSource valueOfIgnoreCase(String value) {
         for (DataSource dataSource : DataSource.values()) {
