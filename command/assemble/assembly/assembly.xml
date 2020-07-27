@@ -9,6 +9,13 @@
     <includeBaseDirectory>true</includeBaseDirectory>
     <fileSets>
         <fileSet>
+            <directory>src/main/resources</directory>
+            <outputDirectory>conf</outputDirectory>
+            <includes>
+                <include>module.yml</include>
+            </includes>
+        </fileSet>
+        <fileSet>
             <directory>../core/target</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
@@ -17,21 +24,49 @@
         </fileSet>
         <fileSet>
             <directory>../rdbms/target</directory>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>module-lib</outputDirectory>
             <includes>
                 <include>**/hercules-command-*.jar</include>
             </includes>
         </fileSet>
         <fileSet>
             <directory>../mysql/target</directory>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>module-lib</outputDirectory>
             <includes>
                 <include>**/hercules-command-*.jar</include>
             </includes>
         </fileSet>
         <fileSet>
             <directory>../tidb/target</directory>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../parquet/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../mongodb/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../parquet-schema/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../clickhouse/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
             <includes>
                 <include>**/hercules-command-*.jar</include>
             </includes>

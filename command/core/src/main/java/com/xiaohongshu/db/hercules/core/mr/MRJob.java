@@ -9,9 +9,12 @@ import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandExecutor;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandResult;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.TaskCompletionEvent;
 import org.apache.hadoop.mapreduce.Counters;
@@ -21,6 +24,8 @@ import org.apache.sqoop.util.PerfCounters;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,9 +42,14 @@ public class MRJob {
     private static final String[] MAPREDUCE_USER_CLASSPATH_FIRST
             = new String[]{"mapreduce.user.classpath.first", "mapreduce.task.classpath.user.precedence"};
 
+    private static final String TMP_JARS_PROP = "tmpjars";
+
     private AssemblySupplier sourceAssemblySupplier;
     private AssemblySupplier targetAssemblySupplier;
     private WrappingOptions options;
+
+    private String sourceJar;
+    private String targetJar;
 
     public MRJob(AssemblySupplier sourceAssemblySupplier,
                  AssemblySupplier targetAssemblySupplier,
@@ -174,6 +184,16 @@ public class MRJob {
         }
     }
 
+    private String qualifyTmpJar(String tmpPath, Configuration conf) throws IOException {
+        FileSystem fs = FileSystem.getLocal(conf);
+        return new Path(tmpPath).makeQualified(fs).toString();
+    }
+
+    public void setJar(String sourceJar, String targetJar) {
+        this.sourceJar = sourceJar;
+        this.targetJar = targetJar;
+    }
+
     public void run(String... args) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration configuration = new Configuration();
 
@@ -204,6 +224,20 @@ public class MRJob {
                         CommonOptionsConf.DEFAULT_NUM_MAPPER)
         );
         job.setNumReduceTasks(0);
+
+        // 设置libjar
+        List<String> tmpJarList = new LinkedList<>();
+        String tmpJars = job.getConfiguration().get(TMP_JARS_PROP);
+        if (!StringUtils.isEmpty(tmpJars)) {
+            tmpJarList.add(tmpJars);
+        }
+        tmpJarList.add(qualifyTmpJar(sourceJar, configuration));
+        tmpJarList.add(qualifyTmpJar(targetJar, configuration));
+//        LOG.info("System path.separator: " + System.getProperty("path.separator"));
+//        String tmpJarsStr = StringUtils.join(tmpJarList, System.getProperty("path.separator"));
+        String tmpJarsStr = StringUtils.join(tmpJarList, ",");
+        job.getConfiguration().set(TMP_JARS_PROP, tmpJarsStr);
+        LOG.debug(String.format("Property [%s]: %s", TMP_JARS_PROP, tmpJarsStr));
 
         sourceAssemblySupplier.getJobContextAsSource().preRun(options);
         targetAssemblySupplier.getJobContextAsTarget().preRun(options);

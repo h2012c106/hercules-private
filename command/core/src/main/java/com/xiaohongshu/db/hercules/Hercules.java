@@ -10,9 +10,8 @@ import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
 import com.xiaohongshu.db.hercules.core.utils.ConfigUtils;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
+import com.xiaohongshu.db.hercules.core.utils.ModuleConfig;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
-import lombok.SneakyThrows;
-import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -20,11 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
-import java.util.Properties;
 
 public class Hercules {
 
@@ -45,8 +40,10 @@ public class Hercules {
         String sourceDataSourceName = dataSourceNames[0];
         String targetDataSourceName = dataSourceNames[1];
 
-        AssemblySupplier sourceSupplier = ConfigUtils.getAssemblySupplier(sourceDataSourceName);
-        AssemblySupplier targetSupplier = ConfigUtils.getAssemblySupplier(targetDataSourceName);
+        ModuleConfig sourceModuleConfig = ConfigUtils.getModuleConfig(sourceDataSourceName);
+        ModuleConfig targetModuleConfig = ConfigUtils.getModuleConfig(targetDataSourceName);
+        AssemblySupplier sourceSupplier = ConfigUtils.getAssemblySupplier(sourceModuleConfig);
+        AssemblySupplier targetSupplier = ConfigUtils.getAssemblySupplier(targetModuleConfig);
 
         DataSource sourceDataSource = sourceSupplier.getDataSource();
         DataSource targetDataSource = targetSupplier.getDataSource();
@@ -101,6 +98,7 @@ public class Hercules {
         negotiator.negotiate();
 
         MRJob job = new MRJob(sourceSupplier, targetSupplier, wrappingOptions);
+        job.setJar(sourceModuleConfig.getJar(), targetModuleConfig.getJar());
 
         int ret;
         try {

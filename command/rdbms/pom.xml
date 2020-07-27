@@ -47,6 +47,7 @@
             <groupId>com.xiaohongshu.db</groupId>
             <artifactId>hercules-command-core</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.alibaba/druid -->

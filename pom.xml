@@ -38,5 +38,4 @@
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:00'Z'</maven.build.timestamp.format>
     </properties>
 
-
 </project>

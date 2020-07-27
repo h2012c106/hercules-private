@@ -40,9 +40,15 @@
     <modules>
         <module>shade</module>
         <module>core</module>
+
         <module>rdbms</module>
         <module>mysql</module>
         <module>tidb</module>
+        <module>parquet</module>
+        <module>mongodb</module>
+        <module>parquet-schema</module>
+        <module>clickhouse</module>
+
         <module>assemble</module>
     </modules>
 
@@ -128,65 +134,41 @@
             <version>5.6.2</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-client -->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+            <version>2.2.4</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-auth</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-mapreduce -->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-mapreduce</artifactId>
+            <version>2.2.4</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-metastore -->
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-metastore</artifactId>
+            <version>3.1.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.parquet</groupId>
+                    <artifactId>parquet-hadoop-bundle</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
-            <!-- https://mvnrepository.com/artifact/ru.yandex.clickhouse/clickhouse-jdbc -->
-            <dependency>
-                <groupId>ru.yandex.clickhouse</groupId>
-                <artifactId>clickhouse-jdbc</artifactId>
-                <version>0.2.4</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-client -->
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-client</artifactId>
-                <version>2.2.4</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.hadoop</groupId>
-                        <artifactId>hadoop-auth</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-mapreduce -->
-            <dependency>
-                <groupId>org.apache.hbase</groupId>
-                <artifactId>hbase-mapreduce</artifactId>
-                <version>2.2.4</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.mongodb/mongo-java-driver -->
-            <dependency>
-                <groupId>org.mongodb</groupId>
-                <artifactId>mongo-java-driver</artifactId>
-                <version>3.12.3</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-metastore -->
-            <dependency>
-                <groupId>org.apache.hive</groupId>
-                <artifactId>hive-metastore</artifactId>
-                <version>3.1.2</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.parquet</groupId>
-                        <artifactId>parquet-hadoop-bundle</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.apache.parquet/parquet-hadoop -->
-            <dependency>
-                <groupId>org.apache.parquet</groupId>
-                <artifactId>parquet-hadoop</artifactId>
-                <version>1.11.0</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-exec -->
-            <!--这个依赖必须晚于parquet-hadoop申明，不然会以hive-exec的parquet(这逼直接复制源码进项目的，maven管不了)覆盖掉parquet-hadoop-->
-            <dependency>
-                <groupId>org.apache.hive</groupId>
-                <artifactId>hive-exec</artifactId>
-                <version>3.1.2</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 

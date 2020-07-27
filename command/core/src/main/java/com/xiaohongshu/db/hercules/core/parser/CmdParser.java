@@ -6,6 +6,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsConf;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import hercules.shaded.org.apache.commons.cli.*;
+import lombok.NonNull;
 
 import java.util.ListIterator;
 import java.util.Map;
@@ -15,13 +16,14 @@ public class CmdParser implements Parser<String[]> {
     public static final String SOURCE_OPTIONS_PREFIX = "source-";
     public static final String TARGET_OPTIONS_PREFIX = "target-";
 
+
     private boolean help;
 
     private OptionsConf optionsConf;
     private DataSource dataSource;
     private OptionsType optionsType;
 
-    public CmdParser(OptionsConf optionsConf, DataSource dataSource, OptionsType optionsType) {
+    public CmdParser(@NonNull OptionsConf optionsConf, DataSource dataSource, OptionsType optionsType) {
         this.optionsConf = optionsConf;
         this.dataSource = dataSource;
         this.optionsType = optionsType;

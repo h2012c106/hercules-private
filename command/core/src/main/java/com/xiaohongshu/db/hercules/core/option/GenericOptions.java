@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class GenericOptions {
-    private static final String PREFIX = "com/xiaohongshu/db/hercules";
+    private static final String PREFIX = "hercules";
     private static final String SOURCE_SUFFIX = "source";
     private static final String TARGET_SUFFIX = "target";
     private static final String COMMON_SUFFIX = "common";
