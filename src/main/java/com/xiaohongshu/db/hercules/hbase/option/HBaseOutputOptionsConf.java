@@ -42,7 +42,6 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
                 .needArg(true)
-                .necessary(true)
                 .description("The column specified to be the row key of PUT or DELETE operations")
                 .build());
         tmpList.add(SingleOptionConf.builder()
@@ -73,10 +72,10 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
                     null);
         }
 
-        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-        if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {
-            throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
-        }
+//        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
+//        List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+//        if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {
+//            throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
+//        }
     }
 }

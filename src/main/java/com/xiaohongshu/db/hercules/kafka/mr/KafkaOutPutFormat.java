@@ -80,6 +80,7 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
         String key = value.get(kafkaKeyCol).asString();
 //        manager.send(Thread.currentThread().getName(), kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
         manager.send(key, kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
+//        manager.send(kvConverterSupplier.getKvConverter().getKey(), kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
     }
 
     @Override

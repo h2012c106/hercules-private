@@ -44,14 +44,13 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Documen
 
         OplogManagerPB.Oplog.Builder builder = OplogManagerPB.Oplog.newBuilder();
         builder.setNs(options.getString(MongoOplogOutputOptionConf.NS, ""));
-        // TODO 后续增加用设置column取ts的逻辑
         builder.setTimestamp(System.currentTimeMillis() / 1000);
         builder.setOp(OperatorPB.Op.INSERT);
         builder.setFromMigrate(false);
         Document doc = new Document();
+        // 若columnNameList为空，则遍历上游传下来的数据，组装 oplog
         if (columnNameList.size() == 0) {
             for (Map.Entry<String, BaseWrapper> entry : value.entrySet()) {
-
                 BaseWrapper wrapper = entry.getValue();
                 String columnName = entry.getKey();
                 DataType type = columnTypeMap.get(columnName);
@@ -60,11 +59,11 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Documen
                 }
                 constructDoc(doc, columnName, wrapper, type);
             }
-        } else {
+        } else { // 若columnNameList不为空，则按照columnNameList来组装 oplog
             for (String columnName : columnNameList) {
 
                 BaseWrapper wrapper = value.get(columnName);
-                if (wrapper == null) {
+                if (wrapper == null) { // 给定的columnName不在上游传下来的value中，则会有NPE可能
                     continue;
                 }
                 DataType type = columnTypeMap.get(columnName);
@@ -93,6 +92,6 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Documen
 
     @Override
     public HerculesWritable generateHerculesWritable(byte[] data, GenericOptions options) throws IOException {
-        return null;
+        throw new RuntimeException("Method not implemented");
     }
 }
