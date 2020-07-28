@@ -1,6 +1,8 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
+import com.xiaohongshu.db.hercules.core.supplier.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
@@ -8,33 +10,35 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
+import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.BufferedMutator;
+import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
 
     /**
      * 配置 conf 并返回 HerculesRecordWriter
      */
+    @SneakyThrows
     @Override
-    public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+    public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) {
 
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
@@ -67,22 +71,30 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     private final String columnFamily;
     private final String rowKeyCol;
     private final HBaseManager manager;
+    private final KvConverterSupplier kvConverterSupplier;
+    //    private final BufferedMutator mutator;
+    private final Table table;
+    private final List<Put> putsBuffer = new LinkedList<>();
+    private final int PUT_BUFFER_SIZE = 10000;
 
-    private final BufferedMutator mutator;
-
-    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException {
+    public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
         super(context, new HBaseOutputWrapperManager());
         this.manager = manager;
         Configuration conf = manager.getConf();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
         rowKeyCol = conf.get(HBaseOptionsConf.ROW_KEY_COL_NAME);
-        mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
-
+//        mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
+        table = HBaseManager.getTable(manager.getConf(), manager);
+        kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
         List<String> temp = new ArrayList<>(columnNameList);
         temp.remove(rowKeyCol);
         columnNameList = temp;
         if (columnNameList.size() == 0) {
             throw new RuntimeException("Column name list failed to fetch(no column name found).");
+        }
+        if (!options.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "").contains("BlankKvConverterSupplier")) {
+            columnNameList.clear();
+            columnNameList.addAll(columnTypeMap.keySet());
         }
     }
 
@@ -142,21 +154,51 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
      * innerColumnWrite 和 innerMapWrite 处理逻辑暂设一致。hbase 写入是遍历 HerculesWritable 中的 map
      */
     @Override
-    protected void innerColumnWrite(HerculesWritable record) {
+    protected void innerColumnWrite(HerculesWritable record) throws IOException {
         innerMapWrite(record);
     }
 
-    @SneakyThrows
     @Override
-    protected void innerMapWrite(HerculesWritable record) {
-        Put put = generatePut(record);
-        mutator.mutate(put);
+    protected void innerMapWrite(HerculesWritable record) throws IOException {
+        Put put;
+
+        try {
+            if (kvConverterSupplier instanceof BlankKvConverterSupplier) {
+                put = generatePut(record);
+            } else {
+                put = getConvertedPut(record);
+            }
+//            mutator.mutate(put);
+            put.setDurability(Durability.SKIP_WAL);
+            putsBuffer.add(put);
+            if (putsBuffer.size() > PUT_BUFFER_SIZE) {
+                table.batch(putsBuffer, null);
+//                table.put(putsBuffer);
+                putsBuffer.clear();
+            }
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    protected Put getConvertedPut(HerculesWritable record) {
+        String qualifier = options.getTargetOptions().getString(HBaseOutputOptionsConf.CONVERT_COLUMN_NAME, "");
+        Put put = new Put(Bytes.toBytes(record.get(rowKeyCol).asString()));
+        WritableUtils.remove(record.getRow(), Collections.singletonList(rowKeyCol));
+        byte[] value = kvConverterSupplier.getKvConverter().generateValue(record, options.getTargetOptions(), columnTypeMap, columnNameList);
+        put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
+        return put;
     }
 
     @Override
     protected void innerClose(TaskAttemptContext context) throws IOException {
-        mutator.flush();
-        mutator.close();
-        manager.closeConnection();
+        try {
+//            mutator.close();
+            table.batch(putsBuffer, null);
+            table.close();
+            manager.closeConnection();
+        } catch (IOException | InterruptedException e) {
+            throw new IOException();
+        }
     }
 }

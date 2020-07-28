@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package oplogManagerPB;
+
+//option java_package = "com.red.producer.PB"; // 声明生成消息类的java包路径
+option java_outer_classname = "OperatorPB"; // 声明生成消息类的类名
+
+
+enum Op {
+    NONE = 0;
+    INSERT = 1;
+    UPDATE = 2;
+    REMOVE = 3;
+}

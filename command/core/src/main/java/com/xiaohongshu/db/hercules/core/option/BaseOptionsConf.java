@@ -65,7 +65,7 @@ public abstract class BaseOptionsConf implements OptionsConf {
 
     abstract protected List<BaseOptionsConf> generateAncestorList();
 
-    public List<BaseOptionsConf> getAncestorList() {
+    public final List<BaseOptionsConf> getAncestorList() {
         return ancestorList;
     }
 
@@ -99,7 +99,7 @@ public abstract class BaseOptionsConf implements OptionsConf {
     }
 
     @Override
-    public void validateOptions(GenericOptions options) {
+    public final void validateOptions(GenericOptions options) {
         for (BaseOptionsConf ancestor : ancestorList) {
             ancestor.validateOptions(options);
         }
@@ -112,10 +112,10 @@ public abstract class BaseOptionsConf implements OptionsConf {
      *
      * @param options
      */
-    abstract public void innerValidateOptions(GenericOptions options);
+    abstract protected void innerValidateOptions(GenericOptions options);
 
     @Override
-    public void processOptions(GenericOptions options) {
+    public final void processOptions(GenericOptions options) {
         for (BaseOptionsConf ancestor : ancestorList) {
             ancestor.processOptions(options);
         }
@@ -127,7 +127,7 @@ public abstract class BaseOptionsConf implements OptionsConf {
      *
      * @param options
      */
-    public void innerProcessOptions(GenericOptions options) {
+    protected void innerProcessOptions(GenericOptions options) {
     }
 
     private List<SingleOptionConf> clearOption(List<SingleOptionConf> confList, Collection<String> confNameList) {
@@ -137,7 +137,7 @@ public abstract class BaseOptionsConf implements OptionsConf {
     }
 
     @Override
-    public Map<String, SingleOptionConf> getOptionsMap() {
+    public final Map<String, SingleOptionConf> getOptionsMap() {
         Map<String, SingleOptionConf> optionConfMap = new HashMap<>();
         for (SingleOptionConf conf : optionConfList) {
             optionConfMap.put(conf.getName(), conf);

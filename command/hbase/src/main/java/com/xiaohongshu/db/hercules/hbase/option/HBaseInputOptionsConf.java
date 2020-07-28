@@ -9,38 +9,23 @@ import java.util.List;
 
 public class HBaseInputOptionsConf extends BaseOptionsConf {
 
-    /**
-     * Scan start row
-     */
-    public static final String SCAN_ROW_START = "hbase.mapreduce.scan.row.start";
-    /**
-     * Scan stop row
-     */
-    public static final String SCAN_ROW_STOP = "hbase.mapreduce.scan.row.stop";
-    /**
-     * Column Family to Scan
-     */
-    public static final String SCAN_COLUMN_FAMILY = "hbase.mapreduce.scan.column.family";
-    /**
-     * The timestamp used to filter columns with a specific timestamp.
-     */
-    public static final String SCAN_TIMESTAMP = "hbase.mapreduce.scan.timestamp";
-    /**
-     * The starting timestamp used to filter columns with a specific range of versions.
-     */
-    public static final String SCAN_TIMERANGE_START = "hbase.mapreduce.scan.timerange.start";
-    /**
-     * The ending timestamp used to filter columns with a specific range of versions.
-     */
-    public static final String SCAN_TIMERANGE_END = "hbase.mapreduce.scan.timerange.end";
-    /**
-     * The number of rows for caching that will be passed to scanners.
-     */
-    public static final String SCAN_CACHEDROWS = "hbase.mapreduce.scan.cachedrows";
-    /**
-     * Set the maximum number of values to return for each call to next().
-     */
-    public static final String SCAN_BATCHSIZE = "hbase.mapreduce.scan.batchsize";
+    /** Scan start row */
+    public static final String SCAN_ROW_START = "row-start";
+    /** Scan stop row */
+    public static final String SCAN_ROW_STOP = "row-stop";
+    /** Column Family to Scan */
+    public static final String SCAN_COLUMN_FAMILY = "column-family";
+    /** The timestamp used to filter columns with a specific timestamp. */
+    public static final String SCAN_TIMESTAMP = "scan-timestamp";
+    /** The starting timestamp used to filter columns with a specific range of versions. */
+    public static final String SCAN_TIMERANGE_START = "timerange-start";
+    /** The ending timestamp used to filter columns with a specific range of versions. */
+    public static final String SCAN_TIMERANGE_END = "timerange-end";
+    /** The number of rows for caching that will be passed to scanners. */
+    public static final String SCAN_CACHEDROWS = "scan-cachedrows";
+    /** Set the maximum number of values to return for each call to next(). */
+    public static final String SCAN_BATCHSIZE = "scan-batchsize";
+    public static final String KV_COLUMN = "kv-column";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -98,6 +83,11 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
                 .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
                 .needArg(true)
                 .description("Specify the name of the row key col passed to the recordWriter.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(KV_COLUMN)
+                .needArg(true)
+                .description("Specify key-value column if a converter is used.")
                 .build());
         return tmpList;
     }

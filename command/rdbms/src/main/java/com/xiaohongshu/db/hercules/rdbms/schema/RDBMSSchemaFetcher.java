@@ -42,7 +42,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
     }
 
 
-    private String getNoneLineSql(String baseSql) {
+    protected String getNoneLineSql(String baseSql) {
         return SqlUtils.addWhere(baseSql, "1 = 0");
     }
 

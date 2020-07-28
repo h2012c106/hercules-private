@@ -12,31 +12,6 @@
     <artifactId>hercules-command</artifactId>
     <packaging>pom</packaging>
 
-    <build>
-        <plugins>
-            <!--            <plugin>-->
-            <!--                <groupId>org.codehaus.mojo</groupId>-->
-            <!--                <artifactId>exec-maven-plugin</artifactId>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <phase>install</phase>-->
-            <!--                        <goals>-->
-            <!--                            <goal>exec</goal>-->
-            <!--                        </goals>-->
-            <!--                        <configuration>-->
-            <!--                            <workingDirectory>${project.basedir}</workingDirectory>-->
-            <!--                            <executable>${project.basedir}/build/build.sh</executable>-->
-            <!--                            <arguments>-->
-            <!--                                <argument>${project.artifactId}-${project.version}.jar</argument>-->
-            <!--                                <argument>${project.build.directory}</argument>-->
-            <!--                                <argument>${project.artifactId}-${project.version}</argument>-->
-            <!--                            </arguments>-->
-            <!--                        </configuration>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
-        </plugins>
-    </build>
     <modules>
         <module>shade</module>
         <module>core</module>
@@ -49,8 +24,12 @@
         <module>parquet-schema</module>
         <module>clickhouse</module>
         <module>hbase</module>
+        <module>myhub</module>
+        <module>kafka</module>
 
         <module>assemble</module>
+
+        <module>xhs-converter</module>
     </modules>
 
     <dependencies>

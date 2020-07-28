@@ -4,23 +4,19 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public final class GenericOptions {
+
     private static final String PREFIX = "hercules";
-    private static final String SOURCE_SUFFIX = "source";
-    private static final String TARGET_SUFFIX = "target";
-    private static final String COMMON_SUFFIX = "common";
     private static final String CONFIGURATION_DELIMITER = ".";
 
-    private HashMap<String, String> properties;
+    private final OptionsType optionsType;
+    private final HashMap<String, String> properties;
 
     private static final String ARRAY_DELIMITER = "@%HHXHH%@";
     /**
@@ -28,8 +24,13 @@ public final class GenericOptions {
      */
     private static final String EMPTY_PLACEHOLDER = "@%HHX_HERCULES_EMPTY_PLACEHOLDER_XHH%@";
 
-    public GenericOptions() {
-        properties = new HashMap<>();
+    public GenericOptions(OptionsType optionsType) {
+        this.optionsType = optionsType;
+        this.properties = new LinkedHashMap<>();
+    }
+
+    public OptionsType getOptionsType() {
+        return optionsType;
     }
 
     public void set(String key, Object value) {
@@ -128,52 +129,21 @@ public final class GenericOptions {
     }
 
     public static String getConfigurationName(String param, OptionsType type) {
-        String suffix;
-        switch (type) {
-            case SOURCE:
-                suffix = SOURCE_SUFFIX;
-                break;
-            case TARGET:
-                suffix = TARGET_SUFFIX;
-                break;
-            default:
-                suffix = COMMON_SUFFIX;
-        }
-        return String.join(CONFIGURATION_DELIMITER, Lists.newArrayList(PREFIX, param, suffix));
+        return String.join(CONFIGURATION_DELIMITER, Lists.newArrayList(PREFIX, param, type.getConfigSuffix()));
     }
 
-    public void toConfiguration(Configuration configuration, OptionsType type) {
-        String suffix;
-        switch (type) {
-            case SOURCE:
-                suffix = SOURCE_SUFFIX;
-                break;
-            case TARGET:
-                suffix = TARGET_SUFFIX;
-                break;
-            default:
-                suffix = COMMON_SUFFIX;
-        }
+    public void toConfiguration(Configuration configuration) {
         for (Map.Entry<String, String> entry : properties.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue();
-            key = String.join(CONFIGURATION_DELIMITER, Lists.newArrayList(PREFIX, key, suffix));
+            key = String.join(CONFIGURATION_DELIMITER, Lists.newArrayList(PREFIX, key, optionsType.getConfigSuffix()));
             configuration.set(key, value.length() == 0 ? EMPTY_PLACEHOLDER : value);
         }
     }
 
-    public void fromConfiguration(Configuration configuration, OptionsType type) {
-        String suffix;
-        switch (type) {
-            case SOURCE:
-                suffix = SOURCE_SUFFIX;
-                break;
-            case TARGET:
-                suffix = TARGET_SUFFIX;
-                break;
-            default:
-                suffix = COMMON_SUFFIX;
-        }
+    public static GenericOptions fromConfiguration(Configuration configuration, OptionsType optionsType) {
+        GenericOptions res = new GenericOptions(optionsType);
+        String suffix = optionsType.getConfigSuffix();
         String prefix = PREFIX + CONFIGURATION_DELIMITER;
         for (Map.Entry<String, String> entry : configuration) {
             String key = entry.getKey();
@@ -185,9 +155,10 @@ public final class GenericOptions {
             String value = entry.getValue();
             if (key.endsWith(suffix)) {
                 key = key.substring(0, key.length() - (CONFIGURATION_DELIMITER + suffix).length());
-                properties.put(key, EMPTY_PLACEHOLDER.equals(value) ? "" : value);
+                res.set(key, EMPTY_PLACEHOLDER.equals(value) ? "" : value);
             }
         }
+        return res;
     }
 
     @Override

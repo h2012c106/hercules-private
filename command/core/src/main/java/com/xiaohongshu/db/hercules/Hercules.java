@@ -1,18 +1,17 @@
 package com.xiaohongshu.db.hercules;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.CmdParser;
-import com.xiaohongshu.db.hercules.core.parser.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
-import com.xiaohongshu.db.hercules.core.utils.ConfigUtils;
-import com.xiaohongshu.db.hercules.core.utils.LogUtils;
-import com.xiaohongshu.db.hercules.core.utils.ModuleConfig;
-import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
-import org.apache.commons.lang3.StringUtils;
+import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
+import com.xiaohongshu.db.hercules.core.supplier.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.utils.*;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,12 +47,6 @@ public class Hercules {
         DataSource sourceDataSource = sourceSupplier.getDataSource();
         DataSource targetDataSource = targetSupplier.getDataSource();
 
-        // 获得target、source、common对应的parser
-        CmdParser commonParser = new CmdParser(
-                new CommonOptionsConf(),
-                null,
-                OptionsType.COMMON
-        );
         CmdParser sourceParser = new CmdParser(
                 sourceSupplier.getInputOptionsConf(),
                 sourceDataSource,
@@ -64,12 +57,44 @@ public class Hercules {
                 targetDataSource,
                 OptionsType.TARGET
         );
+        CmdParser commonParser = new CmdParser(
+                new CommonOptionsConf(),
+                null,
+                OptionsType.COMMON
+        );
 
-        WrappingOptions wrappingOptions = new WrappingOptions(sourceParser.parse(args),
-                targetParser.parse(args),
-                commonParser.parse(args));
-        sourceSupplier.setOptions(wrappingOptions.getSourceOptions());
-        targetSupplier.setOptions(wrappingOptions.getTargetOptions());
+        GenericOptions sourceOptions = sourceParser.parse(args);
+        GenericOptions targetOptions = targetParser.parse(args);
+        GenericOptions commonOptions = commonParser.parse(args);
+
+        WrappingOptions wrappingOptions = new WrappingOptions(commonOptions, sourceOptions, targetOptions);
+
+        sourceSupplier.setOptions(sourceOptions);
+        targetSupplier.setOptions(targetOptions);
+
+        if (sourceDataSource.hasKvConverter() && sourceOptions.hasProperty(KvOptionsConf.SUPPLIER)) {
+            KvConverterSupplier sourceKvConverterSupplier = ReflectUtils.constructWithNonArgsConstructor(
+                    sourceOptions.getString(KvOptionsConf.SUPPLIER, null),
+                    KvConverterSupplier.class
+            );
+            wrappingOptions.add(new CmdParser(
+                    sourceKvConverterSupplier.getInputOptionsConf(),
+                    sourceDataSource,
+                    OptionsType.SOURCE_CONVERTER
+            ).parse(args));
+        }
+
+        if (targetDataSource.hasKvConverter() && targetOptions.hasProperty(KvOptionsConf.SUPPLIER)) {
+            KvConverterSupplier targetKvConverterSupplier = ReflectUtils.constructWithNonArgsConstructor(
+                    targetOptions.getString(KvOptionsConf.SUPPLIER, null),
+                    KvConverterSupplier.class
+            );
+            wrappingOptions.add(new CmdParser(
+                    targetKvConverterSupplier.getOutputOptionsConf(),
+                    targetDataSource,
+                    OptionsType.TARGET_CONVERTER
+            ).parse(args));
+        }
 
         // 处理log-level
         Logger.getRootLogger().setLevel(
@@ -80,7 +105,6 @@ public class Hercules {
                 )
         );
 
-        LOG.debug("Args: " + StringUtils.join(args, ", "));
         LOG.debug("Options: " + wrappingOptions);
 
         // 需要打help，则不运行导数行为

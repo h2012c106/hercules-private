@@ -6,4 +6,8 @@ public interface DataSource {
 
     public String getFilePositionParam();
 
+    default public boolean hasKvConverter() {
+        return false;
+    }
+
 }

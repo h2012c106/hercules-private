@@ -28,4 +28,12 @@ public final class ReflectUtils {
         }
     }
 
+    public static <T> T constructWithNonArgsConstructor(String className, Class<T> clazz) {
+        try {
+            return clazz.cast(Class.forName(className).newInstance());
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

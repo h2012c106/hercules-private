@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package oplogManagerPB;
+
+import "operator.proto";
+
+//option java_package = "com.red.producer.PB"; // 声明生z成消息类的java包路径
+option java_outer_classname = "OplogManagerPB"; // 声明生成消息类的类名
+
+message Oplog {
+    string ns = 1;
+    fixed64 timestamp = 2;
+    Op op = 3;
+    string doc =4;
+    bool fromMigrate =5;
+}
+
+

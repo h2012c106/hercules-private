@@ -137,5 +137,4 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     protected final WrapperGetter<T> getWrapperGetter(DataType dataType) {
         return wrapperGetterFactory.getWrapperGetter(dataType);
     }
-
 }

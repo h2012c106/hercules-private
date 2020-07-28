@@ -1,10 +1,7 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
-import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.OptionsConf;
-import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.option.*;
 import hercules.shaded.org.apache.commons.cli.*;
 import lombok.NonNull;
 
@@ -13,9 +10,10 @@ import java.util.Map;
 
 public class CmdParser implements Parser<String[]> {
 
-    public static final String SOURCE_OPTIONS_PREFIX = "source-";
-    public static final String TARGET_OPTIONS_PREFIX = "target-";
-
+    /**
+     * 各个前缀（除了common）后续的链接如--source'-'table
+     */
+    private static final String PREFIX_DELIMITER = "-";
 
     private boolean help;
 
@@ -30,13 +28,10 @@ public class CmdParser implements Parser<String[]> {
     }
 
     private String getOptionsPrefix() {
-        switch (optionsType) {
-            case SOURCE:
-                return SOURCE_OPTIONS_PREFIX;
-            case TARGET:
-                return TARGET_OPTIONS_PREFIX;
-            default:
-                return "";
+        if (optionsType.isCommon()) {
+            return "";
+        } else {
+            return optionsType.getParamPrefix() + PREFIX_DELIMITER;
         }
     }
 
@@ -70,7 +65,7 @@ public class CmdParser implements Parser<String[]> {
      */
     private GenericOptions parseCommandLine(CommandLine cli) {
         String prefix = getOptionsPrefix();
-        GenericOptions options = new GenericOptions();
+        GenericOptions options = new GenericOptions(optionsType);
         for (Map.Entry<String, SingleOptionConf> entry : optionsConf.getOptionsMap().entrySet()) {
             String paramName = entry.getKey();
             String optionName = prefix + paramName;
@@ -119,6 +114,12 @@ public class CmdParser implements Parser<String[]> {
                 break;
             case COMMON:
                 helpHeader = "Common param:\n\n";
+                break;
+            case SOURCE_CONVERTER:
+                helpHeader = "Source converter param:\n\n";
+                break;
+            case TARGET_CONVERTER:
+                helpHeader = "Target converter param:\n\n";
                 break;
             default:
                 throw new RuntimeException("Unknown option type: " + optionsType);

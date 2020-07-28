@@ -1,9 +1,12 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
+import com.xiaohongshu.db.hercules.core.supplier.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
@@ -140,7 +143,7 @@ public class HBaseInputFormat extends HerculesInputFormat implements HBaseManage
     }
 
     @Override
-    protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+    protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) {
         String rowKeyCol = sourceOptions.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if (rowKeyCol != null) {
             LOG.info("rowKeyCol name has been set to: " + rowKeyCol);
@@ -220,13 +223,16 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
     private final String rowKeyCol;
     private ResultScanner scanner;
     private Result value;
+    private final KvConverterSupplier kvConverterSupplier;
+    private String columnFamily;
 
     @SneakyThrows
     public HBaseRecordReader(TaskAttemptContext context, HBaseManager manager, String rowKeyCol) {
         super(context, new HBaseInputWrapperManager());
         this.manager = manager;
         this.rowKeyCol = rowKeyCol;
-
+        this.kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
+        this.columnFamily = options.getSourceOptions().getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, "");
         // 测试用
 //        manager.InsertTestDataToHBaseTable();
     }
@@ -262,15 +268,30 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
     @SneakyThrows
     @Override
     protected HerculesWritable innerGetCurrentValue() {
-
-        int columnNum = columnNameList.size();
-        HerculesWritable record = new HerculesWritable(columnNum);
-        // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
+        HerculesWritable record;
+        if (kvConverterSupplier instanceof BlankKvConverterSupplier) {
+            int columnNum = columnNameList.size();
+            record = new HerculesWritable(columnNum);
+            // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
+            getLatestRecord(record, columnNum);
+        } else {
+            record = getConvertedLatestRecord();
+        }
         if (rowKeyCol != null) {
             record.put(rowKeyCol, BytesWrapper.get(value.getRow()));
         }
-        getLatestRecord(record, columnNum);
         return record;
+    }
+
+    protected HerculesWritable getConvertedLatestRecord() throws IOException {
+        NavigableMap<byte[], NavigableMap<byte[], byte[]>> familyColMap = value.getNoVersionMap();
+        NavigableMap<byte[], byte[]> colValMap = familyColMap.get(columnFamily.getBytes());
+        String qualifier = options.getSourceOptions().getString(HBaseInputOptionsConf.KV_COLUMN, "");
+        byte[] val = colValMap.get(Bytes.toBytes(qualifier));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("QUALIFIER: " + qualifier);
+        }
+        return kvConverterSupplier.getKvConverter().generateHerculesWritable(val, options.getSourceOptions());
     }
 
     @Override

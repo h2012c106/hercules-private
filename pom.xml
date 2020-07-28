@@ -31,11 +31,57 @@
         <module>manager</module>
         <module>node</module>
         <module>share</module>
+        <module>command/untitled</module>
     </modules>
+
+    <repositories>
+        <repository>
+            <id>xhs-snapshot</id>
+            <url>http://mvn.devops.xiaohongshu.com/repository/maven-public/</url>
+        </repository>
+<!--        <repository>-->
+<!--            <id>central</id>-->
+<!--            <url>repo.maven.apache.org/maven2</url>-->
+<!--            <snapshots>-->
+<!--                <enabled>true</enabled>-->
+<!--                <updatePolicy>never</updatePolicy>-->
+<!--            </snapshots>-->
+<!--            <releases>-->
+<!--                <enabled>true</enabled>-->
+<!--                <updatePolicy>never</updatePolicy>-->
+<!--            </releases>-->
+<!--        </repository>-->
+    </repositories>
 
     <properties>
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:00'Z'</maven.build.timestamp.format>
     </properties>
 
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
+        <dependency>
+        <groupId>com.google.protobuf</groupId>
+        <artifactId>protobuf-java</artifactId>
+        <version>3.12.1</version>
+    </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.alibaba.otter/canal.protocol -->
+        <dependency>
+            <groupId>com.alibaba.otter</groupId>
+            <artifactId>canal.protocol</artifactId>
+            <version>1.1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xiaohongshu.db</groupId>
+            <artifactId>xlog</artifactId>
+            <version>0.9.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.kafka</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
 </project>

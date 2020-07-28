@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.core.assembly;
+package com.xiaohongshu.db.hercules.core.supplier;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
@@ -32,4 +32,5 @@ public interface AssemblySupplier {
     public SchemaNegotiatorContext getSchemaNegotiatorContextAsSource();
 
     public SchemaNegotiatorContext getSchemaNegotiatorContextAsTarget();
+
 }

@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.mongodb.mr.input;
 
 import com.mongodb.MongoClient;
+import com.mongodb.ReadPreference;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -28,6 +29,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.Decimal128;
+import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.util.*;
@@ -94,10 +96,9 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
 
         MongoDBInputSplit mongoDBInputSplit = (MongoDBInputSplit) split;
         Document splitQuery = mongoDBInputSplit.getSplitQuery();
-
         try {
             client = manager.getConnection();
-            MongoCollection<Document> collection = client.getDatabase(databaseStr).getCollection(collectionStr);
+            MongoCollection<Document> collection = client.getDatabase(databaseStr).withReadPreference(ReadPreference.secondaryPreferred()).getCollection(collectionStr);
 
             Document filter = splitQuery;
             if (!StringUtils.isEmpty(query)) {

@@ -9,6 +9,7 @@ import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -22,7 +23,7 @@ public class HBaseManager {
     private static final Log LOG = LogFactory.getLog(HBaseManager.class);
 
     private final GenericOptions options;
-    private Connection conn = null;
+    private volatile static Connection conn;
     private Configuration conf = null;
 
     public HBaseManager(GenericOptions options) {
@@ -30,11 +31,13 @@ public class HBaseManager {
     }
 
     public Connection getConnection() throws IOException {
-        // return connection if connection already established and not closed
-        if (conn != null && !conn.isClosed()) {
-            return conn;
+        if (null == conn) {
+            synchronized (Connection.class) {
+                if (null == conn) {
+                    conn = ConnectionFactory.createConnection(getConf());
+                }
+            }
         }
-        conn = ConnectionFactory.createConnection(getConf());
         return conn;
     }
 
@@ -43,8 +46,9 @@ public class HBaseManager {
      */
     public void setBasicConf() {
 
-        conf.set(HBaseOptionsConf.HB_ZK_QUORUM, options.getString(HBaseOptionsConf.HB_ZK_QUORUM, null));
-        conf.set(HBaseOptionsConf.HB_ZK_PORT, options.getString(HBaseOptionsConf.HB_ZK_PORT, "2181"));
+        conf.set("hbase.zookeeper.quorum", options.getString(HBaseOptionsConf.HB_ZK_QUORUM, null));
+        conf.set("hbase.zookeeper.property.clientPort", options.getString(HBaseOptionsConf.HB_ZK_PORT, "2181"));
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
     }
 
     public Configuration getConf() {
@@ -113,9 +117,9 @@ public class HBaseManager {
         HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.COLUMN_FAMILY, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOptionsConf.TABLE, targetOptions, true);
         HBaseManager.setConfParam(conf, HBaseOptionsConf.ROW_KEY_COL_NAME, targetOptions, true);
-        conf.setInt(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM,
+        conf.setInt("hbase.htable.threads.max",
                 targetOptions.getInteger(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_MAX_WRITE_THREAD_NUM));
-        conf.setLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE,
+        conf.setLong("hbase.mapreduce.writebuffersize",
                 targetOptions.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE));
     }
 
@@ -124,6 +128,12 @@ public class HBaseManager {
         if (notNull && (conf.get(paramName) == null)) {
             throw new ParseException("The param should not be null: " + paramName);
         }
+    }
+
+    public static Table getTable(Configuration conf, HBaseManager manager) throws IOException {
+        String userTable = conf.get(HBaseOptionsConf.TABLE);
+        TableName hTableName = TableName.valueOf(userTable);
+        return manager.getConnection().getTable(hTableName);
     }
 
     /**

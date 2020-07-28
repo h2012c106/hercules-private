@@ -135,6 +135,7 @@ public final class SchemaNegotiator {
 
         Map<String, DataType> res = SchemaUtils.convert(datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()),
                 schemaFetcher.getCustomDataTypeManager());
+//        LOG.info("!!!:"+datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()).toJSONString());
         // 如果用户全部指定，则返回就完事儿了
         if (res.keySet().containsAll(needTypeColumnNameSet)) {
             return res;
@@ -210,7 +211,9 @@ public final class SchemaNegotiator {
 
     private void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {
         for (String columnName : columnNameList) {
-            columnMap.putIfAbsent(columnName, columnName);
+//            if (!columnMap.containsValue(columnName)) {
+                columnMap.putIfAbsent(columnName, columnName);
+//            }
         }
     }
 
@@ -308,7 +311,7 @@ public final class SchemaNegotiator {
 
         if (commonOptions.getBoolean(CommonOptionsConf.ALLOW_COPY_COLUMN_TYPE, false)) {
             Map<String, DataType> beforeChangedSourceColumnTypeMap = new HashMap<>(sourceColumnTypeMap);
-            Map<String, DataType> beforeChangedTargetColumnTypeMap = new HashMap<>(sourceColumnTypeMap);
+            Map<String, DataType> beforeChangedTargetColumnTypeMap = new HashMap<>(targetColumnTypeMap);
 
             // 临时变量用于在source给target抄的时候处于无污染状态
             Map<String, DataType> tmpSourceColumnTypeMap = copyTypeMap(sourceColumnTypeMap, targetColumnTypeMap,
@@ -318,7 +321,6 @@ public final class SchemaNegotiator {
 
             sourceColumnTypeMap = tmpSourceColumnTypeMap;
             targetColumnTypeMap = tmpTargetColumnTypeMap;
-
             // copy必是添加元素，故只需要比大小便可分辨是否copy
             if (beforeChangedSourceColumnTypeMap.size() != sourceColumnTypeMap.size()) {
                 sourceContext.afterCopyColumnTypeMap(sourceColumnNameList, beforeChangedSourceColumnTypeMap, sourceColumnTypeMap);

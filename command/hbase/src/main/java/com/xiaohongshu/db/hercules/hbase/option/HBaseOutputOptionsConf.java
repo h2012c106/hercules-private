@@ -2,20 +2,25 @@ package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.*;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.xiaohongshu.db.hercules.core.option.KvOptionsConf.SUPPLIER;
+
 public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
-    public final static String COLUMN_FAMILY = "hbase.mapreduce.column.family";
+    public final static String COLUMN_FAMILY = "column-family";
 
-    public static final String MAX_WRITE_THREAD_NUM = "hbase.htable.threads.max";
+    public static final String MAX_WRITE_THREAD_NUM = "max-threads";
     public static final int DEFAULT_MAX_WRITE_THREAD_NUM = 5;
 
-    public static final String WRITE_BUFFER_SIZE = "hbase.mapreduce.writebuffersize";
+    public static final String WRITE_BUFFER_SIZE = "writebuffersize";
     public static final long DEFAULT_WRITE_BUFFER_SIZE = 8 * 1024 * 1024;
+
+    public static final String CONVERT_COLUMN_NAME = "converted-column-name";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -37,7 +42,6 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
                 .needArg(true)
-                .necessary(true)
                 .description("The column specified to be the row key of PUT or DELETE operations")
                 .build());
         tmpList.add(SingleOptionConf.builder()
@@ -50,15 +54,28 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .description(String.format("The write maximum threads num, default %d threads.", DEFAULT_MAX_WRITE_THREAD_NUM))
                 .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(CONVERT_COLUMN_NAME)
+                .needArg(true)
+                .description(String.format("The qualifier to put converted bytes. Note that only one qualifier is supported for a converted value."))
+                .build());
         return tmpList;
     }
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-        if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {
-            throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
+        if (!options.getString(SUPPLIER,"").contains("BlankKvConverterSupplier")){
+            ParseUtils.validateDependency(options,
+                    SUPPLIER,
+                    null,
+                    Lists.newArrayList(CONVERT_COLUMN_NAME),
+                    null);
         }
+
+//        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
+//        List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+//        if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {
+//            throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
+//        }
     }
 }

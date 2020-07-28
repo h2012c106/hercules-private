@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.core.mr;
 
 import com.cloudera.sqoop.config.ConfigurationHelper;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.assembly.AssemblySupplier;
+import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;

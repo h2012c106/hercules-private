@@ -1,56 +1,58 @@
 package com.xiaohongshu.db.hercules.core.option;
 
-import com.xiaohongshu.db.hercules.core.parser.OptionsType;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.conf.Configuration;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class WrappingOptions {
-    private GenericOptions sourceOptions;
-    private GenericOptions targetOptions;
-    private GenericOptions commonOptions;
+    private final Map<OptionsType, GenericOptions> genericOptionsMap;
 
     public WrappingOptions() {
-        this.sourceOptions = new GenericOptions();
-        this.targetOptions = new GenericOptions();
-        this.commonOptions = new GenericOptions();
+        genericOptionsMap = new LinkedHashMap<>();
     }
 
-    public WrappingOptions(GenericOptions sourceOptions, GenericOptions targetOptions, GenericOptions commonOptions) {
-        this.sourceOptions = sourceOptions;
-        this.targetOptions = targetOptions;
-        this.commonOptions = commonOptions;
+    public WrappingOptions(GenericOptions... optionsArray) {
+        genericOptionsMap = new LinkedHashMap<>();
+        for (GenericOptions options : optionsArray) {
+            add(options);
+        }
     }
 
-    public GenericOptions getSourceOptions() {
-        return sourceOptions;
+    public void add(GenericOptions options) {
+        genericOptionsMap.put(options.getOptionsType(), options);
     }
 
-    public GenericOptions getTargetOptions() {
-        return targetOptions;
+    public GenericOptions getGenericOptions(OptionsType optionsType) {
+        return genericOptionsMap.getOrDefault(optionsType, new GenericOptions(optionsType));
     }
 
     public GenericOptions getCommonOptions() {
-        return commonOptions;
+        return getGenericOptions(OptionsType.COMMON);
+    }
+
+    public GenericOptions getSourceOptions() {
+        return getGenericOptions(OptionsType.SOURCE);
+    }
+
+    public GenericOptions getTargetOptions() {
+        return getGenericOptions(OptionsType.TARGET);
     }
 
     public void toConfiguration(Configuration configuration) {
-        sourceOptions.toConfiguration(configuration, OptionsType.SOURCE);
-        targetOptions.toConfiguration(configuration, OptionsType.TARGET);
-        commonOptions.toConfiguration(configuration, OptionsType.COMMON);
+        for (GenericOptions options : genericOptionsMap.values()) {
+            options.toConfiguration(configuration);
+        }
     }
 
     public void fromConfiguration(Configuration configuration) {
-        sourceOptions.fromConfiguration(configuration, OptionsType.SOURCE);
-        targetOptions.fromConfiguration(configuration, OptionsType.TARGET);
-        commonOptions.fromConfiguration(configuration, OptionsType.COMMON);
+        for (OptionsType optionsType : OptionsType.values()) {
+            genericOptionsMap.put(optionsType, GenericOptions.fromConfiguration(configuration, optionsType));
+        }
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this)
-                .append("sourceOptions", sourceOptions)
-                .append("targetOptions", targetOptions)
-                .append("commonOptions", commonOptions)
-                .toString();
+        return genericOptionsMap.toString();
     }
 }

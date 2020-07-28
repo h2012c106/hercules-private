@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.core.mr.input;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.parser.OptionsType;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

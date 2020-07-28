@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase;
 
-import com.xiaohongshu.db.hercules.core.assembly.BaseAssemblySupplier;
+import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.NullMRJobContext;

@@ -87,6 +87,7 @@ public class DateWrapper extends BaseWrapper<String> {
      */
     @Override
     public String asString() {
+
         if (DateUtils.getSourceDateFormat().equals(DateUtils.getTargetDateFormat())) {
             return getValue();
         } else {

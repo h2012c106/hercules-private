@@ -1,18 +1,12 @@
-package com.xiaohongshu.db.hercules.core.assembly;
+package com.xiaohongshu.db.hercules.core.supplier;
 
 import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
-import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
-import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
+import com.xiaohongshu.db.hercules.core.mr.NullMRJobContext;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.OptionsConf;
-import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 
 public abstract class BaseAssemblySupplier implements AssemblySupplier {
     protected GenericOptions options;
-
-    public BaseAssemblySupplier() {
-    }
 
     @Override
     public void setOptions(GenericOptions options) {
@@ -21,6 +15,16 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     }
 
     protected void afterSetOptions() {
+    }
+
+    @Override
+    public MRJobContext getJobContextAsSource() {
+        return NullMRJobContext.INSTANCE;
+    }
+
+    @Override
+    public MRJobContext getJobContextAsTarget() {
+        return NullMRJobContext.INSTANCE;
     }
 
     @Override
