@@ -25,3 +25,7 @@ parquetschema:
 clickhouse:
   jar: hercules-command-clickhouse-dev.jar
   assemblyClass: com.xiaohongshu.db.hercules.clickhouse.ClickhouseAssemblySupplier
+
+hbase:
+  jar: hercules-command-hbase-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.hbase.HBaseAssemblySupplier

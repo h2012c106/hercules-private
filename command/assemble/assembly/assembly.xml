@@ -71,5 +71,12 @@
                 <include>**/hercules-command-*.jar</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>../hbase/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </assembly>
