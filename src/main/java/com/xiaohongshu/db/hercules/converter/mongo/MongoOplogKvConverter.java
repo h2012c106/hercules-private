@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.converter.mongo;
 
+import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.converter.KvConverter;
 import com.xiaohongshu.db.xlog.core.codec.Codec;
 import com.xiaohongshu.db.xlog.core.exception.SerDeException;
@@ -18,6 +19,7 @@ import org.bson.json.JsonMode;
 import org.bson.json.JsonWriterSettings;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -27,16 +29,20 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Documen
             .outputMode(JsonMode.RELAXED)
 //        .dateTimeConverter((time, writer)->{
 //            writer.writeStartObject();
-//            writer.writeString("$date", String.valueOf(time));
+//            writer.writeString("$datjsonWriterSettingse", String.valueOf(time));
 //            writer.writeEndObject();
 //        })
             .build();
+
+    private final MongoOplogOutputOptionConf.OplogFormat format;
 
     public MongoOplogKvConverter(GenericOptions options) {
         super(null, new MongoOplogWrapperGetterFactory(), new MongoOplogWrapperSetterFactory(), options);
         MongoOplogWrapperSetterFactory mongoOplogWrapperSetterFactory = (MongoOplogWrapperSetterFactory) this.wrapperSetterFactory;
         Map<String, DataType> columnTypeMap = SchemaUtils.convert(options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new com.alibaba.fastjson.JSONObject()), NullCustomDataTypeManager.INSTANCE);
         mongoOplogWrapperSetterFactory.setColumnTypeMap(columnTypeMap);
+        format = MongoOplogOutputOptionConf.OplogFormat.valueOfIgnoreCase(options.getString(MongoOplogOutputOptionConf.FORMAT,
+                MongoOplogOutputOptionConf.OplogFormat.DEFAULT_FORMAT.name()));
     }
 
     @Override
@@ -73,12 +79,23 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Documen
                 constructDoc(doc, columnName, wrapper, type);
             }
         }
-        builder.setDoc(doc.toJson(jsonWriterSettings));
-        try {
-            return OplogSerDe.serialize(builder.build(), Codec.CODEC_OPLOG_PB01);
-        } catch (SerDeException ignored) {
+        String docJsonString = doc.toJson(jsonWriterSettings);
+        switch (format){
+            case JSON_FORMAT:
+                OplogRecord oplogRecord = new OplogRecord();
+                oplogRecord.setDoc(docJsonString);
+                oplogRecord.setEventTime(LocalDateTime.now());
+                oplogRecord.setOptype("INSERT");
+                return JSON.toJSONString(oplogRecord).getBytes();
+            case DEFAULT_FORMAT:
+            default:
+                builder.setDoc(docJsonString);
+                try {
+                    return OplogSerDe.serialize(builder.build(), Codec.CODEC_OPLOG_PB01);
+                } catch (SerDeException ignored) {
+                }
+                return null;
         }
-        return null;
     }
 
     private void constructDoc(Document doc, String columnName, BaseWrapper wrapper, DataType type) {

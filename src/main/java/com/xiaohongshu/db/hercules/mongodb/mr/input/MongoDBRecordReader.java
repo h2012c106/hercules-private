@@ -109,7 +109,8 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
                 filter = new Document("$and", Arrays.asList(filter, queryFilter));
             }
 
-            FindIterable<Document> iterable = collection.find(filter);
+            FindIterable<Document> iterable = collection.find(filter).batchSize(10000);
+
             if (!emptyColumnNameList) {
                 Document columnProjection = makeColumnProjection(columnNameList);
                 iterable.projection(columnProjection);
