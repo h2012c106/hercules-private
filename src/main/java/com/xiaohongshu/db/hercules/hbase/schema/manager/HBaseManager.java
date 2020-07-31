@@ -48,6 +48,7 @@ public class HBaseManager {
 
         conf.set("hbase.zookeeper.quorum", options.getString(HBaseOptionsConf.HB_ZK_QUORUM, null));
         conf.set("hbase.zookeeper.property.clientPort", options.getString(HBaseOptionsConf.HB_ZK_PORT, "2181"));
+        conf.set("hbase.client.retries.number", "3");
         conf.set("zookeeper.znode.parent", "/hbase-unsecure");
     }
 
@@ -133,7 +134,15 @@ public class HBaseManager {
     public static Table getTable(Configuration conf, HBaseManager manager) throws IOException {
         String userTable = conf.get(HBaseOptionsConf.TABLE);
         TableName hTableName = TableName.valueOf(userTable);
+        if (!tableExists(hTableName, manager)){
+            throw new RuntimeException("Table "+ hTableName.getNameAsString() +" not exists in HBase. Please make sure the table is created before running this task.");
+        }
         return manager.getConnection().getTable(hTableName);
+    }
+
+    public static boolean tableExists(TableName tableName, HBaseManager manager) throws IOException {
+        Admin hbaseAdmin = manager.getConnection().getAdmin();
+        return hbaseAdmin.tableExists(tableName);
     }
 
     /**

@@ -29,7 +29,7 @@ public class MongoOplogKvConverter extends KvConverter<Integer, Integer, Documen
             .outputMode(JsonMode.RELAXED)
 //        .dateTimeConverter((time, writer)->{
 //            writer.writeStartObject();
-//            writer.writeString("$datjsonWriterSettingse", String.valueOf(time));
+//            writer.writeString("$data", String.valueOf(time));
 //            writer.writeEndObject();
 //        })
             .build();
