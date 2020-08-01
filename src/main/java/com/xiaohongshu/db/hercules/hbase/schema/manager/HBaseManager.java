@@ -9,7 +9,6 @@ import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -134,15 +133,17 @@ public class HBaseManager {
     public static Table getTable(Configuration conf, HBaseManager manager) throws IOException {
         String userTable = conf.get(HBaseOptionsConf.TABLE);
         TableName hTableName = TableName.valueOf(userTable);
-        if (!tableExists(hTableName, manager)){
-            throw new RuntimeException("Table "+ hTableName.getNameAsString() +" not exists in HBase. Please make sure the table is created before running this task.");
-        }
+//        checkIfTableExists(hTableName, manager);
         return manager.getConnection().getTable(hTableName);
     }
 
-    public static boolean tableExists(TableName tableName, HBaseManager manager) throws IOException {
+    public static void checkIfTableExists(TableName tableName, HBaseManager manager) throws IOException {
         Admin hbaseAdmin = manager.getConnection().getAdmin();
-        return hbaseAdmin.tableExists(tableName);
+        boolean exists = hbaseAdmin.tableExists(tableName);
+        hbaseAdmin.close();
+        if (!exists){
+            throw new RuntimeException("Table "+ tableName.getNameAsString() +" not exists in HBase. Please make sure the table is created before running this task.");
+        }
     }
 
     /**
@@ -153,6 +154,7 @@ public class HBaseManager {
         long writeBufferSize = conf.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE);
         Connection hConnection = manager.getConnection();
         TableName hTableName = TableName.valueOf(userTable);
+//        checkIfTableExists(hTableName, manager);
         Admin admin = null;
         BufferedMutator bufferedMutator;
         try {

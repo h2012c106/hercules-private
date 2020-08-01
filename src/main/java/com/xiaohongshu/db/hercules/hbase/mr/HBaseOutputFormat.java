@@ -73,7 +73,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     private final String rowKeyCol;
     private final HBaseManager manager;
     private final KvConverterSupplier kvConverterSupplier;
-    //    private final BufferedMutator mutator;
+//    private final BufferedMutator mutator;
     private final Table table;
     private final List<Put> putsBuffer = new LinkedList<>();
     private final int PUT_BUFFER_SIZE = 10000;
@@ -169,8 +169,8 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             } else {
                 put = getConvertedPut(record);
             }
-//            mutator.mutate(put);
             put.setDurability(Durability.SKIP_WAL);
+//            mutator.mutate(put);
             putsBuffer.add(put);
             if (putsBuffer.size() > PUT_BUFFER_SIZE) {
                 table.batch(putsBuffer, null);
