@@ -1,11 +1,13 @@
 package com.xiaohongshu.db.hercules.core.option;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+
 public enum OptionsType {
-    SOURCE("source"),
-    TARGET("target"),
-    COMMON("", "common"),
-    SOURCE_CONVERTER("converter-source","sconverter"),
-    TARGET_CONVERTER("converter-target","tconverter");
+    SOURCE("source", "source", DataSourceRole.SOURCE),
+    TARGET("target", "target", DataSourceRole.TARGET),
+    COMMON("", "common", null),
+    SOURCE_CONVERTER("converter-source", "sconverter", null),
+    TARGET_CONVERTER("converter-target", "tconverter", null);
 
     /**
      * 用户参数前缀
@@ -16,14 +18,12 @@ public enum OptionsType {
      */
     private String configSuffix;
 
-    OptionsType(String paramPrefix, String configSuffix) {
+    private DataSourceRole role;
+
+    OptionsType(String paramPrefix, String configSuffix, DataSourceRole role) {
         this.paramPrefix = paramPrefix;
         this.configSuffix = configSuffix;
-    }
-
-    OptionsType(String fix) {
-        this.paramPrefix = fix;
-        this.configSuffix = fix;
+        this.role = role;
     }
 
     public String getParamPrefix() {
@@ -32,6 +32,10 @@ public enum OptionsType {
 
     public String getConfigSuffix() {
         return configSuffix;
+    }
+
+    public DataSourceRole getRole() {
+        return role;
     }
 
     public boolean isSource() {

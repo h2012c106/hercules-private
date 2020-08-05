@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.DateWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.DoubleWrapper;

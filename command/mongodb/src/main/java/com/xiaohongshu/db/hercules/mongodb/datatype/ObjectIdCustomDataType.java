@@ -22,9 +22,19 @@ public class ObjectIdCustomDataType extends CustomDataType<Document, Document> {
     }
 
     @Override
-    protected BaseWrapper innerRead(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+    public boolean isNull(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+        return row.get(columnName) == null;
+    }
+
+    @Override
+    protected BaseWrapper<?> innerRead(Document row, String rowName, String columnName, int columnSeq) throws Exception {
         ObjectId value = row.get(columnName, ObjectId.class);
         return StringWrapper.get(value == null ? null : value.toString());
+    }
+
+    @Override
+    public void writeNull(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+        row.put(columnName, null);
     }
 
     @Override
@@ -45,5 +55,10 @@ public class ObjectIdCustomDataType extends CustomDataType<Document, Document> {
     @Override
     protected void innerWrite(NullWrapper wrapper, Document row, String rowName, String columnName, int columnSeq) throws Exception {
         row.put(columnName, null);
+    }
+
+    @Override
+    public Class<?> getJavaClass() {
+        return ObjectId.class;
     }
 }

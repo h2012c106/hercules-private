@@ -1,14 +1,14 @@
 package com.xiaohongshu.db.hercules.converter.mysql;
 
-import com.xiaohongshu.db.hercules.core.converter.KvConverter;
+import com.xiaohongshu.db.hercules.core.serializer.KvSerializer;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.supplier.BaseKvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.supplier.BaseKvSerializerSupplier;
 
-public class MysqlCanalKvConverterSupplier extends BaseKvConverterSupplier {
+public class MysqlCanalKvSerializerSupplier extends BaseKvSerializerSupplier {
 
     @Override
-    public KvConverter<?, ?, ?> getKvConverter() {
-        return new MysqlCanalEntryKvConverter(options);
+    public KvSerializer<?, ?, ?> getKvSerializer() {
+        return new MysqlCanalEntryKvSerializer(options);
     }
 
     @Override

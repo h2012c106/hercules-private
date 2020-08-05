@@ -1,11 +1,11 @@
-package com.xiaohongshu.db.hercules.core.mr.input;
+package com.xiaohongshu.db.hercules.core.mr.input.wrapper;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.utils.ReflectionUtils;
+import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -57,7 +57,7 @@ public abstract class WrapperGetterFactory<T> {
                 public WrapperGetter<T> apply(Void aVoid) {
                     String dataTypeCapitalName = StringUtils.capitalize(baseDataType.name().toLowerCase());
                     String methodName = "get" + dataTypeCapitalName + "Getter";
-                    Method getMethod = ReflectionUtils.getMethod(self.getClass(), methodName);
+                    Method getMethod = ReflectUtils.getMethod(self.getClass(), methodName);
                     try {
                         getMethod.setAccessible(true);
                         return (WrapperGetter<T>) getMethod.invoke(self);
@@ -80,7 +80,17 @@ public abstract class WrapperGetterFactory<T> {
             // 运行时赋
             res = wrapperGetterMap.computeIfAbsent(customDataType, key -> new WrapperGetter<T>() {
                 @Override
-                public BaseWrapper get(T row, String rowName, String columnName, int columnSeq) throws Exception {
+                protected DataType getType() {
+                    return customDataType;
+                }
+
+                @Override
+                protected boolean isNull(T row, String rowName, String columnName, int columnSeq) throws Exception {
+                    return customDataType.isNull(row, rowName, columnName, columnSeq);
+                }
+
+                @Override
+                protected BaseWrapper<?> getNonnull(T row, String rowName, String columnName, int columnSeq) throws Exception {
                     return customDataType.read(row, rowName, columnName, columnSeq);
                 }
             });
@@ -93,35 +103,35 @@ public abstract class WrapperGetterFactory<T> {
         return res;
     }
 
-    abstract protected WrapperGetter<T> getByteGetter();
+    abstract protected BaseTypeWrapperGetter.ByteGetter<T> getByteGetter();
 
-    abstract protected WrapperGetter<T> getShortGetter();
+    abstract protected BaseTypeWrapperGetter.ShortGetter<T> getShortGetter();
 
-    abstract protected WrapperGetter<T> getIntegerGetter();
+    abstract protected BaseTypeWrapperGetter.IntegerGetter<T> getIntegerGetter();
 
-    abstract protected WrapperGetter<T> getLongGetter();
+    abstract protected BaseTypeWrapperGetter.LongGetter<T> getLongGetter();
 
-    abstract protected WrapperGetter<T> getLonglongGetter();
+    abstract protected BaseTypeWrapperGetter.LonglongGetter<T> getLonglongGetter();
 
-    abstract protected WrapperGetter<T> getFloatGetter();
+    abstract protected BaseTypeWrapperGetter.FloatGetter<T> getFloatGetter();
 
-    abstract protected WrapperGetter<T> getDoubleGetter();
+    abstract protected BaseTypeWrapperGetter.DoubleGetter<T> getDoubleGetter();
 
-    abstract protected WrapperGetter<T> getDecimalGetter();
+    abstract protected BaseTypeWrapperGetter.DecimalGetter<T> getDecimalGetter();
 
-    abstract protected WrapperGetter<T> getBooleanGetter();
+    abstract protected BaseTypeWrapperGetter.BooleanGetter<T> getBooleanGetter();
 
-    abstract protected WrapperGetter<T> getStringGetter();
+    abstract protected BaseTypeWrapperGetter.StringGetter<T> getStringGetter();
 
-    abstract protected WrapperGetter<T> getDateGetter();
+    abstract protected BaseTypeWrapperGetter.DateGetter<T> getDateGetter();
 
-    abstract protected WrapperGetter<T> getTimeGetter();
+    abstract protected BaseTypeWrapperGetter.TimeGetter<T> getTimeGetter();
 
-    abstract protected WrapperGetter<T> getDatetimeGetter();
+    abstract protected BaseTypeWrapperGetter.DatetimeGetter<T> getDatetimeGetter();
 
-    abstract protected WrapperGetter<T> getBytesGetter();
+    abstract protected BaseTypeWrapperGetter.BytesGetter<T> getBytesGetter();
 
-    abstract protected WrapperGetter<T> getNullGetter();
+    abstract protected BaseTypeWrapperGetter.NullGetter<T> getNullGetter();
 
     protected WrapperGetter<T> getListGetter() {
         throw new UnsupportedOperationException();

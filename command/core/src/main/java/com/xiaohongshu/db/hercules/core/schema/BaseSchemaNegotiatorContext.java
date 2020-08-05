@@ -5,11 +5,12 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class BaseSchemaNegotiatorContext implements SchemaNegotiatorContext {
 
     private GenericOptions options;
-    private BaseSchemaFetcher schemaFetcher;
+    private SchemaFetcher schemaFetcher;
 
     public BaseSchemaNegotiatorContext(GenericOptions options) {
         this.options = options;
@@ -20,7 +21,7 @@ public class BaseSchemaNegotiatorContext implements SchemaNegotiatorContext {
         return options;
     }
 
-    protected BaseSchemaFetcher getSchemaFetcher() {
+    protected SchemaFetcher getSchemaFetcher() {
         return schemaFetcher;
     }
 
@@ -45,11 +46,19 @@ public class BaseSchemaNegotiatorContext implements SchemaNegotiatorContext {
     }
 
     @Override
+    public void afterReadIndexGroupList(List<Set<String>> indexGroupList) {
+    }
+
+    @Override
+    public void afterReadUniqueKeyGroupList(List<Set<String>> uniqueKeyGroupList) {
+    }
+
+    @Override
     public void afterAll(List<String> columnName, Map<String, DataType> columnType) {
     }
 
     @Override
-    public void setSchemaFetcher(BaseSchemaFetcher schemaFetcher) {
+    public void setSchemaFetcher(SchemaFetcher schemaFetcher) {
         this.schemaFetcher = schemaFetcher;
     }
 

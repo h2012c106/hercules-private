@@ -1,14 +1,13 @@
 package com.xiaohongshu.db.hercules.converter.mysql;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.sql.Types;
 import java.util.Date;
 
 public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEntry.Column.Builder> {

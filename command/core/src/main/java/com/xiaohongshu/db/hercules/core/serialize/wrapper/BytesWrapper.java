@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -97,7 +98,7 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
     }
 
     @Override
-    public Date asDate() {
+    public ExtendedDate asDate() {
         throw new SerializeException("Unsupported to convert bytes to date.");
     }
 

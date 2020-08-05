@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 

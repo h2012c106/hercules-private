@@ -56,7 +56,7 @@ public class RDBMSInputFormat extends HerculesInputFormat
         schemaFetcher = initializeSchemaFetcher(sourceOptions, converter, manager);
         baseSql = SqlUtils.makeBaseQuery(sourceOptions);
 
-        columnTypeMap = SchemaUtils.convert(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), generateCustomDataTypeManager());
+        columnTypeMap = SchemaUtils.convertTypeFromOption(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), generateCustomDataTypeManager());
         columnTypeMap = new StingyMap<>(columnTypeMap);
     }
 

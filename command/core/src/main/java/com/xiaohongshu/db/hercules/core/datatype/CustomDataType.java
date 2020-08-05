@@ -41,6 +41,7 @@ public abstract class CustomDataType<I, O> implements DataType {
     protected void innerInitialize(List<String> params) {
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -60,6 +61,8 @@ public abstract class CustomDataType<I, O> implements DataType {
         return true;
     }
 
+    abstract public boolean isNull(I row, String rowName, String columnName, int columnSeq) throws Exception;
+
     /**
      * 确保下游抄类型作业能抄到特殊类型
      *
@@ -70,8 +73,8 @@ public abstract class CustomDataType<I, O> implements DataType {
      * @return
      * @throws Exception
      */
-    public final BaseWrapper read(I row, String rowName, String columnName, int columnSeq) throws Exception {
-        BaseWrapper res = innerRead(row, rowName, columnName, columnSeq);
+    public final BaseWrapper<?> read(I row, String rowName, String columnName, int columnSeq) throws Exception {
+        BaseWrapper<?> res = innerRead(row, rowName, columnName, columnSeq);
         res.setType(this);
         return res;
     }
@@ -86,9 +89,11 @@ public abstract class CustomDataType<I, O> implements DataType {
      * @return
      * @throws Exception
      */
-    abstract protected BaseWrapper innerRead(I row, String rowName, String columnName, int columnSeq) throws Exception;
+    abstract protected BaseWrapper<?> innerRead(I row, String rowName, String columnName, int columnSeq) throws Exception;
 
-    public void write(@NonNull BaseWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    abstract public void writeNull(O row, String rowName, String columnName, int columnSeq) throws Exception;
+
+    public void write(@NonNull BaseWrapper<?> wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
         if (wrapper.getClass() == IntegerWrapper.class) {
             innerWrite((IntegerWrapper) wrapper, row, rowName, columnName, columnSeq);
         } else if (wrapper.getClass() == BooleanWrapper.class) {

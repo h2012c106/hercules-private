@@ -134,7 +134,7 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
     }
 
     @Override
-    protected List<String> innerGetColumnNameList() {
+    protected List<String> getColumnNameList() {
         if (messageType != null) {
             return messageType.getFields()
                     .stream()
@@ -145,8 +145,7 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
         }
     }
 
-    @Override
-    protected Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet) {
+    protected Map<String, DataType> getColumnTypeMap(Set<String> columnNameSet) {
         if (messageType != null) {
             return converter.convertRowType(messageType);
         } else {

@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
-import com.xiaohongshu.db.hercules.core.supplier.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
 import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
@@ -71,7 +71,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     private final String columnFamily;
     private final String rowKeyCol;
     private final HBaseManager manager;
-    private final KvConverterSupplier kvConverterSupplier;
+    private final KvSerializerSupplier kvSerializerSupplier;
     //    private final BufferedMutator mutator;
     private final Table table;
     private final List<Put> putsBuffer = new LinkedList<>();
@@ -85,7 +85,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         rowKeyCol = conf.get(HBaseOptionsConf.ROW_KEY_COL_NAME);
 //        mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
         table = HBaseManager.getTable(manager.getConf(), manager);
-        kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
+        kvSerializerSupplier = (KvSerializerSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
         List<String> temp = new ArrayList<>(columnNameList);
         temp.remove(rowKeyCol);
         columnNameList = temp;
@@ -155,15 +155,15 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
      */
     @Override
     protected void innerColumnWrite(HerculesWritable record) throws IOException {
-        innerMapWrite(record);
+        innerWrite(record);
     }
 
     @Override
-    protected void innerMapWrite(HerculesWritable record) throws IOException {
+    protected void innerWrite(HerculesWritable record) throws IOException {
         Put put;
 
         try {
-            if (kvConverterSupplier instanceof BlankKvConverterSupplier) {
+            if (kvSerializerSupplier instanceof BlankKvConverterSupplier) {
                 put = generatePut(record);
             } else {
                 put = getConvertedPut(record);
@@ -185,7 +185,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         String qualifier = options.getTargetOptions().getString(HBaseOutputOptionsConf.CONVERT_COLUMN_NAME, "");
         Put put = new Put(Bytes.toBytes(record.get(rowKeyCol).asString()));
         WritableUtils.remove(record.getRow(), Collections.singletonList(rowKeyCol));
-        byte[] value = kvConverterSupplier.getKvConverter().generateValue(record, options.getTargetOptions(), columnTypeMap, columnNameList);
+        byte[] value = kvSerializerSupplier.getKvSerializer().generateValue(record, options.getTargetOptions(), columnTypeMap, columnNameList);
         put.addColumn(columnFamily.getBytes(), qualifier.getBytes(), value);
         return put;
     }

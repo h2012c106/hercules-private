@@ -52,10 +52,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
         try {
             connection = manager.getConnection();
             statement = connection.prepareStatement(querySql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-            if (fetchSize != null) {
-                LOG.info("Using fetchSize for query: " + fetchSize);
-                statement.setFetchSize(fetchSize);
-            }
+            SqlUtils.setFetchSize(statement, fetchSize);
             LOG.info("Executing query: " + querySql);
             resultSet = statement.executeQuery();
         } catch (SQLException e) {

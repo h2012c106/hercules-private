@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.parquet.ParquetUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetHerculesDataTypeConverter;

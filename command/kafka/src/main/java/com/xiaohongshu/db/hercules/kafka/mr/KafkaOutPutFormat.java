@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.kafka.mr;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
-import com.xiaohongshu.db.hercules.core.supplier.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
 import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
@@ -32,9 +32,9 @@ public class KafkaOutPutFormat extends HerculesOutputFormat implements KafkaMana
         options.fromConfiguration(context.getConfiguration());
         GenericOptions targetOptions = options.getTargetOptions();
         KafkaManager manager = initializeManager(targetOptions);
-        KvConverterSupplier kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, ""))
+        KvSerializerSupplier kvSerializerSupplier = (KvSerializerSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, ""))
                 .getConstructor(GenericOptions.class).newInstance(options.getTargetOptions());
-        return new KafkaRecordWriter(manager, context, kvConverterSupplier);
+        return new KafkaRecordWriter(manager, context, kvSerializerSupplier);
     }
 
     @Override
@@ -58,17 +58,17 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
     private static final Log LOG = LogFactory.getLog(KafkaRecordWriter.class);
     private final KafkaManager manager;
     private final GenericOptions targetOptions;
-    private final KvConverterSupplier kvConverterSupplier;
+    private final KvSerializerSupplier kvSerializerSupplier;
     private final String kafkaKeyCol;
 
 
-    public KafkaRecordWriter(KafkaManager manager, TaskAttemptContext context, KvConverterSupplier kvConverterSupplier) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
-        super(context, kvConverterSupplier.getWrapperSetterFactory());
+    public KafkaRecordWriter(KafkaManager manager, TaskAttemptContext context, KvSerializerSupplier kvSerializerSupplier) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
+        super(context, kvSerializerSupplier.getWrapperSetterFactory());
         this.targetOptions = options.getTargetOptions();
         this.kafkaKeyCol = this.targetOptions.getString(KafkaOptionConf.KAFKA_KEY, "");
         this.manager = manager;
-        this.kvConverterSupplier = kvConverterSupplier;
-        if (this.kvConverterSupplier instanceof BlankKvConverterSupplier) {
+        this.kvSerializerSupplier = kvSerializerSupplier;
+        if (this.kvSerializerSupplier instanceof BlankKvConverterSupplier) {
             throw new RuntimeException("BlankKvConverterSupplier is not supported in kafka writer. Please specify a valid kvConverter.");
         }
     }
@@ -78,12 +78,12 @@ class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
     protected void innerColumnWrite(HerculesWritable value) {
         String key = value.get(kafkaKeyCol).asString();
 //        manager.send(Thread.currentThread().getName(), kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
-        manager.send(key, kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
+        manager.send(key, kvSerializerSupplier.getKvSerializer().generateValue(value, targetOptions, columnTypeMap, columnNameList));
 //        manager.send(kvConverterSupplier.getKvConverter().getKey(), kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
     }
 
     @Override
-    protected void innerMapWrite(HerculesWritable value) {
+    protected void innerWrite(HerculesWritable value) {
         innerColumnWrite(value);
     }
 

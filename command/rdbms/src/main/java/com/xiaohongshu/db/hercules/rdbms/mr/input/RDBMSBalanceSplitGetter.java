@@ -63,12 +63,15 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
         BigDecimal availableMemoryByte = BigDecimal.valueOf(Runtime.getRuntime().maxMemory()
                 - Runtime.getRuntime().totalMemory() + Runtime.getRuntime().freeMemory())
                 .divide(BigDecimal.TEN, BigDecimal.ROUND_DOWN);
+        BigDecimal memoryAllowedSize = availableMemoryByte.divide(BigDecimal.valueOf(singleByteSize), 8, BigDecimal.ROUND_UP);
         // 取内存允许量(十分之一)以及当前大小的较小值
-        BigDecimal res = sampleSize
-                .min(availableMemoryByte.divide(BigDecimal.valueOf(singleByteSize), 8, BigDecimal.ROUND_UP));
+        BigDecimal res = sampleSize.min(memoryAllowedSize);
         if (maxSampleRow != null) {
             res = res.min(maxSampleRow);
         }
+        LOG.info(String.format("According to the available memory size [%s] and estimated data size [%d], " +
+                        "memory-allowed sample size vs calculated size vs final result: %s vs %s vs %s.",
+                availableMemoryByte, singleByteSize, memoryAllowedSize, sampleSize, res));
         return res;
     }
 

@@ -2,8 +2,8 @@ package com.xiaohongshu.db.hercules.converter.mysql;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 

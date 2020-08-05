@@ -42,7 +42,7 @@ public class ParquetRecordWriter extends HerculesRecordWriter<Group> {
     }
 
     @Override
-    protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
+    protected void innerWrite(HerculesWritable value) throws IOException, InterruptedException {
         // 到这一步，前面一定出了schema了，也就是column信息百分百有了
         throw new UnsupportedOperationException("Unexpected to deal with column-unspecified parquet.");
     }

@@ -6,9 +6,9 @@ import com.xiaohongshu.db.xlog.canal.CanalSerDe;
 import com.xiaohongshu.db.xlog.core.codec.Codec;
 import com.xiaohongshu.db.xlog.core.exception.SerDeException;
 
-public class MysqlCanalEntryKvConverter extends CanalEntryKvConverter{
+public class MysqlCanalEntryKvSerializer extends CanalEntryKvSerializer {
 
-    public MysqlCanalEntryKvConverter(GenericOptions options) {
+    public MysqlCanalEntryKvSerializer(GenericOptions options) {
         super(options);
     }
 

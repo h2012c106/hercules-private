@@ -44,11 +44,11 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
     @Override
     protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
         value = new HerculesWritable(WritableUtils.copyColumn(value.getRow(), columnNameList, WritableUtils.FilterUnexistOption.IGNORE));
-        innerMapWrite(value);
+        innerWrite(value);
     }
 
     @Override
-    protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
+    protected void innerWrite(HerculesWritable value) throws IOException, InterruptedException {
         if (!written) {
             written = true;
         }

@@ -146,17 +146,17 @@ public final class WritableUtils {
         }
     }
 
-    public static MapWrapper copyColumn(MapWrapper in, List<String> whiteNameList, FilterUnexistOption option) {
+    public static MapWrapper copyColumn(MapWrapper in, List<String> whiteNameList, @NonNull FilterUnexistOption option) {
         MapWrapper out = new MapWrapper(whiteNameList.size());
         for (String columnName : whiteNameList) {
             List<String> splitColumnName = splitColumnRaw(columnName);
-            BaseWrapper value = get(in, splitColumnName);
+            BaseWrapper<?> value = get(in, splitColumnName);
             // MapWrapper里不可能存null值，所以null一定代表不存在
             if (value == null) {
                 if (option == FilterUnexistOption.IGNORE) {
                     continue;
-                } else if (option == FilterUnexistOption.THROW) {
-                    throw new RuntimeException(String.format("Column [%s] must exist in the data map.", columnName));
+                } else if (option == FilterUnexistOption.EXCEPTION) {
+                    throw new RuntimeException(String.format("Column [%s] must exist in the data map: %s", columnName, in));
                 } else if (option == FilterUnexistOption.DEFAULT_NULL_VALUE) {
                     value = NullWrapper.INSTANCE;
                 }
@@ -193,7 +193,7 @@ public final class WritableUtils {
 
     public enum FilterUnexistOption {
         IGNORE,
-        THROW,
+        EXCEPTION,
         DEFAULT_NULL_VALUE;
     }
 }

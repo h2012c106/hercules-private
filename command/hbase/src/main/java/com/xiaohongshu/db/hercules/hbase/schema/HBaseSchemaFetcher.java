@@ -52,12 +52,11 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
     }
 
     @Override
-    protected List<String> innerGetColumnNameList() {
+    protected List<String> getColumnNameList() {
         return columnNameList;
     }
 
-    @Override
-    public Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet) {
+    public Map<String, DataType> getColumnTypeMap(Set<String> columnNameSet) {
 
         String rowKeyCol = getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if (rowKeyCol != null) {

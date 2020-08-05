@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -13,16 +14,8 @@ public class BooleanWrapper extends BaseWrapper<Boolean> {
 
     private final static DataType DATA_TYPE = BaseDataType.BOOLEAN;
 
-    private BooleanWrapper(String value) {
-        this(Boolean.parseBoolean(value));
-    }
-
     private BooleanWrapper(Boolean value) {
         super(value, DATA_TYPE, 1);
-    }
-
-    public static BaseWrapper get(String value) {
-        return value == null ? NullWrapper.get(DATA_TYPE) : new BooleanWrapper(value);
     }
 
     public static BaseWrapper get(Boolean value) {
@@ -55,7 +48,7 @@ public class BooleanWrapper extends BaseWrapper<Boolean> {
     }
 
     @Override
-    public Date asDate() {
+    public ExtendedDate asDate() {
         throw new SerializeException("Unsupported to convert boolean to date.");
     }
 

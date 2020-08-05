@@ -9,6 +9,7 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -44,8 +45,6 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         // 黑名单处理
         WritableUtils.filterColumn(value.getRow(), blackColumnList);
 
-        // TODO 列聚合x
-
         // 转换列名
         WritableUtils.convertColumnName(value, columnMap);
 
@@ -60,6 +59,9 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
+
+        HerculesContext.setWrappingOptions(options);
+
         GenericOptions commonOptions = options.getCommonOptions();
 
         // 处理log-level

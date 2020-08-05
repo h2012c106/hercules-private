@@ -118,7 +118,7 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
         // 不用担心NPE，横竖这里都有了
         messageType = MessageTypeParser.parseMessageType(options.getSourceOptions().getString(MESSAGE_TYPE, null));
         // 处理一下column的筛选
-        if (!emptyColumnNameList) {
+        if (!getSchema().getColumnNameList().isEmpty()) {
             MessageType tmpMessageType = Types.buildMessage().named(messageType.getName());
             for (String columnName : columnNameList) {
                 MessageType projectedMessageType = projectOneColumn(columnName);

@@ -1,13 +1,27 @@
 package com.xiaohongshu.db.hercules.core.datatype;
 
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import lombok.NonNull;
+
+import java.util.function.Function;
+
 public interface DataType {
+
+    public String getName();
+
+    /**
+     * 实际在java中的类型，可能没啥用
+     * @return
+     */
+    public Class<?> getJavaClass();
+
     public Class<?> getStorageClass();
 
     public BaseDataType getBaseDataType();
 
     public boolean isCustom();
 
-    public static DataType valueOfIgnoreCase(String typeName, BaseCustomDataTypeManager manager) {
+    public static DataType valueOfIgnoreCase(String typeName, @NonNull CustomDataTypeManager<?, ?> manager) {
         // 先看基本类型（同名以基本类型为准）
         try {
             return BaseDataType.valueOfIgnoreCase(typeName);

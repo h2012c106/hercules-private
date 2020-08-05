@@ -23,6 +23,8 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
 
     public static final String COLUMN = "column";
     public static final String COLUMN_TYPE = "column-type";
+    public static final String INDEX = "index";
+    public static final String UNIQUE_KEY = "unique-key";
 
     private final static JSONObject DEFAULT_COLUMN_TYPE = new JSONObject();
 
@@ -31,6 +33,7 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
     private final static String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static final String COLUMN_DELIMITER = ",";
+    public static final String GROUP_DELIMITER = ";";
     public static final String NESTED_COLUMN_NAME_DELIMITER = ".";
     public static final String NESTED_COLUMN_NAME_DELIMITER_REGEX = Pattern.quote(NESTED_COLUMN_NAME_DELIMITER);
 
@@ -72,6 +75,22 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .description(String.format("The table column type map, formatted in json, type: %s.", Arrays.toString(BaseDataType.values())))
                 .defaultStringValue(DEFAULT_COLUMN_TYPE.toJSONString())
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(INDEX)
+                .needArg(true)
+                .description(String.format("The table index group list, group separated by: %s, column delimited by: %s.", GROUP_DELIMITER, COLUMN_DELIMITER))
+                .defaultStringValue("")
+                .list(true)
+                .listDelimiter(GROUP_DELIMITER)
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(UNIQUE_KEY)
+                .needArg(true)
+                .description(String.format("The table unique key group list, group separated by: %s, column delimited by: %s.", GROUP_DELIMITER, COLUMN_DELIMITER))
+                .defaultStringValue("")
+                .list(true)
+                .listDelimiter(GROUP_DELIMITER)
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(HELP)

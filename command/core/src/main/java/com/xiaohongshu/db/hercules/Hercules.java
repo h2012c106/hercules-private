@@ -4,14 +4,17 @@ import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.CmdParser;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
-import com.xiaohongshu.db.hercules.core.supplier.KvConverterSupplier;
-import com.xiaohongshu.db.hercules.core.utils.*;
+import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
+import com.xiaohongshu.db.hercules.core.utils.ConfigUtils;
+import com.xiaohongshu.db.hercules.core.utils.LogUtils;
+import com.xiaohongshu.db.hercules.core.utils.ModuleConfig;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,28 +72,26 @@ public class Hercules {
 
         WrappingOptions wrappingOptions = new WrappingOptions(commonOptions, sourceOptions, targetOptions);
 
+        HerculesContext.setWrappingOptions(wrappingOptions);
+        HerculesContext.setAssemblySupplierPair(sourceSupplier, targetSupplier);
+
         sourceSupplier.setOptions(sourceOptions);
         targetSupplier.setOptions(targetOptions);
 
-        if (sourceDataSource.hasKvConverter() && sourceOptions.hasProperty(KvOptionsConf.SUPPLIER)) {
-            KvConverterSupplier sourceKvConverterSupplier = ReflectUtils.constructWithNonArgsConstructor(
-                    sourceOptions.getString(KvOptionsConf.SUPPLIER, null),
-                    KvConverterSupplier.class
-            );
+        KvSerializerSupplier sourceKvSerializerSupplier;
+        if (sourceDataSource.hasKvSerializer()
+                && (sourceKvSerializerSupplier = HerculesContext.getKvSerializerSupplierPair().getSourceItem()) != null) {
             wrappingOptions.add(new CmdParser(
-                    sourceKvConverterSupplier.getInputOptionsConf(),
+                    sourceKvSerializerSupplier.getInputOptionsConf(),
                     sourceDataSource,
                     OptionsType.SOURCE_CONVERTER
             ).parse(args));
         }
-
-        if (targetDataSource.hasKvConverter() && targetOptions.hasProperty(KvOptionsConf.SUPPLIER)) {
-            KvConverterSupplier targetKvConverterSupplier = ReflectUtils.constructWithNonArgsConstructor(
-                    targetOptions.getString(KvOptionsConf.SUPPLIER, null),
-                    KvConverterSupplier.class
-            );
+        KvSerializerSupplier targetKvSerializerSupplier;
+        if (targetDataSource.hasKvSerializer()
+                && (targetKvSerializerSupplier = HerculesContext.getKvSerializerSupplierPair().getTargetItem()) != null) {
             wrappingOptions.add(new CmdParser(
-                    targetKvConverterSupplier.getOutputOptionsConf(),
+                    targetKvSerializerSupplier.getOutputOptionsConf(),
                     targetDataSource,
                     OptionsType.TARGET_CONVERTER
             ).parse(args));
@@ -112,14 +113,7 @@ public class Hercules {
             System.exit(0);
         }
 
-        SchemaNegotiator negotiator = new SchemaNegotiator(
-                wrappingOptions,
-                sourceSupplier.getSchemaFetcher(),
-                targetSupplier.getSchemaFetcher(),
-                sourceSupplier.getSchemaNegotiatorContextAsSource(),
-                targetSupplier.getSchemaNegotiatorContextAsTarget()
-        );
-        negotiator.negotiate();
+        SchemaNegotiator.negotiate();
 
         MRJob job = new MRJob(sourceSupplier, targetSupplier, wrappingOptions);
         job.setJar(sourceModuleConfig.getJar(), targetModuleConfig.getJar());

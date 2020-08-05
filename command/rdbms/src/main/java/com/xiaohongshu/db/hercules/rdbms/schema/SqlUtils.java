@@ -17,6 +17,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.FETCH_SIZE;
 
 public final class SqlUtils {
 
@@ -289,6 +292,15 @@ public final class SqlUtils {
                     LOG.warn("Exception when releasing: " + ExceptionUtils.getStackTrace(e));
                 }
             }
+        }
+    }
+
+    public static void setFetchSize(PreparedStatement statement, Integer fetchSize) throws SQLException {
+        if (fetchSize != null) {
+            LOG.info("Using fetchSize for query: " + fetchSize);
+            statement.setFetchSize(fetchSize);
+        } else {
+            LOG.warn(String.format("The fetch size is set to null, default to unlimited. If OOM happens, please use '%s' to limit it.", FETCH_SIZE));
         }
     }
 }

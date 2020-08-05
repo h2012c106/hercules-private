@@ -1,14 +1,14 @@
 package com.xiaohongshu.db.hercules.converter.mongo;
 
-import com.xiaohongshu.db.hercules.core.converter.KvConverter;
+import com.xiaohongshu.db.hercules.core.serializer.KvSerializer;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.supplier.BaseKvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.supplier.BaseKvSerializerSupplier;
 
-public class MongoOplogKvConverterSupplier extends BaseKvConverterSupplier {
+public class MongoOplogKvSerializerSupplier extends BaseKvSerializerSupplier {
 
     @Override
-    public KvConverter<?, ?, ?> getKvConverter() {
-        return new MongoOplogKvConverter(options);
+    public KvSerializer<?, ?, ?> getKvSerializer() {
+        return new MongoOplogKvSerializer(options);
     }
 
     @Override

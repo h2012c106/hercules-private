@@ -1,8 +1,7 @@
 package com.xiaohongshu.db.hercules.converter.mongo;
 
-import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 
 public class MongoOplogWrapperGetterFactory  extends WrapperGetterFactory {
     @Override

@@ -83,7 +83,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
     }
 
     @Override
-    protected List<String> innerGetColumnNameList() {
+    protected List<String> getColumnNameList() {
         final List<String> res = new ArrayList<>();
         getSchemaInfo(baseSql, new BiFunction<String, Integer, Void>() {
             @Override
@@ -104,8 +104,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
         return null;
     }
 
-    @Override
-    protected Map<String, DataType> innerGetColumnTypeMap(final Set<String> columnNameSet) {
+    protected Map<String, DataType> getColumnTypeMap(final Set<String> columnNameSet) {
         final Map<String, Integer> res = new HashMap<>();
         // 用嵌套查询，避免使用sql模式时select到不存在(as出来)的列
         String sql = SqlUtils.replaceSelectItem(String.format("SELECT * from ( %s ) as t;", baseSql), columnNameSet.toArray(new String[0]));

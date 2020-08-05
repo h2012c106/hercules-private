@@ -116,7 +116,7 @@ public final class GenericOptions {
     }
 
     public String[] getStringArray(String key, String[] defaultValue) {
-        return getStringArray(key, defaultValue, true, true);
+        return getStringArray(key, defaultValue, false, false);
     }
 
     public JSONObject getJson(String key, JSONObject defaultValue) {

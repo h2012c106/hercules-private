@@ -1,13 +1,16 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,29 +18,18 @@ import java.util.Set;
 /**
  * 仅用于从数据源fetch schema，且全局仅允许fetch一次
  */
-public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> {
+public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> extends SchemaFetcher {
 
     private static final Log LOG = LogFactory.getLog(BaseSchemaFetcher.class);
 
-    private GenericOptions options;
-    private List<String> columnNameList;
-    private Map<String, DataType> columnTypeMap;
+    private final GenericOptions options;
     protected T converter;
-    protected BaseCustomDataTypeManager customDataTypeManager;
+    protected CustomDataTypeManager<?, ?> customDataTypeManager;
 
-    public BaseSchemaFetcher(GenericOptions options, T converter) {
-        this(options, converter, NullCustomDataTypeManager.INSTANCE);
-    }
-
-    public BaseSchemaFetcher(GenericOptions options, T converter,
-                             BaseCustomDataTypeManager customDataTypeManager) {
-        this.options = options;
-        this.converter = converter;
-        this.customDataTypeManager = customDataTypeManager;
-    }
-
-    public BaseCustomDataTypeManager getCustomDataTypeManager() {
-        return customDataTypeManager;
+    public BaseSchemaFetcher(DataSourceRole role) {
+        this.options = HerculesContext.getWrappingOptions().getGenericOptions(role.getOptionsType());
+        this.converter = (T) HerculesContext.getAssemblySupplierPair().getItem(role).getDataTypeConverter();
+        this.customDataTypeManager = HerculesContext.getAssemblySupplierPair().getItem(role).getCustomDataTypeManager();
     }
 
     protected GenericOptions getOptions() {
@@ -45,6 +37,8 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> {
     }
 
     abstract protected List<String> innerGetColumnNameList();
+
+    private List<String> columnNameList;
 
     /**
      * 出于对列名列表一致性的考虑，强烈建议在mapper阶段勿调此方法，使用通过Configuration传来的列名列表，保证全局仅取一次列名列表
@@ -55,9 +49,11 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> {
      *
      * @return
      */
+    @Override
     final List<String> getColumnNameList() {
         if (columnNameList == null) {
             columnNameList = innerGetColumnNameList();
+            LOG.info("Fetched column name list: " + columnNameList);
         }
         return columnNameList;
     }
@@ -67,27 +63,72 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> {
      *
      * @return
      */
-    abstract protected Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet);
+    abstract protected Map<String, DataType> innerGetColumnTypeMap();
+
+    private Map<String, DataType> columnTypeMap;
 
     /**
      * 仅允许negotiator调用
      *
-     * @param columnNameSet
      * @return
      */
-    final Map<String, DataType> getColumnTypeMap(Set<String> columnNameSet) {
+    @Override
+    final Map<String, DataType> getColumnTypeMap() {
         if (columnTypeMap == null) {
-            columnTypeMap = innerGetColumnTypeMap(columnNameSet);
+            columnTypeMap = innerGetColumnTypeMap();
+            LOG.info("Fetched column type map: " + columnTypeMap);
         }
         return columnTypeMap;
     }
 
     /**
-     * 首先，需要同步的列一定需要试图取类型。其次还可能存在一些不需要同步，但是同样需要取值的列（如split-by、update-key）也需要类型。
+     * 获得表的索引组
      *
      * @return
      */
-    protected Set<String> getAdditionalNeedTypeColumn() {
-        return new HashSet<>(0);
+    protected List<Set<String>> innerGetIndexGroupList() {
+        return Collections.emptyList();
     }
+
+    private List<Set<String>> indexGroupList;
+
+    /**
+     * 仅允许negotiator调用
+     *
+     * @return
+     */
+    @Override
+    final List<Set<String>> getIndexGroupList() {
+        if (indexGroupList == null) {
+            indexGroupList = innerGetIndexGroupList();
+            LOG.info("Fetched index group list: " + indexGroupList);
+        }
+        return indexGroupList;
+    }
+
+    /**
+     * 获得表的唯一键组
+     *
+     * @return
+     */
+    protected List<Set<String>> innerGetUniqueKeyGroupList() {
+        return Collections.emptyList();
+    }
+
+    private List<Set<String>> uniqueKeyGroupList;
+
+    /**
+     * 仅允许negotiator调用
+     *
+     * @return
+     */
+    @Override
+    final List<Set<String>> getUniqueKeyGroupList() {
+        if (uniqueKeyGroupList == null) {
+            uniqueKeyGroupList = innerGetUniqueKeyGroupList();
+            LOG.info("Fetched unique key group list: " + uniqueKeyGroupList);
+        }
+        return uniqueKeyGroupList;
+    }
+
 }

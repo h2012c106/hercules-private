@@ -1,12 +1,14 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
-import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
-import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import lombok.NonNull;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -15,9 +17,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -32,49 +32,37 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    private WrapperGetterFactory<T> wrapperGetterFactory;
+    protected WrapperGetterFactory<T> wrapperGetterFactory;
 
     protected WrappingOptions options;
 
-    protected List<String> columnNameList;
-    protected Map<String, DataType> columnTypeMap;
+    private Schema schema;
 
-    protected BaseCustomDataTypeManager<?, ?> manager;
+    protected CustomDataTypeManager<?, ?> manager;
 
-    protected boolean emptyColumnNameList;
+    public HerculesRecordReader(TaskAttemptContext context) {
+        options = HerculesContext.getWrappingOptions();
 
-    public HerculesRecordReader(TaskAttemptContext context, BaseCustomDataTypeManager<?, ?> manager,
-                                WrapperGetterFactory<T> wrapperGetterFactory) {
-        this.manager = manager;
+        schema = HerculesContext.getSchemaPair().getSourceItem();
 
-        options = new WrappingOptions();
-        options.fromConfiguration(context.getConfiguration());
-
-        // 虽然negotiator中会强制塞，但是空值似乎传不过来
-        columnNameList = Arrays.asList(options.getSourceOptions().getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-        columnTypeMap = SchemaUtils.convert(options.getSourceOptions().getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), manager);
-
-        emptyColumnNameList = columnNameList.size() == 0;
-
-        setWrapperGetterFactory(wrapperGetterFactory);
+        manager = HerculesContext.getAssemblySupplierPair().getSourceItem().getCustomDataTypeManager();
     }
 
-    public HerculesRecordReader(TaskAttemptContext context, WrapperGetterFactory<T> wrapperGetterFactory) {
-        this(context, NullCustomDataTypeManager.INSTANCE, wrapperGetterFactory);
+    public Schema getSchema() {
+        return schema;
     }
 
-    /**
-     * 子类有可能会有内部非静态类（如mongo），初始化无法new出来，留个口子
-     *
-     * @param wrapperGetterFactory
-     */
-    protected void setWrapperGetterFactory(WrapperGetterFactory<T> wrapperGetterFactory) {
+    public void setSchema(Schema schema) {
+        this.schema = schema;
+    }
+
+    public final void setWrapperGetterFactory(@NonNull WrapperGetterFactory<T> wrapperGetterFactory) {
         this.wrapperGetterFactory = wrapperGetterFactory;
 
         if (wrapperGetterFactory != null) {
             // 检查column type里是否有不支持的类型
             Map<String, DataType> errorMap = new HashMap<>();
-            for (Map.Entry<String, DataType> entry : columnTypeMap.entrySet()) {
+            for (Map.Entry<String, DataType> entry : schema.getColumnTypeMap().entrySet()) {
                 String columnName = entry.getKey();
                 DataType dataType = entry.getValue();
                 if (!dataType.isCustom() && !wrapperGetterFactory.contains(dataType)) {

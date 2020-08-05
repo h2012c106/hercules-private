@@ -6,7 +6,7 @@ public interface DataSource {
 
     public String getFilePositionParam();
 
-    default public boolean hasKvConverter() {
+    default public boolean hasKvSerializer() {
         return false;
     }
 

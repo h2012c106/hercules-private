@@ -6,6 +6,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import lombok.NonNull;
 
 import java.math.BigDecimal;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
  * <p>
  * 同时作为{@link HerculesWritable}的内部存储类
  */
-public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper>> {
+public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> {
 
     private final static DataType DATA_TYPE = BaseDataType.MAP;
     private final static String UNSUPPORTED_MESSAGE = "Unsupported to convert map wrapper to any basic data type, except string.";
@@ -40,8 +41,8 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper>> {
 
     public static final NullWrapper NULL_INSTANCE = NullWrapper.get(DATA_TYPE);
 
-    public void put(String columnName, @NonNull BaseWrapper value) {
-        BaseWrapper prevValue = get(columnName);
+    public void put(String columnName, @NonNull BaseWrapper<?> value) {
+        BaseWrapper<?> prevValue = get(columnName);
         if (prevValue != null) {
             addByteSize(-1 * prevValue.getByteSize());
         }
@@ -50,11 +51,11 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper>> {
         addByteSize(value.getByteSize());
     }
 
-    public BaseWrapper get(String columnName) {
+    public BaseWrapper<?> get(String columnName) {
         return getValue().get(columnName);
     }
 
-    public Set<Map.Entry<String, BaseWrapper>> entrySet() {
+    public Set<Map.Entry<String, BaseWrapper<?>>> entrySet() {
         return getValue().entrySet();
     }
 
@@ -62,8 +63,8 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper>> {
         return getValue().containsKey(columnName);
     }
 
-    public BaseWrapper remove(String columnName) {
-        BaseWrapper removedValue = getValue().remove(columnName);
+    public BaseWrapper<?> remove(String columnName) {
+        BaseWrapper<?> removedValue = getValue().remove(columnName);
         if (removedValue != null) {
             addByteSize(-1 * removedValue.getByteSize());
         }
@@ -96,7 +97,7 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper>> {
     }
 
     @Override
-    public Date asDate() {
+    public ExtendedDate asDate() {
         throw new SerializeException(UNSUPPORTED_MESSAGE);
     }
 

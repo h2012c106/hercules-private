@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.clickhouse.mr;
 
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSWrapperSetterFactory;

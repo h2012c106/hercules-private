@@ -1,44 +1,28 @@
 package com.xiaohongshu.db.hercules.mongodb.mr.output;
 
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 import com.mongodb.MongoClient;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.MultiThreadAsyncWriter;
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
-import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.mongodb.ExportType;
-import com.xiaohongshu.db.hercules.mongodb.datatype.MongoDBCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOutputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
-import org.bson.types.Binary;
-import org.bson.types.Decimal128;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
@@ -56,13 +40,11 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
     private final Long statementPerBulk;
     private final List<String> updateKeyList;
     private final boolean bulkOrdered;
-    private boolean decimalAsString;
 
     private final MongoDBMultiThreadAsyncWriter writer;
 
-    public MongoDBRecordWriter(TaskAttemptContext context, MongoDBManager manager, MongoDBCustomDataTypeManager typeManager) throws Exception {
-        super(context, null, typeManager);
-        setWrapperSetterFactory(new MongoDBWrapperSetterFactory());
+    public MongoDBRecordWriter(TaskAttemptContext context, MongoDBManager manager) throws Exception {
+        super(context);
 
         client = manager.getConnection();
 
@@ -82,7 +64,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
         }
         bulkOrdered = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.BULK_ORDERED, false);
 
-        decimalAsString = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.DECIMAL_AS_STRING, false);
+        boolean decimalAsString = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.DECIMAL_AS_STRING, false);
         String mongoServerVersionStr = client.getDatabase(dbName)
                 .runCommand(new Document("buildinfo", ""))
                 .get("version")
@@ -95,57 +77,13 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
             LOG.warn(String.format("The mongo version [%s] doesn't support decimal, force to string.", mongoServerVersionStr));
             decimalAsString = true;
         }
+        ((MongoDBWrapperSetterManager) wrapperSetterFactory).setDecimalAsString(decimalAsString);
 
         recordList = new ArrayList<>(statementPerBulk.intValue());
 
         int threadNum = options.getTargetOptions().getInteger(MongoDBOutputOptionsConf.EXECUTE_THREAD_NUM, null);
         writer = new MongoDBMultiThreadAsyncWriter(threadNum);
         writer.run();
-    }
-
-    /**
-     * 当上游不是list时，做一个singleton list
-     *
-     * @param wrapper
-     * @return
-     * @throws Exception
-     */
-    private ArrayList<Object> wrapperToList(BaseWrapper wrapper) throws Exception {
-        ArrayList<Object> res;
-        if (wrapper.getType() == BaseDataType.LIST) {
-            ListWrapper listWrapper = (ListWrapper) wrapper;
-            res = new ArrayList<>(listWrapper.size());
-            for (int i = 0; i < listWrapper.size(); ++i) {
-                BaseWrapper subWrapper = listWrapper.get(i);
-                // 由于不能指定list下的类型故只能抄作业
-                DataType dataType = subWrapper.getType();
-                // 不能像reader一样共享一个，写会有多线程情况，要慎重
-                Document tmpDocument = new Document();
-                getWrapperSetter(dataType).set(subWrapper, tmpDocument, WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST, WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST, -1);
-                Object convertedValue = tmpDocument.get(WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST);
-                res.add(convertedValue);
-            }
-        } else {
-            DataType dataType = wrapper.getType();
-            Document tmpDocument = new Document();
-            getWrapperSetter(dataType).set(wrapper, tmpDocument, WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST, WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST, -1);
-            Object convertedValue = tmpDocument.get(WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST);
-            res = Lists.newArrayList(convertedValue);
-        }
-        return res;
-    }
-
-    @SneakyThrows
-    private Document mapWrapperToDocument(MapWrapper wrapper, String columnPath) {
-        Document res = new Document();
-        for (Map.Entry<String, BaseWrapper> entry : wrapper.entrySet()) {
-            String columnName = entry.getKey();
-            String fullColumnName = WritableUtils.concatColumn(columnPath, columnName);
-            BaseWrapper subWrapper = entry.getValue();
-            DataType columnType = columnTypeMap.getOrDefault(fullColumnName, subWrapper.getType());
-            getWrapperSetter(columnType).set(subWrapper, res, columnPath, columnName, -1);
-        }
-        return res;
     }
 
     private void execUpdate() throws IOException, InterruptedException {
@@ -156,15 +94,27 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
         List<WriteModel<Document>> writeModelList = new ArrayList<>(recordList.size());
         if (exportType.isInsert()) {
             writeModelList.addAll(recordList.stream()
-                    .map(record -> mapWrapperToDocument(record.getRow(), null))
+                    .map(new Function<HerculesWritable, Document>() {
+                        @SneakyThrows
+                        @Override
+                        public Document apply(HerculesWritable record) {
+                            return wrapperSetterFactory.writeMapWrapper(record.getRow(), new Document(), null);
+                        }
+                    })
                     .map(InsertOneModel::new)
                     .collect(Collectors.toList())
             );
         } else {
             for (HerculesWritable record : recordList) {
-                Document value = mapWrapperToDocument(record.getRow(), null);
-                Document filter = mapWrapperToDocument(WritableUtils.copyColumn(record.getRow(),
-                        updateKeyList, WritableUtils.FilterUnexistOption.THROW), null);
+                Document value = null;
+                Document filter = null;
+                try {
+                    value = wrapperSetterFactory.writeMapWrapper(record.getRow(), new Document(), null);
+                    filter = wrapperSetterFactory.writeMapWrapper(WritableUtils.copyColumn(record.getRow(),
+                            updateKeyList, WritableUtils.FilterUnexistOption.EXCEPTION), new Document(), null);
+                } catch (Exception e) {
+                    throw new IOException(e);
+                }
                 // 即update
                 if (!exportType.isReplaceOne()) {
                     // 第一层的列是update，第二层后的细节会被变成replace
@@ -194,21 +144,13 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
         writer.put(new MongoDBWorkerMission(false, writeModelList));
     }
 
-    /**
-     * 把相关列过滤出来，然后用{@link #innerMapWrite(HerculesWritable)}
-     *
-     * @param value
-     * @throws IOException
-     * @throws InterruptedException
-     */
     @Override
-    protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
-        value = new HerculesWritable(WritableUtils.copyColumn(value.getRow(), columnNameList, WritableUtils.FilterUnexistOption.IGNORE));
-        innerMapWrite(value);
+    protected WritableUtils.FilterUnexistOption getColumnUnexistOption() {
+        return WritableUtils.FilterUnexistOption.IGNORE;
     }
 
     @Override
-    protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
+    protected void innerWrite(HerculesWritable value) throws IOException, InterruptedException {
         recordList.add(value);
         if (recordList.size() >= statementPerBulk) {
             execUpdate();
@@ -223,237 +165,6 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
         writer.done();
 
         client.close();
-    }
-
-    private class MongoDBWrapperSetterFactory extends WrapperSetterFactory<Document> {
-
-        @Override
-        protected WrapperSetter<Document> getByteSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    BigInteger res = wrapper.asBigInteger();
-                    // 由于能走到这一步的一定存在对应列名，故不用纠结上游为null时需要无视还是置null
-                    if (res == null) {
-                        row.put(columnName, null);
-                    } else {
-                        row.put(columnName, res.byteValueExact());
-                    }
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getShortSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    BigInteger res = wrapper.asBigInteger();
-                    // 由于能走到这一步的一定存在对应列名，故不用纠结上游为null时需要无视还是置null
-                    if (res == null) {
-                        row.put(columnName, null);
-                    } else {
-                        row.put(columnName, res.shortValueExact());
-                    }
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getIntegerSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    BigInteger res = wrapper.asBigInteger();
-                    // 由于能走到这一步的一定存在对应列名，故不用纠结上游为null时需要无视还是置null
-                    if (res == null) {
-                        row.put(columnName, null);
-                    } else {
-                        row.put(columnName, res.intValueExact());
-                    }
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getLongSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    BigInteger res = wrapper.asBigInteger();
-                    // 由于能走到这一步的一定存在对应列名，故不用纠结上游为null时需要无视还是置null
-                    if (res == null) {
-                        row.put(columnName, null);
-                    } else {
-                        row.put(columnName, res.longValueExact());
-                    }
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getLonglongSetter() {
-            return null;
-        }
-
-        @Override
-        protected WrapperSetter<Document> getFloatSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    BigDecimal res = wrapper.asBigDecimal();
-                    // 由于能走到这一步的一定存在对应列名，故不用纠结上游为null时需要无视还是置null
-                    if (res == null) {
-                        row.put(columnName, null);
-                    } else {
-                        row.put(columnName, OverflowUtils.numberToFloat(res));
-                    }
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getDoubleSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    BigDecimal res = wrapper.asBigDecimal();
-                    // 由于能走到这一步的一定存在对应列名，故不用纠结上游为null时需要无视还是置null
-                    if (res == null) {
-                        row.put(columnName, null);
-                    } else {
-                        row.put(columnName, OverflowUtils.numberToDouble(res));
-                    }
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getDecimalSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    BigDecimal res = wrapper.asBigDecimal();
-                    // 由于能走到这一步的一定存在对应列名，故不用纠结上游为null时需要无视还是置null
-                    if (res == null) {
-                        row.put(columnName, null);
-                    } else {
-                        if (decimalAsString) {
-                            row.put(columnName, res.toPlainString());
-                        } else {
-                            row.put(columnName, new Decimal128(res));
-                        }
-                    }
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getBooleanSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    row.put(columnName, wrapper.asBoolean());
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getStringSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    row.put(columnName, wrapper.asString());
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getDateSetter() {
-            return null;
-        }
-
-        @Override
-        protected WrapperSetter<Document> getTimeSetter() {
-            return null;
-        }
-
-        @Override
-        protected WrapperSetter<Document> getDatetimeSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    row.put(columnName, wrapper.asDate());
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getBytesSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    row.put(columnName, new Binary(wrapper.asBytes()));
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getNullSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    row.put(columnName, null);
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getListSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    if (wrapper.isNull()) {
-                        row.put(columnName, null);
-                    } else {
-                        row.put(columnName, wrapperToList(wrapper));
-                    }
-                }
-            };
-        }
-
-        @Override
-        protected WrapperSetter<Document> getMapSetter() {
-            return new WrapperSetter<Document>() {
-                @Override
-                public void set(@NonNull BaseWrapper wrapper, Document row, String rowName, String columnName, int columnSeq)
-                        throws Exception {
-                    if (wrapper.isNull()) {
-                        // 有可能是个null，不处理else要NPE
-                        row.put(columnName, null);
-                    } else if (wrapper.getType() == BaseDataType.MAP) {
-                        // 确保尽可能不丢失类型信息
-                        String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
-                        row.put(columnName, mapWrapperToDocument((MapWrapper) wrapper, fullColumnName));
-                    } else {
-                        row.put(columnName, ((JSONObject) wrapper.asJson()).getInnerMap());
-                    }
-                }
-            };
-        }
     }
 
     public class MongoDBMultiThreadAsyncWriter extends MultiThreadAsyncWriter<MongoDBMultiThreadAsyncWriter.ThreadContext, MongoDBWorkerMission> {

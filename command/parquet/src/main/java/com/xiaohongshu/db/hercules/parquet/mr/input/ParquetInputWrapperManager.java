@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;

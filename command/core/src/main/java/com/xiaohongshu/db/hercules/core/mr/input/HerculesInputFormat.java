@@ -1,23 +1,22 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.*;
 
 import java.io.IOException;
 import java.util.List;
 
-public abstract class HerculesInputFormat extends InputFormat<NullWritable, HerculesWritable> {
+public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, HerculesWritable> {
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
@@ -68,19 +67,25 @@ public abstract class HerculesInputFormat extends InputFormat<NullWritable, Herc
     }
 
     @Override
-    public HerculesRecordReader<?> createRecordReader(InputSplit split, TaskAttemptContext context)
+    public RecordReader<NullWritable, HerculesWritable> createRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
+        initializeContext(HerculesContext.getWrappingOptions().getSourceOptions());
 
-        Configuration configuration = context.getConfiguration();
-
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-
-        initializeContext(options.getSourceOptions());
-
-        return innerCreateRecordReader(split, context);
+        HerculesRecordReader<T> res = innerCreateRecordReader(split, context);
+        res.setWrapperGetterFactory(createWrapperGetterFactory());
+        if (HerculesContext.getAssemblySupplierPair().getSourceItem().getDataSource().hasKvSerializer()
+                && HerculesContext.getKvSerializerSupplierPair().getSourceItem() != null) {
+            return new HerculesSerializerRecordReader(
+                    HerculesContext.getKvSerializerSupplierPair().getSourceItem().getKvSerializer(),
+                    res
+            );
+        } else {
+            return res;
+        }
     }
 
-    abstract protected HerculesRecordReader<?> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
+    abstract protected HerculesRecordReader<T> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException;
+
+    abstract protected WrapperGetterFactory<T> createWrapperGetterFactory();
 }

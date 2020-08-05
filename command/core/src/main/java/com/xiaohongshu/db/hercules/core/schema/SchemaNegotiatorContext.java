@@ -4,6 +4,7 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface SchemaNegotiatorContext {
 
@@ -30,11 +31,19 @@ public interface SchemaNegotiatorContext {
         }
 
         @Override
+        public void afterReadIndexGroupList(List<Set<String>> indexGroupList) {
+        }
+
+        @Override
+        public void afterReadUniqueKeyGroupList(List<Set<String>> uniqueKeyGroupList) {
+        }
+
+        @Override
         public void afterAll(List<String> columnName, Map<String, DataType> columnType) {
         }
 
         @Override
-        public void setSchemaFetcher(BaseSchemaFetcher schemaFetcher) {
+        public void setSchemaFetcher(SchemaFetcher schemaFetcher) {
         }
 
     };
@@ -54,8 +63,12 @@ public interface SchemaNegotiatorContext {
 
     public void afterCopyColumnTypeMap(List<String> columnName, Map<String, DataType> before, Map<String, DataType> after);
 
+    public void afterReadIndexGroupList(List<Set<String>> indexGroupList);
+
+    public void afterReadUniqueKeyGroupList(List<Set<String>> uniqueKeyGroupList);
+
     public void afterAll(List<String> columnName, Map<String, DataType> columnType);
 
-    public void setSchemaFetcher(BaseSchemaFetcher schemaFetcher);
+    public void setSchemaFetcher(SchemaFetcher schemaFetcher);
 
 }

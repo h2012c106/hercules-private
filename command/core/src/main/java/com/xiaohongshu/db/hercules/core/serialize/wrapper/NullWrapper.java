@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -81,7 +82,7 @@ public class NullWrapper extends BaseWrapper<String> {
     }
 
     @Override
-    public Date asDate() {
+    public ExtendedDate asDate() {
         return null;
     }
 

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
@@ -76,8 +77,8 @@ public class StringWrapper extends BaseWrapper<String> {
     }
 
     @Override
-    public Date asDate() {
-        return DateUtils.stringToDate(getValue(), DateUtils.getSourceDateFormat());
+    public ExtendedDate asDate() {
+        return new ExtendedDate(DateUtils.stringToDate(getValue(), DateUtils.getSourceDateFormat()));
     }
 
     @Override

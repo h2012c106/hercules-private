@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.core.serialize;
 
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
+import lombok.NonNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.io.Writable;
 
@@ -17,7 +18,7 @@ import java.util.Set;
  */
 public class HerculesWritable implements Writable {
 
-    private MapWrapper row;
+    private final MapWrapper row;
 
     private long byteSize;
 
@@ -35,16 +36,16 @@ public class HerculesWritable implements Writable {
         byteSize = row.getByteSize();
     }
 
-    public void put(String columnName, BaseWrapper column) {
+    public void put(String columnName, BaseWrapper<?> column) {
         row.put(columnName, column);
         byteSize += column.getByteSize();
     }
 
-    public BaseWrapper get(String columnName) {
+    public BaseWrapper<?> get(@NonNull String columnName) {
         return row.get(columnName);
     }
 
-    public Set<Map.Entry<String, BaseWrapper>> entrySet() {
+    public Set<Map.Entry<String, BaseWrapper<?>>> entrySet() {
         return row.entrySet();
     }
 

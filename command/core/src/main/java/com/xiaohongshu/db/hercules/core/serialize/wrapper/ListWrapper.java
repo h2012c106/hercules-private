@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -72,7 +73,7 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper>> {
     }
 
     @Override
-    public Date asDate() {
+    public ExtendedDate asDate() {
         throw new SerializeException(UNSUPPORTED_MESSAGE);
     }
 

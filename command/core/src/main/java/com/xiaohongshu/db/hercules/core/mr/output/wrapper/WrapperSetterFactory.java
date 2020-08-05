@@ -1,11 +1,14 @@
-package com.xiaohongshu.db.hercules.core.mr.output;
+package com.xiaohongshu.db.hercules.core.mr.output.wrapper;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.utils.ReflectionUtils;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
+import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
+import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -13,6 +16,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -24,10 +28,23 @@ public abstract class WrapperSetterFactory<T> {
 
     private static final Log LOG = LogFactory.getLog(WrapperSetterFactory.class);
 
-    private Map<DataType, WrapperSetter<T>> wrapperSetterMap;
+    protected Map<DataType, WrapperSetter<T>> wrapperSetterMap;
+
+    protected Map<String, DataType> columnTypeMap;
 
     public WrapperSetterFactory() {
+        this(false);
+    }
+
+    public WrapperSetterFactory(boolean converterUsed) {
         initializeWrapperSetterMap();
+
+        // converter无schema不可误拿
+        if (!converterUsed) {
+            columnTypeMap = HerculesContext.getSchemaPair().getTargetItem().getColumnTypeMap();
+        } else {
+            columnTypeMap = Collections.emptyMap();
+        }
     }
 
     private void setWrapperSetter(Map<DataType, WrapperSetter<T>> wrapperSetterMap,
@@ -57,7 +74,7 @@ public abstract class WrapperSetterFactory<T> {
                 public WrapperSetter<T> apply(Void aVoid) {
                     String dataTypeCapitalName = StringUtils.capitalize(baseDataType.name().toLowerCase());
                     String methodName = "get" + dataTypeCapitalName + "Setter";
-                    Method getMethod = ReflectionUtils.getMethod(self.getClass(), methodName);
+                    Method getMethod = ReflectUtils.getMethod(self.getClass(), methodName);
                     try {
                         getMethod.setAccessible(true);
                         return (WrapperSetter<T>) getMethod.invoke(self);
@@ -79,7 +96,12 @@ public abstract class WrapperSetterFactory<T> {
             final CustomDataType<?, T> customDataType = (CustomDataType<?, T>) dataType;
             res = wrapperSetterMap.computeIfAbsent(customDataType, key -> new WrapperSetter<T>() {
                 @Override
-                public void set(@NonNull BaseWrapper wrapper, T row, String rowName, String columnName, int columnSeq) throws Exception {
+                protected void setNull(T row, String rowName, String columnName, int columnSeq) throws Exception {
+                    customDataType.writeNull(row, rowName, columnName, columnSeq);
+                }
+
+                @Override
+                protected void setNonnull(@NonNull BaseWrapper<?> wrapper, T row, String rowName, String columnName, int columnSeq) throws Exception {
                     customDataType.write(wrapper, row, rowName, columnName, columnSeq);
                 }
             });
@@ -92,35 +114,47 @@ public abstract class WrapperSetterFactory<T> {
         return res;
     }
 
-    abstract protected WrapperSetter<T> getByteSetter();
+    public T writeMapWrapper(MapWrapper mapWrapper, T out, String columnPath) throws Exception {
+        for (Map.Entry<String, BaseWrapper<?>> entry : mapWrapper.entrySet()) {
+            String columnName = entry.getKey();
+            String fullColumnName = WritableUtils.concatColumn(columnPath, columnName);
+            BaseWrapper<?> subWrapper = entry.getValue();
+            DataType columnType = columnTypeMap.getOrDefault(fullColumnName, subWrapper.getType());
+            // 这里columnSeq必不用关心，因为是塞map的，map的key何谈下标
+            getWrapperSetter(columnType).set(subWrapper, out, columnPath, columnName, -1);
+        }
+        return out;
+    }
 
-    abstract protected WrapperSetter<T> getShortSetter();
+    abstract protected BaseTypeWrapperSetter.ByteSetter<T> getByteSetter();
 
-    abstract protected WrapperSetter<T> getIntegerSetter();
+    abstract protected BaseTypeWrapperSetter.ShortSetter<T> getShortSetter();
 
-    abstract protected WrapperSetter<T> getLongSetter();
+    abstract protected BaseTypeWrapperSetter.IntegerSetter<T> getIntegerSetter();
 
-    abstract protected WrapperSetter<T> getLonglongSetter();
+    abstract protected BaseTypeWrapperSetter.LongSetter<T> getLongSetter();
 
-    abstract protected WrapperSetter<T> getFloatSetter();
+    abstract protected BaseTypeWrapperSetter.LonglongSetter<T> getLonglongSetter();
 
-    abstract protected WrapperSetter<T> getDoubleSetter();
+    abstract protected BaseTypeWrapperSetter.FloatSetter<T> getFloatSetter();
 
-    abstract protected WrapperSetter<T> getDecimalSetter();
+    abstract protected BaseTypeWrapperSetter.DoubleSetter<T> getDoubleSetter();
 
-    abstract protected WrapperSetter<T> getBooleanSetter();
+    abstract protected BaseTypeWrapperSetter.DecimalSetter<T> getDecimalSetter();
 
-    abstract protected WrapperSetter<T> getStringSetter();
+    abstract protected BaseTypeWrapperSetter.BooleanSetter<T> getBooleanSetter();
 
-    abstract protected WrapperSetter<T> getDateSetter();
+    abstract protected BaseTypeWrapperSetter.StringSetter<T> getStringSetter();
 
-    abstract protected WrapperSetter<T> getTimeSetter();
+    abstract protected BaseTypeWrapperSetter.DateSetter<T> getDateSetter();
 
-    abstract protected WrapperSetter<T> getDatetimeSetter();
+    abstract protected BaseTypeWrapperSetter.TimeSetter<T> getTimeSetter();
 
-    abstract protected WrapperSetter<T> getBytesSetter();
+    abstract protected BaseTypeWrapperSetter.DatetimeSetter<T> getDatetimeSetter();
 
-    abstract protected WrapperSetter<T> getNullSetter();
+    abstract protected BaseTypeWrapperSetter.BytesSetter<T> getBytesSetter();
+
+    abstract protected BaseTypeWrapperSetter.NullSetter<T> getNullSetter();
 
     protected WrapperSetter<T> getListSetter() {
         throw new UnsupportedOperationException();

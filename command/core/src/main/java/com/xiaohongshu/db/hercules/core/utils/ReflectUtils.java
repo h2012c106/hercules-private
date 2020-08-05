@@ -5,10 +5,22 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 
 public final class ReflectUtils {
 
     private static final Log LOG = LogFactory.getLog(ReflectUtils.class);
+
+    public static Method getMethod(Class<?> clazz, String methodName, Class<?>... paramClass) throws NoSuchMethodException {
+        while (clazz != null) {
+            try {
+                return clazz.getDeclaredMethod(methodName, paramClass);
+            } catch (NoSuchMethodException e) {
+                clazz = clazz.getSuperclass();
+            }
+        }
+        throw new NoSuchMethodException();
+    }
 
     public static <T> T loadJarClass(String jarName, String className, Class<T> clazz) {
         try {

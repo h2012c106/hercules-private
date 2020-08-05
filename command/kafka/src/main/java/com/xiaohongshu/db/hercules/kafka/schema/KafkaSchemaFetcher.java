@@ -15,12 +15,11 @@ public class KafkaSchemaFetcher extends BaseSchemaFetcher<KafkaDataTypeConverter
     }
 
     @Override
-    protected List<String> innerGetColumnNameList() {
+    protected List<String> getColumnNameList() {
         return null;
     }
 
-    @Override
-    protected Map<String, DataType> innerGetColumnTypeMap(Set<String> columnNameSet) {
+    protected Map<String, DataType> getColumnTypeMap(Set<String> columnNameSet) {
         return null;
     }
 }

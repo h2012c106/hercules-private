@@ -1,19 +1,20 @@
 package com.xiaohongshu.db.hercules.mongodb.mr.input;
 
+import com.google.common.collect.Sets;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
-import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBSchemaFetcher;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
 import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManagerGenerator;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +22,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.ql.QueryProperties;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -33,7 +33,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBManagerGenerator {
+public class MongoDBInputFormat extends HerculesInputFormat<Document> implements MongoDBManagerGenerator {
 
     private static final Log LOG = LogFactory.getLog(MongoDBInputFormat.class);
 
@@ -154,7 +154,7 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
 
                 // 检查key上是否有索引
                 boolean ignoreCheckKey = options.getSourceOptions().getBoolean(MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK, false);
-                if (!ignoreCheckKey && !MongoDBSchemaFetcher.isIndex(col, splitBy)) {
+                if (!ignoreCheckKey && !HerculesContext.getSchemaPair().getSourceItem().getIndexGroupList().contains(Sets.newHashSet(splitBy))) {
                     throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK));
                 }
                 // 直接按ObjectId的时间戳切分，没辙了，如果_id不是ObjectId，那只能`--num-mapper 1`
@@ -267,6 +267,11 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
     @Override
     protected HerculesRecordReader<Document> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         return new MongoDBRecordReader(context, manager);
+    }
+
+    @Override
+    protected WrapperGetterFactory<Document> createWrapperGetterFactory() {
+        return null;
     }
 
     @Override

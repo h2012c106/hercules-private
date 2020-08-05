@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.xiaohongshu.db.hercules.core.supplier.KvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
 import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
@@ -223,7 +223,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
     private final String rowKeyCol;
     private ResultScanner scanner;
     private Result value;
-    private final KvConverterSupplier kvConverterSupplier;
+    private final KvSerializerSupplier kvSerializerSupplier;
     private String columnFamily;
 
     @SneakyThrows
@@ -231,7 +231,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
         super(context, new HBaseInputWrapperManager());
         this.manager = manager;
         this.rowKeyCol = rowKeyCol;
-        this.kvConverterSupplier = (KvConverterSupplier) Class.forName(options.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
+        this.kvSerializerSupplier = (KvSerializerSupplier) Class.forName(options.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
         this.columnFamily = options.getSourceOptions().getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, "");
         // 测试用
 //        manager.InsertTestDataToHBaseTable();
@@ -269,7 +269,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
     @Override
     protected HerculesWritable innerGetCurrentValue() {
         HerculesWritable record;
-        if (kvConverterSupplier instanceof BlankKvConverterSupplier) {
+        if (kvSerializerSupplier instanceof BlankKvConverterSupplier) {
             int columnNum = columnNameList.size();
             record = new HerculesWritable(columnNum);
             // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
@@ -291,7 +291,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
         if (LOG.isDebugEnabled()) {
             LOG.debug("QUALIFIER: " + qualifier);
         }
-        return kvConverterSupplier.getKvConverter().generateHerculesWritable(val, options.getSourceOptions());
+        return kvSerializerSupplier.getKvSerializer().generateHerculesWritable(val, options.getSourceOptions());
     }
 
     @Override

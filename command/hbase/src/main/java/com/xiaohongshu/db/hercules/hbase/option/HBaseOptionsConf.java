@@ -129,8 +129,8 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
         if (rowKeyCol == null) {
             return;
         }
-        Map<String, DataType> columnTypeMap = SchemaUtils.convert(options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
+        Map<String, DataType> columnTypeMap = SchemaUtils.convertTypeFromOption(options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null));
         columnTypeMap.put(rowKeyCol, BaseDataType.BYTES);
-        options.set(BaseDataSourceOptionsConf.COLUMN_TYPE, SchemaUtils.convert(columnTypeMap).toJSONString());
+        options.set(BaseDataSourceOptionsConf.COLUMN_TYPE, SchemaUtils.convertTypeToOption(columnTypeMap).toJSONString());
     }
 }

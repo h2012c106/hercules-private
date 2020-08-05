@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import lombok.NonNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -103,7 +104,7 @@ public abstract class BaseWrapper<T> {
 
     abstract public Boolean asBoolean();
 
-    abstract public Date asDate();
+    abstract public ExtendedDate asDate();
 
     abstract public String asString();
 

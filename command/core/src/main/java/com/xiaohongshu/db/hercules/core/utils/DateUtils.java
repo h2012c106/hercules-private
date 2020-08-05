@@ -17,6 +17,7 @@ public final class DateUtils {
 
     private static final Log LOG = LogFactory.getLog(DateUtils.class);
 
+    public static final String ZERO_DATE = "0000-00-00 00:00:00";
 
     /**
      * 用于应对上下游时间格式不一致

@@ -105,10 +105,7 @@ public class RDBMSManager {
         try {
             connection = getConnection();
             statement = connection.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-            if (fetchSize != null) {
-                LOG.debug("Using fetchSize for next query: " + fetchSize);
-                statement.setFetchSize(fetchSize);
-            }
+            SqlUtils.setFetchSize(statement, fetchSize);
             LOG.debug("Executing SQL statement: " + sql);
             return SqlUtils.resultSetToList(statement.executeQuery(), seq, resultSetGetter, true);
         } finally {

@@ -128,7 +128,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     }
 
     @Override
-    protected void innerMapWrite(HerculesWritable value) throws IOException, InterruptedException {
+    protected void innerWrite(HerculesWritable value) throws IOException, InterruptedException {
         throw new UnsupportedOperationException();
     }
 

@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetter;
-import com.xiaohongshu.db.hercules.core.mr.input.WrapperGetterFactory;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import org.apache.hadoop.hbase.util.Bytes;
 

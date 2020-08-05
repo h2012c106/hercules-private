@@ -1,21 +1,22 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.Pair;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -28,40 +29,13 @@ public final class SchemaNegotiator {
 
     private static final Log LOG = LogFactory.getLog(SchemaNegotiator.class);
 
-    private WrappingOptions options;
-    private BaseSchemaFetcher sourceSchemaFetcher;
-    private BaseSchemaFetcher targetSchemaFetcher;
-    private SchemaNegotiatorContext sourceContext;
-    private SchemaNegotiatorContext targetContext;
-
-    public SchemaNegotiator(WrappingOptions options,
-                            BaseSchemaFetcher sourceSchemaFetcher, BaseSchemaFetcher targetSchemaFetcher,
-                            SchemaNegotiatorContext sourceContext, SchemaNegotiatorContext targetContext) {
-        this.options = options;
-        this.sourceSchemaFetcher = sourceSchemaFetcher;
-        this.targetSchemaFetcher = targetSchemaFetcher;
-        this.sourceContext = sourceContext;
-        this.sourceContext.setSchemaFetcher(this.sourceSchemaFetcher);
-        this.targetContext = targetContext;
-        this.targetContext.setSchemaFetcher(this.targetSchemaFetcher);
-    }
-
-    private List<String> getColumnNameListFromOptions(GenericOptions dataSourceOptions) {
-        return Arrays.asList(dataSourceOptions.getStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0]));
-    }
-
-    private List<String> getColumnNameListFromDataSource(BaseSchemaFetcher schemaFetcher) {
-        List<String> res = schemaFetcher.getColumnNameList();
-        return res == null ? new ArrayList<>(0) : res;
-    }
-
-    private List<String> getColumnNameList(GenericOptions dataSourceOptions, BaseSchemaFetcher schemaFetcher) {
-        List<String> configuredColumnList = getColumnNameListFromOptions(dataSourceOptions);
+    private static List<String> getColumnNameList(List<String> configuredColumnList, SchemaFetcher schemaFetcher) {
         // 若用户有配置，则直接使用用户配置的
         if (configuredColumnList.size() != 0) {
             return configuredColumnList;
         }
-        return getColumnNameListFromDataSource(schemaFetcher);
+        List<String> res = schemaFetcher.getColumnNameList();
+        return res == null ? new ArrayList<>(0) : res;
     }
 
     /**
@@ -71,9 +45,9 @@ public final class SchemaNegotiator {
      *
      * @return 返回两侧的列交集，列名是经columnMap转换后的列名（也就是目标表为准的列名）
      */
-    private Set<String> validateAndGetIntersection(List<String> sourceColumnNameList,
-                                                   List<String> targetColumnNameList,
-                                                   BiMap<String, String> biColumnMap) {
+    private static Set<String> validateAndGetIntersection(List<String> sourceColumnNameList,
+                                                          List<String> targetColumnNameList,
+                                                          BiMap<String, String> biColumnMap) {
         // 按照规则映射后的源数据库列名
         List<String> convertedSourceColumnNameList = sourceColumnNameList.stream()
                 .map(columnName -> biColumnMap.getOrDefault(columnName, columnName))
@@ -90,7 +64,7 @@ public final class SchemaNegotiator {
             Set<String> tmpTmpSet = tmpSet.stream()
                     .map(columnName -> inversedColumnMap.getOrDefault(columnName, columnName))
                     .collect(Collectors.toSet());
-            if (!options.getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN, false)) {
+            if (!HerculesContext.getWrappingOptions().getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN, false)) {
                 throw new SchemaException(String.format("Source data source has more columns: %s, " +
                                 "if want to ignore, please use '--%s'",
                         tmpTmpSet, CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN
@@ -104,7 +78,7 @@ public final class SchemaNegotiator {
         tmpSet = new HashSet<>(targetColumnNameList);
         tmpSet.removeAll(convertedSourceColumnNameList);
         if (tmpSet.size() > 0) {
-            if (!options.getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN, false)) {
+            if (!HerculesContext.getWrappingOptions().getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN, false)) {
                 throw new SchemaException(String.format("Target data source has more columns: %s, " +
                         "if want to ignore, please use '--%s'", tmpSet, CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN));
             } else {
@@ -124,36 +98,19 @@ public final class SchemaNegotiator {
         return tmpSet;
     }
 
-    private Map<String, DataType> getColumnTypeMap(GenericOptions datasourceOptions,
-                                                   BaseSchemaFetcher schemaFetcher,
-                                                   List<String> columnNameList) {
-        // 搞到需要列类型的完整集合，这个集合应该不仅包含需要同步的列，还需要一些别的（数据源相关配置）。
-        Set<String> additionalNeedTypeColumnNameSet = schemaFetcher.getAdditionalNeedTypeColumn();
-        Set<String> needTypeColumnNameSet = new HashSet<>(additionalNeedTypeColumnNameSet.size() + columnNameList.size());
-        needTypeColumnNameSet.addAll(additionalNeedTypeColumnNameSet);
-        needTypeColumnNameSet.addAll(columnNameList);
-
-        Map<String, DataType> res = SchemaUtils.convert(datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()),
-                schemaFetcher.getCustomDataTypeManager());
-//        LOG.info("!!!:"+datasourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()).toJSONString());
-        // 如果用户全部指定，则返回就完事儿了
-        if (res.keySet().containsAll(needTypeColumnNameSet)) {
-            return res;
-        }
-
-        // 优先使用用户配置的，剩下不够的未知的再去数据源搞
-        needTypeColumnNameSet.removeAll(res.keySet());
-        Map<String, DataType> datasourceQueriedTypeMap = schemaFetcher.getColumnTypeMap(needTypeColumnNameSet);
+    private static Map<String, DataType> getColumnTypeMap(Map<String, DataType> configuredColumnTypeMap,
+                                                          SchemaFetcher schemaFetcher) {
+        Map<String, DataType> datasourceQueriedTypeMap = schemaFetcher.getColumnTypeMap();
         datasourceQueriedTypeMap = datasourceQueriedTypeMap == null
-                ? new HashMap<>(res.size())
+                ? new HashMap<>(configuredColumnTypeMap.size())
                 : datasourceQueriedTypeMap;
         // 若有相同，配置的覆盖查出来的
-        datasourceQueriedTypeMap.putAll(res);
+        datasourceQueriedTypeMap.putAll(configuredColumnTypeMap);
 
         return datasourceQueriedTypeMap;
     }
 
-    private List<String> copyNameList(List<String> copiedList, BiMap<String, String> columnMap, DataSourceRole role) {
+    private static List<String> copyNameList(List<String> copiedList, BiMap<String, String> columnMap, DataSourceRole role) {
         if (role == DataSourceRole.SOURCE) {
             columnMap = columnMap.inverse();
         }
@@ -170,22 +127,22 @@ public final class SchemaNegotiator {
      * @param role      表示谁是抄袭者
      * @return
      */
-    private Map<String, DataType> copyTypeMap(Map<String, DataType> source, Map<String, DataType> target,
-                                              BiMap<String, String> columnMap, DataSourceRole role) {
+    private static Map<String, DataType> copyTypeMap(Map<String, DataType> source, Map<String, DataType> target,
+                                                     BiMap<String, String> columnMap, DataSourceRole role) {
         // 被抄袭的
         Map<String, DataType> tmpSource;
         // 抄袭的
         Map<String, DataType> tmpTarget;
-        BaseCustomDataTypeManager targetManager;
+        CustomDataTypeManager<?, ?> targetManager;
         if (role == DataSourceRole.SOURCE) {
             columnMap = columnMap.inverse();
             tmpSource = new HashMap<>(target);
             tmpTarget = new HashMap<>(source);
-            targetManager = sourceSchemaFetcher.getCustomDataTypeManager();
+            targetManager = HerculesContext.getAssemblySupplierPair().getSourceItem().getCustomDataTypeManager();
         } else {
             tmpSource = new HashMap<>(source);
             tmpTarget = new HashMap<>(target);
-            targetManager = targetSchemaFetcher.getCustomDataTypeManager();
+            targetManager = HerculesContext.getAssemblySupplierPair().getTargetItem().getCustomDataTypeManager();
         }
         final BiMap<String, String> finalColumnMap = columnMap;
         // 被抄袭的列名先转一下
@@ -198,9 +155,11 @@ public final class SchemaNegotiator {
             DataType dataType = entry.getValue();
             // 抄袭者自己的答案优先
             if (!tmpTarget.containsKey(columnName)) {
-                // 若抄袭者的custom type中包含被抄的类型，则可以抄，否则抄关联基础类型
-                if (dataType.isCustom() && targetManager.contains(dataType.getClass())) {
-                    tmpTarget.put(columnName, dataType);
+                // 若抄袭者的custom type中包含被抄的类型的名字，则可以抄，否则抄关联基础类型
+                // 这里的特殊类型名必须大小写都一致，越严格越好，ignoreCase仅用于对用户填写类型时的放宽要求
+                // TODO 需要加个开关允许同名不同类特殊类型抄和warn提示抄了同名不同类特殊类型
+                if (dataType.isCustom() && targetManager.contains(dataType.getName())) {
+                    tmpTarget.put(columnName, targetManager.get(dataType.getName()));
                 } else {
                     tmpTarget.put(columnName, dataType.getBaseDataType());
                 }
@@ -209,44 +168,77 @@ public final class SchemaNegotiator {
         return tmpTarget;
     }
 
-    private void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {
+    private static void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {
         for (String columnName : columnNameList) {
-//            if (!columnMap.containsValue(columnName)) {
-                columnMap.putIfAbsent(columnName, columnName);
-//            }
+            columnMap.putIfAbsent(columnName, columnName);
         }
     }
 
-    private List<String> intersect(List<String> a, List<String> b) {
+    private static List<String> intersect(List<String> a, List<String> b) {
         Set<String> c = new LinkedHashSet<>(a);
         c.retainAll(b);
         return new ArrayList<>(c);
     }
 
-    public void negotiate() {
+    private static List<Set<String>> getIndex(List<Set<String>> configuredList, Function<Void, List<Set<String>>> fetchMethod) {
+        // 若用户有配置，则直接使用用户配置的
+        if (configuredList.size() != 0) {
+            return configuredList;
+        }
+        List<Set<String>> res = fetchMethod.apply(null);
+        return res == null ? new ArrayList<>(0) : res;
+    }
+
+    private static List<Set<String>> copyIndex(List<Set<String>> list, BiMap<String, String> columnMap, DataSourceRole role) {
+        if (role == DataSourceRole.SOURCE) {
+            columnMap = columnMap.inverse();
+        }
+        BiMap<String, String> finalColumnMap = columnMap;
+        return list.stream()
+                .map(set -> set.stream()
+                        .map(columnName -> finalColumnMap.getOrDefault(columnName, columnName))
+                        .collect(Collectors.toSet()))
+                .collect(Collectors.toList());
+    }
+
+    private static boolean hasSerializer(DataSourceRole role) {
+        return HerculesContext.getAssemblySupplierPair().getItem(role).getDataSource().hasKvSerializer()
+                && HerculesContext.getKvSerializerSupplierPair().getItem(role) != null;
+    }
+
+    public static void negotiate() {
+        Pair<AssemblySupplier> assemblySupplierPair = HerculesContext.getAssemblySupplierPair();
+        SchemaFetcher sourceSchemaFetcher = assemblySupplierPair.getSourceItem().getSchemaFetcher();
+        SchemaFetcher targetSchemaFetcher = assemblySupplierPair.getTargetItem().getSchemaFetcher();
+        SchemaNegotiatorContext sourceContext = assemblySupplierPair.getSourceItem().getSchemaNegotiatorContextAsSource();
+        SchemaNegotiatorContext targetContext = assemblySupplierPair.getTargetItem().getSchemaNegotiatorContextAsTarget();
+
+        WrappingOptions options = HerculesContext.getWrappingOptions();
         GenericOptions sourceOptions = options.getSourceOptions();
         GenericOptions targetOptions = options.getTargetOptions();
         GenericOptions commonOptions = options.getCommonOptions();
 
-        JSONObject columnMap = commonOptions.getJson(CommonOptionsConf.COLUMN_MAP, null);
-        // 源列名->目标列名
-        BiMap<String, String> biColumnMap = HashBiMap.create(columnMap.size());
-        for (String key : columnMap.keySet()) {
-            // 如果存在相同的value则bimap会报错
-            biColumnMap.put(key, columnMap.getString(key));
-        }
+        //+++++++++++++列名映射+++++++++++++//
+
+        BiMap<String, String> biColumnMap
+                = SchemaUtils.convertColumnMapFromOption(commonOptions.getJson(CommonOptionsConf.COLUMN_MAP, null));
+
+        //-------------列名映射-------------//
+
+        Schema sourceSchema = Schema.fromOptions(sourceOptions, HerculesContext.getAssemblySupplierPair().getSourceItem().getCustomDataTypeManager());
+        Schema targetSchema = Schema.fromOptions(targetOptions, HerculesContext.getAssemblySupplierPair().getTargetItem().getCustomDataTypeManager());
+
+        //+++++++++++++列名+++++++++++++//
 
         boolean fullColumnMap = commonOptions.getBoolean(CommonOptionsConf.RELIABLE_COLUMN_MAP, false);
-        List<String> sourceColumnNameList;
-        List<String> targetColumnNameList;
+        List<String> sourceColumnNameList = sourceSchema.getColumnNameList();
+        List<String> targetColumnNameList = targetSchema.getColumnNameList();
         if (fullColumnMap) {
             // 都说好要依靠map来导了就不允许为空
             if (biColumnMap.size() == 0) {
                 throw new RuntimeException(String.format("Why given a empty column map and specify it as a 'full column map'? " +
                         "If you want to transport full table, please not specify '--%s'.", CommonOptionsConf.RELIABLE_COLUMN_MAP));
             }
-            sourceColumnNameList = getColumnNameListFromOptions(sourceOptions);
-            targetColumnNameList = getColumnNameListFromOptions(targetOptions);
 
             // 取交集
             List<String> intersect = intersect(sourceColumnNameList, targetColumnNameList);
@@ -258,8 +250,8 @@ public final class SchemaNegotiator {
             sourceColumnNameList = new ArrayList<>(biColumnMap.keySet());
             targetColumnNameList = new ArrayList<>(biColumnMap.values());
         } else {
-            sourceColumnNameList = getColumnNameList(sourceOptions, sourceSchemaFetcher);
-            targetColumnNameList = getColumnNameList(targetOptions, targetSchemaFetcher);
+            sourceColumnNameList = getColumnNameList(sourceColumnNameList, assemblySupplierPair.getSourceItem().getSchemaFetcher());
+            targetColumnNameList = getColumnNameList(targetColumnNameList, assemblySupplierPair.getTargetItem().getSchemaFetcher());
         }
 
         sourceContext.afterReadColumnNameList(sourceColumnNameList);
@@ -285,7 +277,6 @@ public final class SchemaNegotiator {
             targetContext.afterIntersectColumnNameList(beforeChangedTargetColumnNameList, targetColumnNameList);
         }
 
-
         if (commonOptions.getBoolean(CommonOptionsConf.ALLOW_COPY_COLUMN_NAME, false)) {
             if (sourceColumnNameList.size() == 0 && targetColumnNameList.size() != 0) {
                 LOG.info("The source data source copy the column name list.");
@@ -301,10 +292,13 @@ public final class SchemaNegotiator {
         LOG.info("The source column name list is: " + sourceColumnNameList);
         LOG.info("The target column name list is: " + targetColumnNameList);
 
-        Map<String, DataType> sourceColumnTypeMap
-                = getColumnTypeMap(sourceOptions, sourceSchemaFetcher, sourceColumnNameList);
-        Map<String, DataType> targetColumnTypeMap
-                = getColumnTypeMap(targetOptions, targetSchemaFetcher, targetColumnNameList);
+        //-------------列名-------------//
+        //+++++++++++++列类型+++++++++++++//
+
+        Map<String, DataType> sourceColumnTypeMap = sourceSchema.getColumnTypeMap();
+        Map<String, DataType> targetColumnTypeMap = targetSchema.getColumnTypeMap();
+        sourceColumnTypeMap = getColumnTypeMap(sourceColumnTypeMap, sourceSchemaFetcher);
+        targetColumnTypeMap = getColumnTypeMap(targetColumnTypeMap, targetSchemaFetcher);
 
         sourceContext.afterReadColumnTypeMap(sourceColumnNameList, sourceColumnTypeMap);
         targetContext.afterReadColumnTypeMap(targetColumnNameList, targetColumnTypeMap);
@@ -333,15 +327,43 @@ public final class SchemaNegotiator {
         LOG.info("The source column type map is: " + sourceColumnTypeMap);
         LOG.info("The target column type map is: " + targetColumnTypeMap);
 
-        // 塞column name list
-        sourceOptions.set(BaseDataSourceOptionsConf.COLUMN, sourceColumnNameList.toArray(new String[0]));
-        targetOptions.set(BaseDataSourceOptionsConf.COLUMN, targetColumnNameList.toArray(new String[0]));
+        //-------------列类型-------------//
+        //+++++++++++++索引 唯一键+++++++++++++//
 
-        // 塞column type map
-        sourceOptions.set(BaseDataSourceOptionsConf.COLUMN_TYPE,
-                SchemaUtils.convert(sourceColumnTypeMap).toJSONString());
-        targetOptions.set(BaseDataSourceOptionsConf.COLUMN_TYPE,
-                SchemaUtils.convert(targetColumnTypeMap).toJSONString());
+        List<Set<String>> sourceIndexGroupList = sourceSchema.getIndexGroupList();
+        List<Set<String>> targetIndexGroupList = targetSchema.getIndexGroupList();
+        sourceIndexGroupList = getIndex(sourceIndexGroupList, aVoid -> sourceSchemaFetcher.getIndexGroupList());
+        sourceContext.afterReadIndexGroupList(sourceIndexGroupList);
+        targetIndexGroupList = getIndex(targetIndexGroupList, aVoid -> targetSchemaFetcher.getIndexGroupList());
+        targetContext.afterReadIndexGroupList(targetIndexGroupList);
+
+        LOG.info("The source index group is: " + sourceIndexGroupList);
+        LOG.info("The target index group is: " + targetIndexGroupList);
+
+        List<Set<String>> sourceUniqueKeyGroupList = sourceSchema.getUniqueKeyGroupList();
+        List<Set<String>> targetUniqueKeyGroupList = targetSchema.getUniqueKeyGroupList();
+        sourceUniqueKeyGroupList = getIndex(sourceUniqueKeyGroupList, aVoid -> sourceSchemaFetcher.getUniqueKeyGroupList());
+        sourceContext.afterReadUniqueKeyGroupList(sourceUniqueKeyGroupList);
+        targetUniqueKeyGroupList = getIndex(targetUniqueKeyGroupList, aVoid -> targetSchemaFetcher.getUniqueKeyGroupList());
+        targetContext.afterReadUniqueKeyGroupList(targetUniqueKeyGroupList);
+
+        LOG.info("The source unique key group is: " + sourceUniqueKeyGroupList);
+        LOG.info("The target unique key group is: " + targetUniqueKeyGroupList);
+
+        //-------------索引 唯一键-------------//
+
+        // 塞回options
+        sourceSchema.setColumnNameList(sourceColumnNameList);
+        sourceSchema.setColumnTypeMap(sourceColumnTypeMap);
+        sourceSchema.setIndexGroupList(sourceIndexGroupList);
+        sourceSchema.setUniqueKeyGroupList(sourceUniqueKeyGroupList);
+        targetSchema.setColumnNameList(targetColumnNameList);
+        targetSchema.setColumnTypeMap(targetColumnTypeMap);
+        targetSchema.setIndexGroupList(targetIndexGroupList);
+        targetSchema.setUniqueKeyGroupList(targetUniqueKeyGroupList);
+
+        sourceSchema.toOptions(sourceOptions);
+        targetSchema.toOptions(targetOptions);
 
         sourceContext.afterAll(sourceColumnNameList, sourceColumnTypeMap);
         targetContext.afterAll(targetColumnNameList, targetColumnTypeMap);

@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.kafka.mr;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.mr.output.WrapperSetterFactory;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 
 public class KafkaOutputWrapperManager extends WrapperSetterFactory<CanalEntry.Entry> {
 

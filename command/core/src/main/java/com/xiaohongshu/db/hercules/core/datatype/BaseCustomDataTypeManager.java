@@ -19,11 +19,11 @@ import java.util.stream.Collectors;
  * @param <I> 同CustomDataType，用于约束子类别把乱七八糟的CustomDataType塞进来，在外部使用本类时没啥用。
  * @param <O> 同CustomDataType，用于约束子类别把乱七八糟的CustomDataType塞进来，在外部使用本类时没啥用。
  */
-public abstract class BaseCustomDataTypeManager<I, O> {
+public abstract class BaseCustomDataTypeManager<I, O> implements CustomDataTypeManager<I, O> {
 
     private static final Log LOG = LogFactory.getLog(BaseCustomDataTypeManager.class);
 
-    private Map<String, Class<? extends CustomDataType<I, O>>> factory = new HashMap<>();
+    private final Map<String, Class<? extends CustomDataType<I, O>>> factory = new HashMap<>();
 
     public BaseCustomDataTypeManager() {
         for (Class<? extends CustomDataType<I, O>> item : generateTypeList()) {
@@ -43,7 +43,7 @@ public abstract class BaseCustomDataTypeManager<I, O> {
 
     abstract protected List<Class<? extends CustomDataType<I, O>>> generateTypeList();
 
-    private class DataTypeInfo {
+    private static class DataTypeInfo {
         private String dataTypeName;
         private List<String> params;
 
@@ -84,10 +84,31 @@ public abstract class BaseCustomDataTypeManager<I, O> {
         return new DataTypeInfo(dataTypeName, params);
     }
 
-    public boolean contains(Class<? extends CustomDataType<I, O>> value) {
-        return factory.containsValue(value);
+    @Override
+    public boolean contains(String typeName) {
+        return factory.containsKey(typeName);
     }
 
+    @Override
+    public CustomDataType<I, O> get(String name) {
+        DataTypeInfo dataTypeInfo = parseDataType(name);
+        String dataTypeName = dataTypeInfo.getDataTypeName();
+        List<String> params = dataTypeInfo.getParams();
+
+        Class<? extends CustomDataType<I, O>> customDataTypeClass = factory.get(dataTypeName);
+        if (customDataTypeClass == null) {
+            throw new RuntimeException("Cannot get special data type with name: " + name);
+        }
+        try {
+            CustomDataType<I, O> customDataType = customDataTypeClass.newInstance();
+            customDataType.initialize(params);
+            return customDataType;
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException("Exception when get special data type.", e);
+        }
+    }
+
+    @Override
     public CustomDataType<I, O> getIgnoreCase(String name) {
         DataTypeInfo dataTypeInfo = parseDataType(name);
         String dataTypeName = dataTypeInfo.getDataTypeName();
@@ -105,6 +126,6 @@ public abstract class BaseCustomDataTypeManager<I, O> {
                 }
             }
         }
-        throw new RuntimeException("Cannot get special data type with name: " + name);
+        throw new RuntimeException("Cannot get special data type with case-ignored name: " + name);
     }
 }

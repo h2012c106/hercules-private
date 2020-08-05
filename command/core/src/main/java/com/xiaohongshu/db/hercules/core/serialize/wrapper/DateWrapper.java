@@ -1,8 +1,10 @@
 package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import lombok.NonNull;
 
@@ -13,41 +15,33 @@ import java.util.Date;
 /**
  * 使用String型存储
  */
-public class DateWrapper extends BaseWrapper<String> {
+public class DateWrapper extends BaseWrapper<ExtendedDate> {
 
-    private DateWrapper(Long value, DataType type) {
-        this(new Date(value), type);
+    private static final long DATE_SIZE = 32;
+
+    private DateWrapper(ExtendedDate value, @NonNull DataType type) {
+        super(value, type, DATE_SIZE);
     }
 
-    private DateWrapper(Date value, DataType type) {
-        this(DateUtils.dateToString(value, type.getBaseDataType(), DateUtils.getSourceDateFormat()), type);
-    }
-
-    /**
-     * 强烈建议使用本方法初始化，搭配{@link #asString()}使用，避免0000-00-00 00:00:00的问题
-     * 0000-00-00 00:00:00经过dateformat之后会变成0002-11-30 00:00:00且无报错
-     *
-     * @param value
-     */
-    private DateWrapper(String value, @NonNull DataType type) {
-        super(value, type, value.length());
-    }
-
-    public static BaseWrapper get(Long value, DataType type) {
+    private static BaseWrapper<?> get(ExtendedDate value, DataType type) {
         return value == null ? NullWrapper.get(type) : new DateWrapper(value, type);
     }
 
-    public static BaseWrapper get(Date value, DataType type) {
-        return value == null ? NullWrapper.get(type) : new DateWrapper(value, type);
+    public static BaseWrapper<?> getDate(ExtendedDate value){
+        return get(value, BaseDataType.DATE);
     }
 
-    public static BaseWrapper get(String value, DataType type) {
-        return value == null ? NullWrapper.get(type) : new DateWrapper(value, type);
+    public static BaseWrapper<?> getTime(ExtendedDate value){
+        return get(value, BaseDataType.TIME);
+    }
+
+    public static BaseWrapper<?> getDatetime(ExtendedDate value){
+        return get(value, BaseDataType.DATETIME);
     }
 
     @Override
     public Long asLong() {
-        return asDate().getTime();
+        return asDate().getDate().getTime();
     }
 
     @Override
@@ -76,8 +70,8 @@ public class DateWrapper extends BaseWrapper<String> {
      * @return
      */
     @Override
-    public Date asDate() {
-        return DateUtils.stringToDate(getValue(), getType().getBaseDataType(), DateUtils.getSourceDateFormat());
+    public ExtendedDate asDate() {
+        return getValue();
     }
 
     /**
@@ -87,20 +81,16 @@ public class DateWrapper extends BaseWrapper<String> {
      */
     @Override
     public String asString() {
-
-        if (DateUtils.getSourceDateFormat().equals(DateUtils.getTargetDateFormat())) {
-            return getValue();
+        if (!getValue().isZero()) {
+            return DateUtils.dateToString(getValue().getDate(), getType().getBaseDataType(), DateUtils.getTargetDateFormat());
         } else {
-            // 当上下游日期格式不一致时，又遇到错误的日期格式/值，则会抛错
-            return DateUtils.dateToString(DateUtils.stringToDate(getValue(), getType().getBaseDataType(), DateUtils.getSourceDateFormat()),
-                    getType().getBaseDataType(),
-                    DateUtils.getTargetDateFormat());
+            return DateUtils.ZERO_DATE;
         }
     }
 
     @Override
     public byte[] asBytes() {
-        return getValue().getBytes();
+        throw new SerializeException("Unsupported to convert date to bytes.");
     }
 
     @Override
