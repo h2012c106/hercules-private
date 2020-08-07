@@ -64,6 +64,15 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
         }
         bulkOrdered = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.BULK_ORDERED, false);
 
+        recordList = new ArrayList<>(statementPerBulk.intValue());
+
+        int threadNum = options.getTargetOptions().getInteger(MongoDBOutputOptionsConf.EXECUTE_THREAD_NUM, null);
+        writer = new MongoDBMultiThreadAsyncWriter(threadNum);
+        writer.run();
+    }
+
+    @Override
+    protected void afterSetWrapperSetterFactory() {
         boolean decimalAsString = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.DECIMAL_AS_STRING, false);
         String mongoServerVersionStr = client.getDatabase(dbName)
                 .runCommand(new Document("buildinfo", ""))
@@ -78,12 +87,6 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
             decimalAsString = true;
         }
         ((MongoDBWrapperSetterManager) wrapperSetterFactory).setDecimalAsString(decimalAsString);
-
-        recordList = new ArrayList<>(statementPerBulk.intValue());
-
-        int threadNum = options.getTargetOptions().getInteger(MongoDBOutputOptionsConf.EXECUTE_THREAD_NUM, null);
-        writer = new MongoDBMultiThreadAsyncWriter(threadNum);
-        writer.run();
     }
 
     private void execUpdate() throws IOException, InterruptedException {

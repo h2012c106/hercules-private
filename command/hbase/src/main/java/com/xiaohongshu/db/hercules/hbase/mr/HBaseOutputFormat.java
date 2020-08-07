@@ -1,21 +1,22 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
-import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
 import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
-import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,15 +32,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 import java.util.*;
 
-public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseManagerInitializer {
+public class HBaseOutputFormat extends HerculesOutputFormat<Put> implements HBaseManagerInitializer {
 
     /**
      * 配置 conf 并返回 HerculesRecordWriter
      */
     @SneakyThrows
     @Override
-    public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) {
-
+    public HerculesRecordWriter<Put> innerGetRecordWriter(TaskAttemptContext context) {
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
         GenericOptions targetOptions = options.getTargetOptions();
@@ -47,6 +47,11 @@ public class HBaseOutputFormat extends HerculesOutputFormat implements HBaseMana
         HBaseManager.setTargetConf(manager.getConf(), targetOptions);
         // 传到 recordWriter 的 manager 有设置好了的 conf， 可以通过 manager 获得 Connection
         return new HBaseRecordWriter(manager, context);
+    }
+
+    @Override
+    protected WrapperSetterFactory<Put> createWrapperSetterFactory() {
+        return new HBaseOutputWrapperManager();
     }
 
     @Override
@@ -77,8 +82,11 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     private final List<Put> putsBuffer = new LinkedList<>();
     private final int PUT_BUFFER_SIZE = 10000;
 
+    private List<String> columnNameList;
+    private Map<String, DataType> columnTypeMap;
+
     public HBaseRecordWriter(HBaseManager manager, TaskAttemptContext context) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
-        super(context, new HBaseOutputWrapperManager());
+        super(context);
         this.manager = manager;
         Configuration conf = manager.getConf();
         columnFamily = conf.get(HBaseOutputOptionsConf.COLUMN_FAMILY);
@@ -86,6 +94,10 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
 //        mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
         table = HBaseManager.getTable(manager.getConf(), manager);
         kvSerializerSupplier = (KvSerializerSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
+
+        columnNameList = getSchema().getColumnNameList();
+        columnTypeMap = getSchema().getColumnTypeMap();
+
         List<String> temp = new ArrayList<>(columnNameList);
         temp.remove(rowKeyCol);
         columnNameList = temp;
@@ -109,9 +121,9 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             throw new RuntimeException("Row key col not found in the HerculesWritable object.");
         }
         Put put = new Put(Bytes.toBytes(record.get(rowKeyCol).asString()));
-        BaseWrapper wrapper;
+        BaseWrapper<?> wrapper;
         if (columnNameList.size() == 0) {
-            for (Map.Entry<String, BaseWrapper> colVal : record.getRow().entrySet()) {
+            for (Map.Entry<String, BaseWrapper<?>> colVal : record.getRow().entrySet()) {
                 String qualifier = colVal.getKey();
                 wrapper = colVal.getValue();
                 constructPut(put, wrapper, qualifier);
@@ -150,14 +162,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         getWrapperSetter(dt).set(wrapper, put, columnFamily, qualifier, 0);
     }
 
-    /**
-     * innerColumnWrite 和 innerMapWrite 处理逻辑暂设一致。hbase 写入是遍历 HerculesWritable 中的 map
-     */
-    @Override
-    protected void innerColumnWrite(HerculesWritable record) throws IOException {
-        innerWrite(record);
-    }
-
     @Override
     protected void innerWrite(HerculesWritable record) throws IOException {
         Put put;
@@ -179,6 +183,11 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         } catch (Exception e) {
             throw new IOException(e);
         }
+    }
+
+    @Override
+    protected WritableUtils.FilterUnexistOption getColumnUnexistOption() {
+        return WritableUtils.FilterUnexistOption.IGNORE;
     }
 
     protected Put getConvertedPut(HerculesWritable record) {

@@ -2,6 +2,8 @@ package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
+import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
@@ -14,11 +16,12 @@ import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.sql.PreparedStatement;
 
-public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSManagerGenerator {
+public class RDBMSOutputFormat extends HerculesOutputFormat<PreparedStatement> {
 
     @Override
-    public RDBMSRecordWriter getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+    public RDBMSRecordWriter innerGetRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
         WrappingOptions options = new WrappingOptions();
         options.fromConfiguration(context.getConfiguration());
 
@@ -52,6 +55,11 @@ public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSMana
     }
 
     @Override
+    protected WrapperSetterFactory<PreparedStatement> createWrapperSetterFactory() {
+        return null;
+    }
+
+    @Override
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
 //        Configuration configuration = context.getConfiguration();
 //
@@ -75,7 +83,6 @@ public class RDBMSOutputFormat extends HerculesOutputFormat implements RDBMSMana
         return new NullOutputCommitter();
     }
 
-    @Override
     public RDBMSManager generateManager(GenericOptions options) {
         return new RDBMSManager(options);
     }

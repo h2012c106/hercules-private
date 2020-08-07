@@ -75,6 +75,9 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
         }
     }
 
+    protected void afterSetWrapperGetterFactory() {
+    }
+
     abstract protected void myInitialize(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException;
 

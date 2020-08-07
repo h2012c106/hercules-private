@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import lombok.NonNull;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * @param <T> 各种数据类型的java类型
@@ -29,105 +30,105 @@ public abstract class BaseTypeWrapperSetter<T, O> extends WrapperSetter<O> {
 
     public static abstract class ByteSetter<O> extends BaseTypeWrapperSetter<Byte, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.BYTE;
         }
     }
 
     public static abstract class ShortSetter<O> extends BaseTypeWrapperSetter<Short, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.SHORT;
         }
     }
 
     public static abstract class IntegerSetter<O> extends BaseTypeWrapperSetter<Integer, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.INTEGER;
         }
     }
 
     public static abstract class LongSetter<O> extends BaseTypeWrapperSetter<Long, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.LONG;
         }
     }
 
-    public static abstract class LonglongSetter<O> extends BaseTypeWrapperSetter<BigDecimal, O> {
+    public static abstract class LonglongSetter<O> extends BaseTypeWrapperSetter<BigInteger, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.LONGLONG;
         }
     }
 
     public static abstract class FloatSetter<O> extends BaseTypeWrapperSetter<Float, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.FLOAT;
         }
     }
 
     public static abstract class DoubleSetter<O> extends BaseTypeWrapperSetter<Double, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.DOUBLE;
         }
     }
 
     public static abstract class DecimalSetter<O> extends BaseTypeWrapperSetter<BigDecimal, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.DECIMAL;
         }
     }
 
     public static abstract class BooleanSetter<O> extends BaseTypeWrapperSetter<Boolean, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.BOOLEAN;
         }
     }
 
     public static abstract class DateSetter<O> extends BaseTypeWrapperSetter<ExtendedDate, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.DATE;
         }
     }
 
     public static abstract class TimeSetter<O> extends BaseTypeWrapperSetter<ExtendedDate, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.TIME;
         }
     }
 
     public static abstract class DatetimeSetter<O> extends BaseTypeWrapperSetter<ExtendedDate, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.DATETIME;
         }
     }
 
     public static abstract class StringSetter<O> extends BaseTypeWrapperSetter<String, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.STRING;
         }
     }
 
     public static abstract class BytesSetter<O> extends BaseTypeWrapperSetter<byte[], O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.BYTES;
         }
     }
 
     public static abstract class NullSetter<O> extends BaseTypeWrapperSetter<Void, O> {
         @Override
-        protected DataType getType() {
+        protected final DataType getType() {
             return BaseDataType.NULL;
         }
     }

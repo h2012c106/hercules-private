@@ -1,17 +1,15 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
-import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.parquet.ParquetUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetHerculesDataTypeConverter;
-import lombok.NonNull;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.Type;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
 
 public class ParquetHerculesOutputWrapperManager extends ParquetOutputWrapperManager {
 
@@ -20,98 +18,105 @@ public class ParquetHerculesOutputWrapperManager extends ParquetOutputWrapperMan
     }
 
     @Override
-    protected WrapperSetter<Group> getByteSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.ByteSetter<Group> getByteSetter() {
+        return new BaseTypeWrapperSetter.ByteSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger res = wrapper.asBigInteger();
-                if (res != null) {
-                    row.add(columnName, res.byteValueExact());
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Byte value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getShortSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.ShortSetter<Group> getShortSetter() {
+        return new BaseTypeWrapperSetter.ShortSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger res = wrapper.asBigInteger();
-                if (res != null) {
-                    row.add(columnName, res.shortValueExact());
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Short value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getLonglongSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.LonglongSetter<Group> getLonglongSetter() {
+        return new BaseTypeWrapperSetter.LonglongSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger res = wrapper.asBigInteger();
-                if (res != null) {
-                    row.add(columnName, ParquetUtils.bigIntegerToLonglong(res));
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(BigInteger value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, ParquetUtils.bigIntegerToLonglong(value));
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getDecimalSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.DecimalSetter<Group> getDecimalSetter() {
+        return new BaseTypeWrapperSetter.DecimalSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(BigDecimal value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
                 Type columnType = row.getType().getType(columnName);
                 // parquet类型一定是decimal
                 LogicalTypeAnnotation.DecimalLogicalTypeAnnotation annotation
                         = (LogicalTypeAnnotation.DecimalLogicalTypeAnnotation) columnType.getLogicalTypeAnnotation();
                 int precision = annotation.getPrecision();
                 int scale = annotation.getScale();
-                BigDecimal res = wrapper.asBigDecimal();
-                if (res != null) {
-                    row.add(columnName, ParquetUtils.decimalToBytes(res, precision, scale));
-                }
+                row.add(columnName, ParquetUtils.decimalToBytes(value, precision, scale));
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getDateSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.DateSetter<Group> getDateSetter() {
+        return new BaseTypeWrapperSetter.DateSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                Date res = wrapper.asDate();
-                if (res != null) {
-                    row.add(columnName, ParquetUtils.dateToInt(res));
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, ParquetUtils.dateToInt(value.getDate()));
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getTimeSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.TimeSetter<Group> getTimeSetter() {
+        return new BaseTypeWrapperSetter.TimeSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                Date res = wrapper.asDate();
-                if (res != null) {
-                    row.add(columnName, ParquetUtils.timeToInt(res));
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, ParquetUtils.timeToInt(value.getDate()));
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getDatetimeSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.DatetimeSetter<Group> getDatetimeSetter() {
+        return new BaseTypeWrapperSetter.DatetimeSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                Date res = wrapper.asDate();
-                if (res != null) {
-                    row.add(columnName, ParquetUtils.datetimeToLong(res));
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, ParquetUtils.datetimeToLong(value.getDate()));
             }
         };
     }

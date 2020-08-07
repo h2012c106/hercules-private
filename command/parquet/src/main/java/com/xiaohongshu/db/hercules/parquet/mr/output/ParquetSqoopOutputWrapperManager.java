@@ -1,13 +1,11 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
-import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetSqoopDataTypeConverter;
-import lombok.NonNull;
 import org.apache.parquet.example.data.Group;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 public class ParquetSqoopOutputWrapperManager extends ParquetOutputWrapperManager {
 
@@ -16,53 +14,73 @@ public class ParquetSqoopOutputWrapperManager extends ParquetOutputWrapperManage
     }
 
     @Override
-    protected WrapperSetter<Group> getByteSetter() {
-        return getIntegerSetter();
-    }
-
-    @Override
-    protected WrapperSetter<Group> getShortSetter() {
-        return getIntegerSetter();
-    }
-
-    @Override
-    protected WrapperSetter<Group> getLonglongSetter() {
+    protected BaseTypeWrapperSetter.ByteSetter<Group> getByteSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<Group> getDecimalSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.ShortSetter<Group> getShortSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.LonglongSetter<Group> getLonglongSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DecimalSetter<Group> getDecimalSetter() {
+        return new BaseTypeWrapperSetter.DecimalSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigDecimal value = wrapper.asBigDecimal();
-                if (value != null) {
-                    row.add(columnName, value.toPlainString());
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(BigDecimal value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value.toPlainString());
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getDateSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.DateSetter<Group> getDateSetter() {
+        return new BaseTypeWrapperSetter.DateSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                Date value = wrapper.asDate();
-                if (value != null) {
-                    row.add(columnName, value.getTime());
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value.getDate().getTime());
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getTimeSetter() {
-        return getDateSetter();
+    protected BaseTypeWrapperSetter.TimeSetter<Group> getTimeSetter() {
+        return new BaseTypeWrapperSetter.TimeSetter<Group>() {
+            @Override
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value.getDate().getTime());
+            }
+        };
     }
 
     @Override
-    protected WrapperSetter<Group> getDatetimeSetter() {
-        return getDateSetter();
+    protected BaseTypeWrapperSetter.DatetimeSetter<Group> getDatetimeSetter() {
+        return new BaseTypeWrapperSetter.DatetimeSetter<Group>() {
+            @Override
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value.getDate().getTime());
+            }
+        };
     }
 }

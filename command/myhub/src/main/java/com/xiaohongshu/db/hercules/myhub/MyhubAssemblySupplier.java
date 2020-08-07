@@ -9,25 +9,26 @@ import com.xiaohongshu.db.hercules.myhub.mr.input.MyhubInputFormat;
 import com.xiaohongshu.db.hercules.myhub.option.MyhubOutputOptionsConf;
 import com.xiaohongshu.db.hercules.myhub.schema.MyhubSchemaFetcher;
 import com.xiaohongshu.db.hercules.mysql.MysqlAssemblySupplier;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 
 public class MyhubAssemblySupplier extends MysqlAssemblySupplier {
     @Override
-    public DataSource getDataSource() {
+    public DataSource innerGetDataSource() {
         return new MyhubDataSource();
     }
 
     @Override
-    public OptionsConf getOutputOptionsConf() {
+    public OptionsConf innerGetOutputOptionsConf() {
         return new MyhubOutputOptionsConf();
     }
 
     @Override
-    public BaseSchemaFetcher<?> getSchemaFetcher() {
-        return new MyhubSchemaFetcher(options, generateConverter(), generateManager(options));
+    public BaseSchemaFetcher<?> innerGetSchemaFetcher() {
+        return new MyhubSchemaFetcher(options, (RDBMSDataTypeConverter) getDataTypeConverter(), generateManager(options));
     }
 
     @Override
-    public Class<? extends HerculesInputFormat> getInputFormatClass() {
+    public Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
         return MyhubInputFormat.class;
     }
 }

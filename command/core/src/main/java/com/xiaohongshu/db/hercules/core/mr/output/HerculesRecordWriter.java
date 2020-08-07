@@ -88,6 +88,9 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         }
     }
 
+    protected void afterSetWrapperSetterFactory() {
+    }
+
     protected final WrapperSetter<T> getWrapperSetter(DataType dataType) {
         return wrapperSetterFactory.getWrapperSetter(dataType);
     }

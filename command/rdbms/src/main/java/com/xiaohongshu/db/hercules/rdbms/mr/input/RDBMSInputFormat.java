@@ -1,21 +1,18 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
-import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManagerGenerator;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
-import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
-import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -28,8 +25,7 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.Map;
 
-public class RDBMSInputFormat extends HerculesInputFormat
-        implements RDBMSManagerGenerator, DataTypeConverterGenerator<RDBMSDataTypeConverter>, CustomDataTypeManagerGenerator {
+public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
@@ -51,13 +47,12 @@ public class RDBMSInputFormat extends HerculesInputFormat
     protected void initializeContext(GenericOptions sourceOptions) {
         super.initializeContext(sourceOptions);
 
-        converter = generateConverter();
+        converter = (RDBMSDataTypeConverter) HerculesContext.getAssemblySupplierPair().getSourceItem().getDataTypeConverter();
         manager = generateManager(sourceOptions);
         schemaFetcher = initializeSchemaFetcher(sourceOptions, converter, manager);
         baseSql = SqlUtils.makeBaseQuery(sourceOptions);
 
-        columnTypeMap = SchemaUtils.convertTypeFromOption(sourceOptions.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, null), generateCustomDataTypeManager());
-        columnTypeMap = new StingyMap<>(columnTypeMap);
+        columnTypeMap = new StingyMap<>(HerculesContext.getSchemaPair().getSourceItem().getColumnTypeMap());
     }
 
     protected SplitGetter getSplitGetter(GenericOptions options) {
@@ -90,12 +85,11 @@ public class RDBMSInputFormat extends HerculesInputFormat
     }
 
     @Override
-    public RDBMSManager generateManager(GenericOptions options) {
-        return new RDBMSManager(options);
+    protected WrapperGetterFactory<ResultSet> createWrapperGetterFactory() {
+        return new RDBMSWrapperGetterFactory();
     }
 
-    @Override
-    public RDBMSDataTypeConverter generateConverter() {
-        return new RDBMSDataTypeConverter();
+    public RDBMSManager generateManager(GenericOptions options) {
+        return new RDBMSManager(options);
     }
 }

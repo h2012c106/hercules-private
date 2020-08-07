@@ -28,8 +28,6 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
 
     private static final Log LOG = LogFactory.getLog(ParquetRecordReader.class);
 
-    private final ParquetInputWrapperManager wrapperManager;
-
     private RecordReader<Void, Group> delegate = null;
     /**
      * 负责生成delegate reader
@@ -42,12 +40,10 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     private List<FileSplit> combinedSplitList = new ArrayList<>(0);
     private TaskAttemptContext context = null;
 
-    public ParquetRecordReader(TaskAttemptContext context, ExampleInputFormat delegateInputFormat,
-                               ParquetInputWrapperManager wrapperManager) {
+    public ParquetRecordReader(TaskAttemptContext context, ExampleInputFormat delegateInputFormat) {
         // 此时还没搞出columnTypeMap
-        super(context, wrapperManager);
+        super(context);
         this.delegateInputFormat = delegateInputFormat;
-        this.wrapperManager = wrapperManager;
     }
 
     /**
@@ -113,14 +109,14 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
         context.getTaskAttemptID().getTaskID();
 
         // 补赋columnTypeMap
-        wrapperManager.setColumnTypeMap(columnTypeMap);
+        ((ParquetInputWrapperManager) wrapperGetterFactory).setColumnTypeMap(getSchema().getColumnTypeMap());
 
         // 不用担心NPE，横竖这里都有了
         messageType = MessageTypeParser.parseMessageType(options.getSourceOptions().getString(MESSAGE_TYPE, null));
         // 处理一下column的筛选
         if (!getSchema().getColumnNameList().isEmpty()) {
             MessageType tmpMessageType = Types.buildMessage().named(messageType.getName());
-            for (String columnName : columnNameList) {
+            for (String columnName : getSchema().getColumnNameList()) {
                 MessageType projectedMessageType = projectOneColumn(columnName);
                 if (projectedMessageType == null) {
                     LOG.warn(String.format("Can't find the column [%s] in schema.", columnName));
@@ -129,7 +125,7 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
                 }
             }
             messageType = tmpMessageType;
-            LOG.info(String.format("The projection message type of column %s is: %s", columnNameList, messageType));
+            LOG.info(String.format("The projection message type of column %s is: %s", getSchema().getColumnNameList(), messageType));
         }
         configuration.set(ReadSupport.PARQUET_READ_SCHEMA, messageType.toString());
 
@@ -156,7 +152,7 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     @Override
     public HerculesWritable innerGetCurrentValue() throws IOException, InterruptedException {
         try {
-            return new HerculesWritable(wrapperManager.groupToMapWrapper(delegate.getCurrentValue(), null));
+            return new HerculesWritable(((ParquetInputWrapperManager) wrapperGetterFactory).groupToMapWrapper(delegate.getCurrentValue(), null));
         } catch (Exception e) {
             throw new IOException(e);
         }

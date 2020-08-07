@@ -4,7 +4,9 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
+import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,7 +24,6 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
 
     private static final Log LOG = LogFactory.getLog(ParquetSchemaRecordWriter.class);
 
-    private final ParquetSchemaOutputWrapperManager wrapperManager;
     private final TypeBuilderTreeNode result;
     private final RecordWriter<NullWritable, Text> delegate;
 
@@ -32,19 +33,10 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
      */
     private boolean written = false;
 
-    public ParquetSchemaRecordWriter(TaskAttemptContext context, ParquetSchemaOutputWrapperManager wrapperSetterFactory,
-                                     RecordWriter<NullWritable, Text> delegate) {
-        super(context, wrapperSetterFactory);
-        this.wrapperManager = wrapperSetterFactory;
+    public ParquetSchemaRecordWriter(TaskAttemptContext context, RecordWriter<NullWritable, Text> delegate) {
+        super(context);
         this.delegate = delegate;
         this.result = new TypeBuilderTreeNode(GENERATED_MESSAGE_NAME, Types.buildMessage(), null, BaseDataType.MAP);
-        wrapperManager.setColumnTypeMap(columnTypeMap);
-    }
-
-    @Override
-    protected void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
-        value = new HerculesWritable(WritableUtils.copyColumn(value.getRow(), columnNameList, WritableUtils.FilterUnexistOption.IGNORE));
-        innerWrite(value);
     }
 
     @Override
@@ -53,7 +45,7 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
             written = true;
         }
         try {
-            wrapperManager.union(value.getRow(), result);
+            ((ParquetSchemaOutputWrapperManager) wrapperSetterFactory).union(value.getRow(), result);
         } catch (Exception e) {
             error = true;
             LOG.error("Error row: " + value.toString());
@@ -62,9 +54,17 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
     }
 
     @Override
+    protected WritableUtils.FilterUnexistOption getColumnUnexistOption() {
+        return WritableUtils.FilterUnexistOption.IGNORE;
+    }
+
+    @Override
     protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
         if (written && !error) {
-            String messageTypeStr = ParquetSchemaUtils.calculateTree(result, wrapperManager.getConverter()).toString();
+            String messageTypeStr = ParquetSchemaUtils.calculateTree(
+                    result,
+                    (ParquetDataTypeConverter) HerculesContext.getAssemblySupplierPair().getTargetItem().getDataTypeConverter()
+            ).toString();
             LOG.info(String.format("Task [%s] generate message type: %s", context.getTaskAttemptID(), messageTypeStr));
             delegate.write(NullWritable.get(), new Text(messageTypeStr));
             delegate.close(context);

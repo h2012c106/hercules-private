@@ -13,16 +13,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class NullWrapper extends BaseWrapper<String> {
 
-    private final static DataType DATA_TYPE = BaseDataType.NULL;
-
     public final static NullWrapper INSTANCE = new NullWrapper();
 
     private NullWrapper(DataType dataType) {
-        super("", DATA_TYPE, 0);
+        super("", dataType, 0);
     }
 
     private NullWrapper() {
-        this(DATA_TYPE);
+        this(BaseDataType.NULL);
     }
 
     private static final Map<DataType, NullWrapper> FACTORY = new ConcurrentHashMap<>();

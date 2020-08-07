@@ -1,7 +1,9 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.DateWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.DoubleWrapper;
@@ -13,6 +15,7 @@ import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.Type;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class ParquetHerculesInputWrapperManager extends ParquetInputWrapperManager {
 
@@ -29,95 +32,111 @@ public class ParquetHerculesInputWrapperManager extends ParquetInputWrapperManag
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getByteGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.ByteGetter<GroupWithSchemaInfo> getByteGetter() {
+        return new BaseTypeWrapperGetter.ByteGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return IntegerWrapper.get(row.isEmpty()
-                        ? null
-                        : OverflowUtils.numberToByte(row.getGroup().getInteger(columnName, row.getValueSeq())));
+            protected Byte getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return OverflowUtils.numberToByte(row.getGroup().getInteger(columnName, row.getValueSeq()));
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getShortGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.ShortGetter<GroupWithSchemaInfo> getShortGetter() {
+        return new BaseTypeWrapperGetter.ShortGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return IntegerWrapper.get(row.isEmpty()
-                        ? null
-                        : OverflowUtils.numberToShort(row.getGroup().getInteger(columnName, row.getValueSeq())));
+            protected Short getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return OverflowUtils.numberToShort(row.getGroup().getInteger(columnName, row.getValueSeq()));
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getLonglongGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.LonglongGetter<GroupWithSchemaInfo> getLonglongGetter() {
+        return new BaseTypeWrapperGetter.LonglongGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return IntegerWrapper.get(row.isEmpty()
-                        ? null
-                        : ParquetUtils.longlongToBigInteger(row.getGroup().getInt96(columnName, row.getValueSeq())));
+            protected BigInteger getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return ParquetUtils.longlongToBigInteger(row.getGroup().getInt96(columnName, row.getValueSeq()));
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getDecimalGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.DecimalGetter<GroupWithSchemaInfo> getDecimalGetter() {
+        return new BaseTypeWrapperGetter.DecimalGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                if (row.isEmpty()) {
-                    return DoubleWrapper.get((BigDecimal) null);
-                } else {
-                    Type columnType = row.getGroup().getType().getType(columnName);
-                    // parquet类型一定是decimal
-                    LogicalTypeAnnotation.DecimalLogicalTypeAnnotation annotation
-                            = (LogicalTypeAnnotation.DecimalLogicalTypeAnnotation) columnType.getLogicalTypeAnnotation();
-                    int scale = annotation.getScale();
-                    return DoubleWrapper.get(ParquetUtils.bytesToDecimal(row.getGroup().getBinary(columnName, row.getValueSeq()), scale));
-                }
+            protected BigDecimal getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                Type columnType = row.getGroup().getType().getType(columnName);
+                // parquet类型一定是decimal
+                LogicalTypeAnnotation.DecimalLogicalTypeAnnotation annotation
+                        = (LogicalTypeAnnotation.DecimalLogicalTypeAnnotation) columnType.getLogicalTypeAnnotation();
+                int scale = annotation.getScale();
+                return ParquetUtils.bytesToDecimal(row.getGroup().getBinary(columnName, row.getValueSeq()), scale);
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getDateGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.DateGetter<GroupWithSchemaInfo> getDateGetter() {
+        return new BaseTypeWrapperGetter.DateGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return DateWrapper.get(row.isEmpty()
-                                ? null
-                                : ParquetUtils.intToDate(row.getGroup().getInteger(columnName, row.getValueSeq())),
-                        BaseDataType.DATE);
+            protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return new ExtendedDate(ParquetUtils.intToDate(row.getGroup().getInteger(columnName, row.getValueSeq())));
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getTimeGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.TimeGetter<GroupWithSchemaInfo> getTimeGetter() {
+        return new BaseTypeWrapperGetter.TimeGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return DateWrapper.get(row.isEmpty()
-                                ? null
-                                : ParquetUtils.intToTime(row.getGroup().getInteger(columnName, row.getValueSeq())),
-                        BaseDataType.TIME);
+            protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return new ExtendedDate(ParquetUtils.intToTime(row.getGroup().getInteger(columnName, row.getValueSeq())));
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getDatetimeGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.DatetimeGetter<GroupWithSchemaInfo> getDatetimeGetter() {
+        return new BaseTypeWrapperGetter.DatetimeGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return DateWrapper.get(row.isEmpty()
-                                ? null
-                                : ParquetUtils.longToDatetime(row.getGroup().getLong(columnName, row.getValueSeq())),
-                        BaseDataType.DATETIME);
+            protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return new ExtendedDate(ParquetUtils.longToDatetime(row.getGroup().getLong(columnName, row.getValueSeq())));
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }

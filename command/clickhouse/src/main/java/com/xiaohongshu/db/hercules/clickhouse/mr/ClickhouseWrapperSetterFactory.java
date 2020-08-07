@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.clickhouse.mr;
 
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
@@ -130,13 +131,13 @@ public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getBooleanSetter() {
+    protected BaseTypeWrapperSetter.BooleanSetter<PreparedStatement> getBooleanSetter() {
         // clickhouse没有boolean
         return null;
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getStringSetter() {
+    protected BaseTypeWrapperSetter.StringSetter<PreparedStatement> getStringSetter() {
         if (enableNull) {
             return super.getByteSetter();
         } else {
@@ -166,7 +167,7 @@ public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getTimeSetter() {
+    protected BaseTypeWrapperSetter.TimeSetter<PreparedStatement> getTimeSetter() {
         if (enableNull) {
             return super.getByteSetter();
         } else {
@@ -181,7 +182,7 @@ public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getDatetimeSetter() {
+    protected BaseTypeWrapperSetter.DatetimeSetter<PreparedStatement> getDatetimeSetter() {
         if (enableNull) {
             return super.getByteSetter();
         } else {
@@ -200,7 +201,7 @@ public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getBytesSetter() {
+    protected BaseTypeWrapperSetter.BytesSetter<PreparedStatement> getBytesSetter() {
         return null;
     }
 }

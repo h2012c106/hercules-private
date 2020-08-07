@@ -32,7 +32,7 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
 
     @Override
     protected String makeSql(String columnMask, Integer rowNum) {
-        return statementGetter.getExportSql(tableName, columnNameList, columnMask, updateKeyList);
+        return statementGetter.getExportSql(tableName, getSchema().getColumnNameList(), columnMask, updateKeyList);
     }
 
     @Override
@@ -53,9 +53,9 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
         for (HerculesWritable record : recordList) {
             // 排去null的下标
             int meaningfulSeq = 0;
-            for (int i = 0; i < columnNameList.size(); ++i) {
-                String columnName = columnNameList.get(i);
-                BaseWrapper columnValue = record.get(columnName);
+            for (int i = 0; i < getSchema().getColumnNameList().size(); ++i) {
+                String columnName = getSchema().getColumnNameList().get(i);
+                BaseWrapper<?> columnValue = record.get(columnName);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (columnValue == null) {
                     continue;
@@ -66,7 +66,7 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter {
             }
             for (int i = 0; i < updateKeyList.size(); ++i) {
                 String columnName = updateKeyList.get(i);
-                BaseWrapper columnValue = record.get(columnName);
+                BaseWrapper<?> columnValue = record.get(columnName);
                 // record内必须要有update的列值
                 if (columnValue == null) {
                     throw new MapReduceException(String.format("The update key [%s] should be the subset of source data source columns.", columnName));

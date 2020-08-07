@@ -23,13 +23,13 @@
         <module>mongodb</module>
         <module>parquet-schema</module>
         <module>clickhouse</module>
-        <module>hbase</module>
+<!--        <module>hbase</module>-->
         <module>myhub</module>
-        <module>kafka</module>
+<!--        <module>kafka</module>-->
 
         <module>assemble</module>
 
-        <module>xhs-converter</module>
+<!--        <module>xhs-converter</module>-->
     </modules>
 
     <dependencies>

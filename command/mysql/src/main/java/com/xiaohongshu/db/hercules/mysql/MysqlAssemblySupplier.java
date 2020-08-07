@@ -18,32 +18,32 @@ import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 public class MysqlAssemblySupplier extends RDBMSAssemblySupplier {
 
     @Override
-    public DataSource getDataSource() {
+    public DataSource innerGetDataSource() {
         return new MysqlDataSource();
     }
 
     @Override
-    public OptionsConf getInputOptionsConf() {
+    public OptionsConf innerGetInputOptionsConf() {
         return new MysqlInputOptionsConf();
     }
 
     @Override
-    public OptionsConf getOutputOptionsConf() {
+    public OptionsConf innerGetOutputOptionsConf() {
         return new MysqlOutputOptionsConf();
     }
 
     @Override
-    public Class<? extends HerculesInputFormat> getInputFormatClass() {
+    public Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
         return MysqlInputFormat.class;
     }
 
     @Override
-    public Class<? extends HerculesOutputFormat> getOutputFormatClass() {
+    public Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass() {
         return MysqlOutputFormat.class;
     }
 
     @Override
-    public MRJobContext getJobContextAsTarget() {
+    public MRJobContext innerGetJobContextAsTarget() {
         return new MysqlOutputMRJobContext();
     }
 

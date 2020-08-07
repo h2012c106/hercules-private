@@ -1,9 +1,13 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
@@ -80,91 +84,112 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getIntegerGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.IntegerGetter<GroupWithSchemaInfo> getIntegerGetter() {
+        return new BaseTypeWrapperGetter.IntegerGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return IntegerWrapper.get(row.isEmpty()
-                        ? null
-                        : row.getGroup().getInteger(columnName, row.getValueSeq()));
+            protected Integer getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getGroup().getInteger(columnName, row.getValueSeq());
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getLongGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.LongGetter<GroupWithSchemaInfo> getLongGetter() {
+        return new BaseTypeWrapperGetter.LongGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return IntegerWrapper.get(row.isEmpty()
-                        ? null
-                        : row.getGroup().getLong(columnName, row.getValueSeq()));
+            protected Long getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getGroup().getLong(columnName, row.getValueSeq());
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getFloatGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.FloatGetter<GroupWithSchemaInfo> getFloatGetter() {
+        return new BaseTypeWrapperGetter.FloatGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return DoubleWrapper.get(row.isEmpty()
-                        ? null
-                        : row.getGroup().getFloat(columnName, row.getValueSeq()));
+            protected Float getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getGroup().getFloat(columnName, row.getValueSeq());
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getDoubleGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.DoubleGetter<GroupWithSchemaInfo> getDoubleGetter() {
+        return new BaseTypeWrapperGetter.DoubleGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return DoubleWrapper.get(row.isEmpty()
-                        ? null
-                        : row.getGroup().getDouble(columnName, row.getValueSeq()));
+            protected Double getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getGroup().getDouble(columnName, row.getValueSeq());
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getBooleanGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.BooleanGetter<GroupWithSchemaInfo> getBooleanGetter() {
+        return new BaseTypeWrapperGetter.BooleanGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return BooleanWrapper.get(row.isEmpty()
-                        ? null
-                        : row.getGroup().getBoolean(columnName, row.getValueSeq()));
+            protected Boolean getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getGroup().getBoolean(columnName, row.getValueSeq());
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getStringGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.StringGetter<GroupWithSchemaInfo> getStringGetter() {
+        return new BaseTypeWrapperGetter.StringGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return StringWrapper.get(row.isEmpty()
-                        ? null
-                        : row.getGroup().getString(columnName, row.getValueSeq()));
+            protected String getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getGroup().getString(columnName, row.getValueSeq());
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getBytesGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+    protected BaseTypeWrapperGetter.BytesGetter<GroupWithSchemaInfo> getBytesGetter() {
+        return new BaseTypeWrapperGetter.BytesGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return BytesWrapper.get(row.isEmpty()
-                        ? null
-                        : row.getGroup().getBinary(columnName, row.getValueSeq()).getBytes());
+            protected byte[] getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getGroup().getBinary(columnName, row.getValueSeq()).getBytes();
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<GroupWithSchemaInfo> getNullGetter() {
+    protected BaseTypeWrapperGetter.NullGetter<GroupWithSchemaInfo> getNullGetter() {
         return null;
     }
 
@@ -172,9 +197,17 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
     protected WrapperGetter<GroupWithSchemaInfo> getListGetter() {
         return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                // 由于逻辑上LIST与其他类型在同一层，所以直接塞，在函数里二次判断真正类型并调用对应的方法
-                // list不取值，只查出真正类型后取别的Getter取回的值
+            protected DataType getType() {
+                return BaseDataType.LIST;
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
+            }
+
+            @Override
+            protected BaseWrapper<?> getNonnull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
                 return repeatedToListWrapper(row.getGroup(), columnName);
             }
         };
@@ -184,13 +217,21 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
     protected WrapperGetter<GroupWithSchemaInfo> getMapGetter() {
         return new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
-            public BaseWrapper get(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                if (row.isEmpty()) {
-                    return MapWrapper.NULL_INSTANCE;
-                } else {
-                    return groupToMapWrapper(row.getGroup().getGroup(columnName, row.getValueSeq()),
-                            WritableUtils.concatColumn(rowName, columnName));
-                }
+            protected DataType getType() {
+                return BaseDataType.MAP;
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
+            }
+
+            @Override
+            protected BaseWrapper<?> getNonnull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return groupToMapWrapper(
+                        row.getGroup().getGroup(columnName, row.getValueSeq()),
+                        WritableUtils.concatColumn(rowName, columnName)
+                );
             }
         };
     }

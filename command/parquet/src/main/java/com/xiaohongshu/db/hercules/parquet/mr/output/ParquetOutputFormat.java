@@ -2,46 +2,40 @@ package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.parquet.example.data.Group;
 import org.apache.parquet.hadoop.example.ExampleOutputFormat;
 
 import java.io.IOException;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
-public class ParquetOutputFormat extends HerculesOutputFormat {
+public class ParquetOutputFormat extends HerculesOutputFormat<Group> {
 
     private final ExampleOutputFormat delegate = new ExampleOutputFormat();
 
     @Override
-    public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
+    public HerculesRecordWriter<Group> innerGetRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+        return new ParquetRecordWriter(context, delegate.getRecordWriter(context));
+    }
 
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-
-        SchemaStyle schemaStyle = SchemaStyle.valueOfIgnoreCase(options.getTargetOptions().getString(SCHEMA_STYLE, null));
-        ParquetOutputWrapperManager wrapperManager;
+    @Override
+    protected ParquetOutputWrapperManager createWrapperSetterFactory() {
+        SchemaStyle schemaStyle = SchemaStyle.valueOfIgnoreCase(HerculesContext.getWrappingOptions().getTargetOptions().getString(SCHEMA_STYLE, null));
         switch (schemaStyle) {
             case SQOOP:
-                wrapperManager = new ParquetSqoopOutputWrapperManager();
-                break;
+                return new ParquetSqoopOutputWrapperManager();
             case HIVE:
-                wrapperManager = new ParquetHiveOutputWrapperManager();
-                break;
+                return new ParquetHiveOutputWrapperManager();
             case ORIGINAL:
-                wrapperManager = new ParquetHerculesOutputWrapperManager();
-                break;
+                return new ParquetHerculesOutputWrapperManager();
             default:
                 throw new RuntimeException();
         }
-
-        return new ParquetRecordWriter(context, delegate.getRecordWriter(context), wrapperManager);
     }
 
     @Override

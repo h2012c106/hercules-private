@@ -1,14 +1,17 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
 import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
+import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
+import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
@@ -35,7 +38,7 @@ import java.util.NavigableMap;
 /**
  * 通过获取的regions list 来生成splits。最少一个region对应一个split
  */
-public class HBaseInputFormat extends HerculesInputFormat implements HBaseManagerInitializer {
+public class HBaseInputFormat extends HerculesInputFormat<byte[]> implements HBaseManagerInitializer {
 
     private static final Log LOG = LogFactory.getLog(HBaseInputFormat.class);
     private HBaseManager manager;
@@ -143,7 +146,7 @@ public class HBaseInputFormat extends HerculesInputFormat implements HBaseManage
     }
 
     @Override
-    protected HerculesRecordReader innerCreateRecordReader(InputSplit split, TaskAttemptContext context) {
+    protected HerculesRecordReader<byte[]> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) {
         String rowKeyCol = sourceOptions.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if (rowKeyCol != null) {
             LOG.info("rowKeyCol name has been set to: " + rowKeyCol);
@@ -151,6 +154,11 @@ public class HBaseInputFormat extends HerculesInputFormat implements HBaseManage
             LOG.info("rowKeyCol name not set. rowKey will be excluded.");
         }
         return new HBaseRecordReader(context, manager, rowKeyCol);
+    }
+
+    @Override
+    protected WrapperGetterFactory<byte[]> createWrapperGetterFactory() {
+        return new HBaseInputWrapperManager();
     }
 
     @Override
@@ -226,15 +234,20 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
     private final KvSerializerSupplier kvSerializerSupplier;
     private String columnFamily;
 
+    private List<String> columnNameList;
+    private Map<String, DataType> columnTypeMap;
+
     @SneakyThrows
     public HBaseRecordReader(TaskAttemptContext context, HBaseManager manager, String rowKeyCol) {
-        super(context, new HBaseInputWrapperManager());
+        super(context);
         this.manager = manager;
         this.rowKeyCol = rowKeyCol;
         this.kvSerializerSupplier = (KvSerializerSupplier) Class.forName(options.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
         this.columnFamily = options.getSourceOptions().getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, "");
         // 测试用
 //        manager.InsertTestDataToHBaseTable();
+        this.columnNameList = getSchema().getColumnNameList();
+        this.columnTypeMap = new StingyMap<>(getSchema().getColumnTypeMap());
     }
 
     /**
@@ -304,7 +317,6 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
      * 获取 san 出来的 timestamp 范围中最新的一个版本
      */
     private void getLatestRecord(HerculesWritable record, int columnNum) throws Exception {
-
         // 利用getNoVersionMap可以获取包含最新版本的唯一数据。
         NavigableMap<byte[], NavigableMap<byte[], byte[]>> familyColMap = value.getNoVersionMap();
         for (byte[] family : familyColMap.keySet()) {

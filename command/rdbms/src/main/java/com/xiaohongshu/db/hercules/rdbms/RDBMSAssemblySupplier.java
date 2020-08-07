@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms;
 
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
@@ -22,46 +23,50 @@ import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
 
-public class RDBMSAssemblySupplier extends BaseAssemblySupplier
-        implements RDBMSManagerGenerator, DataTypeConverterGenerator<RDBMSDataTypeConverter> {
+public class RDBMSAssemblySupplier extends BaseAssemblySupplier implements RDBMSManagerGenerator {
 
     @Override
-    public DataSource getDataSource() {
+    public DataSource innerGetDataSource() {
         return new RDBMSDataSource();
     }
 
     @Override
-    public OptionsConf getInputOptionsConf() {
+    public OptionsConf innerGetInputOptionsConf() {
         return new RDBMSInputOptionsConf();
     }
 
     @Override
-    public OptionsConf getOutputOptionsConf() {
+    public OptionsConf innerGetOutputOptionsConf() {
         return new RDBMSOutputOptionsConf();
     }
 
     @Override
-    public Class<? extends HerculesInputFormat> getInputFormatClass() {
+    public Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
         return RDBMSInputFormat.class;
     }
 
     @Override
-    public Class<? extends HerculesOutputFormat> getOutputFormatClass() {
+    public Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass() {
         return RDBMSOutputFormat.class;
     }
 
     @Override
-    public BaseSchemaFetcher<?> getSchemaFetcher() {
-        return new RDBMSSchemaFetcher(options, generateConverter(), generateManager(options));
+    public BaseSchemaFetcher<?> innerGetSchemaFetcher() {
+        return new RDBMSSchemaFetcher(options, (RDBMSDataTypeConverter) getDataTypeConverter(), generateManager(options));
     }
 
     @Override
-    public MRJobContext getJobContextAsSource() {
+    protected DataTypeConverter<?, ?> innerGetDataTypeConverter() {
+        return new RDBMSDataTypeConverter();
+    }
+
+    @Override
+    public MRJobContext innerGetJobContextAsSource() {
         return NullMRJobContext.INSTANCE;
     }
 
     @Override
-    public MRJobContext getJobContextAsTarget() {
+    public MRJobContext innerGetJobContextAsTarget() {
         return new RDBMSOutputMRJobContext();
     }
 
@@ -71,17 +76,12 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier
     }
 
     @Override
-    public RDBMSDataTypeConverter generateConverter() {
-        return new RDBMSDataTypeConverter();
-    }
-
-    @Override
-    public SchemaNegotiatorContext getSchemaNegotiatorContextAsSource() {
+    public SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsSource() {
         return new RDBMSSchemaNegotiatorContext(options);
     }
 
     @Override
-    public SchemaNegotiatorContext getSchemaNegotiatorContextAsTarget() {
+    public SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsTarget() {
         return new RDBMSSchemaNegotiatorContext(options);
     }
 }

@@ -2,12 +2,12 @@ package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
-import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
@@ -16,8 +16,6 @@ import org.apache.parquet.example.data.Group;
 import org.apache.parquet.io.api.Binary;
 import org.apache.parquet.schema.Type;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -29,15 +27,10 @@ import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_N
  */
 public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<Group> {
 
-    private Map<String, DataType> columnTypeMap;
     private final ParquetDataTypeConverter converter;
 
     public ParquetOutputWrapperManager(ParquetDataTypeConverter converter) {
         this.converter = converter;
-    }
-
-    public void setColumnTypeMap(Map<String, DataType> columnTypeMap) {
-        this.columnTypeMap = columnTypeMap;
     }
 
     /**
@@ -63,114 +56,124 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
         }
     }
 
-    /**
-     * {@return}与{@param res}是同一个对象
-     * 和Mongo手段不一样，Mongo是你给什么我要什么，Parquet是我要什么你给什么，所以循环的目标一个是MapWrapper，一个是GroupType
-     * 对于数据类型也是这个道理，如果从map里取不到，Mongo是你给什么类型我就当什么类型，Parquet是我从自己schema里取
-     */
-    public Group mapWrapperToGroup(MapWrapper wrapper, Group res, String columnPath) throws Exception {
-        List<Type> groupSonTypeList = res.getType().getFields();
-        for (Type type : groupSonTypeList) {
-            String columnName = type.getName();
-            BaseWrapper value = wrapper.get(columnName);
-            if (value == null || value.isNull()) {
-                // 如果这列上游没有，那就不set，祈祷这列不是required吧
-                // 其实这里加了isNull判断，各个setter里的==null就全部木大了，之前脑子秀逗了
-                continue;
-            }
-            String fullColumnName = WritableUtils.concatColumn(columnPath, columnName);
-            DataType columnType = columnTypeMap.getOrDefault(fullColumnName, converter.convertElementType(new ParquetType(type)));
-            getWrapperSetter(columnType).set(value, res, columnPath, columnName, -1);
-        }
-        return res;
-    }
+//    /**
+//     * {@return}与{@param res}是同一个对象
+//     * 和Mongo手段不一样，Mongo是你给什么我要什么，Parquet是我要什么你给什么，所以循环的目标一个是MapWrapper，一个是GroupType
+//     * 对于数据类型也是这个道理，如果从map里取不到，Mongo是你给什么类型我就当什么类型，Parquet是我从自己schema里取
+//     */
+//    public Group mapWrapperToGroup(MapWrapper wrapper, Group res, String columnPath) throws Exception {
+//        List<Type> groupSonTypeList = res.getType().getFields();
+//        for (Type type : groupSonTypeList) {
+//            String columnName = type.getName();
+//            BaseWrapper value = wrapper.get(columnName);
+//            if (value == null || value.isNull()) {
+//                // 如果这列上游没有，那就不set，祈祷这列不是required吧
+//                // 其实这里加了isNull判断，各个setter里的==null就全部木大了，之前脑子秀逗了
+//                continue;
+//            }
+//            String fullColumnName = WritableUtils.concatColumn(columnPath, columnName);
+//            DataType columnType = columnTypeMap.getOrDefault(fullColumnName, converter.convertElementType(new ParquetType(type)));
+//            getWrapperSetter(columnType).set(value, res, columnPath, columnName, -1);
+//        }
+//        return res;
+//    }
 
     @Override
-    protected WrapperSetter<Group> getIntegerSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.IntegerSetter<Group> getIntegerSetter() {
+        return new BaseTypeWrapperSetter.IntegerSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger value = wrapper.asBigInteger();
-                // 由于parquet没有null，null的之后直接不置
-                if (value != null) {
-                    row.add(columnName, value.intValueExact());
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Integer value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getLongSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.LongSetter<Group> getLongSetter() {
+        return new BaseTypeWrapperSetter.LongSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger value = wrapper.asBigInteger();
-                // 由于parquet没有null，null的之后直接不置
-                if (value != null) {
-                    row.add(columnName, value.longValueExact());
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Long value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getFloatSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.FloatSetter<Group> getFloatSetter() {
+        return new BaseTypeWrapperSetter.FloatSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigDecimal value = wrapper.asBigDecimal();
-                // 由于parquet没有null，null的之后直接不置
-                if (value != null) {
-                    row.add(columnName, OverflowUtils.numberToFloat(value));
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Float value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName,value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getDoubleSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.DoubleSetter<Group> getDoubleSetter() {
+        return new BaseTypeWrapperSetter.DoubleSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigDecimal value = wrapper.asBigDecimal();
-                // 由于parquet没有null，null的之后直接不置
-                if (value != null) {
-                    row.add(columnName, OverflowUtils.numberToDouble(value));
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Double value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName,value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getBooleanSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.BooleanSetter<Group> getBooleanSetter() {
+        return new BaseTypeWrapperSetter.BooleanSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                Boolean value = wrapper.asBoolean();
-                // 由于parquet没有null，null的之后直接不置
-                if (value != null) {
-                    row.add(columnName, value);
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Boolean value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName,value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getStringSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.StringSetter<Group> getStringSetter() {
+        return new BaseTypeWrapperSetter.StringSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                String value = wrapper.asString();
-                if (value != null) {
-                    row.add(columnName, value);
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(String value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<Group> getBytesSetter() {
-        return new WrapperSetter<Group>() {
+    protected BaseTypeWrapperSetter.BytesSetter<Group> getBytesSetter() {
+        return new BaseTypeWrapperSetter.BytesSetter<Group>() {
+            @Override
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(byte[] value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, Binary.fromConstantByteArray(value));
+            }
+
             @Override
             public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
                 byte[] value = wrapper.asBytes();
@@ -182,7 +185,7 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
     }
 
     @Override
-    protected WrapperSetter<Group> getNullSetter() {
+    protected BaseTypeWrapperSetter.NullSetter<Group> getNullSetter() {
         return null;
     }
 
@@ -190,7 +193,11 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
     protected WrapperSetter<Group> getListSetter() {
         return new WrapperSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnull(@NonNull BaseWrapper<?> wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
                 // 不用对null做判断，在委托其他setter构建singleton list的时候如果为null，他们自然不会塞值
                 // List不自己塞值，它找到真正类型后继续委托其他Setter塞值
                 wrapperToRepeated(wrapper, row, columnName);
@@ -202,14 +209,15 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
     protected WrapperSetter<Group> getMapSetter() {
         return new WrapperSetter<Group>() {
             @Override
-            public void set(@NonNull BaseWrapper wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                // 如果是null，就不报错了，不置值
-                if (!wrapper.isNull()) {
-                    String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
-                    Group newGroup = row.addGroup(rowName);
-                    // 如果上游不是一个Map，直接报错
-                    mapWrapperToGroup((MapWrapper) wrapper, newGroup, fullColumnName);
-                }
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnull(@NonNull BaseWrapper<?> wrapper, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                String fullColumnName = WritableUtils.concatColumn(rowName, columnName);
+                Group newGroup = row.addGroup(rowName);
+                // 如果上游不是一个Map，直接报错
+                writeMapWrapper((MapWrapper) wrapper, newGroup, fullColumnName);
             }
         };
     }

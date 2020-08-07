@@ -12,22 +12,22 @@ import com.xiaohongshu.db.hercules.tidb.option.TiDBInputOptionsConf;
 public class TiDBAssemblySupplier extends MysqlAssemblySupplier {
 
     @Override
-    public DataSource getDataSource() {
+    public DataSource innerGetDataSource() {
         return new TiDBDataSource();
     }
 
     @Override
-    public OptionsConf getInputOptionsConf() {
+    public OptionsConf innerGetInputOptionsConf() {
         return new TiDBInputOptionsConf();
     }
 
     @Override
-    public Class<? extends HerculesInputFormat> getInputFormatClass() {
+    public Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
         return TiDBInputFormat.class;
     }
 
     @Override
-    public MRJobContext getJobContextAsTarget() {
+    public MRJobContext innerGetJobContextAsTarget() {
         return new TiDBOutputMRJobContext();
     }
 }

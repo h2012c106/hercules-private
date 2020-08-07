@@ -114,6 +114,8 @@ public abstract class WrapperSetterFactory<T> {
         return res;
     }
 
+    public static final int MAP_WRITE_COLUMN_SEQ = -1;
+
     public T writeMapWrapper(MapWrapper mapWrapper, T out, String columnPath) throws Exception {
         for (Map.Entry<String, BaseWrapper<?>> entry : mapWrapper.entrySet()) {
             String columnName = entry.getKey();
@@ -121,7 +123,7 @@ public abstract class WrapperSetterFactory<T> {
             BaseWrapper<?> subWrapper = entry.getValue();
             DataType columnType = columnTypeMap.getOrDefault(fullColumnName, subWrapper.getType());
             // 这里columnSeq必不用关心，因为是塞map的，map的key何谈下标
-            getWrapperSetter(columnType).set(subWrapper, out, columnPath, columnName, -1);
+            getWrapperSetter(columnType).set(subWrapper, out, columnPath, columnName, MAP_WRITE_COLUMN_SEQ);
         }
         return out;
     }

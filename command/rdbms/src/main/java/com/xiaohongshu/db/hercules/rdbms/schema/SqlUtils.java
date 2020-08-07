@@ -10,9 +10,11 @@ import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,7 +26,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -131,51 +132,16 @@ public final class SqlUtils {
         return statement.toString();
     }
 
-    public static String getTimestamp(ResultSet resultSet, int seq) throws SQLException {
+    public static ExtendedDate getTimestamp(ResultSet resultSet, int seq) throws SQLException {
         try {
-            return resultSet.getString(seq);
+            Timestamp res = resultSet.getTimestamp(seq);
+            return res == null ? null : new ExtendedDate(res);
         } catch (SQLException e) {
-            List<String> regexList = Lists.newArrayList(
-                    "^Value '(.+)' can not be represented as java.sql.Timestamp$"
-            );
-            for (String regex : regexList) {
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(e.getMessage());
-                if (matcher.find()) {
-                    return "0000-00-00 00:00:00";
-                }
+            if (StringUtils.contains(e.getMessage(), "0000")) {
+                return new ExtendedDate();
+            } else {
+                throw e;
             }
-            throw e;
-        }
-    }
-
-    /**
-     * @param resultSet
-     * @param seq
-     * @param defaultValue 仅当是0000-00-00 00:00:00时会返回的默认值
-     * @return
-     * @throws SQLException
-     */
-    public static Long getTimestamp(ResultSet resultSet, int seq, Long defaultValue) throws SQLException {
-        try {
-            String strRes = resultSet.getString(seq);
-            if (strRes.startsWith("0000-00-00 00:00:00")) {
-                return defaultValue;
-            }
-            Timestamp ts = resultSet.getTimestamp(seq);
-            return ts == null ? null : ts.getTime();
-        } catch (SQLException e) {
-            List<String> regexList = Lists.newArrayList(
-                    "^Value '(.+)' can not be represented as java.sql.Timestamp$"
-            );
-            for (String regex : regexList) {
-                Pattern pattern = Pattern.compile(regex);
-                Matcher matcher = pattern.matcher(e.getMessage());
-                if (matcher.find()) {
-                    return defaultValue;
-                }
-            }
-            throw e;
         }
     }
 

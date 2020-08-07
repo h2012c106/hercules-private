@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.parquet;
 
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
@@ -15,60 +16,54 @@ import com.xiaohongshu.db.hercules.parquet.mr.output.ParquetOutputMRJobContext;
 import com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf;
 import com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf;
 import com.xiaohongshu.db.hercules.parquet.schema.*;
+import org.apache.parquet.schema.MessageType;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
-public class ParquetAssemblySupplier extends BaseAssemblySupplier implements DataTypeConverterGenerator<ParquetDataTypeConverter> {
-
-    private ParquetDataTypeConverter converter;
+public class ParquetAssemblySupplier extends BaseAssemblySupplier {
 
     @Override
-    protected void afterSetOptions() {
-        converter = generateConverter();
-    }
-
-    @Override
-    public DataSource getDataSource() {
+    public DataSource innerGetDataSource() {
         return new ParqeutDataSource();
     }
 
     @Override
-    public OptionsConf getInputOptionsConf() {
+    public OptionsConf innerGetInputOptionsConf() {
         return new ParquetInputOptionsConf();
     }
 
     @Override
-    public OptionsConf getOutputOptionsConf() {
+    public OptionsConf innerGetOutputOptionsConf() {
         return new ParquetOutputOptionsConf();
     }
 
     @Override
-    public Class<? extends HerculesInputFormat> getInputFormatClass() {
+    public Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
         return ParquetInputFormat.class;
     }
 
     @Override
-    public Class<? extends HerculesOutputFormat> getOutputFormatClass() {
+    public Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass() {
         return ParquetOutputFormat.class;
     }
 
     @Override
-    public BaseSchemaFetcher<?> getSchemaFetcher() {
-        return new ParquetSchemaFetcher(options, converter);
+    public BaseSchemaFetcher<?> innerGetSchemaFetcher() {
+        return new ParquetSchemaFetcher(options, (ParquetDataTypeConverter) getDataTypeConverter());
     }
 
     @Override
-    public MRJobContext getJobContextAsSource() {
+    public MRJobContext innerGetJobContextAsSource() {
         return new ParquetInputMRJobContext();
     }
 
     @Override
-    public MRJobContext getJobContextAsTarget() {
+    public MRJobContext innerGetJobContextAsTarget() {
         return new ParquetOutputMRJobContext();
     }
 
     @Override
-    public ParquetDataTypeConverter generateConverter() {
+    public DataTypeConverter<?, ?> innerGetDataTypeConverter() {
         SchemaStyle schemaStyle = SchemaStyle.valueOfIgnoreCase(options.getString(SCHEMA_STYLE, null));
         switch (schemaStyle) {
             case SQOOP:

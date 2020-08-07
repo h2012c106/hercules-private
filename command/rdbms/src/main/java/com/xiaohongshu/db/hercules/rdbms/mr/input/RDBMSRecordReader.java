@@ -1,10 +1,12 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
 import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
@@ -19,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
@@ -36,8 +39,10 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
     protected RDBMSManager manager;
 
+    protected Map<String, DataType> columnTypeMap;
+
     public RDBMSRecordReader(TaskAttemptContext context, RDBMSManager manager) {
-        super(context, new RDBMSWrapperGetterFactory());
+        super(context);
         this.manager = manager;
     }
 
@@ -65,7 +70,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         Configuration configuration = context.getConfiguration();
 
-        columnTypeMap = new StingyMap<>(super.columnTypeMap);
+        columnTypeMap = new StingyMap<>(getSchema().getColumnTypeMap());
 
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
@@ -89,10 +94,10 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
             ++pos;
 
-            int columnNum = columnNameList.size();
+            int columnNum = getSchema().getColumnNameList().size();
             value = new HerculesWritable(columnNum);
             for (int i = 0; i < columnNum; ++i) {
-                String columnName = columnNameList.get(i);
+                String columnName = getSchema().getColumnNameList().get(i);
                 value.put(columnName, getWrapperGetter(columnTypeMap.get(columnName)).get(resultSet, null, null, i + 1));
             }
 

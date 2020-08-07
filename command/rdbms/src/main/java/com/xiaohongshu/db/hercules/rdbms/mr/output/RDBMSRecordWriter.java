@@ -1,10 +1,12 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.google.common.base.Objects;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.MultiThreadAsyncWriter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
+import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFactory;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
@@ -47,17 +49,19 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     private Map<String, List<HerculesWritable>> recordListMap;
     private Map<ColumnRowKey, String> sqlCache;
 
+    protected Map<String, DataType> columnTypeMap;
+
     abstract protected PreparedStatement getPreparedStatement(RDBMSWorkerMission mission, Connection connection)
             throws Exception;
 
     public RDBMSRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType,
                              RDBMSManager manager, RDBMSWrapperSetterFactory wrapperSetterFactory)
             throws Exception {
-        super(context, wrapperSetterFactory);
+        super(context);
 
         this.manager = manager;
 
-        columnTypeMap = new StingyMap<>(super.columnTypeMap);
+        columnTypeMap = new StingyMap<>(getSchema().getColumnTypeMap());
 
         this.tableName = tableName;
         statementGetter = StatementGetterFactory.get(exportType);
@@ -77,6 +81,11 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
                 RDBMSOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM);
         writer = new RDBMSMultiThreadAsyncWriter(threadNum);
         writer.run();
+    }
+
+    @Override
+    protected WritableUtils.FilterUnexistOption getColumnUnexistOption() {
+        return WritableUtils.FilterUnexistOption.IGNORE;
     }
 
     abstract protected String makeSql(String columnMask, Integer rowNum);
@@ -110,14 +119,14 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
      */
     private String getWritableColumnMask(HerculesWritable value) {
         StringBuilder sb = new StringBuilder();
-        for (String columnName : columnNameList) {
+        for (String columnName : getSchema().getColumnNameList()) {
             sb.append(value.getRow().containsColumn(columnName) ? "1" : "0");
         }
         return sb.toString();
     }
 
     @Override
-    public void innerColumnWrite(HerculesWritable value) throws IOException, InterruptedException {
+    public void innerWrite(HerculesWritable value) throws IOException, InterruptedException {
         String columnMask = getWritableColumnMask(value);
         List<HerculesWritable> tmpRecordList = recordListMap.computeIfAbsent(columnMask,
                 k -> new ArrayList<>(recordPerStatement.intValue()));
@@ -125,11 +134,6 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         if (tmpRecordList.size() >= recordPerStatement) {
             execUpdate(columnMask, tmpRecordList);
         }
-    }
-
-    @Override
-    protected void innerWrite(HerculesWritable value) throws IOException, InterruptedException {
-        throw new UnsupportedOperationException();
     }
 
     @Override

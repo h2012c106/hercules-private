@@ -28,7 +28,7 @@ public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
 
     @Override
     protected String makeSql(String columnMask, Integer rowNum) {
-        return statementGetter.getExportSql(tableName, columnNameList, columnMask, rowNum);
+        return statementGetter.getExportSql(tableName, getSchema().getColumnNameList(), columnMask, rowNum);
     }
 
     @Override
@@ -49,9 +49,9 @@ public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
         int meaningfulSeq = 0;
         for (HerculesWritable record : recordList) {
             // 排去null的下标
-            for (int i = 0; i < columnNameList.size(); ++i) {
-                String columnName = columnNameList.get(i);
-                BaseWrapper columnValue = record.get(columnName);
+            for (int i = 0; i < getSchema().getColumnNameList().size(); ++i) {
+                String columnName = getSchema().getColumnNameList().get(i);
+                BaseWrapper<?> columnValue = record.get(columnName);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (columnValue == null) {
                     continue;

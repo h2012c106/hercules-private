@@ -1,223 +1,231 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
-import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.PreparedStatement;
+import java.sql.Timestamp;
 import java.sql.Types;
-import java.util.Date;
 
 public class RDBMSWrapperSetterFactory extends WrapperSetterFactory<PreparedStatement> {
 
     @Override
-    protected WrapperSetter<PreparedStatement> getByteSetter() {
-        return new WrapperSetter<PreparedStatement>() {
+    protected BaseTypeWrapperSetter.ByteSetter<PreparedStatement> getByteSetter() {
+        return new BaseTypeWrapperSetter.ByteSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger res = wrapper.asBigInteger();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.TINYINT);
-                } else {
-                    row.setByte(columnSeq, res.byteValueExact());
-                }
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.TINYINT);
+            }
+
+            @Override
+            protected void setNonnullValue(Byte value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setByte(columnSeq, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getShortSetter() {
-        return new WrapperSetter<PreparedStatement>() {
+    protected BaseTypeWrapperSetter.ShortSetter<PreparedStatement> getShortSetter() {
+        return new BaseTypeWrapperSetter.ShortSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger res = wrapper.asBigInteger();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.SMALLINT);
-                } else {
-                    row.setShort(columnSeq, res.shortValueExact());
-                }
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.SMALLINT);
+            }
+
+            @Override
+            protected void setNonnullValue(Short value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setShort(columnSeq, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getIntegerSetter() {
-        return new WrapperSetter<PreparedStatement>() {
+    protected BaseTypeWrapperSetter.IntegerSetter<PreparedStatement> getIntegerSetter() {
+        return new BaseTypeWrapperSetter.IntegerSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger res = wrapper.asBigInteger();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.INTEGER);
-                } else {
-                    row.setInt(columnSeq, res.intValueExact());
-                }
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.INTEGER);
+            }
+
+            @Override
+            protected void setNonnullValue(Integer value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setInt(columnSeq, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getLongSetter() {
-        return new WrapperSetter<PreparedStatement>() {
+    protected BaseTypeWrapperSetter.LongSetter<PreparedStatement> getLongSetter() {
+        return new BaseTypeWrapperSetter.LongSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigInteger res = wrapper.asBigInteger();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.BIGINT);
-                } else {
-                    row.setLong(columnSeq, res.longValueExact());
-                }
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.BIGINT);
+            }
+
+            @Override
+            protected void setNonnullValue(Long value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setLong(columnSeq, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getLonglongSetter() {
+    protected BaseTypeWrapperSetter.LonglongSetter<PreparedStatement> getLonglongSetter() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getFloatSetter() {
-        return new WrapperSetter<PreparedStatement>() {
+    protected BaseTypeWrapperSetter.FloatSetter<PreparedStatement> getFloatSetter() {
+        return new BaseTypeWrapperSetter.FloatSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigDecimal res = wrapper.asBigDecimal();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.FLOAT);
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.FLOAT);
+            }
+
+            @Override
+            protected void setNonnullValue(Float value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setFloat(columnSeq, value);
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DoubleSetter<PreparedStatement> getDoubleSetter() {
+        return new BaseTypeWrapperSetter.DoubleSetter<PreparedStatement>() {
+            @Override
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.DOUBLE);
+            }
+
+            @Override
+            protected void setNonnullValue(Double value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setDouble(columnSeq, value);
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DecimalSetter<PreparedStatement> getDecimalSetter() {
+        return new BaseTypeWrapperSetter.DecimalSetter<PreparedStatement>() {
+            @Override
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.DECIMAL);
+            }
+
+            @Override
+            protected void setNonnullValue(BigDecimal value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setBigDecimal(columnSeq, value);
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.BooleanSetter<PreparedStatement> getBooleanSetter() {
+        return new BaseTypeWrapperSetter.BooleanSetter<PreparedStatement>() {
+            @Override
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.BOOLEAN);
+            }
+
+            @Override
+            protected void setNonnullValue(Boolean value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setBoolean(columnSeq, value);
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.StringSetter<PreparedStatement> getStringSetter() {
+        return new BaseTypeWrapperSetter.StringSetter<PreparedStatement>() {
+            @Override
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.VARCHAR);
+            }
+
+            @Override
+            protected void setNonnullValue(String value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setString(columnSeq, value);
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DateSetter<PreparedStatement> getDateSetter() {
+        return new BaseTypeWrapperSetter.DateSetter<PreparedStatement>() {
+            @Override
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.DATE);
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setDate(columnSeq, new java.sql.Date(value.getDate().getTime()));
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.TimeSetter<PreparedStatement> getTimeSetter() {
+        return new BaseTypeWrapperSetter.TimeSetter<PreparedStatement>() {
+            @Override
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.TIME);
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setTime(columnSeq, new java.sql.Time(value.getDate().getTime()));
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DatetimeSetter<PreparedStatement> getDatetimeSetter() {
+        return new BaseTypeWrapperSetter.DatetimeSetter<PreparedStatement>() {
+            @Override
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.TIMESTAMP);
+            }
+
+            @Override
+            protected void setNonnullValue(ExtendedDate value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                if (value.isZero()) {
+                    row.setString(columnSeq, DateUtils.ZERO_DATE);
                 } else {
-                    row.setFloat(columnSeq, OverflowUtils.numberToFloat(res));
+                    row.setTimestamp(columnSeq, new Timestamp(value.getDate().getTime()));
                 }
             }
         };
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getDoubleSetter() {
-        return new WrapperSetter<PreparedStatement>() {
+    protected BaseTypeWrapperSetter.BytesSetter<PreparedStatement> getBytesSetter() {
+        return new BaseTypeWrapperSetter.BytesSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigDecimal res = wrapper.asBigDecimal();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.DOUBLE);
-                } else {
-                    row.setDouble(columnSeq, OverflowUtils.numberToDouble(res));
-                }
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.LONGVARBINARY);
+            }
+
+            @Override
+            protected void setNonnullValue(byte[] value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setBytes(columnSeq, value);
             }
         };
     }
 
     @Override
-    protected WrapperSetter<PreparedStatement> getDecimalSetter() {
-        return new WrapperSetter<PreparedStatement>() {
+    protected BaseTypeWrapperSetter.NullSetter<PreparedStatement> getNullSetter() {
+        return new BaseTypeWrapperSetter.NullSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigDecimal res = wrapper.asBigDecimal();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.DECIMAL);
-                } else {
-                    row.setBigDecimal(columnSeq, res);
-                }
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.NULL);
             }
-        };
-    }
 
-    @Override
-    protected WrapperSetter<PreparedStatement> getBooleanSetter() {
-        return new WrapperSetter<PreparedStatement>() {
             @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                Boolean res = wrapper.asBoolean();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.BOOLEAN);
-                } else {
-                    row.setBoolean(columnSeq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getStringSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                String res = wrapper.asString();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.VARCHAR);
-                } else {
-                    row.setString(columnSeq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getDateSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                Date res = wrapper.asDate();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.DATE);
-                } else {
-                    row.setDate(columnSeq, new java.sql.Date(res.getTime()));
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getTimeSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                Date res = wrapper.asDate();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.TIME);
-                } else {
-                    row.setTime(columnSeq, new java.sql.Time(res.getTime()));
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getDatetimeSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                String res = wrapper.asString();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.TIMESTAMP);
-                } else {
-                    row.setString(columnSeq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getBytesSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                byte[] res = wrapper.asBytes();
-                if (res == null) {
-                    row.setNull(columnSeq, Types.LONGVARBINARY);
-                } else {
-                    row.setBytes(columnSeq, res);
-                }
-            }
-        };
-    }
-
-    @Override
-    protected WrapperSetter<PreparedStatement> getNullSetter() {
-        return new WrapperSetter<PreparedStatement>() {
-            @Override
-            public void set(BaseWrapper wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+            protected void setNonnullValue(Void value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
                 row.setNull(columnSeq, Types.NULL);
             }
         };

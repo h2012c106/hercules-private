@@ -1,9 +1,9 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
-import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
+import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 
 import java.math.BigDecimal;
@@ -12,180 +12,223 @@ import java.sql.ResultSet;
 public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
 
     @Override
-    protected WrapperGetter<ResultSet> getByteGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.ByteGetter<ResultSet> getByteGetter() {
+        return new BaseTypeWrapperGetter.ByteGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                Byte res = row.getByte(columnSeq);
-                if (row.wasNull()) {
-                    res = null;
-                }
-                return IntegerWrapper.get(res);
+            protected Byte getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getByte(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.getByte(columnSeq);
+                return row.wasNull();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getShortGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.ShortGetter<ResultSet> getShortGetter() {
+        return new BaseTypeWrapperGetter.ShortGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                Short res = row.getShort(columnSeq);
-                if (row.wasNull()) {
-                    res = null;
-                }
-                return IntegerWrapper.get(res);
+            protected Short getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getShort(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.getShort(columnSeq);
+                return row.wasNull();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getIntegerGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.IntegerGetter<ResultSet> getIntegerGetter() {
+        return new BaseTypeWrapperGetter.IntegerGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                Integer res = row.getInt(columnSeq);
-                if (row.wasNull()) {
-                    res = null;
-                }
-                return IntegerWrapper.get(res);
+            protected Integer getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getInt(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.getInt(columnSeq);
+                return row.wasNull();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getLongGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.LongGetter<ResultSet> getLongGetter() {
+        return new BaseTypeWrapperGetter.LongGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                Long res = row.getLong(columnSeq);
-                if (row.wasNull()) {
-                    res = null;
-                }
-                return IntegerWrapper.get(res);
+            protected Long getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getLong(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.getLong(columnSeq);
+                return row.wasNull();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getLonglongGetter() {
+    protected BaseTypeWrapperGetter.LonglongGetter<ResultSet> getLonglongGetter() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getFloatGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.FloatGetter<ResultSet> getFloatGetter() {
+        return new BaseTypeWrapperGetter.FloatGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                Float res = row.getFloat(columnSeq);
-                if (row.wasNull()) {
-                    res = null;
-                }
-                return DoubleWrapper.get(res);
+            protected Float getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getFloat(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.getFloat(columnSeq);
+                return row.wasNull();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getDoubleGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.DoubleGetter<ResultSet> getDoubleGetter() {
+        return new BaseTypeWrapperGetter.DoubleGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                Double res = row.getDouble(columnSeq);
-                if (row.wasNull()) {
-                    res = null;
-                }
-                return DoubleWrapper.get(res);
+            protected Double getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getDouble(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.getDouble(columnSeq);
+                return row.wasNull();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getDecimalGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.DecimalGetter<ResultSet> getDecimalGetter() {
+        return new BaseTypeWrapperGetter.DecimalGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                BigDecimal res = row.getBigDecimal(columnSeq);
-                return DoubleWrapper.get(res);
+            protected BigDecimal getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getBigDecimal(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getBigDecimal(columnSeq) == null;
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getBooleanGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.BooleanGetter<ResultSet> getBooleanGetter() {
+        return new BaseTypeWrapperGetter.BooleanGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                Boolean res = row.getBoolean(columnSeq);
-                if (row.wasNull()) {
-                    res = null;
-                }
-                return BooleanWrapper.get(res);
+            protected Boolean getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getBoolean(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.getBoolean(columnSeq);
+                return row.wasNull();
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getStringGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.StringGetter<ResultSet> getStringGetter() {
+        return new BaseTypeWrapperGetter.StringGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                String res = row.getString(columnSeq);
-                return StringWrapper.get(res);
+            protected String getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getString(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getString(columnSeq) == null;
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getDateGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.DateGetter<ResultSet> getDateGetter() {
+        return new BaseTypeWrapperGetter.DateGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                java.sql.Date res = row.getDate(columnSeq);
-                return DateWrapper.get(res, BaseDataType.DATE);
+            protected ExtendedDate getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return new ExtendedDate(row.getDate(columnSeq));
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getDate(columnSeq) == null;
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getTimeGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.TimeGetter<ResultSet> getTimeGetter() {
+        return new BaseTypeWrapperGetter.TimeGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                java.sql.Time res = row.getTime(columnSeq);
-                return DateWrapper.get(res, BaseDataType.TIME);
+            protected ExtendedDate getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return new ExtendedDate(row.getTime(columnSeq));
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getTime(columnSeq) == null;
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getDatetimeGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.DatetimeGetter<ResultSet> getDatetimeGetter() {
+        return new BaseTypeWrapperGetter.DatetimeGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                String res = SqlUtils.getTimestamp(row, columnSeq);
-                return DateWrapper.get(res, BaseDataType.DATETIME);
+            protected ExtendedDate getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return SqlUtils.getTimestamp(row, columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return SqlUtils.getTimestamp(row, columnSeq) == null;
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getBytesGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.BytesGetter<ResultSet> getBytesGetter() {
+        return new BaseTypeWrapperGetter.BytesGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                byte[] res = row.getBytes(columnSeq);
-                return BytesWrapper.get(res);
+            protected byte[] getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getBytes(columnSeq);
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getBytes(columnSeq) == null;
             }
         };
     }
 
     @Override
-    protected WrapperGetter<ResultSet> getNullGetter() {
-        return new WrapperGetter<ResultSet>() {
+    protected BaseTypeWrapperGetter.NullGetter<ResultSet> getNullGetter() {
+        return new BaseTypeWrapperGetter.NullGetter<ResultSet>() {
             @Override
-            public BaseWrapper get(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                return NullWrapper.INSTANCE;
+            protected Void getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return null;
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return true;
             }
         };
     }

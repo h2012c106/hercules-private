@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.parquet.mr.input;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
@@ -27,7 +28,7 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.ORIGINAL_SPLIT;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
-public class ParquetInputFormat extends HerculesInputFormat {
+public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo> {
 
     private static final Log LOG = LogFactory.getLog(ParquetInputFormat.class);
 
@@ -114,13 +115,12 @@ public class ParquetInputFormat extends HerculesInputFormat {
     }
 
     @Override
-    protected HerculesRecordReader<?> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new ParquetRecordReader(context,
-                delegate,
-                generateWrapperManager(options));
+    protected HerculesRecordReader<GroupWithSchemaInfo> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+        return new ParquetRecordReader(context, delegate);
     }
 
-    private ParquetInputWrapperManager generateWrapperManager(GenericOptions options) {
+    @Override
+    protected ParquetInputWrapperManager createWrapperGetterFactory() {
         switch (schemaStyle) {
             case SQOOP:
                 return new ParquetSqoopInputWrapperManager();
