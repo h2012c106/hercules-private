@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
-import com.xiaohongshu.db.hercules.core.serializer.KvSerializer;
+import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -9,13 +9,13 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-public class HerculesSerializerRecordReader extends RecordReader<NullWritable, HerculesWritable> {
+public class HerculesSerDerRecordReader extends RecordReader<NullWritable, HerculesWritable> {
 
-    private final KvSerializer<?, ?> serializer;
+    private final KvSerDer<?, ?> serDer;
     private final HerculesRecordReader<?> reader;
 
-    public HerculesSerializerRecordReader(KvSerializer<?, ?> serializer, HerculesRecordReader<?> reader) {
-        this.serializer = serializer;
+    public HerculesSerDerRecordReader(KvSerDer<?, ?> serDer, HerculesRecordReader<?> reader) {
+        this.serDer = serDer;
         this.reader = reader;
     }
 
@@ -36,7 +36,7 @@ public class HerculesSerializerRecordReader extends RecordReader<NullWritable, H
 
     @Override
     public HerculesWritable getCurrentValue() throws IOException, InterruptedException {
-        return serializer.read(reader.getCurrentValue());
+        return serDer.read(reader.getCurrentValue());
     }
 
     @Override

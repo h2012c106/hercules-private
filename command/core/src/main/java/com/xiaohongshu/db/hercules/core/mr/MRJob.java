@@ -2,6 +2,9 @@ package com.xiaohongshu.db.hercules.core.mr;
 
 import com.cloudera.sqoop.config.ConfigurationHelper;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
+import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper;
@@ -9,6 +12,7 @@ import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandExecutor;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandResult;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -16,6 +20,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.TaskCompletionEvent;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -44,19 +49,27 @@ public class MRJob {
 
     private static final String TMP_JARS_PROP = "tmpjars";
 
-    private AssemblySupplier sourceAssemblySupplier;
-    private AssemblySupplier targetAssemblySupplier;
     private WrappingOptions options;
 
     private String sourceJar;
     private String targetJar;
 
-    public MRJob(AssemblySupplier sourceAssemblySupplier,
-                 AssemblySupplier targetAssemblySupplier,
-                 WrappingOptions options) {
-        this.sourceAssemblySupplier = sourceAssemblySupplier;
-        this.targetAssemblySupplier = targetAssemblySupplier;
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private Class<? extends HerculesInputFormat<?>> inputFormatClass;
+
+    @GeneralAssembly(role = DataSourceRole.TARGET)
+    private Class<? extends HerculesOutputFormat<?>> outputFormatClass;
+
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private MRJobContext jobContextAsSource;
+
+    @GeneralAssembly(role = DataSourceRole.TARGET)
+    private MRJobContext jobContextAsTarget;
+
+    public MRJob(WrappingOptions options, String sourceJar, String targetJar) {
         this.options = options;
+        this.sourceJar = sourceJar;
+        this.targetJar = targetJar;
     }
 
     private void configure(Configuration configuration, String value, String... keys) {
@@ -209,11 +222,11 @@ public class MRJob {
         }
         job.setJarByClass(MRJob.class);
 
-        sourceAssemblySupplier.getJobContextAsSource().configureJob(job, options);
-        job.setInputFormatClass(sourceAssemblySupplier.getInputFormatClass());
+        jobContextAsSource.configureJob(job, options);
+        job.setInputFormatClass(inputFormatClass);
 
-        targetAssemblySupplier.getJobContextAsTarget().configureJob(job, options);
-        job.setOutputFormatClass(targetAssemblySupplier.getOutputFormatClass());
+        jobContextAsTarget.configureJob(job, options);
+        job.setOutputFormatClass(outputFormatClass);
 
         job.setMapperClass(HerculesMapper.class);
         job.setMapOutputKeyClass(NullWritable.class);
@@ -239,8 +252,8 @@ public class MRJob {
         job.getConfiguration().set(TMP_JARS_PROP, tmpJarsStr);
         LOG.debug(String.format("Property [%s]: %s", TMP_JARS_PROP, tmpJarsStr));
 
-        sourceAssemblySupplier.getJobContextAsSource().preRun(options);
-        targetAssemblySupplier.getJobContextAsTarget().preRun(options);
+        jobContextAsSource.preRun(options);
+        jobContextAsTarget.preRun(options);
 
         PerfCounters perfCounters = new PerfCounters();
         perfCounters.startClock();
@@ -269,7 +282,7 @@ public class MRJob {
             throw new MapReduceException("The map reduce job failed.");
         }
 
-        sourceAssemblySupplier.getJobContextAsSource().postRun(options);
-        targetAssemblySupplier.getJobContextAsTarget().postRun(options);
+        jobContextAsSource.postRun(options);
+        jobContextAsTarget.postRun(options);
     }
 }

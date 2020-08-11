@@ -42,10 +42,6 @@ public interface SchemaNegotiatorContext {
         public void afterAll(List<String> columnName, Map<String, DataType> columnType) {
         }
 
-        @Override
-        public void setSchemaFetcher(SchemaFetcher schemaFetcher) {
-        }
-
     };
 
     public void afterReadColumnNameList(List<String> columnName);
@@ -68,7 +64,5 @@ public interface SchemaNegotiatorContext {
     public void afterReadUniqueKeyGroupList(List<Set<String>> uniqueKeyGroupList);
 
     public void afterAll(List<String> columnName, Map<String, DataType> columnType);
-
-    public void setSchemaFetcher(SchemaFetcher schemaFetcher);
 
 }

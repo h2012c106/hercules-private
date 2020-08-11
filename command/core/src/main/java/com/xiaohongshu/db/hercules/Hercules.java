@@ -9,7 +9,7 @@ import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.parser.CmdParser;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
-import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
+import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
 import com.xiaohongshu.db.hercules.core.utils.ConfigUtils;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.ModuleConfig;
@@ -72,28 +72,24 @@ public class Hercules {
 
         WrappingOptions wrappingOptions = new WrappingOptions(commonOptions, sourceOptions, targetOptions);
 
-        HerculesContext.setWrappingOptions(wrappingOptions);
-        HerculesContext.setAssemblySupplierPair(sourceSupplier, targetSupplier);
+        HerculesContext context = HerculesContext.initialize(wrappingOptions, sourceSupplier, targetSupplier);
 
-        sourceSupplier.setOptions(sourceOptions);
-        targetSupplier.setOptions(targetOptions);
-
-        KvSerializerSupplier sourceKvSerializerSupplier;
-        if (sourceDataSource.hasKvSerializer()
-                && (sourceKvSerializerSupplier = HerculesContext.getKvSerializerSupplierPair().getSourceItem()) != null) {
+        KvSerDerSupplier sourceKvSerDerSupplier;
+        if (sourceDataSource.hasKvSerDer()
+                && (sourceKvSerDerSupplier = context.getKvSerDerSupplierPair().getSourceItem()) != null) {
             wrappingOptions.add(new CmdParser(
-                    sourceKvSerializerSupplier.getInputOptionsConf(),
+                    sourceKvSerDerSupplier.getInputOptionsConf(),
                     sourceDataSource,
-                    OptionsType.SOURCE_CONVERTER
+                    OptionsType.SOURCE_SERDER
             ).parse(args));
         }
-        KvSerializerSupplier targetKvSerializerSupplier;
-        if (targetDataSource.hasKvSerializer()
-                && (targetKvSerializerSupplier = HerculesContext.getKvSerializerSupplierPair().getTargetItem()) != null) {
+        KvSerDerSupplier targetKvSerDerSupplier;
+        if (targetDataSource.hasKvSerDer()
+                && (targetKvSerDerSupplier = context.getKvSerDerSupplierPair().getTargetItem()) != null) {
             wrappingOptions.add(new CmdParser(
-                    targetKvSerializerSupplier.getOutputOptionsConf(),
+                    targetKvSerDerSupplier.getOutputOptionsConf(),
                     targetDataSource,
-                    OptionsType.TARGET_CONVERTER
+                    OptionsType.TARGET_SERDER
             ).parse(args));
         }
 
@@ -113,10 +109,12 @@ public class Hercules {
             System.exit(0);
         }
 
-        SchemaNegotiator.negotiate();
+        SchemaNegotiator schemaNegotiator = new SchemaNegotiator();
+        context.inject(schemaNegotiator);
+        schemaNegotiator.negotiate();
 
-        MRJob job = new MRJob(sourceSupplier, targetSupplier, wrappingOptions);
-        job.setJar(sourceModuleConfig.getJar(), targetModuleConfig.getJar());
+        MRJob job = new MRJob(wrappingOptions,sourceModuleConfig.getJar(), targetModuleConfig.getJar());
+        context.inject(job);
 
         int ret;
         try {

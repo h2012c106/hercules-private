@@ -9,22 +9,6 @@ import java.util.Set;
 
 public class BaseSchemaNegotiatorContext implements SchemaNegotiatorContext {
 
-    private GenericOptions options;
-    private SchemaFetcher schemaFetcher;
-
-    public BaseSchemaNegotiatorContext(GenericOptions options) {
-        this.options = options;
-        this.schemaFetcher = null;
-    }
-
-    protected GenericOptions getOptions() {
-        return options;
-    }
-
-    protected SchemaFetcher getSchemaFetcher() {
-        return schemaFetcher;
-    }
-
     @Override
     public void afterReadColumnNameList(List<String> columnName) {
     }
@@ -55,11 +39,6 @@ public class BaseSchemaNegotiatorContext implements SchemaNegotiatorContext {
 
     @Override
     public void afterAll(List<String> columnName, Map<String, DataType> columnType) {
-    }
-
-    @Override
-    public void setSchemaFetcher(SchemaFetcher schemaFetcher) {
-        this.schemaFetcher = schemaFetcher;
     }
 
 }

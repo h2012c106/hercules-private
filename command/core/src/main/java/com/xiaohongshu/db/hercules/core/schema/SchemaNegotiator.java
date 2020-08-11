@@ -2,16 +2,20 @@ package com.xiaohongshu.db.hercules.core.schema;
 
 import com.google.common.collect.BiMap;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.Pair;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -27,9 +31,48 @@ import java.util.stream.Collectors;
  */
 public final class SchemaNegotiator {
 
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private DataSource sourceDataSource;
+
+    @GeneralAssembly(role = DataSourceRole.TARGET)
+    private DataSource targetDataSource;
+
+    @Options(type = OptionsType.COMMON)
+    private GenericOptions commonOptions;
+
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
+
+    @Options(type = OptionsType.TARGET)
+    private GenericOptions targetOptions;
+
+    @Options(type = OptionsType.SOURCE_SERDER)
+    private GenericOptions sourceSerDerOptions;
+
+    @Options(type = OptionsType.TARGET_SERDER)
+    private GenericOptions targetSerDerOptions;
+
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private SchemaFetcher sourceSchemaFetcher;
+
+    @GeneralAssembly(role = DataSourceRole.TARGET)
+    private SchemaFetcher targetSchemaFetcher;
+
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private CustomDataTypeManager<?,?> sourceDataTypeManager;
+
+    @GeneralAssembly(role = DataSourceRole.TARGET)
+    private CustomDataTypeManager<?,?> targetDataTypeManager;
+
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private SchemaNegotiatorContext sourceContext;
+
+    @GeneralAssembly(role = DataSourceRole.TARGET)
+    private SchemaNegotiatorContext targetContext;
+
     private static final Log LOG = LogFactory.getLog(SchemaNegotiator.class);
 
-    private static List<String> getColumnNameList(List<String> configuredColumnList, SchemaFetcher schemaFetcher) {
+    private List<String> getColumnNameList(List<String> configuredColumnList, SchemaFetcher schemaFetcher) {
         // 若用户有配置，则直接使用用户配置的
         if (configuredColumnList.size() != 0) {
             return configuredColumnList;
@@ -45,9 +88,9 @@ public final class SchemaNegotiator {
      *
      * @return 返回两侧的列交集，列名是经columnMap转换后的列名（也就是目标表为准的列名）
      */
-    private static Set<String> validateAndGetIntersection(List<String> sourceColumnNameList,
-                                                          List<String> targetColumnNameList,
-                                                          BiMap<String, String> biColumnMap) {
+    private Set<String> validateAndGetIntersection(List<String> sourceColumnNameList,
+                                                   List<String> targetColumnNameList,
+                                                   BiMap<String, String> biColumnMap) {
         // 按照规则映射后的源数据库列名
         List<String> convertedSourceColumnNameList = sourceColumnNameList.stream()
                 .map(columnName -> biColumnMap.getOrDefault(columnName, columnName))
@@ -64,7 +107,7 @@ public final class SchemaNegotiator {
             Set<String> tmpTmpSet = tmpSet.stream()
                     .map(columnName -> inversedColumnMap.getOrDefault(columnName, columnName))
                     .collect(Collectors.toSet());
-            if (!HerculesContext.getWrappingOptions().getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN, false)) {
+            if (!commonOptions.getBoolean(CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN, false)) {
                 throw new SchemaException(String.format("Source data source has more columns: %s, " +
                                 "if want to ignore, please use '--%s'",
                         tmpTmpSet, CommonOptionsConf.ALLOW_SOURCE_MORE_COLUMN
@@ -78,7 +121,7 @@ public final class SchemaNegotiator {
         tmpSet = new HashSet<>(targetColumnNameList);
         tmpSet.removeAll(convertedSourceColumnNameList);
         if (tmpSet.size() > 0) {
-            if (!HerculesContext.getWrappingOptions().getCommonOptions().getBoolean(CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN, false)) {
+            if (!commonOptions.getBoolean(CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN, false)) {
                 throw new SchemaException(String.format("Target data source has more columns: %s, " +
                         "if want to ignore, please use '--%s'", tmpSet, CommonOptionsConf.ALLOW_TARGET_MORE_COLUMN));
             } else {
@@ -98,8 +141,8 @@ public final class SchemaNegotiator {
         return tmpSet;
     }
 
-    private static Map<String, DataType> getColumnTypeMap(Map<String, DataType> configuredColumnTypeMap,
-                                                          SchemaFetcher schemaFetcher) {
+    private Map<String, DataType> getColumnTypeMap(Map<String, DataType> configuredColumnTypeMap,
+                                                   SchemaFetcher schemaFetcher) {
         Map<String, DataType> datasourceQueriedTypeMap = schemaFetcher.getColumnTypeMap();
         datasourceQueriedTypeMap = datasourceQueriedTypeMap == null
                 ? new HashMap<>(configuredColumnTypeMap.size())
@@ -110,7 +153,7 @@ public final class SchemaNegotiator {
         return datasourceQueriedTypeMap;
     }
 
-    private static List<String> copyNameList(List<String> copiedList, BiMap<String, String> columnMap, DataSourceRole role) {
+    private List<String> copyNameList(List<String> copiedList, BiMap<String, String> columnMap, DataSourceRole role) {
         if (role == DataSourceRole.SOURCE) {
             columnMap = columnMap.inverse();
         }
@@ -127,8 +170,8 @@ public final class SchemaNegotiator {
      * @param role      表示谁是抄袭者
      * @return
      */
-    private static Map<String, DataType> copyTypeMap(Map<String, DataType> source, Map<String, DataType> target,
-                                                     BiMap<String, String> columnMap, DataSourceRole role) {
+    private Map<String, DataType> copyTypeMap(Map<String, DataType> source, Map<String, DataType> target,
+                                              BiMap<String, String> columnMap, DataSourceRole role) {
         // 被抄袭的
         Map<String, DataType> tmpSource;
         // 抄袭的
@@ -138,11 +181,11 @@ public final class SchemaNegotiator {
             columnMap = columnMap.inverse();
             tmpSource = new HashMap<>(target);
             tmpTarget = new HashMap<>(source);
-            targetManager = HerculesContext.getAssemblySupplierPair().getSourceItem().getCustomDataTypeManager();
+            targetManager = sourceDataTypeManager;
         } else {
             tmpSource = new HashMap<>(source);
             tmpTarget = new HashMap<>(target);
-            targetManager = HerculesContext.getAssemblySupplierPair().getTargetItem().getCustomDataTypeManager();
+            targetManager = targetDataTypeManager;
         }
         final BiMap<String, String> finalColumnMap = columnMap;
         // 被抄袭的列名先转一下
@@ -168,19 +211,19 @@ public final class SchemaNegotiator {
         return tmpTarget;
     }
 
-    private static void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {
+    private void fillMapWithColumnList(List<String> columnNameList, Map<String, String> columnMap) {
         for (String columnName : columnNameList) {
             columnMap.putIfAbsent(columnName, columnName);
         }
     }
 
-    private static List<String> intersect(List<String> a, List<String> b) {
+    private List<String> intersect(List<String> a, List<String> b) {
         Set<String> c = new LinkedHashSet<>(a);
         c.retainAll(b);
         return new ArrayList<>(c);
     }
 
-    private static List<Set<String>> getIndex(List<Set<String>> configuredList, Function<Void, List<Set<String>>> fetchMethod) {
+    private List<Set<String>> getIndex(List<Set<String>> configuredList, Function<Void, List<Set<String>>> fetchMethod) {
         // 若用户有配置，则直接使用用户配置的
         if (configuredList.size() != 0) {
             return configuredList;
@@ -189,7 +232,7 @@ public final class SchemaNegotiator {
         return res == null ? new ArrayList<>(0) : res;
     }
 
-    private static List<Set<String>> copyIndex(List<Set<String>> list, BiMap<String, String> columnMap, DataSourceRole role) {
+    private List<Set<String>> copyIndex(List<Set<String>> list, BiMap<String, String> columnMap, DataSourceRole role) {
         if (role == DataSourceRole.SOURCE) {
             columnMap = columnMap.inverse();
         }
@@ -201,22 +244,12 @@ public final class SchemaNegotiator {
                 .collect(Collectors.toList());
     }
 
-    private static boolean hasSerializer(DataSourceRole role) {
-        return HerculesContext.getAssemblySupplierPair().getItem(role).getDataSource().hasKvSerializer()
-                && HerculesContext.getKvSerializerSupplierPair().getItem(role) != null;
+    private boolean hasSerDer(DataSource dataSource,DataSourceRole role) {
+        return dataSource.hasKvSerDer()
+                && HerculesContext.instance().hasSerDer(role);
     }
 
-    public static void negotiate() {
-        Pair<AssemblySupplier> assemblySupplierPair = HerculesContext.getAssemblySupplierPair();
-        SchemaFetcher sourceSchemaFetcher = assemblySupplierPair.getSourceItem().getSchemaFetcher();
-        SchemaFetcher targetSchemaFetcher = assemblySupplierPair.getTargetItem().getSchemaFetcher();
-        SchemaNegotiatorContext sourceContext = assemblySupplierPair.getSourceItem().getSchemaNegotiatorContextAsSource();
-        SchemaNegotiatorContext targetContext = assemblySupplierPair.getTargetItem().getSchemaNegotiatorContextAsTarget();
-
-        WrappingOptions options = HerculesContext.getWrappingOptions();
-        GenericOptions sourceOptions = options.getSourceOptions();
-        GenericOptions targetOptions = options.getTargetOptions();
-        GenericOptions commonOptions = options.getCommonOptions();
+    public void negotiate() {
 
         //+++++++++++++列名映射+++++++++++++//
 
@@ -225,8 +258,8 @@ public final class SchemaNegotiator {
 
         //-------------列名映射-------------//
 
-        Schema sourceSchema = Schema.fromOptions(sourceOptions, HerculesContext.getAssemblySupplierPair().getSourceItem().getCustomDataTypeManager());
-        Schema targetSchema = Schema.fromOptions(targetOptions, HerculesContext.getAssemblySupplierPair().getTargetItem().getCustomDataTypeManager());
+        Schema sourceSchema = Schema.fromOptions(sourceOptions, sourceDataTypeManager);
+        Schema targetSchema = Schema.fromOptions(targetOptions, targetDataTypeManager);
 
         //+++++++++++++列名+++++++++++++//
 
@@ -250,8 +283,8 @@ public final class SchemaNegotiator {
             sourceColumnNameList = new ArrayList<>(biColumnMap.keySet());
             targetColumnNameList = new ArrayList<>(biColumnMap.values());
         } else {
-            sourceColumnNameList = getColumnNameList(sourceColumnNameList, assemblySupplierPair.getSourceItem().getSchemaFetcher());
-            targetColumnNameList = getColumnNameList(targetColumnNameList, assemblySupplierPair.getTargetItem().getSchemaFetcher());
+            sourceColumnNameList = getColumnNameList(sourceColumnNameList, sourceSchemaFetcher);
+            targetColumnNameList = getColumnNameList(targetColumnNameList, targetSchemaFetcher);
         }
 
         sourceContext.afterReadColumnNameList(sourceColumnNameList);

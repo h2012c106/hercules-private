@@ -1,22 +1,21 @@
-package com.xiaohongshu.db.hercules.converter.tidb;
+package com.xiaohongshu.db.hercules.converter.mysql;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xiaohongshu.db.hercules.converter.mysql.CanalEntryKvSerializer;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.xlog.canal.CanalSerDe;
 import com.xiaohongshu.db.xlog.core.codec.Codec;
 import com.xiaohongshu.db.xlog.core.exception.SerDeException;
 
-public class TidbCanalEntryKvSerializer extends CanalEntryKvSerializer {
+public class MysqlCanalEntryKvSerDer extends CanalEntryKvSerDer {
 
-    public TidbCanalEntryKvSerializer(GenericOptions options) {
+    public MysqlCanalEntryKvSerDer(GenericOptions options) {
         super(options);
     }
 
     @Override
     public byte[] serializeCanalEntry(CanalEntry.Entry entry) {
         try {
-            return CanalSerDe.serialize(entry, Codec.CODEC_CANAL_BL02);
+            return CanalSerDe.serialize(entry, Codec.CODEC_CANAL_BL01);
         } catch (SerDeException e){
             return null;
         }

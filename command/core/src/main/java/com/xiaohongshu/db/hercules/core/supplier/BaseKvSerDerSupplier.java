@@ -1,16 +1,16 @@
 package com.xiaohongshu.db.hercules.core.supplier;
 
-import com.xiaohongshu.db.hercules.core.serializer.KvSerializer;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
+import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public abstract class BaseKvSerializerSupplier implements KvSerializerSupplier {
+public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
 
-    private static final Log LOG = LogFactory.getLog(BaseKvSerializerSupplier.class);
+    private static final Log LOG = LogFactory.getLog(BaseKvSerDerSupplier.class);
 
     protected GenericOptions options;
 
@@ -23,20 +23,20 @@ public abstract class BaseKvSerializerSupplier implements KvSerializerSupplier {
     protected void afterSetOptions() {
     }
 
-    private KvSerializer<?, ?> kvSerializer;
+    private KvSerDer<?, ?> kvSerDer = null;
 
-    abstract protected KvSerializer<?, ?> innerGetKvSerializer();
+    abstract protected KvSerDer<?, ?> innerGetKvSerDer();
 
     @Override
-    synchronized public final KvSerializer<?, ?> getKvSerializer() {
-        if (kvSerializer == null) {
-            LOG.info(String.format("Initializing KvSerializer of [%s]...", getClass().getSimpleName()));
-            kvSerializer = innerGetKvSerializer();
+    synchronized public final KvSerDer<?, ?> getKvSerDer() {
+        if (kvSerDer == null) {
+            LOG.info(String.format("Initializing KvSerDer of [%s]...", getClass().getSimpleName()));
+            kvSerDer = innerGetKvSerDer();
         }
-        return kvSerializer;
+        return kvSerDer;
     }
 
-    private OptionsConf inputOptionsConf;
+    private OptionsConf inputOptionsConf = null;
 
     abstract protected OptionsConf innerGetInputOptionsConf();
 
@@ -49,7 +49,7 @@ public abstract class BaseKvSerializerSupplier implements KvSerializerSupplier {
         return inputOptionsConf;
     }
 
-    private OptionsConf outputOptionsConf;
+    private OptionsConf outputOptionsConf = null;
 
     abstract protected OptionsConf innerGetOutputOptionsConf();
 
@@ -62,7 +62,7 @@ public abstract class BaseKvSerializerSupplier implements KvSerializerSupplier {
         return outputOptionsConf;
     }
 
-    private DataTypeConverter<?, ?> dataTypeConverter;
+    private DataTypeConverter<?, ?> dataTypeConverter = null;
 
     abstract protected DataTypeConverter<?, ?> innerGetDataTypeConverter();
 
@@ -75,7 +75,7 @@ public abstract class BaseKvSerializerSupplier implements KvSerializerSupplier {
         return dataTypeConverter;
     }
 
-    private CustomDataTypeManager<?, ?> customDataTypeManager;
+    private CustomDataTypeManager<?, ?> customDataTypeManager = null;
 
     abstract protected CustomDataTypeManager<?, ?> innerGetCustomDataTypeManager();
 

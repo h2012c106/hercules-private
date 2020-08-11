@@ -27,10 +27,10 @@ public abstract class HerculesOutputFormat<T> extends OutputFormat<NullWritable,
             throws IOException, InterruptedException {
         HerculesRecordWriter<T> res = innerGetRecordWriter(context);
         res.setWrapperSetterFactory(createWrapperSetterFactory());
-        if (HerculesContext.getAssemblySupplierPair().getTargetItem().getDataSource().hasKvSerializer()
+        if (HerculesContext.getAssemblySupplierPair().getTargetItem().getDataSource().hasKvSerDer()
                 && HerculesContext.getKvSerializerSupplierPair().getTargetItem() != null) {
-            return new HerculesSerializerRecordWriter(
-                    HerculesContext.getKvSerializerSupplierPair().getTargetItem().getKvSerializer(),
+            return new HerculesSerDerRecordWriter(
+                    HerculesContext.getKvSerializerSupplierPair().getTargetItem().getKvSerDer(),
                     res
             );
         } else {

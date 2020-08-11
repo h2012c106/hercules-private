@@ -1,12 +1,8 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.datatype.BaseCustomDataTypeManager;
-import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
-import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -23,13 +19,11 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> exten
     private static final Log LOG = LogFactory.getLog(BaseSchemaFetcher.class);
 
     private final GenericOptions options;
-    protected T converter;
-    protected CustomDataTypeManager<?, ?> customDataTypeManager;
+    private final DataSourceRole role;
 
-    public BaseSchemaFetcher(DataSourceRole role) {
-        this.options = HerculesContext.getWrappingOptions().getGenericOptions(role.getOptionsType());
-        this.converter = (T) HerculesContext.getAssemblySupplierPair().getItem(role).getDataTypeConverter();
-        this.customDataTypeManager = HerculesContext.getAssemblySupplierPair().getItem(role).getCustomDataTypeManager();
+    public BaseSchemaFetcher(GenericOptions options) {
+        this.options = options;
+        this.role = options.getOptionsType().getRole();
     }
 
     protected GenericOptions getOptions() {

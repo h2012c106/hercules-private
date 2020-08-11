@@ -1,13 +1,12 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
-import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import lombok.NonNull;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,26 +33,10 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
     protected WrapperGetterFactory<T> wrapperGetterFactory;
 
-    protected WrappingOptions options;
-
+    @SchemaInfo(role = DataSourceRole.SOURCE)
     private Schema schema;
 
-    protected CustomDataTypeManager<?, ?> manager;
-
     public HerculesRecordReader(TaskAttemptContext context) {
-        options = HerculesContext.getWrappingOptions();
-
-        schema = HerculesContext.getSchemaPair().getSourceItem();
-
-        manager = HerculesContext.getAssemblySupplierPair().getSourceItem().getCustomDataTypeManager();
-    }
-
-    public Schema getSchema() {
-        return schema;
-    }
-
-    public void setSchema(Schema schema) {
-        this.schema = schema;
     }
 
     public final void setWrapperGetterFactory(@NonNull WrapperGetterFactory<T> wrapperGetterFactory) {

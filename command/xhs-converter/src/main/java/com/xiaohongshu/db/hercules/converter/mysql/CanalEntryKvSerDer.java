@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.converter.mysql;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xiaohongshu.db.hercules.core.serializer.KvSerializer;
+import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
@@ -11,9 +11,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public abstract class CanalEntryKvSerializer extends KvSerializer<Integer, CanalEntry.Column, CanalEntry.Column.Builder> {
+public abstract class CanalEntryKvSerDer extends KvSerDer<Integer, CanalEntry.Column, CanalEntry.Column.Builder> {
 
-    public CanalEntryKvSerializer(GenericOptions options) {
+    public CanalEntryKvSerDer(GenericOptions options) {
         super(new CanalEntryDataTypeConverter(), new CanalMysqlWrapperGetterFactory(), new CanalMysqlWrapperSetterFactory(), options);
     }
 

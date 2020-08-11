@@ -6,8 +6,8 @@ public enum OptionsType {
     SOURCE("source", "source", DataSourceRole.SOURCE),
     TARGET("target", "target", DataSourceRole.TARGET),
     COMMON("", "common", null),
-    SOURCE_CONVERTER("converter-source", "sconverter", null),
-    TARGET_CONVERTER("converter-target", "tconverter", null);
+    SOURCE_SERDER("converter-source", "sconverter", null),
+    TARGET_SERDER("converter-target", "tconverter", null);
 
     /**
      * 用户参数前缀

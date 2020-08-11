@@ -1,15 +1,19 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.*;
 
@@ -21,26 +25,26 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
     public HerculesInputFormat() {
+        HerculesContext.instance().inject(this);
     }
 
-    protected GenericOptions options;
+    @Options(type = OptionsType.COMMON)
+    private GenericOptions commonOptions;
 
-    protected void initializeContext(GenericOptions sourceOptions) {
-        options = sourceOptions;
-    }
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
+
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private DataSource dataSource;
+
+    @SerDerAssembly(role = DataSourceRole.SOURCE)
+    private KvSerDer<?, ?> kvSerDer;
 
     abstract protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException;
 
     @Override
     public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
-
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-
-        initializeContext(options.getSourceOptions());
-
-        int numSplits = options.getCommonOptions().getInteger(CommonOptionsConf.NUM_MAPPER,
+        int numSplits = commonOptions.getInteger(CommonOptionsConf.NUM_MAPPER,
                 CommonOptionsConf.DEFAULT_NUM_MAPPER);
 
         List<InputSplit> res = innerGetSplits(context, numSplits);
@@ -53,14 +57,16 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
         }
 
         // 换算各个mapper实际的qps
-        if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
-            double maxWriteQps = options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
+        if (commonOptions.hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
+            double maxWriteQps = commonOptions.getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
             double maxWriteQpsPerMap = maxWriteQps / (double) actualNumSplits;
             LOG.info("Max write qps per map is: " + maxWriteQpsPerMap);
             // 在这里设置options吊用没有，这里的和别的地方的是深拷贝关系，要设置Configuration
             // options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
-            configuration.setDouble(GenericOptions.getConfigurationName(CommonOptionsConf.MAX_WRITE_QPS, OptionsType.COMMON),
-                    maxWriteQpsPerMap);
+            context.getConfiguration().setDouble(
+                    GenericOptions.getConfigurationName(CommonOptionsConf.MAX_WRITE_QPS, OptionsType.COMMON),
+                    maxWriteQpsPerMap
+            );
         }
 
         return res;
@@ -69,19 +75,19 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
     @Override
     public RecordReader<NullWritable, HerculesWritable> createRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
-        initializeContext(HerculesContext.getWrappingOptions().getSourceOptions());
+        HerculesRecordReader<T> delegate = innerCreateRecordReader(split, context);
+        WrapperGetterFactory<T> wrapperGetterFactory = createWrapperGetterFactory();
+        HerculesContext.instance().inject(wrapperGetterFactory);
+        delegate.setWrapperGetterFactory(wrapperGetterFactory);
 
-        HerculesRecordReader<T> res = innerCreateRecordReader(split, context);
-        res.setWrapperGetterFactory(createWrapperGetterFactory());
-        if (HerculesContext.getAssemblySupplierPair().getSourceItem().getDataSource().hasKvSerializer()
-                && HerculesContext.getKvSerializerSupplierPair().getSourceItem() != null) {
-            return new HerculesSerializerRecordReader(
-                    HerculesContext.getKvSerializerSupplierPair().getSourceItem().getKvSerializer(),
-                    res
-            );
+        RecordReader<NullWritable, HerculesWritable> res;
+        if (dataSource.hasKvSerDer() && kvSerDer != null) {
+            res = new HerculesSerDerRecordReader(kvSerDer, delegate);
         } else {
-            return res;
+            res = delegate;
         }
+        HerculesContext.instance().inject(res);
+        return res;
     }
 
     abstract protected HerculesRecordReader<T> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)

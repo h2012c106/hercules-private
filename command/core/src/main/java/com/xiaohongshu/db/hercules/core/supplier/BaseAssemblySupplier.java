@@ -30,7 +30,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     protected void afterSetOptions() {
     }
 
-    private DataSource dataSource;
+    private DataSource dataSource = null;
 
     abstract protected DataSource innerGetDataSource();
 
@@ -43,7 +43,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return dataSource;
     }
 
-    private OptionsConf inputOptionsConf;
+    private OptionsConf inputOptionsConf = null;
 
     abstract protected OptionsConf innerGetInputOptionsConf();
 
@@ -56,7 +56,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return inputOptionsConf;
     }
 
-    private OptionsConf outputOptionsConf;
+    private OptionsConf outputOptionsConf = null;
 
     abstract protected OptionsConf innerGetOutputOptionsConf();
 
@@ -69,7 +69,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return outputOptionsConf;
     }
 
-    private Class<? extends HerculesInputFormat<?>> inputFormatClass;
+    private Class<? extends HerculesInputFormat<?>> inputFormatClass = null;
 
     abstract protected Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass();
 
@@ -82,7 +82,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return inputFormatClass;
     }
 
-    private Class<? extends HerculesOutputFormat<?>> outputFormatClass;
+    private Class<? extends HerculesOutputFormat<?>> outputFormatClass = null;
 
     abstract protected Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass();
 
@@ -108,7 +108,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return schemaFetcher;
     }
 
-    private MRJobContext jobContextAsSource;
+    private MRJobContext jobContextAsSource = null;
 
     protected MRJobContext innerGetJobContextAsSource() {
         return NullMRJobContext.INSTANCE;
@@ -123,7 +123,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return jobContextAsSource;
     }
 
-    private MRJobContext jobContextAsTarget;
+    private MRJobContext jobContextAsTarget = null;
 
     protected MRJobContext innerGetJobContextAsTarget() {
         return NullMRJobContext.INSTANCE;
@@ -138,7 +138,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return jobContextAsTarget;
     }
 
-    private SchemaNegotiatorContext schemaNegotiatorContextAsSource;
+    private SchemaNegotiatorContext schemaNegotiatorContextAsSource = null;
 
     protected SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsSource() {
         return SchemaNegotiatorContext.NULL_INSTANCE;
@@ -153,7 +153,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return schemaNegotiatorContextAsSource;
     }
 
-    private SchemaNegotiatorContext schemaNegotiatorContextAsTarget;
+    private SchemaNegotiatorContext schemaNegotiatorContextAsTarget = null;
 
     protected SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsTarget() {
         return SchemaNegotiatorContext.NULL_INSTANCE;
@@ -168,7 +168,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return schemaNegotiatorContextAsTarget;
     }
 
-    private DataTypeConverter<?, ?> dataTypeConverter;
+    private DataTypeConverter<?, ?> dataTypeConverter = null;
 
     abstract protected DataTypeConverter<?, ?> innerGetDataTypeConverter();
 
@@ -181,7 +181,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
         return dataTypeConverter;
     }
 
-    private CustomDataTypeManager<?, ?> customDataTypeManager;
+    private CustomDataTypeManager<?, ?> customDataTypeManager = null;
 
     protected CustomDataTypeManager<?, ?> innerGetCustomDataTypeManager() {
         return NullCustomDataTypeManager.INSTANCE;

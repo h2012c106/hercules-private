@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.converter.mongo;
 
-import com.xiaohongshu.db.hercules.core.serializer.KvSerializer;
+import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
 import com.xiaohongshu.db.xlog.core.codec.Codec;
 import com.xiaohongshu.db.xlog.core.exception.SerDeException;
 import com.xiaohongshu.db.xlog.oplog.OperatorPB;
@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-public class MongoOplogKvSerializer extends KvSerializer<Integer, Integer, Document> {
+public class MongoOplogKvSerDer extends KvSerDer<Integer, Integer, Document> {
 
     private static final JsonWriterSettings jsonWriterSettings = JsonWriterSettings.builder()
             .outputMode(JsonMode.RELAXED)
@@ -32,7 +32,7 @@ public class MongoOplogKvSerializer extends KvSerializer<Integer, Integer, Docum
 //        })
             .build();
 
-    public MongoOplogKvSerializer(GenericOptions options) {
+    public MongoOplogKvSerDer(GenericOptions options) {
         super(null, new MongoOplogWrapperGetterFactory(), new MongoOplogWrapperSetterFactory(), options);
         MongoOplogWrapperSetterFactory mongoOplogWrapperSetterFactory = (MongoOplogWrapperSetterFactory) this.wrapperSetterFactory;
         Map<String, DataType> columnTypeMap = SchemaUtils.convertTypeFromOption(options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new com.alibaba.fastjson.JSONObject()), NullCustomDataTypeManager.INSTANCE);

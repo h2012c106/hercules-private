@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.core.serializer;
+package com.xiaohongshu.db.hercules.core.serder;
 
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
@@ -17,18 +17,16 @@ import org.apache.commons.logging.LogFactory;
  * @param <I>
  * @param <O>
  */
-public abstract class KvSerializer<I, O> {
+public abstract class KvSerDer<I, O> {
 
-    private static final Log LOG = LogFactory.getLog(KvSerializer.class);
+    private static final Log LOG = LogFactory.getLog(KvSerDer.class);
 
     protected WrapperGetterFactory<I> wrapperGetterFactory;
     protected WrapperSetterFactory<O> wrapperSetterFactory;
-    protected WrappingOptions options;
 
-    public KvSerializer(WrapperGetterFactory<I> wrapperGetterFactory, WrapperSetterFactory<O> wrapperSetterFactory) {
+    public KvSerDer(WrapperGetterFactory<I> wrapperGetterFactory, WrapperSetterFactory<O> wrapperSetterFactory) {
         this.wrapperGetterFactory = wrapperGetterFactory;
         this.wrapperSetterFactory = wrapperSetterFactory;
-        this.options = HerculesContext.getWrappingOptions();
     }
 
     abstract protected void readKey(BaseWrapper<?> inKey, HerculesWritable out);

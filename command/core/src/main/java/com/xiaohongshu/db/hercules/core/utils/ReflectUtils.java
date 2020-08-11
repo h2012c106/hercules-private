@@ -5,7 +5,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.function.Function;
 
 public final class ReflectUtils {
 
@@ -20,6 +24,10 @@ public final class ReflectUtils {
             }
         }
         throw new NoSuchMethodException();
+    }
+
+    public static List<Field> getFiledList(Class<?> clazz) {
+        return Arrays.asList(clazz.getDeclaredFields());
     }
 
     public static <T> T loadJarClass(String jarName, String className, Class<T> clazz) {
