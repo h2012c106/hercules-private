@@ -12,6 +12,7 @@ import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -21,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.xiaohongshu.db.hercules.core.option.KvOptionsConf.SUPPLIER;
 
@@ -45,29 +47,55 @@ public final class HerculesContext {
      */
     private final Set<Class<?>> injectingClass = new HashSet<>();
 
+    /**
+     * 避免还在初始化instance就有人要取之，用来加读写锁，其实不会出现写锁冲突，这点由INITIALIZED保证，主要用来解读写与读读的问题
+     */
+    private static final ReentrantReadWriteLock LOCK = new ReentrantReadWriteLock();
+
+    public static HerculesContext initialize(Configuration configuration) {
+        WrappingOptions options = new WrappingOptions();
+        options.fromConfiguration(configuration);
+        return initialize(options);
+    }
+
     public static HerculesContext initialize(WrappingOptions wrappingOptions) {
         if (INITIALIZED.getAndSet(true)) {
-            throw new RuntimeException("Not allow to initialize HerculesContext repeatedly.");
+            LOG.debug("Initialize HerculesContext repeatedly, ignore this init.");
         } else {
-            INSTANCE = new HerculesContext(wrappingOptions);
-            return INSTANCE;
+            LOCK.writeLock().lock();
+            try {
+                INSTANCE = new HerculesContext(wrappingOptions);
+            } finally {
+                LOCK.writeLock().unlock();
+            }
         }
+        return INSTANCE;
     }
 
     public static HerculesContext initialize(WrappingOptions wrappingOptions,
                                              AssemblySupplier sourceSupplier,
                                              AssemblySupplier targetSupplier) {
         if (INITIALIZED.getAndSet(true)) {
-            throw new RuntimeException("Not allow to initialize HerculesContext repeatedly.");
+            LOG.debug("Initialize HerculesContext repeatedly, ignore this init.");
         } else {
-            INSTANCE = new HerculesContext(wrappingOptions, sourceSupplier, targetSupplier);
-            return INSTANCE;
+            LOCK.writeLock().lock();
+            try {
+                INSTANCE = new HerculesContext(wrappingOptions, sourceSupplier, targetSupplier);
+            } finally {
+                LOCK.writeLock().unlock();
+            }
         }
+        return INSTANCE;
     }
 
     public static HerculesContext instance() {
-        if (INITIALIZED.getAndSet(true)) {
-            return INSTANCE;
+        if (INITIALIZED.get()) {
+            LOCK.readLock().lock();
+            try {
+                return INSTANCE;
+            } finally {
+                LOCK.readLock().unlock();
+            }
         } else {
             throw new RuntimeException("The HerculesContext is not initialized yet.");
         }
@@ -82,8 +110,12 @@ public final class HerculesContext {
         // setOptions
         assemblySupplierPair.getSourceItem().setOptions(wrappingOptions.getSourceOptions());
         assemblySupplierPair.getTargetItem().setOptions(wrappingOptions.getTargetOptions());
-        kvSerDerSupplierPair.getSourceItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SOURCE_SERDER));
-        kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.TARGET_SERDER));
+        if (hasSerDer(DataSourceRole.SOURCE)) {
+            kvSerDerSupplierPair.getSourceItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SOURCE_SERDER));
+        }
+        if (hasSerDer(DataSourceRole.TARGET)) {
+            kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.TARGET_SERDER));
+        }
     }
 
     private HerculesContext(WrappingOptions wrappingOptions, AssemblySupplier sourceSupplier, AssemblySupplier targetSupplier) {
@@ -99,8 +131,12 @@ public final class HerculesContext {
         // setOptions
         assemblySupplierPair.getSourceItem().setOptions(wrappingOptions.getSourceOptions());
         assemblySupplierPair.getTargetItem().setOptions(wrappingOptions.getTargetOptions());
-        kvSerDerSupplierPair.getSourceItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SOURCE_SERDER));
-        kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.TARGET_SERDER));
+        if (hasSerDer(DataSourceRole.SOURCE)) {
+            kvSerDerSupplierPair.getSourceItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SOURCE_SERDER));
+        }
+        if (hasSerDer(DataSourceRole.TARGET)) {
+            kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.TARGET_SERDER));
+        }
     }
 
     public boolean hasSerDer(DataSourceRole role) {
@@ -174,6 +210,11 @@ public final class HerculesContext {
 
         // 所有成员变量访问完，循环引用的警报解除
         injectingClass.remove(obj.getClass());
+
+        // 如果这个类继承了InjectedClass，则执行一下这个函数
+        if (ReflectUtils.doesImplementInterface(obj.getClass(), InjectedClass.class)) {
+            ((InjectedClass) obj).afterInject();
+        }
 
         return obj;
     }

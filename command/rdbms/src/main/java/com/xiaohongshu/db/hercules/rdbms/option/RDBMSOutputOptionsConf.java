@@ -148,7 +148,7 @@ public final class RDBMSOutputOptionsConf extends BaseOptionsConf {
                 options.getString(TABLE, null)),
                 "Disallowed to set the staging table name equaling the target name.");
         if (options.hasProperty(UPDATE_KEY)) {
-            ParseUtils.assertTrue(options.getStringArray(UPDATE_KEY, null).length > 0,
+            ParseUtils.assertTrue(options.getTrimmedStringArray(UPDATE_KEY, null).length > 0,
                     "It's meaningless to set a zero-length update key name list.");
             ParseUtils.assertTrue(ExportType.valueOfIgnoreCase(options.getString(EXPORT_TYPE, null)).isUpdate(),
                     "Update key can only used in update mode.");

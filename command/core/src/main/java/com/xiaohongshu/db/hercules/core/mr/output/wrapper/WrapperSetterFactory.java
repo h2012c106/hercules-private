@@ -4,11 +4,11 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -16,7 +16,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -32,19 +31,9 @@ public abstract class WrapperSetterFactory<T> {
 
     protected Map<String, DataType> columnTypeMap;
 
-    public WrapperSetterFactory() {
-        this(false);
-    }
-
-    public WrapperSetterFactory(boolean converterUsed) {
+    public WrapperSetterFactory(Schema schema) {
         initializeWrapperSetterMap();
-
-        // converter无schema不可误拿
-        if (!converterUsed) {
-            columnTypeMap = HerculesContext.getSchemaPair().getTargetItem().getColumnTypeMap();
-        } else {
-            columnTypeMap = Collections.emptyMap();
-        }
+        columnTypeMap = schema.getColumnTypeMap();
     }
 
     private void setWrapperSetter(Map<DataType, WrapperSetter<T>> wrapperSetterMap,

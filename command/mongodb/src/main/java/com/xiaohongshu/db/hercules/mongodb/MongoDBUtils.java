@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.mongodb.schema.manager;
+package com.xiaohongshu.db.hercules.mongodb;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
@@ -17,19 +17,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class MongoDBManager {
+public final class MongoDBUtils {
 
-    private static final Log LOG = LogFactory.getLog(MongoDBManager.class);
+    private static final Log LOG = LogFactory.getLog(MongoDBUtils.class);
 
     public static final String ID = "_id";
 
-    private GenericOptions options;
-
-    public MongoDBManager(GenericOptions options) {
-        this.options = options;
-    }
-
-    private ServerAddress getServerAddress(String address) {
+    private static ServerAddress getServerAddress(String address) {
         String regex = "(\\S+):([0-9]+)";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(address.trim());
@@ -40,22 +34,22 @@ public class MongoDBManager {
         }
     }
 
-    private List<ServerAddress> getServerAddressList() {
-        return Arrays.stream(options.getStringArray(MongoDBOptionsConf.CONNECTION, null))
-                .map(this::getServerAddress)
+    private static List<ServerAddress> getServerAddressList(GenericOptions options) {
+        return Arrays.stream(options.getTrimmedStringArray(MongoDBOptionsConf.CONNECTION, null))
+                .map(MongoDBUtils::getServerAddress)
                 .collect(Collectors.toList());
     }
 
-    public MongoClient getConnection() {
+    public static MongoClient getConnection(GenericOptions options) {
         String user = options.getString(MongoDBOptionsConf.USERNAME, null);
         String password = options.getString(MongoDBOptionsConf.PASSWORD, null);
         if (StringUtils.isEmpty(user) || StringUtils.isEmpty(password)) {
-            return new MongoClient(getServerAddressList());
+            return new MongoClient(getServerAddressList(options));
         } else {
             String authdb = options.getString(MongoDBOptionsConf.AUTHDB,
                     options.getString(MongoDBOptionsConf.DATABASE, null));
             MongoCredential credential = MongoCredential.createCredential(user, authdb, password.toCharArray());
-            return new MongoClient(getServerAddressList(), Collections.singletonList(credential));
+            return new MongoClient(getServerAddressList(options), Collections.singletonList(credential));
         }
     }
 }

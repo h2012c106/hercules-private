@@ -7,9 +7,8 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.*;
-import java.util.function.Function;
+import java.util.Arrays;
+import java.util.List;
 
 public final class ReflectUtils {
 
@@ -28,6 +27,15 @@ public final class ReflectUtils {
 
     public static List<Field> getFiledList(Class<?> clazz) {
         return Arrays.asList(clazz.getDeclaredFields());
+    }
+
+    public static boolean doesImplementInterface(Class<?> clazz, Class<?> interfaceClass) {
+        for (Class<?> tmpClazz = clazz; tmpClazz != null; tmpClazz = tmpClazz.getSuperclass()) {
+            if (Arrays.asList(tmpClazz.getInterfaces()).contains(interfaceClass)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static <T> T loadJarClass(String jarName, String className, Class<T> clazz) {

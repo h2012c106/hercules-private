@@ -95,7 +95,7 @@ public class RDBMSOutputMRJobContext implements MRJobContext, RDBMSManagerGenera
                         null));
                 StatementGetter statementGetter = StatementGetterFactory.get(exportType);
 
-                List<String> columnNameList = Arrays.asList(targetOptions.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+                List<String> columnNameList = Arrays.asList(targetOptions.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, null));
                 String migrateSql = statementGetter.getMigrateSql(targetTable, stagingTable, columnNameList);
                 String deleteSql = String.format("DELETE FROM `%s`", stagingTable);
 

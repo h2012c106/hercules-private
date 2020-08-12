@@ -5,7 +5,7 @@ import com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
-import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
+import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +36,8 @@ public final class MongoDBInputOptionsConf extends BaseOptionsConf {
                 .name(SPLIT_BY)
                 .needArg(true)
                 .description(String.format("The column that splitting map will depend on. " +
-                        "If not set, default to [%s].", MongoDBManager.ID))
-                .defaultStringValue(MongoDBManager.ID)
+                        "If not set, default to [%s].", MongoDBUtils.ID))
+                .defaultStringValue(MongoDBUtils.ID)
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(IGNORE_SPLIT_KEY_CHECK)

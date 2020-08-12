@@ -1,17 +1,21 @@
 package com.xiaohongshu.db.hercules.mongodb.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.Decimal128;
@@ -24,13 +28,13 @@ import java.util.Map;
 
 public class MongoDBWrapperGetterManager extends WrapperGetterFactory<Document> {
 
-    private final DataTypeConverter<Object, Document> converter;
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private DataTypeConverter<Object, Document> converter;
+
+    @SchemaInfo(role = DataSourceRole.SOURCE)
+    private Schema schema;
 
     private final Document fakeDocument = new Document(WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST, 0);
-
-    public MongoDBWrapperGetterManager(DataTypeConverter<Object, Document> converter) {
-        this.converter = converter;
-    }
 
     public MapWrapper documentToMapWrapper(Document document, String documentPosition)
             throws Exception {
@@ -40,9 +44,7 @@ public class MongoDBWrapperGetterManager extends WrapperGetterFactory<Document> 
             // 用于columnTypeMap
             String fullColumnName = WritableUtils.concatColumn(documentPosition, columnName);
             Object columnValue = entry.getValue();
-            DataType columnType = HerculesContext.getSchemaPair()
-                    .getSourceItem()
-                    .getColumnTypeMap()
+            DataType columnType = schema.getColumnTypeMap()
                     .getOrDefault(fullColumnName, converter.convertElementType(columnValue));
             res.put(columnName, getWrapperGetter(columnType).get(document, documentPosition, columnName, -1));
         }

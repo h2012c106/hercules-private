@@ -30,6 +30,10 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> exten
         return options;
     }
 
+    protected DataSourceRole getRole() {
+        return role;
+    }
+
     abstract protected List<String> innerGetColumnNameList();
 
     private List<String> columnNameList;

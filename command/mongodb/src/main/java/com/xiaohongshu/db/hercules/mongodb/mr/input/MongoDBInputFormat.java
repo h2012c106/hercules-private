@@ -6,22 +6,23 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
-import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
-import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManagerGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -33,7 +34,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MongoDBInputFormat extends HerculesInputFormat<Document> implements MongoDBManagerGenerator {
+public class MongoDBInputFormat extends HerculesInputFormat<Document> {
 
     private static final Log LOG = LogFactory.getLog(MongoDBInputFormat.class);
 
@@ -42,14 +43,11 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> implements
     private static final int MONGO_UNAUTHORIZED_ERR_CODE = 13;
     private static final int MONGO_ILLEGALOP_ERR_CODE = 20;
 
-    private MongoDBManager manager;
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
 
-    @Override
-    protected void initializeContext(GenericOptions sourceOptions) {
-        super.initializeContext(sourceOptions);
-        manager = generateManager(sourceOptions);
-    }
-
+    @SchemaInfo(role = DataSourceRole.SOURCE)
+    private Schema schema;
 
     /**
      * 逻辑抄的DataX mongo CollectionSplitUtil，但是这个策略会无视配置的Query，整表地split，看性能表现如何再考虑改
@@ -62,18 +60,13 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> implements
      */
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
-
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-
-        String splitBy = options.getSourceOptions().getString(MongoDBInputOptionsConf.SPLIT_BY, null);
-        String databaseStr = options.getSourceOptions().getString(MongoDBOptionsConf.DATABASE, null);
-        String collectionStr = options.getSourceOptions().getString(MongoDBOptionsConf.COLLECTION, null);
+        String splitBy = sourceOptions.getString(MongoDBInputOptionsConf.SPLIT_BY, null);
+        String databaseStr = sourceOptions.getString(MongoDBOptionsConf.DATABASE, null);
+        String collectionStr = sourceOptions.getString(MongoDBOptionsConf.COLLECTION, null);
 
         MongoClient client = null;
         try {
-            client = manager.getConnection();
+            client = MongoDBUtils.getConnection(sourceOptions);
             MongoDatabase database = client.getDatabase(databaseStr).withReadPreference(ReadPreference.secondaryPreferred());
             List<InputSplit> res = new ArrayList<>(numSplits);
             if (numSplits == 1) {
@@ -138,7 +131,7 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> implements
             } else {
                 LOG.info("Split by query.");
 
-                String query = options.getSourceOptions().getString(MongoDBInputOptionsConf.QUERY, null);
+                String query = sourceOptions.getString(MongoDBInputOptionsConf.QUERY, null);
                 Document findQuery = new Document();
                 if (!StringUtils.isEmpty(query)) {
                     findQuery = Document.parse(query);
@@ -146,15 +139,15 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> implements
 
                 Document projectionQuery = new Document();
                 // 先把_id置0，就算真的按照_id，也会在下一行置1
-                projectionQuery.put(MongoDBManager.ID, 0);
+                projectionQuery.put(MongoDBUtils.ID, 0);
                 projectionQuery.put(splitBy, 1);
 
                 // 优先读从库
                 MongoCollection<Document> col = database.withReadPreference(ReadPreference.secondaryPreferred()).getCollection(collectionStr);
 
                 // 检查key上是否有索引
-                boolean ignoreCheckKey = options.getSourceOptions().getBoolean(MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK, false);
-                if (!ignoreCheckKey && !HerculesContext.getSchemaPair().getSourceItem().getIndexGroupList().contains(Sets.newHashSet(splitBy))) {
+                boolean ignoreCheckKey = sourceOptions.getBoolean(MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK, false);
+                if (!ignoreCheckKey && !schema.getIndexGroupList().contains(Sets.newHashSet(splitBy))) {
                     throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK));
                 }
                 // 直接按ObjectId的时间戳切分，没辙了，如果_id不是ObjectId，那只能`--num-mapper 1`
@@ -220,8 +213,6 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> implements
                         .distinct()
                         .sorted()
                         .collect(Collectors.toList());
-
-
             }
 
             Object lastObjectId = null;
@@ -250,7 +241,7 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> implements
             LOG.info(String.format("Actually split to %d splits: %s", res.size(), res.toString()));
 
             // docCount的值是全表值，有query时不准确，不过也就是颗糖，没必要耗费太多性能在这上面
-            configuration.setLong(AVERAGE_MAP_ROW_NUM, docCount / res.size());
+            context.getConfiguration().setLong(AVERAGE_MAP_ROW_NUM, docCount / res.size());
 
             return res;
         } finally {
@@ -266,17 +257,12 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> implements
 
     @Override
     protected HerculesRecordReader<Document> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new MongoDBRecordReader(context, manager);
+        return new MongoDBRecordReader(context);
     }
 
     @Override
     protected WrapperGetterFactory<Document> createWrapperGetterFactory() {
-        return null;
-    }
-
-    @Override
-    public MongoDBManager generateManager(GenericOptions options) {
-        return new MongoDBManager(options);
+        return new MongoDBWrapperGetterManager();
     }
 
     private static final BigDecimal MIN_INCREMENT =

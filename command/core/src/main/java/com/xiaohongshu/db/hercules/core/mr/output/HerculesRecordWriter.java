@@ -1,15 +1,18 @@
 package com.xiaohongshu.db.hercules.core.mr.output;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
-import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import hercules.shaded.com.google.common.util.concurrent.RateLimiter;
 import lombok.NonNull;
 import org.apache.commons.logging.Log;
@@ -26,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @param <T> 数据源写出时用于表示一行的数据结构，详情可见{@link WrapperSetter}
  */
-public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable, HerculesWritable> {
+public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable, HerculesWritable> implements InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordWriter.class);
 
@@ -36,32 +39,25 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    protected WrappingOptions options;
-
+    @SchemaInfo(role = DataSourceRole.TARGET)
     private Schema schema;
+
+    @Options(type = OptionsType.COMMON)
+    private GenericOptions commonOptions;
 
     private RateLimiter rateLimiter = null;
     private double acquireTime = 0;
 
-    protected CustomDataTypeManager<?, ?> manager;
-
     public HerculesRecordWriter(TaskAttemptContext context) {
-        options = new WrappingOptions();
-        options.fromConfiguration(context.getConfiguration());
+    }
 
-        manager = HerculesContext.getAssemblySupplierPair().getTargetItem().getCustomDataTypeManager();
-
-        schema = HerculesContext.getSchemaPair().getTargetItem();
-
-        if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
-            double qps = options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
+    @Override
+    public void afterInject() {
+        if (commonOptions.hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
+            double qps = commonOptions.getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
             LOG.info("The map max qps is limited to: " + qps);
             rateLimiter = RateLimiter.create(qps);
         }
-    }
-
-    public Schema getSchema() {
-        return schema;
     }
 
     /**

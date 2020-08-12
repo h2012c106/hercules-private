@@ -1,13 +1,12 @@
 package com.xiaohongshu.db.hercules.mongodb.schema;
 
-import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
-import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
+import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
 import org.apache.commons.compress.utils.Sets;
 import org.bson.Document;
-
 import java.util.*;
 
 import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf.COLLECTION;
@@ -15,11 +14,8 @@ import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf.DATA
 
 public class MongoDBSchemaFetcher extends BaseSchemaFetcher<MongoDBDataTypeConverter> {
 
-    private MongoDBManager manager;
-
-    public MongoDBSchemaFetcher(DataSourceRole role) {
-        super(role);
-        manager = new MongoDBManager(getOptions());
+    public MongoDBSchemaFetcher(GenericOptions options) {
+        super(options);
     }
 
     @Override
@@ -35,7 +31,8 @@ public class MongoDBSchemaFetcher extends BaseSchemaFetcher<MongoDBDataTypeConve
     @Override
     protected List<Set<String>> innerGetIndexGroupList() {
         List<Set<String>> res = new LinkedList<>();
-        for (Document indexInfo : manager.getConnection()
+        res.add(Sets.newHashSet(MongoDBUtils.ID));
+        for (Document indexInfo : MongoDBUtils.getConnection(getOptions())
                 .getDatabase(getOptions().getString(DATABASE, null))
                 .getCollection(getOptions().getString(COLLECTION, null))
                 .listIndexes()) {
@@ -52,8 +49,8 @@ public class MongoDBSchemaFetcher extends BaseSchemaFetcher<MongoDBDataTypeConve
     @Override
     protected List<Set<String>> innerGetUniqueKeyGroupList() {
         List<Set<String>> res = new LinkedList<>();
-        res.add(Sets.newHashSet(MongoDBManager.ID));
-        for (Document indexInfo : manager.getConnection()
+        res.add(Sets.newHashSet(MongoDBUtils.ID));
+        for (Document indexInfo : MongoDBUtils.getConnection(getOptions())
                 .getDatabase(getOptions().getString(DATABASE, null))
                 .getCollection(getOptions().getString(COLLECTION, null))
                 .listIndexes()) {

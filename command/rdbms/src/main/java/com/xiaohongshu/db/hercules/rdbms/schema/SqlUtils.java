@@ -179,7 +179,7 @@ public final class SqlUtils {
                 }
             } else {
                 columnNameList
-                        = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+                        = Arrays.asList(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, null));
             }
             String where = options.hasProperty(RDBMSInputOptionsConf.CONDITION)
                     ? " WHERE " + options.getString(RDBMSInputOptionsConf.CONDITION, null)

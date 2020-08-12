@@ -5,14 +5,18 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
-import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBDataTypeConverter;
-import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -36,21 +40,24 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
      */
     private Long mapAverageRowNum;
 
-    private MongoDBManager manager;
-
     private MongoCursor<Document> cursor = null;
     private MongoClient client = null;
     private HerculesWritable value;
 
-    public MongoDBRecordReader(TaskAttemptContext context, MongoDBManager manager) {
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
+
+    @SchemaInfo(role = DataSourceRole.SOURCE)
+    private Schema schema;
+
+    public MongoDBRecordReader(TaskAttemptContext context) {
         super(context);
-        this.manager = manager;
     }
 
     private Document makeColumnProjection(List<String> columnNameList) {
         Document res = new Document();
         // 不需要判断，无脑置0，反正如果包含的话也会置回1
-        res.put(MongoDBManager.ID, 0);
+        res.put(MongoDBUtils.ID, 0);
         for (String columnName : columnNameList) {
             res.put(columnName, 1);
         }
@@ -63,17 +70,14 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
 
         mapAverageRowNum = configuration.getLong(MongoDBInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-
-        String databaseStr = options.getSourceOptions().getString(MongoDBOptionsConf.DATABASE, null);
-        String collectionStr = options.getSourceOptions().getString(MongoDBOptionsConf.COLLECTION, null);
-        String query = options.getSourceOptions().getString(MongoDBInputOptionsConf.QUERY, null);
+        String databaseStr = sourceOptions.getString(MongoDBOptionsConf.DATABASE, null);
+        String collectionStr = sourceOptions.getString(MongoDBOptionsConf.COLLECTION, null);
+        String query = sourceOptions.getString(MongoDBInputOptionsConf.QUERY, null);
 
         MongoDBInputSplit mongoDBInputSplit = (MongoDBInputSplit) split;
         Document splitQuery = mongoDBInputSplit.getSplitQuery();
         try {
-            client = manager.getConnection();
+            client = MongoDBUtils.getConnection(sourceOptions);
             MongoCollection<Document> collection = client.getDatabase(databaseStr).withReadPreference(ReadPreference.secondaryPreferred()).getCollection(collectionStr);
 
             Document filter = splitQuery;
@@ -83,8 +87,8 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
             }
 
             FindIterable<Document> iterable = collection.find(filter);
-            if (!getSchema().getColumnNameList().isEmpty()) {
-                Document columnProjection = makeColumnProjection(getSchema().getColumnNameList());
+            if (!schema.getColumnNameList().isEmpty()) {
+                Document columnProjection = makeColumnProjection(schema.getColumnNameList());
                 iterable.projection(columnProjection);
             }
             cursor = iterable.iterator();

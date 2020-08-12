@@ -12,6 +12,7 @@ import com.xiaohongshu.db.hercules.core.option.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -37,7 +38,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final DataSource getDataSource() {
         if (dataSource == null) {
-            LOG.info(String.format("Initializing DataSource of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing DataSource of [%s]...", getClass().getSimpleName()));
             dataSource = innerGetDataSource();
         }
         return dataSource;
@@ -50,7 +51,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final OptionsConf getInputOptionsConf() {
         if (inputOptionsConf == null) {
-            LOG.info(String.format("Initializing InputOptionsConf of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing InputOptionsConf of [%s]...", getClass().getSimpleName()));
             inputOptionsConf = innerGetInputOptionsConf();
         }
         return inputOptionsConf;
@@ -63,7 +64,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final OptionsConf getOutputOptionsConf() {
         if (outputOptionsConf == null) {
-            LOG.info(String.format("Initializing OutputOptionsConf of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing OutputOptionsConf of [%s]...", getClass().getSimpleName()));
             outputOptionsConf = innerGetOutputOptionsConf();
         }
         return outputOptionsConf;
@@ -76,7 +77,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final Class<? extends HerculesInputFormat<?>> getInputFormatClass() {
         if (inputFormatClass == null) {
-            LOG.info(String.format("Initializing InputFormatClass of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing InputFormatClass of [%s]...", getClass().getSimpleName()));
             inputFormatClass = innerGetInputFormatClass();
         }
         return inputFormatClass;
@@ -89,7 +90,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final Class<? extends HerculesOutputFormat<?>> getOutputFormatClass() {
         if (outputFormatClass == null) {
-            LOG.info(String.format("Initializing OutputFormatClass of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing OutputFormatClass of [%s]...", getClass().getSimpleName()));
             outputFormatClass = innerGetOutputFormatClass();
         }
         return outputFormatClass;
@@ -102,8 +103,9 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final SchemaFetcher getSchemaFetcher() {
         if (schemaFetcher == null) {
-            LOG.info(String.format("Initializing SchemaFetcher of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing SchemaFetcher of [%s]...", getClass().getSimpleName()));
             schemaFetcher = innerGetSchemaFetcher();
+            HerculesContext.instance().inject(schemaFetcher);
         }
         return schemaFetcher;
     }
@@ -117,8 +119,9 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final MRJobContext getJobContextAsSource() {
         if (jobContextAsSource == null) {
-            LOG.info(String.format("Initializing JobContextAsSource of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing JobContextAsSource of [%s]...", getClass().getSimpleName()));
             jobContextAsSource = innerGetJobContextAsSource();
+            HerculesContext.instance().inject(jobContextAsSource);
         }
         return jobContextAsSource;
     }
@@ -132,8 +135,9 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final MRJobContext getJobContextAsTarget() {
         if (jobContextAsTarget == null) {
-            LOG.info(String.format("Initializing JobContextAsTarget of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing JobContextAsTarget of [%s]...", getClass().getSimpleName()));
             jobContextAsTarget = innerGetJobContextAsTarget();
+            HerculesContext.instance().inject(jobContextAsTarget);
         }
         return jobContextAsTarget;
     }
@@ -147,8 +151,9 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final SchemaNegotiatorContext getSchemaNegotiatorContextAsSource() {
         if (schemaNegotiatorContextAsSource == null) {
-            LOG.info(String.format("Initializing SchemaNegotiatorContextAsSource of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing SchemaNegotiatorContextAsSource of [%s]...", getClass().getSimpleName()));
             schemaNegotiatorContextAsSource = innerGetSchemaNegotiatorContextAsSource();
+            HerculesContext.instance().inject(schemaNegotiatorContextAsSource);
         }
         return schemaNegotiatorContextAsSource;
     }
@@ -162,8 +167,9 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final SchemaNegotiatorContext getSchemaNegotiatorContextAsTarget() {
         if (schemaNegotiatorContextAsTarget == null) {
-            LOG.info(String.format("Initializing SchemaNegotiatorContextAsTarget of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing SchemaNegotiatorContextAsTarget of [%s]...", getClass().getSimpleName()));
             schemaNegotiatorContextAsTarget = innerGetSchemaNegotiatorContextAsTarget();
+            HerculesContext.instance().inject(schemaNegotiatorContextAsTarget);
         }
         return schemaNegotiatorContextAsTarget;
     }
@@ -175,8 +181,9 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final DataTypeConverter<?, ?> getDataTypeConverter() {
         if (dataTypeConverter == null) {
-            LOG.info(String.format("Initializing DataTypeConverter of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing DataTypeConverter of [%s]...", getClass().getSimpleName()));
             dataTypeConverter = innerGetDataTypeConverter();
+            HerculesContext.instance().inject(dataTypeConverter);
         }
         return dataTypeConverter;
     }
@@ -190,7 +197,7 @@ public abstract class BaseAssemblySupplier implements AssemblySupplier {
     @Override
     synchronized public final CustomDataTypeManager<?, ?> getCustomDataTypeManager() {
         if (customDataTypeManager == null) {
-            LOG.info(String.format("Initializing CustomDataTypeManager of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing CustomDataTypeManager of [%s]...", getClass().getSimpleName()));
             customDataTypeManager = innerGetCustomDataTypeManager();
         }
         return customDataTypeManager;

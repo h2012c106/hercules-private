@@ -4,12 +4,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -38,6 +39,15 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
     private long readRecordNum = 0L;
 
+    @Options(type = OptionsType.COMMON)
+    private GenericOptions commonOptions;
+
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
+
+    @Options(type = OptionsType.TARGET)
+    private GenericOptions targetOptions;
+
     public HerculesMapper() {
     }
 
@@ -55,14 +65,11 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     protected void setup(Context context) throws IOException, InterruptedException {
         super.setup(context);
 
+        // 初始化context，因为hadoop的这三兄弟的构造都不归我管，且仅在进入这几个函数时我能获得configuration用以初始化context，
+        // 但是这几个函数初次调用顺序并不一定，所以都做一次，context内部仅会做一次初始化
+        HerculesContext.initialize(context.getConfiguration()).inject(this);
+
         LogUtils.configureLog4J();
-
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(context.getConfiguration());
-
-        HerculesContext.setWrappingOptions(options);
-
-        GenericOptions commonOptions = options.getCommonOptions();
 
         // 处理log-level
         Logger.getRootLogger().setLevel(
@@ -74,17 +81,17 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         );
 
         // 注册时间格式
-        DateUtils.setFormats(options.getSourceOptions(), options.getTargetOptions());
+        DateUtils.setFormats(sourceOptions, targetOptions);
 
         // 注册columnMap
-        columnMap = options.getCommonOptions()
+        columnMap = commonOptions
                 .getJson(CommonOptionsConf.COLUMN_MAP, new JSONObject())
                 .getInnerMap()
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey,
                         entry -> (String) entry.getValue()));
-        blackColumnList = Arrays.asList(options.getSourceOptions().getStringArray(BLACK_COLUMN, null));
+        blackColumnList = Arrays.asList(sourceOptions.getTrimmedStringArray(BLACK_COLUMN, null));
     }
 
     @Override

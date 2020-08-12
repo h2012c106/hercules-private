@@ -119,7 +119,7 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
                 "datetime");
 
         if (options.hasProperty(BaseDataSourceOptionsConf.COLUMN)) {
-            ParseUtils.assertTrue(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null).length > 0,
+            ParseUtils.assertTrue(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, null).length > 0,
                     "It's meaningless to set a zero-length column name list.");
         }
     }

@@ -6,12 +6,16 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.*;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.MultiThreadAsyncWriter;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.mongodb.ExportType;
+import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOutputOptionsConf;
-import com.xiaohongshu.db.hercules.mongodb.schema.manager.MongoDBManager;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,55 +29,67 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class MongoDBRecordWriter extends HerculesRecordWriter<Document> {
+public class MongoDBRecordWriter extends HerculesRecordWriter<Document> implements InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(MongoDBRecordWriter.class);
 
     private MongoClient client;
     private List<HerculesWritable> recordList;
 
-    private final String dbName;
-    private final String collectionName;
+    private String dbName;
+    private String collectionName;
 
-    private final ExportType exportType;
-    private final boolean upsert;
-    private final Long statementPerBulk;
-    private final List<String> updateKeyList;
-    private final boolean bulkOrdered;
+    private ExportType exportType;
+    private boolean upsert;
+    private Long statementPerBulk;
+    private List<String> updateKeyList;
+    private boolean bulkOrdered;
 
-    private final MongoDBMultiThreadAsyncWriter writer;
+    private MongoDBMultiThreadAsyncWriter writer;
 
-    public MongoDBRecordWriter(TaskAttemptContext context, MongoDBManager manager) throws Exception {
+    @Options(type = OptionsType.TARGET)
+    private GenericOptions targetOptions;
+
+    public MongoDBRecordWriter(TaskAttemptContext context) throws Exception {
         super(context);
+    }
 
-        client = manager.getConnection();
+    @Override
+    public void afterInject() {
+        super.afterInject();
 
-        dbName = options.getTargetOptions().getString(MongoDBOptionsConf.DATABASE, null);
-        collectionName = options.getTargetOptions().getString(MongoDBOptionsConf.COLLECTION, null);
+        client = MongoDBUtils.getConnection(targetOptions);
 
-        exportType = ExportType.valueOfIgnoreCase(options.getTargetOptions().getString(MongoDBOutputOptionsConf.EXPORT_TYPE, null));
-        upsert = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.UPSERT, false);
-        statementPerBulk = options.getTargetOptions().getLong(MongoDBOutputOptionsConf.STATEMENT_PER_BULK, null);
+        dbName = targetOptions.getString(MongoDBOptionsConf.DATABASE, null);
+        collectionName = targetOptions.getString(MongoDBOptionsConf.COLLECTION, null);
+
+        exportType = ExportType.valueOfIgnoreCase(targetOptions.getString(MongoDBOutputOptionsConf.EXPORT_TYPE, null));
+        upsert = targetOptions.getBoolean(MongoDBOutputOptionsConf.UPSERT, false);
+        statementPerBulk = targetOptions.getLong(MongoDBOutputOptionsConf.STATEMENT_PER_BULK, null);
         if (!exportType.isInsert()) {
-            updateKeyList = Arrays.asList(options.getTargetOptions().getStringArray(MongoDBOutputOptionsConf.UPDATE_KEY, null));
+            updateKeyList = Arrays.asList(targetOptions.getTrimmedStringArray(MongoDBOutputOptionsConf.UPDATE_KEY, null));
             if (updateKeyList.size() == 0) {
                 throw new RuntimeException(String.format("Zero-length update key list when using %s mode.", exportType.name()));
             }
         } else {
             updateKeyList = null;
         }
-        bulkOrdered = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.BULK_ORDERED, false);
+        bulkOrdered = targetOptions.getBoolean(MongoDBOutputOptionsConf.BULK_ORDERED, false);
 
         recordList = new ArrayList<>(statementPerBulk.intValue());
 
-        int threadNum = options.getTargetOptions().getInteger(MongoDBOutputOptionsConf.EXECUTE_THREAD_NUM, null);
+        int threadNum = targetOptions.getInteger(MongoDBOutputOptionsConf.EXECUTE_THREAD_NUM, null);
         writer = new MongoDBMultiThreadAsyncWriter(threadNum);
-        writer.run();
+        try {
+            writer.run();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     protected void afterSetWrapperSetterFactory() {
-        boolean decimalAsString = options.getTargetOptions().getBoolean(MongoDBOutputOptionsConf.DECIMAL_AS_STRING, false);
+        boolean decimalAsString = targetOptions.getBoolean(MongoDBOutputOptionsConf.DECIMAL_AS_STRING, false);
         String mongoServerVersionStr = client.getDatabase(dbName)
                 .runCommand(new Document("buildinfo", ""))
                 .get("version")

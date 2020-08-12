@@ -21,53 +21,53 @@ import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBSchemaFetcher;
 public class MongoDBAssemblySupplier extends BaseAssemblySupplier {
 
     @Override
-    public DataSource innerGetDataSource() {
+    protected DataSource innerGetDataSource() {
         return new MongoDBDataSource();
     }
 
     @Override
-    public OptionsConf innerGetInputOptionsConf() {
+    protected OptionsConf innerGetInputOptionsConf() {
         return new MongoDBInputOptionsConf();
     }
 
     @Override
-    public OptionsConf innerGetOutputOptionsConf() {
+    protected OptionsConf innerGetOutputOptionsConf() {
         return new MongoDBOutputOptionsConf();
     }
 
     @Override
-    public Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
+    protected Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
         return MongoDBInputFormat.class;
     }
 
     @Override
-    public Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass() {
+    protected Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass() {
         return MongoDBOutputFormat.class;
     }
 
     @Override
     protected BaseSchemaFetcher<?> innerGetSchemaFetcher() {
-        return new MongoDBSchemaFetcher(options.getOptionsType().getRole());
+        return new MongoDBSchemaFetcher(options);
     }
 
     @Override
-    public MRJobContext innerGetJobContextAsSource() {
+    protected MRJobContext innerGetJobContextAsSource() {
         return NullMRJobContext.INSTANCE;
     }
 
     @Override
-    public MRJobContext innerGetJobContextAsTarget() {
+    protected MRJobContext innerGetJobContextAsTarget() {
         return NullMRJobContext.INSTANCE;
     }
 
     @Override
-    public DataTypeConverter<?, ?> innerGetDataTypeConverter() {
+    protected DataTypeConverter<?, ?> innerGetDataTypeConverter() {
         return new MongoDBDataTypeConverter();
     }
 
     @Override
-    public CustomDataTypeManager<?, ?> innerGetCustomDataTypeManager() {
-        return new MongoDBCustomDataTypeManager();
+    protected CustomDataTypeManager<?, ?> innerGetCustomDataTypeManager() {
+        return MongoDBCustomDataTypeManager.INSTANCE;
     }
 
 }

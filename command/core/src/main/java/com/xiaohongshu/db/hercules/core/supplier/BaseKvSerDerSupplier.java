@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
+import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -30,8 +31,9 @@ public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
     @Override
     synchronized public final KvSerDer<?, ?> getKvSerDer() {
         if (kvSerDer == null) {
-            LOG.info(String.format("Initializing KvSerDer of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing KvSerDer of [%s]...", getClass().getSimpleName()));
             kvSerDer = innerGetKvSerDer();
+            HerculesContext.instance().inject(kvSerDer);
         }
         return kvSerDer;
     }
@@ -43,7 +45,7 @@ public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
     @Override
     synchronized public final OptionsConf getInputOptionsConf() {
         if (inputOptionsConf == null) {
-            LOG.info(String.format("Initializing InputOptionsConf of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing InputOptionsConf of [%s]...", getClass().getSimpleName()));
             inputOptionsConf = innerGetInputOptionsConf();
         }
         return inputOptionsConf;
@@ -56,7 +58,7 @@ public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
     @Override
     synchronized public final OptionsConf getOutputOptionsConf() {
         if (outputOptionsConf == null) {
-            LOG.info(String.format("Initializing OutputOptionsConf of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing OutputOptionsConf of [%s]...", getClass().getSimpleName()));
             outputOptionsConf = innerGetOutputOptionsConf();
         }
         return outputOptionsConf;
@@ -69,8 +71,9 @@ public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
     @Override
     synchronized public final DataTypeConverter<?, ?> getDataTypeConverter() {
         if (dataTypeConverter == null) {
-            LOG.info(String.format("Initializing DataTypeConverter of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing DataTypeConverter of [%s]...", getClass().getSimpleName()));
             dataTypeConverter = innerGetDataTypeConverter();
+            HerculesContext.instance().inject(dataTypeConverter);
         }
         return dataTypeConverter;
     }
@@ -82,7 +85,7 @@ public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
     @Override
     synchronized public final CustomDataTypeManager<?, ?> getCustomDataTypeManager() {
         if (customDataTypeManager == null) {
-            LOG.info(String.format("Initializing CustomDataTypeManager of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing CustomDataTypeManager of [%s]...", getClass().getSimpleName()));
             customDataTypeManager = innerGetCustomDataTypeManager();
         }
         return customDataTypeManager;

@@ -8,7 +8,6 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,10 +70,10 @@ public class Schema {
 
     public static Schema fromOptions(GenericOptions options, CustomDataTypeManager<?, ?> customDataTypeManager) {
         Schema res = new Schema();
-        res.setColumnNameList(SchemaUtils.convertNameFromOption(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0])));
+        res.setColumnNameList(SchemaUtils.convertNameFromOption(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0])));
         res.setColumnTypeMap(SchemaUtils.convertTypeFromOption(options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()), customDataTypeManager));
-        res.setIndexGroupList(SchemaUtils.convertIndexFromOption(options.getStringArray(BaseDataSourceOptionsConf.INDEX, new String[0])));
-        res.setUniqueKeyGroupList(SchemaUtils.convertIndexFromOption(options.getStringArray(BaseDataSourceOptionsConf.UNIQUE_KEY, new String[0])));
+        res.setIndexGroupList(SchemaUtils.convertIndexFromOption(options.getTrimmedStringArray(BaseDataSourceOptionsConf.INDEX, new String[0])));
+        res.setUniqueKeyGroupList(SchemaUtils.convertIndexFromOption(options.getTrimmedStringArray(BaseDataSourceOptionsConf.UNIQUE_KEY, new String[0])));
         return res;
     }
 

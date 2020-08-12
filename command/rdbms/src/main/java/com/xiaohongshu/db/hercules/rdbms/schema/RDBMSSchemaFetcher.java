@@ -141,7 +141,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter
             }
         }
         if (getOptions().hasProperty(RDBMSOutputOptionsConf.UPDATE_KEY)) {
-            res.addAll(Arrays.asList(getOptions().getStringArray(RDBMSOutputOptionsConf.UPDATE_KEY, null)));
+            res.addAll(Arrays.asList(getOptions().getTrimmedStringArray(RDBMSOutputOptionsConf.UPDATE_KEY, null)));
         }
         return res;
     }

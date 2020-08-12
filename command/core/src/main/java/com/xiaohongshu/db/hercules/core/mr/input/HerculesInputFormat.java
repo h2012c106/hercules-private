@@ -25,7 +25,6 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
     public HerculesInputFormat() {
-        HerculesContext.instance().inject(this);
     }
 
     @Options(type = OptionsType.COMMON)
@@ -43,7 +42,11 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
     abstract protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException;
 
     @Override
-    public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
+    public final List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
+        // 初始化context，因为hadoop的这三兄弟的构造都不归我管，且仅在进入这几个函数时我能获得configuration用以初始化context，
+        // 但是这几个函数初次调用顺序并不一定，所以都做一次，context内部仅会做一次初始化
+        HerculesContext.initialize(context.getConfiguration()).inject(this);
+
         int numSplits = commonOptions.getInteger(CommonOptionsConf.NUM_MAPPER,
                 CommonOptionsConf.DEFAULT_NUM_MAPPER);
 
@@ -73,20 +76,28 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
     }
 
     @Override
-    public RecordReader<NullWritable, HerculesWritable> createRecordReader(InputSplit split, TaskAttemptContext context)
+    public final RecordReader<NullWritable, HerculesWritable> createRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
+        // 初始化context，因为hadoop的这三兄弟的构造都不归我管，且仅在进入这几个函数时我能获得configuration用以初始化context，
+        // 但是这几个函数初次调用顺序并不一定，所以都做一次，context内部仅会做一次初始化
+        HerculesContext.initialize(context.getConfiguration()).inject(this);
+
         HerculesRecordReader<T> delegate = innerCreateRecordReader(split, context);
-        WrapperGetterFactory<T> wrapperGetterFactory = createWrapperGetterFactory();
-        HerculesContext.instance().inject(wrapperGetterFactory);
-        delegate.setWrapperGetterFactory(wrapperGetterFactory);
 
         RecordReader<NullWritable, HerculesWritable> res;
         if (dataSource.hasKvSerDer() && kvSerDer != null) {
+            HerculesContext.instance().inject(delegate);
             res = new HerculesSerDerRecordReader(kvSerDer, delegate);
         } else {
             res = delegate;
         }
         HerculesContext.instance().inject(res);
+
+        WrapperGetterFactory<T> wrapperGetterFactory = createWrapperGetterFactory();
+        HerculesContext.instance().inject(wrapperGetterFactory);
+        delegate.setWrapperGetterFactory(wrapperGetterFactory);
+        delegate.afterSetWrapperGetterFactory();
+
         return res;
     }
 

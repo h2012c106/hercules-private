@@ -37,7 +37,7 @@ public enum HerculesContextElement {
                 return method.invoke(assemblySupplier);
             }
 
-            List<Method> supplierPublicMethodList = getGetMethodList(assemblySupplier.getClass(), BaseAssemblySupplier.class);
+            List<Method> supplierPublicMethodList = getGetMethodList(assemblySupplier.getClass(), Object.class);
 
             // 根据返回类型来，必须得一摸一样
             List<Method> sameReturnClassMethodList = supplierPublicMethodList.stream()
@@ -87,7 +87,7 @@ public enum HerculesContextElement {
                 return method.invoke(serDerSupplier);
             }
 
-            List<Method> supplierPublicMethodList = getGetMethodList(serDerSupplier.getClass(), BaseKvSerDerSupplier.class);
+            List<Method> supplierPublicMethodList = getGetMethodList(serDerSupplier.getClass(), Object.class);
 
             // 根据返回类型来，必须得一摸一样
             List<Method> sameReturnClassMethodList = supplierPublicMethodList.stream()
@@ -157,9 +157,15 @@ public enum HerculesContextElement {
         return contextReader;
     }
 
-    private static List<Method> getAllMethodList(Class<?> clazz, Class<?> end) {
+    /**
+     * 包头不包尾
+     * @param start
+     * @param end
+     * @return
+     */
+    private static List<Method> getAllMethodList(Class<?> start, Class<?> end) {
         List<Method> res = new LinkedList<>();
-        for (Class<?> tmpClazz = clazz; tmpClazz != null && tmpClazz != end; tmpClazz = tmpClazz.getSuperclass()) {
+        for (Class<?> tmpClazz = start; tmpClazz != null && tmpClazz != end; tmpClazz = tmpClazz.getSuperclass()) {
             res.addAll(Arrays.asList(tmpClazz.getDeclaredMethods()));
         }
         return res;

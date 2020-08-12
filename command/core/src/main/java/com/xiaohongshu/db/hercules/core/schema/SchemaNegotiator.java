@@ -9,13 +9,11 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
-import com.xiaohongshu.db.hercules.core.utils.context.Pair;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -59,16 +57,22 @@ public final class SchemaNegotiator {
     private SchemaFetcher targetSchemaFetcher;
 
     @GeneralAssembly(role = DataSourceRole.SOURCE)
-    private CustomDataTypeManager<?,?> sourceDataTypeManager;
+    private CustomDataTypeManager<?, ?> sourceDataTypeManager;
 
     @GeneralAssembly(role = DataSourceRole.TARGET)
-    private CustomDataTypeManager<?,?> targetDataTypeManager;
+    private CustomDataTypeManager<?, ?> targetDataTypeManager;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @GeneralAssembly(role = DataSourceRole.SOURCE, getMethodName = "getSchemaNegotiatorContextAsSource")
     private SchemaNegotiatorContext sourceContext;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @GeneralAssembly(role = DataSourceRole.TARGET, getMethodName = "getSchemaNegotiatorContextAsTarget")
     private SchemaNegotiatorContext targetContext;
+
+    @SchemaInfo(role = DataSourceRole.SOURCE)
+    private Schema sourceSchema;
+
+    @SchemaInfo(role = DataSourceRole.TARGET)
+    private Schema targetSchema;
 
     private static final Log LOG = LogFactory.getLog(SchemaNegotiator.class);
 
@@ -244,7 +248,7 @@ public final class SchemaNegotiator {
                 .collect(Collectors.toList());
     }
 
-    private boolean hasSerDer(DataSource dataSource,DataSourceRole role) {
+    private boolean hasSerDer(DataSource dataSource, DataSourceRole role) {
         return dataSource.hasKvSerDer()
                 && HerculesContext.instance().hasSerDer(role);
     }
@@ -257,9 +261,6 @@ public final class SchemaNegotiator {
                 = SchemaUtils.convertColumnMapFromOption(commonOptions.getJson(CommonOptionsConf.COLUMN_MAP, null));
 
         //-------------列名映射-------------//
-
-        Schema sourceSchema = Schema.fromOptions(sourceOptions, sourceDataTypeManager);
-        Schema targetSchema = Schema.fromOptions(targetOptions, targetDataTypeManager);
 
         //+++++++++++++列名+++++++++++++//
 

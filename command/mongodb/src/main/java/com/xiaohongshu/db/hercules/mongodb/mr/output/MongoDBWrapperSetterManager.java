@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
@@ -23,6 +24,10 @@ import java.util.ArrayList;
 class MongoDBWrapperSetterManager extends WrapperSetterFactory<Document> {
 
     private boolean decimalAsString;
+
+    public MongoDBWrapperSetterManager(Schema schema) {
+        super(schema);
+    }
 
     public void setDecimalAsString(boolean decimalAsString) {
         this.decimalAsString = decimalAsString;
