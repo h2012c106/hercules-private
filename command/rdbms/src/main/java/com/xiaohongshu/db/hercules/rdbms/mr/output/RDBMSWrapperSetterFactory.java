@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 

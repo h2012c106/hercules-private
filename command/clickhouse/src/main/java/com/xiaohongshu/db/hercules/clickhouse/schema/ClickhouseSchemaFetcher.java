@@ -8,24 +8,26 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Set;
 
 public class ClickhouseSchemaFetcher extends RDBMSSchemaFetcher {
 
     private static final Log LOG = LogFactory.getLog(ClickhouseSchemaFetcher.class);
 
-    public ClickhouseSchemaFetcher(GenericOptions options, RDBMSDataTypeConverter converter, RDBMSManager manager) {
-        super(options, converter, manager);
+    public ClickhouseSchemaFetcher(GenericOptions options) {
+        super(options);
     }
 
     @Override
-    public String getPrimaryKey() throws SQLException {
-        LOG.warn("Clickhouse does't support primary key.");
-        return null;
+    protected List<Set<String>> innerGetIndexGroupList() {
+        LOG.info("Clickhouse doesn't support index fetching, return empty.");
+        return super.innerGetIndexGroupList();
     }
 
     @Override
-    public boolean isIndex(String columnName) throws SQLException {
-        LOG.warn("Clickhouse does't support index.");
-        return true;
+    protected List<Set<String>> innerGetUniqueKeyGroupList() {
+        LOG.info("Clickhouse doesn't support unique key fetching, return empty.");
+        return super.innerGetUniqueKeyGroupList();
     }
 }

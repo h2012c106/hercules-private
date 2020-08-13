@@ -11,6 +11,7 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -31,11 +32,11 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
 
     protected Map<DataType, WrapperSetter<T>> wrapperSetterMap;
 
-    protected Map<String, DataType> columnTypeMap;
+    @SchemaInfo
+    private Schema schema;
 
-    public WrapperSetterFactory(Schema schema) {
+    public WrapperSetterFactory() {
         initializeWrapperSetterMap();
-        columnTypeMap = schema.getColumnTypeMap();
     }
 
     @Override
@@ -117,7 +118,7 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
             String columnName = entry.getKey();
             String fullColumnName = WritableUtils.concatColumn(columnPath, columnName);
             BaseWrapper<?> subWrapper = entry.getValue();
-            DataType columnType = columnTypeMap.getOrDefault(fullColumnName, subWrapper.getType());
+            DataType columnType = schema.getColumnTypeMap().getOrDefault(fullColumnName, subWrapper.getType());
             // 这里columnSeq必不用关心，因为是塞map的，map的key何谈下标
             getWrapperSetter(columnType).set(subWrapper, out, columnPath, columnName, MAP_WRITE_COLUMN_SEQ);
         }

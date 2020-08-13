@@ -2,7 +2,6 @@ package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
@@ -52,11 +51,6 @@ public class RDBMSOutputFormat extends HerculesOutputFormat<PreparedStatement> {
     }
 
     @Override
-    protected WrapperSetterFactory<PreparedStatement> createWrapperSetterFactory() {
-        return null;
-    }
-
-    @Override
     public void innerCheckOutputSpecs(JobContext context) throws IOException, InterruptedException {
 //        Configuration configuration = context.getConfiguration();
 //
@@ -75,7 +69,8 @@ public class RDBMSOutputFormat extends HerculesOutputFormat<PreparedStatement> {
 //        }
     }
 
-    protected RDBMSWrapperSetterFactory generateWrapperSetterFactory(GenericOptions targetOptions) {
+    @Override
+    protected RDBMSWrapperSetterFactory createWrapperSetterFactory() {
         return new RDBMSWrapperSetterFactory();
     }
 }

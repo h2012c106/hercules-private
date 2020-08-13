@@ -25,10 +25,6 @@ class MongoDBWrapperSetterManager extends WrapperSetterFactory<Document> {
 
     private boolean decimalAsString;
 
-    public MongoDBWrapperSetterManager(Schema schema) {
-        super(schema);
-    }
-
     public void setDecimalAsString(boolean decimalAsString) {
         this.decimalAsString = decimalAsString;
     }
