@@ -1,7 +1,9 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
+import com.xiaohongshu.db.hercules.core.mr.context.BaseMRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -21,13 +23,17 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESS
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf.COMPRESSION_CODEC;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf.DELETE_TARGET_DIR;
 
-public class ParquetOutputMRJobContext implements MRJobContext {
+public class ParquetOutputMRJobContext extends BaseMRJobContext {
 
     private static final Log LOG = LogFactory.getLog(ParquetOutputMRJobContext.class);
 
+    public ParquetOutputMRJobContext(GenericOptions options) {
+        super(options);
+    }
+
     @Override
-    public void configureJob(Job job, WrappingOptions options) {
-        String schema = options.getTargetOptions().getString(MESSAGE_TYPE, null);
+    public void configureJob(Job job) {
+        String schema = getOptions().getString(MESSAGE_TYPE, null);
         if (StringUtils.isEmpty(schema)) {
             throw new MapReduceException(String.format("There must exist a parquet schema for writing. Use '--%s' or '--%s' to specify it.",
                     COLUMN_TYPE, MESSAGE_TYPE));
@@ -35,12 +41,12 @@ public class ParquetOutputMRJobContext implements MRJobContext {
         ExampleOutputFormat.setSchema(job, MessageTypeParser.parseMessageType(schema));
 
         CompressionCodecName compressionCodec
-                = CompressionCodecName.fromConf(options.getTargetOptions().getString(COMPRESSION_CODEC, null));
+                = CompressionCodecName.fromConf(getOptions().getString(COMPRESSION_CODEC, null));
         ExampleOutputFormat.setCompression(job, compressionCodec);
 
-        Path targetDir = new Path(options.getTargetOptions().getString(DIR, null));
+        Path targetDir = new Path(getOptions().getString(DIR, null));
         // 清空目标目录
-        if (options.getTargetOptions().getBoolean(DELETE_TARGET_DIR, false)) {
+        if (getOptions().getBoolean(DELETE_TARGET_DIR, false)) {
             try {
                 FileSystem fs = targetDir.getFileSystem(job.getConfiguration());
 
@@ -60,10 +66,10 @@ public class ParquetOutputMRJobContext implements MRJobContext {
     }
 
     @Override
-    public void preRun(WrappingOptions options) {
+    public void preRun() {
     }
 
     @Override
-    public void postRun(WrappingOptions options) {
+    public void postRun() {
     }
 }

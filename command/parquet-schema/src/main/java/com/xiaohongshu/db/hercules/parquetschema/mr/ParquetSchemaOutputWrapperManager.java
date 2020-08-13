@@ -6,12 +6,15 @@ import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
@@ -21,7 +24,6 @@ import org.apache.parquet.schema.Types;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Map;
 
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST;
 import static com.xiaohongshu.db.hercules.parquetschema.option.ParquetSchemaOptionsConf.TRY_REQUIRED;
@@ -31,11 +33,13 @@ import static com.xiaohongshu.db.hercules.parquetschema.option.ParquetSchemaOpti
  * 由于要与{@link ParquetSchemaRecordWriter}逻辑强解耦，所以不能以内部类的方式存在，所以会有参数初始化以及一些多余的函数
  * 由于给repeated赋值只要无脑add即可，不需要记录下标，所以T为Group就够了
  */
-public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<TypeBuilderTreeNode> {
+public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<TypeBuilderTreeNode> implements InjectedClass {
 
-    private final ParquetDataTypeConverter converter;
-    private final Type.Repetition defaultRepetition;
-    private final boolean typeAutoUpgrade;
+    @Options(type = OptionsType.TARGET)
+    private GenericOptions options;
+
+    private Type.Repetition defaultRepetition;
+    private boolean typeAutoUpgrade;
     private boolean first = true;
 
     /**
@@ -43,16 +47,12 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
      */
     private static final int REPEATED = 0;
 
-    public ParquetSchemaOutputWrapperManager() {
-        this.converter = (ParquetDataTypeConverter) HerculesContext.getAssemblySupplierPair().getTargetItem().getDataTypeConverter();
-        this.defaultRepetition = HerculesContext.getWrappingOptions().getTargetOptions().getBoolean(TRY_REQUIRED, false)
+    @Override
+    public void afterInject() {
+        this.defaultRepetition = options.getBoolean(TRY_REQUIRED, false)
                 ? Type.Repetition.REQUIRED
                 : Type.Repetition.OPTIONAL;
-        this.typeAutoUpgrade = HerculesContext.getWrappingOptions().getTargetOptions().getBoolean(TYPE_AUTO_UPGRADE, false);
-    }
-
-    public ParquetDataTypeConverter getConverter() {
-        return converter;
+        this.typeAutoUpgrade = options.getBoolean(TYPE_AUTO_UPGRADE, false);
     }
 
     public void union(MapWrapper value, TypeBuilderTreeNode res) throws Exception {
@@ -182,7 +182,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(Float value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -196,7 +197,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(Double value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -210,7 +212,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(BigDecimal value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -224,7 +227,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(Boolean value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -238,7 +242,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(String value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -252,7 +257,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(ExtendedDate value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -266,7 +272,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(ExtendedDate value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -280,7 +287,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(ExtendedDate value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -294,7 +302,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(byte[] value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }
@@ -308,7 +317,8 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
 
             @Override
             protected void setNonnullValue(Void value, TypeBuilderTreeNode row, String rowName, String columnName, int columnSeq) throws Exception {
-
+                TypeBuilderTreeNode node = makeNode(columnName, getType(), row, columnSeq == REPEATED);
+                row.addAndReturnChildren(node);
             }
         };
     }

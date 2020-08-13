@@ -14,10 +14,6 @@ import java.math.BigDecimal;
 
 public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager {
 
-    public ParquetSqoopInputWrapperManager() {
-        super(ParquetSqoopDataTypeConverter.getInstance());
-    }
-
     @Override
     protected boolean emptyAsNull() {
         return true;

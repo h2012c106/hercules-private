@@ -22,7 +22,6 @@ public class ParquetHerculesInputWrapperManager extends ParquetInputWrapperManag
     private final boolean emptyAsNull;
 
     public ParquetHerculesInputWrapperManager(boolean emptyAsNull) {
-        super(ParquetHerculesDataTypeConverter.getInstance());
         this.emptyAsNull = emptyAsNull;
     }
 

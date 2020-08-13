@@ -3,13 +3,13 @@ package com.xiaohongshu.db.hercules.parquet.mr.input;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
-import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -28,13 +28,16 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.ORIGINAL_SPLIT;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
-public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo> {
+public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo> implements InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(ParquetInputFormat.class);
 
     private final ExampleInputFormat delegate = new ExampleInputFormat();
 
     private SchemaStyle schemaStyle;
+
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions options;
 
     @SuppressWarnings("unchecked")
     private List<FileStatus> listStatus(JobContext context) {
@@ -81,10 +84,7 @@ public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo>
 
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-        if (!options.getSourceOptions().getBoolean(ORIGINAL_SPLIT, false)) {
+        if (!options.getBoolean(ORIGINAL_SPLIT, false)) {
             configureNumMapper(context, numSplits);
         }
         List<InputSplit> tmpRes = delegate.getSplits(context);
@@ -109,9 +109,8 @@ public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo>
     }
 
     @Override
-    protected void initializeContext(GenericOptions sourceOptions) {
-        schemaStyle = SchemaStyle.valueOfIgnoreCase(sourceOptions.getString(SCHEMA_STYLE, null));
-        super.initializeContext(sourceOptions);
+    public void afterInject() {
+        schemaStyle = SchemaStyle.valueOfIgnoreCase(options.getString(SCHEMA_STYLE, null));
     }
 
     @Override

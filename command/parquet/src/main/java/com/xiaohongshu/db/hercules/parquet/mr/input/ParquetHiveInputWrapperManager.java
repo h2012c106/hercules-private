@@ -18,10 +18,6 @@ import java.math.BigDecimal;
 
 public class ParquetHiveInputWrapperManager extends ParquetInputWrapperManager {
 
-    public ParquetHiveInputWrapperManager() {
-        super(ParquetHiveDataTypeConverter.getInstance());
-    }
-
     @Override
     protected boolean emptyAsNull() {
         return true;

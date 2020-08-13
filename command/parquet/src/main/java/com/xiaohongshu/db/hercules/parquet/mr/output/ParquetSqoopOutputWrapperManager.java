@@ -9,10 +9,6 @@ import java.math.BigDecimal;
 
 public class ParquetSqoopOutputWrapperManager extends ParquetOutputWrapperManager {
 
-    public ParquetSqoopOutputWrapperManager() {
-        super(ParquetSqoopDataTypeConverter.getInstance());
-    }
-
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<Group> getByteSetter() {
         return null;

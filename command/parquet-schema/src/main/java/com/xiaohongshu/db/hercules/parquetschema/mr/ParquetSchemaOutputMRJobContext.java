@@ -1,9 +1,11 @@
 package com.xiaohongshu.db.hercules.parquetschema.mr;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.mr.context.BaseMRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
 import com.xiaohongshu.db.hercules.parquet.schema.*;
@@ -31,15 +33,22 @@ import static com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils.GENERATED_M
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
-public class ParquetSchemaOutputMRJobContext implements MRJobContext {
+public class ParquetSchemaOutputMRJobContext extends BaseMRJobContext {
 
     private static final Log LOG = LogFactory.getLog(ParquetSchemaOutputMRJobContext.class);
 
     private static final String GENERATED_FILE_NAME = "HERCULES_GENERATED_SCHEMA";
 
+    @GeneralAssembly
+    private ParquetDataTypeConverter dataTypeConverter;
+
+    public ParquetSchemaOutputMRJobContext(GenericOptions options) {
+        super(options);
+    }
+
     @Override
-    public void configureJob(Job job, WrappingOptions options) {
-        Path targetDir = new Path(options.getTargetOptions().getString(DIR, null));
+    public void configureJob(Job job) {
+        Path targetDir = new Path(getOptions().getString(DIR, null));
         try {
             FileSystem fs = targetDir.getFileSystem(job.getConfiguration());
             if (fs.exists(targetDir)) {
@@ -58,22 +67,8 @@ public class ParquetSchemaOutputMRJobContext implements MRJobContext {
     }
 
     @Override
-    public void preRun(WrappingOptions options) {
+    public void preRun() {
 
-    }
-
-    private ParquetDataTypeConverter getConverter(GenericOptions options) {
-        SchemaStyle schemaStyle = SchemaStyle.valueOfIgnoreCase(options.getString(SCHEMA_STYLE, null));
-        switch (schemaStyle) {
-            case SQOOP:
-                return ParquetSqoopDataTypeConverter.getInstance();
-            case HIVE:
-                return ParquetHiveDataTypeConverter.getInstance();
-            case ORIGINAL:
-                return ParquetHerculesDataTypeConverter.getInstance();
-            default:
-                throw new RuntimeException();
-        }
     }
 
     private String readFile(Path file, FileSystem fs) throws IOException {
@@ -192,11 +187,11 @@ public class ParquetSchemaOutputMRJobContext implements MRJobContext {
     }
 
     @Override
-    public void postRun(WrappingOptions options) {
-        final ParquetDataTypeConverter converter = getConverter(options.getTargetOptions());
-        Path targetDir = new Path(options.getTargetOptions().getString(DIR, null));
+    public void postRun() {
+        final ParquetDataTypeConverter converter = dataTypeConverter;
+        Path targetDir = new Path(getOptions().getString(DIR, null));
         Path targetFile = Path.mergePaths(targetDir, new Path("/" + GENERATED_FILE_NAME));
-        boolean typeAutoUpgrade = options.getTargetOptions().getBoolean(ParquetSchemaOptionsConf.TYPE_AUTO_UPGRADE, false);
+        boolean typeAutoUpgrade = getOptions().getBoolean(ParquetSchemaOptionsConf.TYPE_AUTO_UPGRADE, false);
 
         try {
             FileSystem fs = targetDir.getFileSystem(new Configuration());

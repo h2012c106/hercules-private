@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.parquet;
 
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
+import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
@@ -22,7 +23,7 @@ public class ParquetAssemblySupplier extends BaseAssemblySupplier {
 
     @Override
     public DataSource innerGetDataSource() {
-        return new ParqeutDataSource();
+        return new ParquetDataSource();
     }
 
     @Override
@@ -47,17 +48,22 @@ public class ParquetAssemblySupplier extends BaseAssemblySupplier {
 
     @Override
     public BaseSchemaFetcher<?> innerGetSchemaFetcher() {
-        return new ParquetSchemaFetcher(options, (ParquetDataTypeConverter) getDataTypeConverter());
+        return new ParquetSchemaFetcher(options);
     }
 
     @Override
     public MRJobContext innerGetJobContextAsSource() {
-        return new ParquetInputMRJobContext();
+        return new ParquetInputMRJobContext(options);
     }
 
     @Override
     public MRJobContext innerGetJobContextAsTarget() {
-        return new ParquetOutputMRJobContext();
+        return new ParquetOutputMRJobContext(options);
+    }
+
+    @Override
+    protected SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsTarget() {
+        return new ParquetSchemaNegotiatorContext(options);
     }
 
     @Override

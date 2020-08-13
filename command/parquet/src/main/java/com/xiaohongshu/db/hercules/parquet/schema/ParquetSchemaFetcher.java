@@ -4,6 +4,7 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -36,6 +37,9 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
     private final Configuration tmpConfiguration;
 
     private MessageType messageType;
+
+    @GeneralAssembly
+    private ParquetDataTypeConverter dataTypeConverter;
 
     /**
      * 抄的sqoop
@@ -112,12 +116,12 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
         }
     }
 
-    public ParquetSchemaFetcher(GenericOptions options, ParquetDataTypeConverter converter) {
-        this(options, converter, new Configuration());
+    public ParquetSchemaFetcher(GenericOptions options) {
+        this(options, new Configuration());
     }
 
-    public ParquetSchemaFetcher(GenericOptions options, ParquetDataTypeConverter converter, Configuration tmpConfiguration) {
-        super(options, converter);
+    public ParquetSchemaFetcher(GenericOptions options, Configuration tmpConfiguration) {
+        super(options);
         this.tmpConfiguration = tmpConfiguration;
 
         // 获得parquet schema
@@ -134,7 +138,7 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
     }
 
     @Override
-    protected List<String> getColumnNameList() {
+    protected List<String> innerGetColumnNameList() {
         if (messageType != null) {
             return messageType.getFields()
                     .stream()
@@ -145,9 +149,10 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConve
         }
     }
 
-    protected Map<String, DataType> getColumnTypeMap(Set<String> columnNameSet) {
+    @Override
+    protected Map<String, DataType> innerGetColumnTypeMap() {
         if (messageType != null) {
-            return converter.convertRowType(messageType);
+            return dataTypeConverter.convertRowType(messageType);
         } else {
             return null;
         }

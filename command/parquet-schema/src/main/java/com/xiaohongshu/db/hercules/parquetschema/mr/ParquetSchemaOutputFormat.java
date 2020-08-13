@@ -20,7 +20,7 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHE
 
 public class ParquetSchemaOutputFormat extends HerculesOutputFormat<TypeBuilderTreeNode> {
 
-    private TextOutputFormat<NullWritable, Text> delegate = new TextOutputFormat<>();
+    private final TextOutputFormat<NullWritable, Text> delegate = new TextOutputFormat<>();
 
     @Override
     public HerculesRecordWriter<TypeBuilderTreeNode> innerGetRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
@@ -33,12 +33,12 @@ public class ParquetSchemaOutputFormat extends HerculesOutputFormat<TypeBuilderT
     }
 
     @Override
-    public void checkOutputSpecs(JobContext jobContext) throws IOException, InterruptedException {
+    public void innerCheckOutputSpecs(JobContext jobContext) throws IOException, InterruptedException {
         delegate.checkOutputSpecs(jobContext);
     }
 
     @Override
-    public OutputCommitter getOutputCommitter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
+    public OutputCommitter innerGetOutputCommitter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
         return delegate.getOutputCommitter(taskAttemptContext);
     }
 }

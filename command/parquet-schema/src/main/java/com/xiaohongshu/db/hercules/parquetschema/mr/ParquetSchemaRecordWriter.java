@@ -4,7 +4,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
@@ -32,6 +32,9 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
      * 如果一个map一行都没写，会导致直接把空message type写下去
      */
     private boolean written = false;
+
+    @GeneralAssembly
+    private ParquetDataTypeConverter dataTypeConverter;
 
     public ParquetSchemaRecordWriter(TaskAttemptContext context, RecordWriter<NullWritable, Text> delegate) {
         super(context);
@@ -61,10 +64,7 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
     @Override
     protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
         if (written && !error) {
-            String messageTypeStr = ParquetSchemaUtils.calculateTree(
-                    result,
-                    (ParquetDataTypeConverter) HerculesContext.getAssemblySupplierPair().getTargetItem().getDataTypeConverter()
-            ).toString();
+            String messageTypeStr = ParquetSchemaUtils.calculateTree(result, dataTypeConverter).toString();
             LOG.info(String.format("Task [%s] generate message type: %s", context.getTaskAttemptID(), messageTypeStr));
             delegate.write(NullWritable.get(), new Text(messageTypeStr));
             delegate.close(context);

@@ -5,17 +5,19 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.schema.Type;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST;
 
@@ -24,16 +26,11 @@ import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_N
  */
 public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<GroupWithSchemaInfo> {
 
-    private Map<String, DataType> columnTypeMap;
-    private final ParquetDataTypeConverter converter;
+    @SchemaInfo
+    private Schema schema;
 
-    public ParquetInputWrapperManager(ParquetDataTypeConverter converter) {
-        this.converter = converter;
-    }
-
-    public void setColumnTypeMap(Map<String, DataType> columnTypeMap) {
-        this.columnTypeMap = columnTypeMap;
-    }
+    @GeneralAssembly
+    private final ParquetDataTypeConverter converter = null;
 
     /**
      * 注意！由于parquet没有null值，所以一个无值的optional类型有两种语义：null/无值。这个很matter，打个比方，
@@ -67,7 +64,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
             }
 
             String fullColumnName = WritableUtils.concatColumn(groupPosition, columnName);
-            DataType columnType = columnTypeMap.getOrDefault(fullColumnName, converter.convertElementType(new ParquetType(type)));
+            DataType columnType = schema.getColumnTypeMap().getOrDefault(fullColumnName, converter.convertElementType(new ParquetType(type)));
             // 先写一下这里无脑new出来GroupWithRepeatedInfo的理由，以防以后忘了：
             // 由于parquet schema里逻辑LIST与其他类型在同一层定义，所以会有不同（比如一个repeated int32既是一个LIST也是一个INTEGER）
             // 流程逻辑是如果读到其他类型，直接获得函数返回（一层）；如果读到LIST，调用ListGetter调用repeatedToListWrapper二次判断真正类型，然后根据这个类型获得的函数循环（valueSeq）获得每个元素的值（三层）。

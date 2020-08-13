@@ -13,10 +13,6 @@ import java.math.BigInteger;
 
 public class ParquetHerculesOutputWrapperManager extends ParquetOutputWrapperManager {
 
-    public ParquetHerculesOutputWrapperManager() {
-        super(ParquetHerculesDataTypeConverter.getInstance());
-    }
-
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<Group> getByteSetter() {
         return new BaseTypeWrapperSetter.ByteSetter<Group>() {

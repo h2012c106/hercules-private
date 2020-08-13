@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.parquet.schema;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaNegotiatorContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,22 +14,22 @@ import java.util.Map;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
 
-public class ParqeutSchemaNegotiatorContext extends BaseSchemaNegotiatorContext {
+public class ParquetSchemaNegotiatorContext extends BaseSchemaNegotiatorContext {
 
-    private static final Log LOG = LogFactory.getLog(ParqeutSchemaNegotiatorContext.class);
+    private static final Log LOG = LogFactory.getLog(ParquetSchemaNegotiatorContext.class);
 
-    private ParquetDataTypeConverter converter;
+    @GeneralAssembly
+    private ParquetDataTypeConverter dataTypeConverter;
 
-    public ParqeutSchemaNegotiatorContext(GenericOptions options, ParquetDataTypeConverter converter) {
+    public ParquetSchemaNegotiatorContext(GenericOptions options) {
         super(options);
-        this.converter = converter;
     }
 
     @Override
     public void afterAll(List<String> columnName, Map<String, DataType> columnType) {
         // 仅在作为下游时装配，上游时一定拿得到
         if (StringUtils.isEmpty(getOptions().getString(MESSAGE_TYPE, null))) {
-            MessageType generatedMessageType = converter.convertTypeMap(columnName, columnType);
+            MessageType generatedMessageType = dataTypeConverter.convertTypeMap(columnName, columnType);
             if (generatedMessageType != null) {
                 String messageTypeStr = generatedMessageType.toString();
                 LOG.info("Generate the parquet schema from negotiated column name list and column type map: " + messageTypeStr);

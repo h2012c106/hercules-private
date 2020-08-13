@@ -16,10 +16,6 @@ import java.util.Date;
 
 public class ParquetHiveOutputWrapperManager extends ParquetOutputWrapperManager {
 
-    public ParquetHiveOutputWrapperManager() {
-        super(ParquetHiveDataTypeConverter.getInstance());
-    }
-
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<Group> getByteSetter() {
         return new BaseTypeWrapperSetter.ByteSetter<Group>() {

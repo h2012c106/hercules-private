@@ -1,9 +1,14 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -39,6 +44,12 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     private int combinedSplitSeq = 0;
     private List<FileSplit> combinedSplitList = new ArrayList<>(0);
     private TaskAttemptContext context = null;
+
+    @Options(type= OptionsType.SOURCE)
+    private GenericOptions options;
+
+    @SchemaInfo
+    private Schema schema;
 
     public ParquetRecordReader(TaskAttemptContext context, ExampleInputFormat delegateInputFormat) {
         // 此时还没搞出columnTypeMap
@@ -102,21 +113,12 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
 
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-
-        context.getTaskAttemptID().getTaskID();
-
-        // 补赋columnTypeMap
-        ((ParquetInputWrapperManager) wrapperGetterFactory).setColumnTypeMap(getSchema().getColumnTypeMap());
-
         // 不用担心NPE，横竖这里都有了
-        messageType = MessageTypeParser.parseMessageType(options.getSourceOptions().getString(MESSAGE_TYPE, null));
+        messageType = MessageTypeParser.parseMessageType(options.getString(MESSAGE_TYPE, null));
         // 处理一下column的筛选
-        if (!getSchema().getColumnNameList().isEmpty()) {
+        if (!schema.getColumnNameList().isEmpty()) {
             MessageType tmpMessageType = Types.buildMessage().named(messageType.getName());
-            for (String columnName : getSchema().getColumnNameList()) {
+            for (String columnName : schema.getColumnNameList()) {
                 MessageType projectedMessageType = projectOneColumn(columnName);
                 if (projectedMessageType == null) {
                     LOG.warn(String.format("Can't find the column [%s] in schema.", columnName));
@@ -125,9 +127,9 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
                 }
             }
             messageType = tmpMessageType;
-            LOG.info(String.format("The projection message type of column %s is: %s", getSchema().getColumnNameList(), messageType));
+            LOG.info(String.format("The projection message type of column %s is: %s", schema.getColumnNameList(), messageType));
         }
-        configuration.set(ReadSupport.PARQUET_READ_SCHEMA, messageType.toString());
+        context.getConfiguration().set(ReadSupport.PARQUET_READ_SCHEMA, messageType.toString());
 
         this.context = context;
         this.combinedSplitList = ((ParquetCombinedInputSplit) split).getCombinedInputSplitList();
