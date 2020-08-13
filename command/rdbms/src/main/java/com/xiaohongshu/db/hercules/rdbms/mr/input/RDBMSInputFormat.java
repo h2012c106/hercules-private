@@ -1,13 +1,16 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.utils.StingyMap;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
@@ -15,7 +18,6 @@ import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -23,36 +25,33 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.List;
-import java.util.Map;
 
-public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> {
+public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> implements InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
     public static final String AVERAGE_MAP_ROW_NUM = "hercules.average.map.row.num";
 
-    protected RDBMSManager manager;
-    protected String baseSql;
-    protected RDBMSSchemaFetcher schemaFetcher;
-    protected RDBMSDataTypeConverter converter;
-    protected Map<String, DataType> columnTypeMap;
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private RDBMSManager manager;
 
-    protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options,
-                                                         RDBMSDataTypeConverter converter,
-                                                         RDBMSManager manager) {
-        return new RDBMSSchemaFetcher(options, converter, manager);
-    }
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private RDBMSSchemaFetcher schemaFetcher;
+
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private RDBMSDataTypeConverter dataTypeConverter;
+
+    @SchemaInfo(role = DataSourceRole.SOURCE)
+    private Schema schema;
+
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
+
+    protected String baseSql;
 
     @Override
-    protected void initializeContext(GenericOptions sourceOptions) {
-        super.initializeContext(sourceOptions);
-
-        converter = (RDBMSDataTypeConverter) HerculesContext.getAssemblySupplierPair().getSourceItem().getDataTypeConverter();
-        manager = generateManager(sourceOptions);
-        schemaFetcher = initializeSchemaFetcher(sourceOptions, converter, manager);
+    public void afterInject() {
         baseSql = SqlUtils.makeBaseQuery(sourceOptions);
-
-        columnTypeMap = new StingyMap<>(HerculesContext.getSchemaPair().getSourceItem().getColumnTypeMap());
     }
 
     protected SplitGetter getSplitGetter(GenericOptions options) {
@@ -65,15 +64,9 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> {
 
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
-        Configuration configuration = context.getConfiguration();
+        SplitUtils.SplitResult splitResult = SplitUtils.split(sourceOptions, schema, schemaFetcher, numSplits, manager, baseSql, getSplitGetter(sourceOptions));
 
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(configuration);
-
-        SplitUtils.SplitResult splitResult = SplitUtils.split(options, schemaFetcher, numSplits, manager, baseSql,
-                columnTypeMap, getSplitGetter(options.getTargetOptions()));
-
-        configuration.setLong(AVERAGE_MAP_ROW_NUM, splitResult.getTotalNum() / splitResult.getInputSplitList().size());
+        context.getConfiguration().setLong(AVERAGE_MAP_ROW_NUM, splitResult.getTotalNum() / splitResult.getInputSplitList().size());
 
         return splitResult.getInputSplitList();
     }
@@ -81,15 +74,11 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> {
     @Override
     public HerculesRecordReader<ResultSet> innerCreateRecordReader(InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
-        return new RDBMSRecordReader(context, manager);
+        return new RDBMSRecordReader(context);
     }
 
     @Override
     protected WrapperGetterFactory<ResultSet> createWrapperGetterFactory() {
         return new RDBMSWrapperGetterFactory();
-    }
-
-    public RDBMSManager generateManager(GenericOptions options) {
-        return new RDBMSManager(options);
     }
 }

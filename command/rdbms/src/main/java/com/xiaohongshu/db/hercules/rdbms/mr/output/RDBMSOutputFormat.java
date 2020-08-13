@@ -1,18 +1,17 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
-import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
-import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManagerGenerator;
-import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
@@ -20,19 +19,17 @@ import java.sql.PreparedStatement;
 
 public class RDBMSOutputFormat extends HerculesOutputFormat<PreparedStatement> {
 
+    @Options(type = OptionsType.TARGET)
+    private GenericOptions targetOptions;
+
+    @GeneralAssembly(role = DataSourceRole.TARGET)
+    private RDBMSManager manager;
+
     @Override
     public RDBMSRecordWriter innerGetRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(context.getConfiguration());
-
-        GenericOptions targetOptions = options.getTargetOptions();
-
-        RDBMSManager manager = generateManager(targetOptions);
-        RDBMSWrapperSetterFactory wrapperSetterFactory = generateWrapperSetterFactory(targetOptions);
-
         try {
             String tableName = targetOptions.getString(RDBMSOptionsConf.TABLE, null);
-            ExportType exportType = ExportType.valueOfIgnoreCase(options.getTargetOptions()
+            ExportType exportType = ExportType.valueOfIgnoreCase(targetOptions
                     .getString(RDBMSOutputOptionsConf.EXPORT_TYPE, null));
             if (targetOptions.hasProperty(RDBMSOutputOptionsConf.STAGING_TABLE)) {
                 tableName = targetOptions.getString(RDBMSOutputOptionsConf.STAGING_TABLE, null);
@@ -42,12 +39,12 @@ public class RDBMSOutputFormat extends HerculesOutputFormat<PreparedStatement> {
             }
 
             if (ExportType.valueOfIgnoreCase(targetOptions.getString(RDBMSOutputOptionsConf.EXPORT_TYPE, null)).isUpdate()) {
-                return new RDBMSUpdateRecordWriter(context, tableName, exportType, manager, wrapperSetterFactory);
+                return new RDBMSUpdateRecordWriter(context, tableName, exportType);
             }
             if (targetOptions.getBoolean(RDBMSOutputOptionsConf.BATCH, false)) {
-                return new RDBMSBatchRecordWriter(context, tableName, exportType, manager, wrapperSetterFactory);
+                return new RDBMSBatchRecordWriter(context, tableName, exportType);
             } else {
-                return new RDBMSRichLineRecordWriter(context, tableName, exportType, manager, wrapperSetterFactory);
+                return new RDBMSRichLineRecordWriter(context, tableName, exportType);
             }
         } catch (Exception e) {
             throw new IOException(e);
@@ -60,7 +57,7 @@ public class RDBMSOutputFormat extends HerculesOutputFormat<PreparedStatement> {
     }
 
     @Override
-    public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
+    public void innerCheckOutputSpecs(JobContext context) throws IOException, InterruptedException {
 //        Configuration configuration = context.getConfiguration();
 //
 //        WrappingOptions options = new WrappingOptions();
@@ -76,15 +73,6 @@ public class RDBMSOutputFormat extends HerculesOutputFormat<PreparedStatement> {
 //                throw new IOException("The update key must be the subset of columns.");
 //            }
 //        }
-    }
-
-    @Override
-    public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
-        return new NullOutputCommitter();
-    }
-
-    public RDBMSManager generateManager(GenericOptions options) {
-        return new RDBMSManager(options);
     }
 
     protected RDBMSWrapperSetterFactory generateWrapperSetterFactory(GenericOptions targetOptions) {

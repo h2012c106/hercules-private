@@ -1,8 +1,7 @@
 package com.xiaohongshu.db.hercules.core.utils.context;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
-import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
-import com.xiaohongshu.db.hercules.core.supplier.BaseKvSerDerSupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
@@ -27,8 +26,9 @@ public enum HerculesContextElement {
     GENERAL_ASSEMBLY(GeneralAssembly.class, new ContextReader<GeneralAssembly>() {
         @SneakyThrows
         @Override
-        public Object pulloutValueFromContext(HerculesContext context, final Field field, GeneralAssembly annotation) {
-            AssemblySupplier assemblySupplier = context.getAssemblySupplierPair().getItem(annotation.role());
+        public Object pulloutValueFromContext(HerculesContext context, final Field field,
+                                              GeneralAssembly annotation, DataSourceRole role) {
+            AssemblySupplier assemblySupplier = context.getAssemblySupplierPair().getItem(getRole(annotation.role(), role));
 
             // 如果用户给了方法名了，直接反射就完事儿了
             String annotatedMethodName = annotation.getMethodName();
@@ -73,8 +73,9 @@ public enum HerculesContextElement {
     SERDER_ASSEMBLY(SerDerAssembly.class, new ContextReader<SerDerAssembly>() {
         @SneakyThrows
         @Override
-        public Object pulloutValueFromContext(HerculesContext context, final Field field, SerDerAssembly annotation) {
-            KvSerDerSupplier serDerSupplier = context.getKvSerDerSupplierPair().getItem(annotation.role());
+        public Object pulloutValueFromContext(HerculesContext context, final Field field,
+                                              SerDerAssembly annotation, DataSourceRole role) {
+            KvSerDerSupplier serDerSupplier = context.getKvSerDerSupplierPair().getItem(getRole(annotation.role(), role));
             if (serDerSupplier == null) {
                 LOG.debug(String.format("%s KvSerDerSupplier is null, inject the assembly field [%s] with null.", annotation.role(), field));
                 return null;
@@ -122,7 +123,8 @@ public enum HerculesContextElement {
      */
     OPTIONS(Options.class, new ContextReader<Options>() {
         @Override
-        public Object pulloutValueFromContext(HerculesContext context, Field field, Options annotation) {
+        public Object pulloutValueFromContext(HerculesContext context, Field field,
+                                              Options annotation, DataSourceRole role) {
             return context.getWrappingOptions().getGenericOptions(annotation.type());
         }
     }),
@@ -131,8 +133,9 @@ public enum HerculesContextElement {
      */
     SCHEMA(SchemaInfo.class, new ContextReader<SchemaInfo>() {
         @Override
-        public Object pulloutValueFromContext(HerculesContext context, Field field, SchemaInfo annotation) {
-            return context.getSchemaPair().getItem(annotation.role());
+        public Object pulloutValueFromContext(HerculesContext context, Field field,
+                                              SchemaInfo annotation, DataSourceRole role) {
+            return context.getSchemaPair().getItem(getRole(annotation.role(), role));
         }
     });
 
@@ -157,8 +160,21 @@ public enum HerculesContextElement {
         return contextReader;
     }
 
+    private static DataSourceRole getRole(DataSourceRole[] annotationRole, DataSourceRole classRole) {
+        if (annotationRole.length == 0 && classRole == null) {
+            throw new RuntimeException("Cannot inject a object field without annotation role or class role.");
+        }
+        // 优先用用户注解配置
+        if (annotationRole.length > 0) {
+            return annotationRole[0];
+        } else {
+            return classRole;
+        }
+    }
+
     /**
      * 包头不包尾
+     *
      * @param start
      * @param end
      * @return
@@ -193,6 +209,6 @@ public enum HerculesContextElement {
     }
 
     public interface ContextReader<T extends Annotation> {
-        public Object pulloutValueFromContext(HerculesContext context, Field field, T annotation);
+        public Object pulloutValueFromContext(HerculesContext context, Field field, T annotation, DataSourceRole role);
     }
 }

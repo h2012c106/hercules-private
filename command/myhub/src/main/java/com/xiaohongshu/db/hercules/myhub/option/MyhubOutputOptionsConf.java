@@ -5,23 +5,29 @@ import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.mysql.option.MysqlOutputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 
 import java.util.List;
+
+import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf.*;
 
 public final class MyhubOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
         return Lists.newArrayList(
-                new MysqlOutputOptionsConf()
+                new MysqlOutputOptionsConf(),
+                new MyhubOptionsConf()
         );
     }
 
     @Override
     protected List<String> deleteOptions() {
         return Lists.newArrayList(
-                RDBMSOutputOptionsConf.AUTOCOMMIT
+                AUTOCOMMIT,
+                STATEMENT_PER_COMMIT,
+                STAGING_TABLE,
+                CLOSE_FORCE_INSERT_STAGING,
+                PRE_MIGRATE_SQL
         );
     }
 
@@ -36,6 +42,6 @@ public final class MyhubOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     protected void innerProcessOptions(GenericOptions options) {
-        options.set(RDBMSOutputOptionsConf.AUTOCOMMIT, true);
+        options.set(AUTOCOMMIT, true);
     }
 }

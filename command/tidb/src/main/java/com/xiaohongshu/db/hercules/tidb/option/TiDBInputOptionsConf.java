@@ -10,6 +10,8 @@ import com.xiaohongshu.db.hercules.mysql.option.MysqlInputOptionsConf;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.FETCH_SIZE;
+
 public final class TiDBInputOptionsConf extends BaseOptionsConf {
 
     public static final String SECONDARY_SPLIT_SIZE = "secondary-split-size";
@@ -31,6 +33,14 @@ public final class TiDBInputOptionsConf extends BaseOptionsConf {
                 .defaultStringValue(String.valueOf(DEFAULT_SECONDARY_SPLIT_SIZE))
                 .build());
         return tmpList;
+    }
+
+    @Override
+    protected List<String> deleteOptions() {
+        // 低版本tidb不支持服务器侧游标，全部使用客户端侧游标
+        return Lists.newArrayList(
+                FETCH_SIZE
+        );
     }
 
     @Override

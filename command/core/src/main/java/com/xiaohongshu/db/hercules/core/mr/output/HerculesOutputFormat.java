@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.mr.output;
 import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
@@ -16,7 +17,8 @@ import org.apache.hadoop.mapreduce.*;
 
 import java.io.IOException;
 
-public abstract class HerculesOutputFormat<T> extends OutputFormat<NullWritable, HerculesWritable> {
+public abstract class HerculesOutputFormat<T> extends OutputFormat<NullWritable, HerculesWritable>
+        implements DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(HerculesOutputFormat.class);
 
@@ -27,6 +29,11 @@ public abstract class HerculesOutputFormat<T> extends OutputFormat<NullWritable,
     private KvSerDer<?, ?> kvSerDer;
 
     public HerculesOutputFormat() {
+    }
+
+    @Override
+    public final DataSourceRole getRole() {
+        return DataSourceRole.TARGET;
     }
 
     protected void innerCheckOutputSpecs(JobContext context) throws IOException, InterruptedException {

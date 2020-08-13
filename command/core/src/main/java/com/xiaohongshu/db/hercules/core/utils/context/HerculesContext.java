@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.utils.context;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
@@ -161,6 +162,12 @@ public final class HerculesContext {
             injectingClass.add(obj.getClass());
         }
 
+        // 如果此类实现getRole()方法，则先调一下这个接口拿到此类角色
+        DataSourceRole classConfiguredRole = null;
+        if (ReflectUtils.doesImplementInterface(obj.getClass(), DataSourceRoleGetter.class)) {
+            classConfiguredRole = ((DataSourceRoleGetter) obj).getRole();
+        }
+
         // 仅注入被注入对象的类属性，不注入父类
         // List<Field> filedList = ReflectUtils.getFiledList(obj.getClass());
         // 递归注入上去
@@ -195,7 +202,8 @@ public final class HerculesContext {
             }
 
             HerculesContextElement contextElement = contextElementList.get(0);
-            Object fieldValueFromContext = contextElement.getContextReader().pulloutValueFromContext(this, field, annotation);
+            Object fieldValueFromContext = contextElement.getContextReader()
+                    .pulloutValueFromContext(this, field, annotation, classConfiguredRole);
 
             boolean accessible = field.isAccessible();
             try {

@@ -6,10 +6,14 @@ import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
+import lombok.NonNull;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
@@ -19,7 +23,7 @@ public class RDBMSManager {
 
     protected GenericOptions options;
 
-    public RDBMSManager(GenericOptions options) {
+    public RDBMSManager(@NonNull GenericOptions options) {
         this.options = options;
     }
 
@@ -104,8 +108,7 @@ public class RDBMSManager {
         Integer fetchSize = options.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
         try {
             connection = getConnection();
-            statement = connection.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-            SqlUtils.setFetchSize(statement, fetchSize);
+            statement = SqlUtils.makeReadStatement(connection, sql, fetchSize);
             LOG.debug("Executing SQL statement: " + sql);
             return SqlUtils.resultSetToList(statement.executeQuery(), seq, resultSetGetter, true);
         } finally {

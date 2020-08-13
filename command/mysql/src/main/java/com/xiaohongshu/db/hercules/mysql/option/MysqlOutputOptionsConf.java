@@ -11,7 +11,7 @@ import java.util.List;
 
 public final class MysqlOutputOptionsConf extends BaseOptionsConf {
 
-    public static final String ABANDON_ZERO_DATE = "allow-zero-date";
+    public static final String ALLOW_ZERO_DATE = "allow-zero-date";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -25,9 +25,9 @@ public final class MysqlOutputOptionsConf extends BaseOptionsConf {
     protected List<SingleOptionConf> innerGenerateOptionConf() {
         List<SingleOptionConf> tmpList = new ArrayList<>();
         tmpList.add(SingleOptionConf.builder()
-                .name(ABANDON_ZERO_DATE)
+                .name(ALLOW_ZERO_DATE)
                 .needArg(false)
-                .description("Whether to abandon inserting '0000-00-00 00:00:00' as timestamp.")
+                .description("Whether to allow inserting '0000-00-00 00:00:00' as timestamp.")
                 .build());
         return tmpList;
     }

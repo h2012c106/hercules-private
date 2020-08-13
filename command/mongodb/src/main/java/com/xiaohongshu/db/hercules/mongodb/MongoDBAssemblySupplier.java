@@ -2,8 +2,8 @@ package com.xiaohongshu.db.hercules.mongodb;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
-import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
-import com.xiaohongshu.db.hercules.core.mr.NullMRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.context.NullMRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.OptionsConf;

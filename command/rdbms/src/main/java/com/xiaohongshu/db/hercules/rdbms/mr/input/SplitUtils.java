@@ -1,16 +1,17 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
+import com.google.common.collect.Sets;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.splitter.*;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -19,7 +20,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class SplitUtils {
 
@@ -67,18 +69,20 @@ public final class SplitUtils {
         }
     }
 
-    public static SplitResult split(WrappingOptions options, RDBMSSchemaFetcher schemaFetcher,
-                                    int numSplits, RDBMSManager manager, String baseSql,
-                                    Map<String, DataType> columnTypeMap, SplitGetter splitGetter) throws IOException {
+    public static SplitResult split(GenericOptions sourceOptions, Schema schema, RDBMSSchemaFetcher schemaFetcher,
+                                    int numSplits, RDBMSManager manager, String baseSql, SplitGetter splitGetter) throws IOException {
         // 检查split-by列在不在列集里
         String splitBy;
-        try {
-            splitBy = options.getSourceOptions().getString(RDBMSInputOptionsConf.SPLIT_BY, null);
-            if (splitBy == null) {
-                splitBy = schemaFetcher.getPrimaryKey();
+        splitBy = sourceOptions.getString(RDBMSInputOptionsConf.SPLIT_BY, null);
+        if (splitBy == null) {
+            List<Set<String>> length1Index = schema.getIndexGroupList()
+                    .stream()
+                    .filter(set -> set.size() == 1)
+                    .collect(Collectors.toList());
+            if (length1Index.size() > 0) {
+                splitBy = length1Index.get(0).iterator().next();
+                LOG.info("Use a index column as split-by key: " + splitBy);
             }
-        } catch (SQLException e) {
-            throw new IOException(e);
         }
         if (splitBy == null) {
             throw new SchemaException(String.format("Cannot get the split-by column automatically, " +
@@ -92,13 +96,9 @@ public final class SplitUtils {
         }
 
         // 检查key上是否有索引
-        boolean ignoreCheckKey = options.getSourceOptions().getBoolean(RDBMSInputOptionsConf.IGNORE_SPLIT_KEY_CHECK, false);
-        try {
-            if (!ignoreCheckKey && !schemaFetcher.isIndex(splitBy)) {
-                throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, RDBMSInputOptionsConf.IGNORE_SPLIT_KEY_CHECK));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Fail to fetch key information, due to: " + ExceptionUtils.getStackTrace(e));
+        boolean ignoreCheckKey = sourceOptions.getBoolean(RDBMSInputOptionsConf.IGNORE_SPLIT_KEY_CHECK, false);
+        if (!ignoreCheckKey && schema.getIndexGroupList().contains(Sets.newHashSet(splitBy))) {
+            throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, RDBMSInputOptionsConf.IGNORE_SPLIT_KEY_CHECK));
         }
 
         ResultSet minMaxCountResult = null;
@@ -132,9 +132,9 @@ public final class SplitUtils {
 
             BaseSplitter splitter = getSplitter(
                     minMaxCountResult,
-                    columnTypeMap.get(splitBy),
+                    schema.getColumnTypeMap().get(splitBy),
                     sqlDataType,
-                    options.getSourceOptions().getBoolean(RDBMSInputOptionsConf.SPLIT_BY_HEX_STRING, false)
+                    sourceOptions.getBoolean(RDBMSInputOptionsConf.SPLIT_BY_HEX_STRING, false)
             );
 
             // 如果没有不null的行，那么直接返回一个split
@@ -153,10 +153,10 @@ public final class SplitUtils {
             long nullRowNum = manager.executeSelect(nullSql, 1, ResultSetGetter.LONG_GETTER).get(0);
             LOG.info("Null row num: " + nullRowNum);
 
-            BigDecimal maxSampleRow = options.getSourceOptions()
+            BigDecimal maxSampleRow = sourceOptions
                     .getDecimal(RDBMSInputOptionsConf.BALANCE_SPLIT_SAMPLE_MAX_ROW, null);
 
-            List<InputSplit> res = splitGetter.getSplits(minMaxCountResult, numSplits, splitBy, columnTypeMap,
+            List<InputSplit> res = splitGetter.getSplits(minMaxCountResult, numSplits, splitBy, schema.getColumnTypeMap(),
                     baseSql, splitter, maxSampleRow, manager);
 
             if (nullRowNum > 0) {

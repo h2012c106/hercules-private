@@ -1,18 +1,31 @@
 package com.xiaohongshu.db.hercules.myhub.schema;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.myhub.MyhubUtils;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.mysql.schema.MysqlSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf.IGNORE_SPLIT_KEY_CHECK;
+public class MyhubSchemaFetcher extends MysqlSchemaFetcher implements InjectedClass {
 
-public class MyhubSchemaFetcher extends RDBMSSchemaFetcher {
+    private static final Log LOG = LogFactory.getLog(MyhubSchemaFetcher.class);
 
     private boolean isShard;
+
+    @GeneralAssembly
+    private RDBMSManager manager;
+
+    public MyhubSchemaFetcher(GenericOptions options) {
+        super(options);
+    }
 
     private void initializeIsShard(GenericOptions options, RDBMSManager manager) {
         try {
@@ -22,14 +35,9 @@ public class MyhubSchemaFetcher extends RDBMSSchemaFetcher {
         }
     }
 
-    public MyhubSchemaFetcher(GenericOptions options, RDBMSDataTypeConverter converter, RDBMSManager manager) {
-        super(options, converter, manager);
-        initializeIsShard(options, manager);
-    }
-
-    public MyhubSchemaFetcher(GenericOptions options, RDBMSManager manager) {
-        super(options, manager);
-        initializeIsShard(options, manager);
+    @Override
+    public void afterInject() {
+        initializeIsShard(getOptions(), manager);
     }
 
     @Override
@@ -42,12 +50,8 @@ public class MyhubSchemaFetcher extends RDBMSSchemaFetcher {
     }
 
     @Override
-    public String getPrimaryKey() throws SQLException {
-        return null;
-    }
-
-    @Override
-    public boolean isIndex(String columnName) throws SQLException {
-        throw new RuntimeException(String.format("Myhub doesn't support fetch index info yet, please use '%s' to retry.", IGNORE_SPLIT_KEY_CHECK));
+    protected List<Set<String>> innerGetUniqueKeyGroupList() {
+        LOG.info("Myhub's unique key is not reliable, return empty.");
+        return Collections.emptyList();
     }
 }

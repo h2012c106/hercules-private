@@ -1,8 +1,9 @@
-package com.xiaohongshu.db.hercules.rdbms.schema;
+package com.xiaohongshu.db.hercules.mysql.schema;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaNegotiatorContext;
-import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,19 +12,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RDBMSSchemaNegotiatorContext extends BaseSchemaNegotiatorContext {
+import static com.xiaohongshu.db.hercules.mysql.option.MysqlOptionsConf.IGNORE_AUTOINCREMENT;
 
-    private static final Log LOG = LogFactory.getLog(RDBMSSchemaNegotiatorContext.class);
+public class MysqlSchemaNegotiatorContext extends BaseSchemaNegotiatorContext {
 
-    public RDBMSSchemaNegotiatorContext(GenericOptions options) {
+    private static final Log LOG = LogFactory.getLog(MysqlSchemaNegotiatorContext.class);
+
+    @GeneralAssembly
+    private MysqlSchemaFetcher schemaFetcher;
+
+    public MysqlSchemaNegotiatorContext(GenericOptions options) {
         super(options);
     }
 
     @Override
     public void afterReadColumnNameList(List<String> columnName) {
         // 清理autoincrement字段
-        if (getOptions().getBoolean(RDBMSOptionsConf.IGNORE_AUTOINCREMENT, false)) {
-            RDBMSSchemaFetcher schemaFetcher = (RDBMSSchemaFetcher) getSchemaFetcher();
+        if (getOptions().getBoolean(IGNORE_AUTOINCREMENT, false)) {
             Set<String> removeSet = new HashSet<>(1);
             for (String autoincrement : schemaFetcher.getAutoincrementColumn()) {
                 for (String column : columnName) {

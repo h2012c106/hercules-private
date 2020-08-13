@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import org.apache.commons.logging.Log;
@@ -14,7 +15,8 @@ import java.util.Set;
 /**
  * 仅用于从数据源fetch schema，且全局仅允许fetch一次
  */
-public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> extends SchemaFetcher {
+public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> extends SchemaFetcher
+        implements DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(BaseSchemaFetcher.class);
 
@@ -26,11 +28,12 @@ public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> exten
         this.role = options.getOptionsType().getRole();
     }
 
-    protected GenericOptions getOptions() {
+    protected final GenericOptions getOptions() {
         return options;
     }
 
-    protected DataSourceRole getRole() {
+    @Override
+    public final DataSourceRole getRole() {
         return role;
     }
 

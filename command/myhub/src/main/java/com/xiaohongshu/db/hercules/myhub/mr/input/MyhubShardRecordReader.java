@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.myhub.mr.input;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSRecordReader;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
@@ -10,16 +11,17 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 public class MyhubShardRecordReader extends MyhubRecordReader {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordReader.class);
 
-    public MyhubShardRecordReader(TaskAttemptContext context, RDBMSManager manager) {
-        super(context, manager);
+    @GeneralAssembly
+    private RDBMSManager manager;
+
+    public MyhubShardRecordReader(TaskAttemptContext context) {
+        super(context);
     }
 
     @Override

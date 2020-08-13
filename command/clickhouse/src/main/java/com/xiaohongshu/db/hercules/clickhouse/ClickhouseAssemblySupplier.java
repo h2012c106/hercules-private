@@ -8,7 +8,7 @@ import com.xiaohongshu.db.hercules.clickhouse.option.ClickhouseOutputOptionsConf
 import com.xiaohongshu.db.hercules.clickhouse.schema.ClickhouseSchemaFetcher;
 import com.xiaohongshu.db.hercules.clickhouse.schema.manager.ClickhouseManager;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
-import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;

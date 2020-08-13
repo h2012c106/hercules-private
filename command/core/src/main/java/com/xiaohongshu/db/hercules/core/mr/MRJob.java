@@ -3,9 +3,9 @@ package com.xiaohongshu.db.hercules.core.mr;
 import com.cloudera.sqoop.config.ConfigurationHelper;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
@@ -20,7 +20,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.TaskCompletionEvent;
 import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
@@ -222,10 +221,10 @@ public class MRJob {
         }
         job.setJarByClass(MRJob.class);
 
-        jobContextAsSource.configureJob(job, options);
+        jobContextAsSource.configureJob(job);
         job.setInputFormatClass(inputFormatClass);
 
-        jobContextAsTarget.configureJob(job, options);
+        jobContextAsTarget.configureJob(job);
         job.setOutputFormatClass(outputFormatClass);
 
         job.setMapperClass(HerculesMapper.class);
@@ -252,8 +251,8 @@ public class MRJob {
         job.getConfiguration().set(TMP_JARS_PROP, tmpJarsStr);
         LOG.debug(String.format("Property [%s]: %s", TMP_JARS_PROP, tmpJarsStr));
 
-        jobContextAsSource.preRun(options);
-        jobContextAsTarget.preRun(options);
+        jobContextAsSource.preRun();
+        jobContextAsTarget.preRun();
 
         PerfCounters perfCounters = new PerfCounters();
         perfCounters.startClock();
@@ -282,7 +281,7 @@ public class MRJob {
             throw new MapReduceException("The map reduce job failed.");
         }
 
-        jobContextAsSource.postRun(options);
-        jobContextAsTarget.postRun(options);
+        jobContextAsSource.postRun();
+        jobContextAsTarget.postRun();
     }
 }

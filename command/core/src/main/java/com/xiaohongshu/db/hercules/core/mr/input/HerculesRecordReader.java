@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
@@ -23,7 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @param <T> 数据源读入时用于表示一行的数据结构，详情可见{@link WrapperGetter}
  */
-public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable, HerculesWritable> {
+public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable, HerculesWritable>
+        implements DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordReader.class);
 
@@ -37,6 +39,11 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     private Schema schema;
 
     public HerculesRecordReader(TaskAttemptContext context) {
+    }
+
+    @Override
+    public final DataSourceRole getRole() {
+        return DataSourceRole.SOURCE;
     }
 
     public final void setWrapperGetterFactory(@NonNull WrapperGetterFactory<T> wrapperGetterFactory) {

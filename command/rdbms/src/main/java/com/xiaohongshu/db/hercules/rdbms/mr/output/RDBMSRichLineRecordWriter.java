@@ -1,9 +1,11 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,15 +22,17 @@ public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRichLineRecordWriter.class);
 
-    public RDBMSRichLineRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType,
-                                     RDBMSManager manager, RDBMSWrapperSetterFactory wrapperSetterFactory)
+    @SchemaInfo(role = DataSourceRole.TARGET)
+    private Schema schema;
+
+    public RDBMSRichLineRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType)
             throws Exception {
-        super(context, tableName, exportType, manager, wrapperSetterFactory);
+        super(context, tableName, exportType);
     }
 
     @Override
     protected String makeSql(String columnMask, Integer rowNum) {
-        return statementGetter.getExportSql(tableName, getSchema().getColumnNameList(), columnMask, rowNum);
+        return statementGetter.getExportSql(tableName, schema.getColumnNameList(), columnMask, rowNum);
     }
 
     @Override
@@ -49,14 +53,14 @@ public class RDBMSRichLineRecordWriter extends RDBMSRecordWriter {
         int meaningfulSeq = 0;
         for (HerculesWritable record : recordList) {
             // 排去null的下标
-            for (int i = 0; i < getSchema().getColumnNameList().size(); ++i) {
-                String columnName = getSchema().getColumnNameList().get(i);
+            for (int i = 0; i < schema.getColumnNameList().size(); ++i) {
+                String columnName = schema.getColumnNameList().get(i);
                 BaseWrapper<?> columnValue = record.get(columnName);
                 // 如果没有这列值，则meaningfulSeq不加
                 if (columnValue == null) {
                     continue;
                 }
-                WrapperSetter<PreparedStatement> setter = getWrapperSetter(columnTypeMap.get(columnName));
+                WrapperSetter<PreparedStatement> setter = getWrapperSetter(schema.getColumnTypeMap().get(columnName));
                 // meaningfulSeq + 1为prepared statement里问号的下标
                 setter.set(columnValue, preparedStatement, null, null, ++meaningfulSeq);
             }

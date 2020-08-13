@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
-import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;

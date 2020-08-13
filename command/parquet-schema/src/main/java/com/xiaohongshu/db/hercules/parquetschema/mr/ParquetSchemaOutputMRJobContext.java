@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.parquetschema.mr;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
-import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;

@@ -10,6 +10,8 @@ import java.util.List;
 
 public final class MysqlOptionsConf extends BaseOptionsConf {
 
+    public static final String IGNORE_AUTOINCREMENT = "ignore-autoincrement";
+
     private static final String DEFAULT_DRIVER_CLASS = "com.mysql.jdbc.Driver";
 
     @Override
@@ -25,6 +27,11 @@ public final class MysqlOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .defaultStringValue(DEFAULT_DRIVER_CLASS)
                 .description("The jdbc driver class name, e.g. 'com.mysql.jdbc.Driver'.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(IGNORE_AUTOINCREMENT)
+                .needArg(false)
+                .description("If specified, the AUTO_INCREMENT column will not be covered.")
                 .build());
         return tmpList;
     }

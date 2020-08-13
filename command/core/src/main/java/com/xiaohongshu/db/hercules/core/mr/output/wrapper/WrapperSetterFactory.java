@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.core.mr.output.wrapper;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
@@ -23,7 +25,7 @@ import java.util.function.Function;
 /**
  * 将数据转换策略与IO逻辑解耦
  */
-public abstract class WrapperSetterFactory<T> {
+public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(WrapperSetterFactory.class);
 
@@ -34,6 +36,11 @@ public abstract class WrapperSetterFactory<T> {
     public WrapperSetterFactory(Schema schema) {
         initializeWrapperSetterMap();
         columnTypeMap = schema.getColumnTypeMap();
+    }
+
+    @Override
+    public final DataSourceRole getRole() {
+        return DataSourceRole.TARGET;
     }
 
     private void setWrapperSetter(Map<DataType, WrapperSetter<T>> wrapperSetterMap,

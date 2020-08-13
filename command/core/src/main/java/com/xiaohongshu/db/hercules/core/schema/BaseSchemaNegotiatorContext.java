@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 
@@ -7,7 +9,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class BaseSchemaNegotiatorContext implements SchemaNegotiatorContext {
+public class BaseSchemaNegotiatorContext implements SchemaNegotiatorContext, DataSourceRoleGetter {
+
+    private final GenericOptions options;
+    private final DataSourceRole role;
+
+    public BaseSchemaNegotiatorContext(GenericOptions options) {
+        this.options = options;
+        this.role = options.getOptionsType().getRole();
+    }
+
+    protected final GenericOptions getOptions() {
+        return options;
+    }
+
+    @Override
+    public final DataSourceRole getRole() {
+        return role;
+    }
 
     @Override
     public void afterReadColumnNameList(List<String> columnName) {

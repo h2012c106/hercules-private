@@ -1,6 +1,13 @@
 package com.xiaohongshu.db.hercules.tidb.mr;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSBalanceSplitGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputSplit;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSRecordReader;
@@ -15,7 +22,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.stream.Collectors;
@@ -26,16 +32,23 @@ public class TiDBRecordReader extends RDBMSRecordReader {
 
     private static final Log LOG = LogFactory.getLog(TiDBRecordReader.class);
 
-    private final RDBMSSchemaFetcher schemaFetcher;
-
     private Long totalSize;
     private Iterator<String> querySqlIterator;
 
-    private Integer fetchSize;
+    @GeneralAssembly
+    private RDBMSManager manager;
 
-    public TiDBRecordReader(TaskAttemptContext context, RDBMSManager manager, RDBMSSchemaFetcher schemaFetcher) {
-        super(context, manager);
-        this.schemaFetcher = schemaFetcher;
+    @GeneralAssembly
+    private RDBMSSchemaFetcher schemaFetcher;
+
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
+
+    @SchemaInfo(role = DataSourceRole.SOURCE)
+    private Schema schema;
+
+    public TiDBRecordReader(TaskAttemptContext context) {
+        super(context);
     }
 
     private long getSplitSize(String querySql) throws IOException {
@@ -49,18 +62,16 @@ public class TiDBRecordReader extends RDBMSRecordReader {
 
     @Override
     protected void start(String querySql, Integer fetchSize) throws IOException {
-        this.fetchSize = fetchSize;
-
         // 查一下本split行数，根据二层split大小计算需要多少split
         totalSize = getSplitSize(querySql);
         LOG.info("Split total size: " + totalSize);
-        long splitSize = options.getSourceOptions().getLong(SECONDARY_SPLIT_SIZE, null);
+        long splitSize = sourceOptions.getLong(SECONDARY_SPLIT_SIZE, null);
         int secondaryNumSplits = OverflowUtils.numberToInteger(Math.ceil((double) totalSize / (double) splitSize));
-        SplitUtils.SplitResult secondarySplitResult = SplitUtils.split(options, schemaFetcher, secondaryNumSplits,
-                manager, querySql, columnTypeMap, new RDBMSBalanceSplitGetter());
+        SplitUtils.SplitResult secondarySplitResult = SplitUtils.split(sourceOptions, schema, schemaFetcher, secondaryNumSplits,
+                manager, querySql, new RDBMSBalanceSplitGetter());
         querySqlIterator = secondarySplitResult.getInputSplitList()
                 .stream()
-                .map(split -> makeSql(options.getSourceOptions(), (RDBMSInputSplit) split))
+                .map(split -> makeSql(sourceOptions, (RDBMSInputSplit) split))
                 .collect(Collectors.toList()).iterator();
 
         statement = null;
@@ -76,8 +87,7 @@ public class TiDBRecordReader extends RDBMSRecordReader {
     private boolean executeNewSplit() throws SQLException {
         if (querySqlIterator.hasNext()) {
             String querySql = querySqlIterator.next();
-            statement = connection.prepareStatement(querySql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-            SqlUtils.setFetchSize(statement, fetchSize);
+            statement = SqlUtils.makeReadStatement(connection, querySql);
             LOG.info("Executing query: " + querySql);
             resultSet = statement.executeQuery();
             return true;

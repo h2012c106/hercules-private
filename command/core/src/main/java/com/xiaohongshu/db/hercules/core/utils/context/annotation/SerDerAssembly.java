@@ -16,7 +16,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Documented
 public @interface SerDerAssembly {
-    DataSourceRole role();
+    DataSourceRole[] role() default {};
 
     String getMethodName() default "";
 }

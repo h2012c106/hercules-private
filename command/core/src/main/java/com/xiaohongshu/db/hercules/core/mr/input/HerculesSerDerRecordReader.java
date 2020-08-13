@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import org.apache.hadoop.io.NullWritable;
@@ -9,7 +11,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-public class HerculesSerDerRecordReader extends RecordReader<NullWritable, HerculesWritable> {
+public class HerculesSerDerRecordReader extends RecordReader<NullWritable, HerculesWritable>
+        implements DataSourceRoleGetter {
 
     private final KvSerDer<?, ?> serDer;
     private final HerculesRecordReader<?> reader;
@@ -17,6 +20,11 @@ public class HerculesSerDerRecordReader extends RecordReader<NullWritable, Hercu
     public HerculesSerDerRecordReader(KvSerDer<?, ?> serDer, HerculesRecordReader<?> reader) {
         this.serDer = serDer;
         this.reader = reader;
+    }
+
+    @Override
+    public final DataSourceRole getRole() {
+        return DataSourceRole.SOURCE;
     }
 
     @Override

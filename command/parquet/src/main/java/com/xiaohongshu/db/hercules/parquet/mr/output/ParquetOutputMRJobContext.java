@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
-import com.xiaohongshu.db.hercules.core.mr.MRJobContext;
+import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;

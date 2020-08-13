@@ -1,17 +1,24 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.google.common.base.Objects;
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.MultiThreadAsyncWriter;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFactory;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
-import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -25,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedStatement> {
+abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedStatement> implements InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordWriter.class);
 
@@ -35,13 +42,12 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
 
     protected String tableName;
 
-    private final boolean autocommit;
-    private final TransactionManager transactionManager;
-    private final Long statementPerCommit;
-    private final boolean unlimitedStatementPerCommit;
-    private final RDBMSManager manager;
+    private boolean autocommit;
+    private TransactionManager transactionManager;
+    private Long statementPerCommit;
+    private boolean unlimitedStatementPerCommit;
 
-    private final RDBMSMultiThreadAsyncWriter writer;
+    private RDBMSMultiThreadAsyncWriter writer;
 
     /**
      * 键为列mask，上游有可能送来残缺的信息（各种缺列），对不同方式缺列的record做归并
@@ -49,38 +55,51 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     private Map<String, List<HerculesWritable>> recordListMap;
     private Map<ColumnRowKey, String> sqlCache;
 
-    protected Map<String, DataType> columnTypeMap;
+    @SchemaInfo(role = DataSourceRole.TARGET)
+    private Schema schema;
+
+    @GeneralAssembly(role = DataSourceRole.TARGET)
+    private RDBMSManager manager;
+
+    @Options(type = OptionsType.TARGET)
+    private GenericOptions targetOptions;
 
     abstract protected PreparedStatement getPreparedStatement(RDBMSWorkerMission mission, Connection connection)
             throws Exception;
 
-    public RDBMSRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType,
-                             RDBMSManager manager, RDBMSWrapperSetterFactory wrapperSetterFactory)
+    public RDBMSRecordWriter(TaskAttemptContext context, String tableName, ExportType exportType)
             throws Exception {
         super(context);
 
-        this.manager = manager;
-
-        columnTypeMap = new StingyMap<>(getSchema().getColumnTypeMap());
-
         this.tableName = tableName;
-        statementGetter = StatementGetterFactory.get(exportType);
+        this.statementGetter = StatementGetterFactory.get(exportType);
+    }
 
-        recordPerStatement = options.getTargetOptions().getLong(RDBMSOutputOptionsConf.RECORD_PER_STATEMENT,
+    @Override
+    public void afterInject() {
+        super.afterInject();
+
+        schema.setColumnTypeMap(new StingyMap<>(schema.getColumnTypeMap()));
+
+        recordPerStatement = targetOptions.getLong(RDBMSOutputOptionsConf.RECORD_PER_STATEMENT,
                 RDBMSOutputOptionsConf.DEFAULT_RECORD_PER_STATEMENT);
 
         recordListMap = new HashMap<>();
         sqlCache = new HashMap<>();
 
-        autocommit = options.getTargetOptions().getBoolean(RDBMSOutputOptionsConf.AUTOCOMMIT, false);
+        autocommit = targetOptions.getBoolean(RDBMSOutputOptionsConf.AUTOCOMMIT, false);
         transactionManager = autocommit ? TransactionManager.NULL : TransactionManager.NORMAL;
-        statementPerCommit = options.getTargetOptions().getLong(RDBMSOutputOptionsConf.STATEMENT_PER_COMMIT, null);
+        statementPerCommit = targetOptions.getLong(RDBMSOutputOptionsConf.STATEMENT_PER_COMMIT, null);
         unlimitedStatementPerCommit = statementPerCommit == null;
 
-        int threadNum = options.getTargetOptions().getInteger(RDBMSOutputOptionsConf.EXECUTE_THREAD_NUM,
+        int threadNum = targetOptions.getInteger(RDBMSOutputOptionsConf.EXECUTE_THREAD_NUM,
                 RDBMSOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM);
         writer = new RDBMSMultiThreadAsyncWriter(threadNum);
-        writer.run();
+        try {
+            writer.run();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -119,7 +138,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
      */
     private String getWritableColumnMask(HerculesWritable value) {
         StringBuilder sb = new StringBuilder();
-        for (String columnName : getSchema().getColumnNameList()) {
+        for (String columnName : schema.getColumnNameList()) {
             sb.append(value.getRow().containsColumn(columnName) ? "1" : "0");
         }
         return sb.toString();

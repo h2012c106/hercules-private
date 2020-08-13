@@ -18,7 +18,7 @@ public class MysqlManager extends RDBMSManager {
 
     private static final Log LOG = LogFactory.getLog(MysqlManager.class);
 
-    private static final String ALLOW_ZERO_DATE_SQL = "set session sql_mode='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,ALLOW_INVALID_DATES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';";
+    protected static final String ALLOW_ZERO_DATE_SQL = "set session sql_mode='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,ALLOW_INVALID_DATES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';";
 
     public MysqlManager(GenericOptions options) {
         super(options);
@@ -27,14 +27,16 @@ public class MysqlManager extends RDBMSManager {
     @Override
     public Connection getConnection() throws SQLException {
         Connection res;
-        if (options.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null) == null) {
+        if (options.getOptionsType().isSource()
+                && options.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null) == null) {
             res = super.getConnection();
         } else {
             Properties properties = new Properties();
             properties.put("useCursorFetch", "true");
             res = getConnection(properties);
         }
-        if (!options.getBoolean(MysqlOutputOptionsConf.ABANDON_ZERO_DATE, false)) {
+        if (options.getOptionsType().isTarget()
+                && options.getBoolean(MysqlOutputOptionsConf.ALLOW_ZERO_DATE, false)) {
             LOG.warn("To allow the zero timestamp, execute sql: " + ALLOW_ZERO_DATE_SQL);
             Statement statement = null;
             try {

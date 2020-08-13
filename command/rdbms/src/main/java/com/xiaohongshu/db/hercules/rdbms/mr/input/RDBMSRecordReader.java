@@ -1,12 +1,16 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
@@ -21,7 +25,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 
 public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
@@ -37,13 +40,17 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
     protected ResultSet resultSet = null;
     protected HerculesWritable value;
 
-    protected RDBMSManager manager;
+    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    private RDBMSManager manager;
 
-    protected Map<String, DataType> columnTypeMap;
+    @SchemaInfo(role = DataSourceRole.SOURCE)
+    private Schema schema;
 
-    public RDBMSRecordReader(TaskAttemptContext context, RDBMSManager manager) {
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
+
+    public RDBMSRecordReader(TaskAttemptContext context) {
         super(context);
-        this.manager = manager;
     }
 
     protected String makeSql(GenericOptions sourceOptions, InputSplit split) {
@@ -56,8 +63,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
     protected void start(String querySql, Integer fetchSize) throws IOException {
         try {
             connection = manager.getConnection();
-            statement = connection.prepareStatement(querySql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-            SqlUtils.setFetchSize(statement, fetchSize);
+            statement = SqlUtils.makeReadStatement(connection, querySql, fetchSize);
             LOG.info("Executing query: " + querySql);
             resultSet = statement.executeQuery();
         } catch (SQLException e) {
@@ -70,13 +76,13 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         Configuration configuration = context.getConfiguration();
 
-        columnTypeMap = new StingyMap<>(getSchema().getColumnTypeMap());
+        schema.setColumnTypeMap(new StingyMap<>(schema.getColumnTypeMap()));
 
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
-        String querySql = makeSql(options.getSourceOptions(), split);
+        String querySql = makeSql(sourceOptions, split);
 
-        Integer fetchSize = options.getSourceOptions().getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
+        Integer fetchSize = sourceOptions.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
 
         start(querySql, fetchSize);
     }
@@ -94,11 +100,11 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
             ++pos;
 
-            int columnNum = getSchema().getColumnNameList().size();
+            int columnNum = schema.getColumnNameList().size();
             value = new HerculesWritable(columnNum);
             for (int i = 0; i < columnNum; ++i) {
-                String columnName = getSchema().getColumnNameList().get(i);
-                value.put(columnName, getWrapperGetter(columnTypeMap.get(columnName)).get(resultSet, null, null, i + 1));
+                String columnName = schema.getColumnNameList().get(i);
+                value.put(columnName, getWrapperGetter(schema.getColumnTypeMap().get(columnName)).get(resultSet, null, null, i + 1));
             }
 
             return true;

@@ -4,14 +4,15 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.mysql.mr.MysqlOutputMRJobContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
+import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputMRJobContext;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFactory;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOutputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
+import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -21,19 +22,26 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 
-public class TiDBOutputMRJobContext extends MysqlOutputMRJobContext {
+public class TiDBOutputMRJobContext extends RDBMSOutputMRJobContext {
 
     private static final Log LOG = LogFactory.getLog(TiDBOutputMRJobContext.class);
 
+    @GeneralAssembly
+    private RDBMSManager manager;
+
+    public TiDBOutputMRJobContext(GenericOptions options) {
+        super(options);
+    }
+
     @Override
-    public void postRun(WrappingOptions options) {
-        GenericOptions targetOptions = options.getTargetOptions();
+    public void postRun() {
+        GenericOptions targetOptions = getOptions();
         if (targetOptions.hasProperty(RDBMSOutputOptionsConf.STAGING_TABLE)) {
             String stagingTable = targetOptions.getString(RDBMSOutputOptionsConf.STAGING_TABLE, null);
             Connection connection = null;
             Statement statement = null;
             try {
-                connection = generateManager(targetOptions).getConnection();
+                connection = manager.getConnection();
                 connection.setAutoCommit(true);
                 statement = connection.createStatement();
 

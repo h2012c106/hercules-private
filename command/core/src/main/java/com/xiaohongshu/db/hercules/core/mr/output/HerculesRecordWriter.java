@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.core.mr.output;
 
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
@@ -29,7 +30,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @param <T> 数据源写出时用于表示一行的数据结构，详情可见{@link WrapperSetter}
  */
-public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable, HerculesWritable> implements InjectedClass {
+public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable, HerculesWritable>
+        implements InjectedClass, DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordWriter.class);
 
@@ -49,6 +51,11 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
     private double acquireTime = 0;
 
     public HerculesRecordWriter(TaskAttemptContext context) {
+    }
+
+    @Override
+    public final DataSourceRole getRole() {
+        return DataSourceRole.TARGET;
     }
 
     @Override

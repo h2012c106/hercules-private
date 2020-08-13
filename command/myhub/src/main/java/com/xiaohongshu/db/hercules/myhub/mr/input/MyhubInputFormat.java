@@ -2,9 +2,12 @@ package com.xiaohongshu.db.hercules.myhub.mr.input;
 
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.myhub.MyhubUtils;
 import com.xiaohongshu.db.hercules.myhub.schema.MyhubSchemaFetcher;
-import com.xiaohongshu.db.hercules.mysql.mr.MysqlInputFormat;
+import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
@@ -24,11 +27,17 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MyhubInputFormat extends MysqlInputFormat {
+public class MyhubInputFormat extends RDBMSInputFormat {
 
     private static final Log LOG = LogFactory.getLog(MyhubInputFormat.class);
 
     private static final String IS_SHARD_PROPERTY_NAME = "hercules.myhub.table.shard";
+
+    @GeneralAssembly
+    private RDBMSManager manager;
+
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions options;
 
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
@@ -93,14 +102,9 @@ public class MyhubInputFormat extends MysqlInputFormat {
         }
         boolean isShard = configuration.getBoolean(IS_SHARD_PROPERTY_NAME, false);
         if (!isShard) {
-            return new MyhubRecordReader(context, manager);
+            return new MyhubRecordReader(context);
         } else {
-            return new MyhubShardRecordReader(context, manager);
+            return new MyhubShardRecordReader(context);
         }
-    }
-
-    @Override
-    protected RDBMSSchemaFetcher initializeSchemaFetcher(GenericOptions options, RDBMSDataTypeConverter converter, RDBMSManager manager) {
-        return new MyhubSchemaFetcher(options, converter, manager);
     }
 }

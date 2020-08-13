@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.mr.input;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
@@ -20,7 +21,8 @@ import org.apache.hadoop.mapreduce.*;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, HerculesWritable> {
+public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, HerculesWritable>
+        implements DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
@@ -38,6 +40,11 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
 
     @SerDerAssembly(role = DataSourceRole.SOURCE)
     private KvSerDer<?, ?> kvSerDer;
+
+    @Override
+    public final DataSourceRole getRole() {
+        return DataSourceRole.SOURCE;
+    }
 
     abstract protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException;
 
