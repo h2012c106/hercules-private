@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * 仅用于从数据源fetch schema，且全局仅允许fetch一次
  */
-public abstract class BaseSchemaFetcher<T extends DataTypeConverter<?, ?>> extends SchemaFetcher
+public abstract class BaseSchemaFetcher extends SchemaFetcher
         implements DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(BaseSchemaFetcher.class);

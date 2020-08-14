@@ -9,7 +9,6 @@ import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -23,50 +22,21 @@ public class HBaseManager {
     private static final Log LOG = LogFactory.getLog(HBaseManager.class);
 
     private final GenericOptions options;
-    private volatile static Connection conn;
-    private Configuration conf = null;
+    private volatile Connection conn;
 
     public HBaseManager(GenericOptions options) {
         this.options = options;
     }
 
-    public Connection getConnection() throws IOException {
+    public Connection getConnection(Configuration configuration) throws IOException {
         if (null == conn) {
             synchronized (Connection.class) {
                 if (null == conn) {
-                    conn = ConnectionFactory.createConnection(getConf());
+                    conn = ConnectionFactory.createConnection(configuration);
                 }
             }
         }
         return conn;
-    }
-
-    /**
-     * 配置基本的链接数据库的参数，后续通过{@link #genScan}来进行详细的配置Scan
-     */
-    public void setBasicConf() {
-
-        conf.set("hbase.zookeeper.quorum", options.getString(HBaseOptionsConf.HB_ZK_QUORUM, null));
-        conf.set("hbase.zookeeper.property.clientPort", options.getString(HBaseOptionsConf.HB_ZK_PORT, "2181"));
-        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
-    }
-
-    public Configuration getConf() {
-
-        if (conf != null) {
-            return conf;
-        }
-        conf = new Configuration();
-        setBasicConf();
-        return conf;
-    }
-
-    public List<RegionInfo> getRegionInfo(String tn) throws IOException {
-
-        Admin admin = getConnection().getAdmin();
-        List<RegionInfo> rsInfo = admin.getRegions(TableName.valueOf(tn));
-        admin.close();
-        return rsInfo;
     }
 
     public void closeConnection() throws IOException {
@@ -75,14 +45,18 @@ public class HBaseManager {
         }
     }
 
-    public Table getHtable() throws IOException {
-        Connection conn = getConnection();
-        System.out.println(options.getString(HBaseOptionsConf.TABLE, null));
-        return conn.getTable(TableName.valueOf(options.getString(HBaseOptionsConf.TABLE, null)));
+    public static List<RegionInfo> getRegionInfo(Connection connection, String tn) throws IOException {
+        Admin admin = connection.getAdmin();
+        List<RegionInfo> rsInfo = admin.getRegions(TableName.valueOf(tn));
+        admin.close();
+        return rsInfo;
     }
 
-    public Scan genScan(Scan scan, String startKey, String endKey) throws IOException {
+    public static Table getHtable(Connection connection, String tableName) throws IOException {
+        return connection.getTable(TableName.valueOf(tableName));
+    }
 
+    public static Scan genScan(Scan scan, String startKey, String endKey, GenericOptions options) throws IOException {
         scan.withStartRow(Bytes.toBytes(startKey))
                 .withStopRow(Bytes.toBytes(endKey));
         String scanColumnFamily = options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, null);
@@ -101,7 +75,7 @@ public class HBaseManager {
         if (null != options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)) {
             scan.setBatch(options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null));
         }
-        List<String> scanColumns = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, new String[]{}));
+        List<String> scanColumns = Arrays.asList(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0]));
         if (scanColumns.size() != 0) {
             for (String qualifier : scanColumns) {
                 scan.addColumn(Bytes.toBytes(scanColumnFamily), Bytes.toBytes(qualifier));
@@ -112,11 +86,13 @@ public class HBaseManager {
         return scan;
     }
 
-    public static void setTargetConf(Configuration conf, GenericOptions targetOptions) {
+    public static void setBasicConf(Configuration conf, GenericOptions targetOptions) {
+        conf.set("hbase.zookeeper.quorum", targetOptions.getString(HBaseOptionsConf.HB_ZK_QUORUM, null));
+        conf.set("hbase.zookeeper.property.clientPort", targetOptions.getString(HBaseOptionsConf.HB_ZK_PORT, "2181"));
+        conf.set("zookeeper.znode.parent", "/hbase-unsecure");
+    }
 
-        HBaseManager.setConfParam(conf, HBaseOutputOptionsConf.COLUMN_FAMILY, targetOptions, true);
-        HBaseManager.setConfParam(conf, HBaseOptionsConf.TABLE, targetOptions, true);
-        HBaseManager.setConfParam(conf, HBaseOptionsConf.ROW_KEY_COL_NAME, targetOptions, true);
+    public static void setTargetConf(Configuration conf, GenericOptions targetOptions) {
         conf.setInt("hbase.htable.threads.max",
                 targetOptions.getInteger(HBaseOutputOptionsConf.MAX_WRITE_THREAD_NUM, HBaseOutputOptionsConf.DEFAULT_MAX_WRITE_THREAD_NUM));
         conf.setLong("hbase.mapreduce.writebuffersize",
@@ -130,31 +106,29 @@ public class HBaseManager {
         }
     }
 
-    public static Table getTable(Configuration conf, HBaseManager manager) throws IOException {
-        String userTable = conf.get(HBaseOptionsConf.TABLE);
-        TableName hTableName = TableName.valueOf(userTable);
-        return manager.getConnection().getTable(hTableName);
+    public static Table getTable(String tableName, Connection connection) throws IOException {
+        TableName hTableName = TableName.valueOf(tableName);
+        return connection.getTable(hTableName);
     }
 
     /**
      * 通过配置好的conf以及manager来获取BufferedMutator(Async).
      */
-    public static BufferedMutator getBufferedMutator(Configuration conf, HBaseManager manager) throws IOException {
-        String userTable = conf.get(HBaseOptionsConf.TABLE);
-        long writeBufferSize = conf.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE);
-        Connection hConnection = manager.getConnection();
+    public static BufferedMutator getBufferedMutator(GenericOptions options, Connection connection, Configuration configuration) throws IOException {
+        String userTable = options.getString(HBaseOptionsConf.TABLE, null);
+        long writeBufferSize = options.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE);
         TableName hTableName = TableName.valueOf(userTable);
         Admin admin = null;
         BufferedMutator bufferedMutator;
         try {
-            admin = hConnection.getAdmin();
-            bufferedMutator = hConnection.getBufferedMutator(
+            admin = connection.getAdmin();
+            bufferedMutator = connection.getBufferedMutator(
                     new BufferedMutatorParams(hTableName)
-                            .pool(HTable.getDefaultExecutor(conf))
+                            .pool(HTable.getDefaultExecutor(configuration))
                             .writeBufferSize(writeBufferSize));
         } catch (Exception e) {
             closeAdmin(admin);
-            closeConnection(hConnection);
+            closeConnection(connection);
             throw new RuntimeException("Failed to create BufferedMutator");
         }
         return bufferedMutator;

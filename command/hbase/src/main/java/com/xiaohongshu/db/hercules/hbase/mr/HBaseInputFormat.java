@@ -1,21 +1,22 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
-import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
-import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
 import com.xiaohongshu.db.hercules.core.utils.StingyMap;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
-import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManagerInitializer;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,22 +36,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
+import static com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf.TABLE;
+
 /**
  * 通过获取的regions list 来生成splits。最少一个region对应一个split
  */
-public class HBaseInputFormat extends HerculesInputFormat<byte[]> implements HBaseManagerInitializer {
+public class HBaseInputFormat extends HerculesInputFormat<byte[]> {
 
     private static final Log LOG = LogFactory.getLog(HBaseInputFormat.class);
+
+    @GeneralAssembly
     private HBaseManager manager;
+
+    @Options(type = OptionsType.SOURCE)
     private GenericOptions sourceOptions;
 
-    @SneakyThrows
-    @Override
-    protected void initializeContext(GenericOptions sourceOptions) {
-        super.initializeContext(sourceOptions);
-        this.sourceOptions = sourceOptions;
-        manager = initializeManager(sourceOptions);
-    }
+    private Connection connection;
 
     /**
      * split策略：默认一个region对应一个split，指定 num—mapper 后，可以合并region生成新的split。
@@ -58,7 +59,8 @@ public class HBaseInputFormat extends HerculesInputFormat<byte[]> implements HBa
     @Override
     protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException {
         List<InputSplit> splits = new ArrayList<>();
-        List<RegionInfo> rsInfo = manager.getRegionInfo(sourceOptions.getString(HBaseOptionsConf.TABLE, null));
+        Connection connection = manager.getConnection(context.getConfiguration());
+        List<RegionInfo> rsInfo = HBaseManager.getRegionInfo(connection, sourceOptions.getString(TABLE, null));
         for (RegionInfo r : rsInfo) {
             String startKey = Bytes.toString(r.getStartKey());
             String endKey = Bytes.toString(r.getEndKey());
@@ -160,11 +162,6 @@ public class HBaseInputFormat extends HerculesInputFormat<byte[]> implements HBa
     protected WrapperGetterFactory<byte[]> createWrapperGetterFactory() {
         return new HBaseInputWrapperManager();
     }
-
-    @Override
-    public HBaseManager initializeManager(GenericOptions options) {
-        return new HBaseManager(options);
-    }
 }
 
 class HBaseSplit extends InputSplit implements Writable {
@@ -224,30 +221,36 @@ class HBaseSplit extends InputSplit implements Writable {
     }
 }
 
-class HBaseRecordReader extends HerculesRecordReader<byte[]> {
+class HBaseRecordReader extends HerculesRecordReader<byte[]> implements InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(HBaseRecordReader.class);
-    private final HBaseManager manager;
+
     private final String rowKeyCol;
     private ResultScanner scanner;
     private Result value;
-    private final KvSerializerSupplier kvSerializerSupplier;
     private String columnFamily;
 
     private List<String> columnNameList;
-    private Map<String, DataType> columnTypeMap;
+
+    @GeneralAssembly
+    private final HBaseManager manager = null;
+
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions options;
+
+    @SchemaInfo
+    private Schema schema;
 
     @SneakyThrows
     public HBaseRecordReader(TaskAttemptContext context, HBaseManager manager, String rowKeyCol) {
         super(context);
-        this.manager = manager;
         this.rowKeyCol = rowKeyCol;
-        this.kvSerializerSupplier = (KvSerializerSupplier) Class.forName(options.getSourceOptions().getString(KvOptionsConf.SUPPLIER, "")).newInstance();
-        this.columnFamily = options.getSourceOptions().getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, "");
-        // 测试用
-//        manager.InsertTestDataToHBaseTable();
-        this.columnNameList = getSchema().getColumnNameList();
-        this.columnTypeMap = new StingyMap<>(getSchema().getColumnTypeMap());
+    }
+
+    @Override
+    public void afterInject() {
+        this.columnFamily = options.getString(HBaseInputOptionsConf.SCAN_COLUMN_FAMILY, "");
+        schema.setColumnTypeMap(new StingyMap<>(schema.getColumnTypeMap()));
     }
 
     /**
@@ -256,11 +259,12 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
     @Override
     protected void myInitialize(InputSplit split, TaskAttemptContext context) throws IOException {
         HBaseSplit hbaseSplit = (HBaseSplit) split;
-        Table table = manager.getHtable();
+        Connection connection = manager.getConnection(context.getConfiguration());
+        Table table = HBaseManager.getHtable(connection, options.getString(TABLE, null));
         Scan scan = new Scan();
-        scanner = table.getScanner(manager.genScan(scan, hbaseSplit.getStartKey(), hbaseSplit.getEndKey()));
+        scanner = table.getScanner(HBaseManager.genScan(scan, hbaseSplit.getStartKey(), hbaseSplit.getEndKey(), options));
 
-        List<String> temp = new ArrayList<>(columnNameList);
+        List<String> temp = new ArrayList<>(schema.getColumnNameList());
         temp.remove(rowKeyCol);
         columnNameList = temp;
         if (columnNameList.size() == 0) {
@@ -282,30 +286,28 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
     @Override
     protected HerculesWritable innerGetCurrentValue() {
         HerculesWritable record;
-        if (kvSerializerSupplier instanceof BlankKvConverterSupplier) {
-            int columnNum = columnNameList.size();
-            record = new HerculesWritable(columnNum);
-            // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
-            getLatestRecord(record, columnNum);
-        } else {
-            record = getConvertedLatestRecord();
-        }
+
+        int columnNum = columnNameList.size();
+        record = new HerculesWritable(columnNum);
+        getLatestRecord(record, columnNum);
+
+        // 如果用户指定了 row key col，则将 row key col 存入 HerculesWritable 并传到下游,否则则抛弃
         if (rowKeyCol != null) {
             record.put(rowKeyCol, BytesWrapper.get(value.getRow()));
         }
         return record;
     }
 
-    protected HerculesWritable getConvertedLatestRecord() throws IOException {
-        NavigableMap<byte[], NavigableMap<byte[], byte[]>> familyColMap = value.getNoVersionMap();
-        NavigableMap<byte[], byte[]> colValMap = familyColMap.get(columnFamily.getBytes());
-        String qualifier = options.getSourceOptions().getString(HBaseInputOptionsConf.KV_COLUMN, "");
-        byte[] val = colValMap.get(Bytes.toBytes(qualifier));
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("QUALIFIER: " + qualifier);
-        }
-        return kvSerializerSupplier.getKvSerializer().generateHerculesWritable(val, options.getSourceOptions());
-    }
+//    protected HerculesWritable getConvertedLatestRecord() throws IOException {
+//        NavigableMap<byte[], NavigableMap<byte[], byte[]>> familyColMap = value.getNoVersionMap();
+//        NavigableMap<byte[], byte[]> colValMap = familyColMap.get(columnFamily.getBytes());
+//        String qualifier = options.getSourceOptions().getString(HBaseInputOptionsConf.KV_COLUMN, "");
+//        byte[] val = colValMap.get(Bytes.toBytes(qualifier));
+//        if (LOG.isDebugEnabled()) {
+//            LOG.debug("QUALIFIER: " + qualifier);
+//        }
+//        return kvSerializerSupplier.getKvSerializer().generateHerculesWritable(val, options.getSourceOptions());
+//    }
 
     @Override
     public boolean innerNextKeyValue() throws IOException, InterruptedException {
@@ -324,10 +326,10 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> {
             for (int i = 0; i < columnNum; i++) {
                 String qualifier = columnNameList.get(i);
                 byte[] val = colValMap.get(Bytes.toBytes(qualifier));
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("QUALIFIER: " + qualifier);
-                }
-                record.put(qualifier, getWrapperGetter(columnTypeMap.get(qualifier)).get(val, qualifier, "", 0));
+//                if (LOG.isDebugEnabled()) {
+//                    LOG.debug("QUALIFIER: " + qualifier);
+//                }
+                record.put(qualifier, getWrapperGetter(schema.getColumnTypeMap().get(qualifier)).get(val, null, null, 0));
             }
         }
     }

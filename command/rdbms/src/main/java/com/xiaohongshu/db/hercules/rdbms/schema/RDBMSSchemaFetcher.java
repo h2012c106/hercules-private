@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_TYPE;
 
-public class RDBMSSchemaFetcher extends BaseSchemaFetcher<RDBMSDataTypeConverter> {
+public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
 
     private static final Log LOG = LogFactory.getLog(RDBMSSchemaFetcher.class);
 

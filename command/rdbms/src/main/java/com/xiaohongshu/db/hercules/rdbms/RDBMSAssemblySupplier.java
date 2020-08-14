@@ -2,12 +2,11 @@ package com.xiaohongshu.db.hercules.rdbms;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
-import com.xiaohongshu.db.hercules.core.mr.context.NullMRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.OptionsConf;
-import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
+import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
@@ -26,32 +25,32 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier {
     private static final Log LOG = LogFactory.getLog(RDBMSAssemblySupplier.class);
 
     @Override
-    public DataSource innerGetDataSource() {
+    protected DataSource innerGetDataSource() {
         return new RDBMSDataSource();
     }
 
     @Override
-    public OptionsConf innerGetInputOptionsConf() {
+    protected OptionsConf innerGetInputOptionsConf() {
         return new RDBMSInputOptionsConf();
     }
 
     @Override
-    public OptionsConf innerGetOutputOptionsConf() {
+    protected OptionsConf innerGetOutputOptionsConf() {
         return new RDBMSOutputOptionsConf();
     }
 
     @Override
-    public Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
+    protected Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
         return RDBMSInputFormat.class;
     }
 
     @Override
-    public Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass() {
+    protected Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass() {
         return RDBMSOutputFormat.class;
     }
 
     @Override
-    public BaseSchemaFetcher<?> innerGetSchemaFetcher() {
+    protected SchemaFetcher innerGetSchemaFetcher() {
         return new RDBMSSchemaFetcher(options);
     }
 
@@ -61,7 +60,7 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier {
     }
 
     @Override
-    public MRJobContext innerGetJobContextAsTarget() {
+    protected MRJobContext innerGetJobContextAsTarget() {
         return new RDBMSOutputMRJobContext(options);
     }
 
@@ -73,7 +72,7 @@ public class RDBMSAssemblySupplier extends BaseAssemblySupplier {
 
     synchronized public final RDBMSManager getManager() {
         if (manager == null) {
-            LOG.debug(String.format("Initializing InputOptionsConf of [%s]...", getClass().getSimpleName()));
+            LOG.debug(String.format("Initializing RDBMSManager of [%s]...", getClass().getSimpleName()));
             manager = innerGetManager();
             HerculesContext.instance().inject(manager);
         }

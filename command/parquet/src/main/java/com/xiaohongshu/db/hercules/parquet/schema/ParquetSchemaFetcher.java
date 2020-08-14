@@ -27,7 +27,7 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf.DELETE_TARGET_DIR;
 
-public class ParquetSchemaFetcher extends BaseSchemaFetcher<ParquetDataTypeConverter> {
+public class ParquetSchemaFetcher extends BaseSchemaFetcher {
 
     private static final Log LOG = LogFactory.getLog(ParquetSchemaFetcher.class);
 

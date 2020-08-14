@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedStatement> implements InjectedClass {
+abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedStatement> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordWriter.class);
 
@@ -76,9 +76,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     }
 
     @Override
-    public void afterInject() {
-        super.afterInject();
-
+    public void innerAfterInject() {
         schema.setColumnTypeMap(new StingyMap<>(schema.getColumnTypeMap()));
 
         recordPerStatement = targetOptions.getLong(RDBMSOutputOptionsConf.RECORD_PER_STATEMENT,

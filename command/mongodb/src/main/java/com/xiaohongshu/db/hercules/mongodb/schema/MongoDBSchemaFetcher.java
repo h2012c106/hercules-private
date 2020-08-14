@@ -12,7 +12,7 @@ import java.util.*;
 import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf.COLLECTION;
 import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf.DATABASE;
 
-public class MongoDBSchemaFetcher extends BaseSchemaFetcher<MongoDBDataTypeConverter> {
+public class MongoDBSchemaFetcher extends BaseSchemaFetcher {
 
     public MongoDBSchemaFetcher(GenericOptions options) {
         super(options);

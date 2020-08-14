@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class KafkaSchemaFetcher extends BaseSchemaFetcher<KafkaDataTypeConverter> {
+public class KafkaSchemaFetcher extends BaseSchemaFetcher {
 
     public KafkaSchemaFetcher(GenericOptions options, KafkaDataTypeConverter converter) {
         super(options, converter);

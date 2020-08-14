@@ -13,17 +13,17 @@ import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 public class MysqlAssemblySupplier extends RDBMSAssemblySupplier {
 
     @Override
-    public DataSource innerGetDataSource() {
+    protected DataSource innerGetDataSource() {
         return new MysqlDataSource();
     }
 
     @Override
-    public OptionsConf innerGetInputOptionsConf() {
+    protected OptionsConf innerGetInputOptionsConf() {
         return new MysqlInputOptionsConf();
     }
 
     @Override
-    public OptionsConf innerGetOutputOptionsConf() {
+    protected OptionsConf innerGetOutputOptionsConf() {
         return new MysqlOutputOptionsConf();
     }
 

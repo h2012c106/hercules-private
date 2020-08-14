@@ -33,9 +33,7 @@ public class ParquetRecordWriter extends HerculesRecordWriter<Group> implements 
     }
 
     @Override
-    public void afterInject() {
-        super.afterInject();
-
+    public void innerAfterInject() {
         // 不用担心NPE，横竖这里都有了
         MessageType messageType = MessageTypeParser.parseMessageType(options.getString(MESSAGE_TYPE, null));
         groupFactory = new SimpleGroupFactory(messageType);

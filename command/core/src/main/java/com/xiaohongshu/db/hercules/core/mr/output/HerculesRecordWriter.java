@@ -58,8 +58,11 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         return DataSourceRole.TARGET;
     }
 
+    protected void innerAfterInject() {
+    }
+
     @Override
-    public void afterInject() {
+    public final void afterInject() {
         if (commonOptions.hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
             double qps = commonOptions.getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
             LOG.info("The map max qps is limited to: " + qps);

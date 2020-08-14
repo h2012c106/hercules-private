@@ -55,9 +55,7 @@ public class MongoDBRecordWriter extends HerculesRecordWriter<Document> implemen
     }
 
     @Override
-    public void afterInject() {
-        super.afterInject();
-
+    public void innerAfterInject() {
         client = MongoDBUtils.getConnection(targetOptions);
 
         dbName = targetOptions.getString(MongoDBOptionsConf.DATABASE, null);

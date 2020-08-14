@@ -96,7 +96,7 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
     public void innerValidateOptions(GenericOptions options) {
         String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if (rowKeyCol != null) {
-            List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+            List<String> columnNameList = Arrays.asList(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, null));
             if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {
                 throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
             }

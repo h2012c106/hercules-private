@@ -1,29 +1,33 @@
 package com.xiaohongshu.db.hercules.hbase.schema;
 
+import com.google.common.collect.Sets;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import lombok.SneakyThrows;
 
 import java.sql.*;
 import java.util.*;
 
-public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter> {
+public class HBaseSchemaFetcher extends BaseSchemaFetcher {
 
     private final List<String> columnNameList = new ArrayList<>();
     private final Map<String, DataType> columnTypeMap = new HashMap<>();
 
+    @GeneralAssembly
+    private HBaseDataTypeConverter dataTypeConverter;
+
     @SneakyThrows
-    public HBaseSchemaFetcher(GenericOptions options, HBaseDataTypeConverter converter) {
-        super(options, converter);
+    public HBaseSchemaFetcher(GenericOptions options) {
+        super(options);
 //        initHiveMetaInfo();
     }
 
     // 如果 HBase 的 ColumnTypeMap 由用户全部指定，不需要从数据库中获取。
     private void initHiveMetaInfo() throws SQLException, ClassNotFoundException {
-
         String url = getOptions().getString(HBaseOptionsConf.HIVE_METASTORE_URL, "");
         if (url.equals("")) {
             return;
@@ -46,22 +50,36 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher<HBaseDataTypeConverter
 
         while (resultSet.next()) {
             String columnName = resultSet.getString(1);
-            columnTypeMap.put(columnName, converter.hbaseConvertElementType(resultSet.getString(2)));
+            columnTypeMap.put(columnName, dataTypeConverter.hbaseConvertElementType(resultSet.getString(2)));
             columnNameList.add(columnName);
         }
     }
 
     @Override
-    protected List<String> getColumnNameList() {
+    protected List<String> innerGetColumnNameList() {
         return columnNameList;
     }
 
-    public Map<String, DataType> getColumnTypeMap(Set<String> columnNameSet) {
-
+    @Override
+    public Map<String, DataType> innerGetColumnTypeMap() {
         String rowKeyCol = getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
         if (rowKeyCol != null) {
             columnTypeMap.put(rowKeyCol, BaseDataType.BYTES);
         }
         return columnTypeMap;
+    }
+
+    @Override
+    protected List<Set<String>> innerGetIndexGroupList() {
+        List<Set<String>> res = new LinkedList<>();
+        res.add(Sets.newHashSet(getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null)));
+        return res;
+    }
+
+    @Override
+    protected List<Set<String>> innerGetUniqueKeyGroupList() {
+        List<Set<String>> res = new LinkedList<>();
+        res.add(Sets.newHashSet(getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null)));
+        return res;
     }
 }

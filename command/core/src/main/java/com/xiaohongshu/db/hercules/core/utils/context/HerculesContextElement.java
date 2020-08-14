@@ -162,7 +162,7 @@ public enum HerculesContextElement {
 
     private static DataSourceRole getRole(DataSourceRole[] annotationRole, DataSourceRole classRole) {
         if (annotationRole.length == 0 && classRole == null) {
-            throw new RuntimeException("Cannot inject a object field without annotation role or class role.");
+            throw new RuntimeException("Cannot inject a object field without annotation role or class role (specified by DataSourceRoleGetter interface).");
         }
         // 优先用用户注解配置
         if (annotationRole.length > 0) {

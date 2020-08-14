@@ -23,7 +23,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-public class KafkaOutPutFormat extends HerculesOutputFormat implements KafkaManagerInitializer {
+public class KafkaOutPutFormat extends HerculesOutputFormat {
 
     @SneakyThrows
     @Override

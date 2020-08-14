@@ -66,7 +66,6 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
                 .list(true)
                 .listDelimiter(COLUMN_DELIMITER)
                 .build());
-<<<<<<< HEAD:command/hbase/src/main/java/com/xiaohongshu/db/hercules/hbase/option/HBaseOptionsConf.java
 //        tmpList.add(SingleOptionConf.builder()
 //                .name(HIVE_USER)
 //                .needArg(true)
@@ -87,28 +86,6 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
 //                .needArg(true)
 //                .description("JDBC url to connect hive metastore(mysql).")
 //                .build());
-=======
-        tmpList.add(SingleOptionConf.builder()
-                .name(HIVE_USER)
-                .needArg(true)
-                .description("User name used to connect Hive metastore.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(HIVE_PASSWD)
-                .needArg(true)
-                .description("Password use to connect Hive metastore")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(HIVE_TABLE)
-                .needArg(true)
-                .description("The table name used to specify hive table. Default it would be the the same as HBase table.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(HIVE_METASTORE_URL)
-                .needArg(true)
-                .description("JDBC url to connect hive metastore(mysql).")
-                .build());
->>>>>>> feature/kafkaWriter:src/main/java/com/xiaohongshu/db/hercules/hbase/option/HBaseOptionsConf.java
         return tmpList;
     }
 

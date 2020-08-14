@@ -40,9 +40,8 @@ public class RDBMSUpdateRecordWriter extends RDBMSRecordWriter implements Inject
     }
 
     @Override
-    public void afterInject() {
-        super.afterInject();
-
+    public void innerAfterInject() {
+        super.innerAfterInject();
         updateKeyList = Arrays.asList(targetOptions.getTrimmedStringArray(RDBMSOutputOptionsConf.UPDATE_KEY, null));
     }
 
