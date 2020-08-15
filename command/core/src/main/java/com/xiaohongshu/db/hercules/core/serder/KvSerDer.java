@@ -24,24 +24,28 @@ public abstract class KvSerDer<I, O> {
     protected WrapperGetterFactory<I> wrapperGetterFactory;
     protected WrapperSetterFactory<O> wrapperSetterFactory;
 
+    private String keyName;
+    private String valueName;
+
     public KvSerDer(WrapperGetterFactory<I> wrapperGetterFactory, WrapperSetterFactory<O> wrapperSetterFactory) {
         this.wrapperGetterFactory = wrapperGetterFactory;
         this.wrapperSetterFactory = wrapperSetterFactory;
+    }
+
+    public void setKeyName(String keyName) {
+        this.keyName = keyName;
+    }
+
+    public void setValueName(String valueName) {
+        this.valueName = valueName;
     }
 
     abstract protected void readKey(BaseWrapper<?> inKey, HerculesWritable out);
 
     abstract protected void readValue(BaseWrapper<?> inValue, HerculesWritable out);
 
-    abstract protected String getReadKeyColumnName();
-
-    abstract protected String getReadValueColumnName();
-
     public final HerculesWritable read(HerculesWritable in) {
         HerculesWritable out = new HerculesWritable();
-        // TODO 搞个kvreader里把key和value列在writable里的列名搞成常量
-        String keyName = getReadKeyColumnName();
-        String valueName = getReadValueColumnName();
         BaseWrapper<?> key = in.get(keyName);
         BaseWrapper<?> value = in.get(valueName);
         // 上游给一对kv，其中有一个值不存在，则认为这行没意义，不予处理
@@ -60,16 +64,10 @@ public abstract class KvSerDer<I, O> {
 
     abstract protected BaseWrapper<?> writeValue(HerculesWritable in);
 
-    abstract protected String getWriteKeyColumnName();
-
-    abstract protected String getWriteValueColumnName();
-
     public final HerculesWritable write(HerculesWritable in) {
         HerculesWritable out = new HerculesWritable(2);
         BaseWrapper<?> key = writeKey(in);
         BaseWrapper<?> value = writeValue(in);
-        String keyName = getWriteKeyColumnName();
-        String valueName = getWriteValueColumnName();
         // 转出一对kv，其中有一个值不存在，则认为这行没意义，不予写下游
         if (key == null || value == null) {
             if (LOG.isDebugEnabled()) {
