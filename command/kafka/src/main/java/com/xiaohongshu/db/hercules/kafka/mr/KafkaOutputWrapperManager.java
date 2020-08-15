@@ -56,12 +56,12 @@ public class KafkaOutputWrapperManager extends WrapperSetterFactory<KafkaKV> {
         return new BaseTypeWrapperSetter.StringSetter<KafkaKV>() {
             @Override
             protected void setNull(KafkaKV row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.set(KafkaKV.KafkaKVValue.initialize(getType(), null), columnName);
+                row.set(KafkaKV.KafkaKVValue.initialize(getType(), null), columnSeq);
             }
 
             @Override
             protected void setNonnullValue(String value, KafkaKV row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.set(KafkaKV.KafkaKVValue.initialize(getType(), value), columnName);
+                row.set(KafkaKV.KafkaKVValue.initialize(getType(), value), columnSeq);
             }
         };
     }
@@ -86,12 +86,12 @@ public class KafkaOutputWrapperManager extends WrapperSetterFactory<KafkaKV> {
         return new BaseTypeWrapperSetter.BytesSetter<KafkaKV>() {
             @Override
             protected void setNull(KafkaKV row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.set(KafkaKV.KafkaKVValue.initialize(getType(), null), columnName);
+                row.set(KafkaKV.KafkaKVValue.initialize(getType(), null), columnSeq);
             }
 
             @Override
             protected void setNonnullValue(byte[] value, KafkaKV row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.set(KafkaKV.KafkaKVValue.initialize(getType(), value), columnName);
+                row.set(KafkaKV.KafkaKVValue.initialize(getType(), value), columnSeq);
             }
         };
     }
