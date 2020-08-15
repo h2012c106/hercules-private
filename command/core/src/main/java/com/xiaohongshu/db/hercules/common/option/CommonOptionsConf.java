@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.common.option;
 
 import com.alibaba.fastjson.JSONObject;
-import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN;
 
 /**
  * 千万不能出现以"source-"或"target-"开头的通用配置，大多数情况没问题，但是万一和源或目标端的参数碰了

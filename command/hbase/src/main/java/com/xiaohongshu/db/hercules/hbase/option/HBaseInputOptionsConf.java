@@ -2,6 +2,9 @@ package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.*;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 
 import java.util.ArrayList;
 import java.util.Arrays;

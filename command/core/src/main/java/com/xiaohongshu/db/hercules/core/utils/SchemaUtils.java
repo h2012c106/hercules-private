@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
 public final class SchemaUtils {
 

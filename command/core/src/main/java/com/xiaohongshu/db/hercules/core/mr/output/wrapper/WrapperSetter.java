@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.core.mr.output.wrapper;
 
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import lombok.NonNull;
 

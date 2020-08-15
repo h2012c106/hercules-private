@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.parquet.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.BaseOutputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;

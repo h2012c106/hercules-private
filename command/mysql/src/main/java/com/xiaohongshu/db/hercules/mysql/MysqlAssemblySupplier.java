@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.mysql;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
-import com.xiaohongshu.db.hercules.core.option.OptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.mysql.option.MysqlInputOptionsConf;
 import com.xiaohongshu.db.hercules.mysql.option.MysqlOutputOptionsConf;

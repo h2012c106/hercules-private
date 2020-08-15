@@ -8,7 +8,7 @@ import com.xiaohongshu.db.hercules.core.mr.context.NullMRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.OptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;

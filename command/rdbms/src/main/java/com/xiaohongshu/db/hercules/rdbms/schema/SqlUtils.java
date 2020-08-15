@@ -8,7 +8,7 @@ import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;

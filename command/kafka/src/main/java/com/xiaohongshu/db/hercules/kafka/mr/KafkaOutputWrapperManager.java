@@ -1,83 +1,103 @@
 package com.xiaohongshu.db.hercules.kafka.mr;
 
-import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
+import com.xiaohongshu.db.hercules.kafka.KafkaKV;
 
-public class KafkaOutputWrapperManager extends WrapperSetterFactory<CanalEntry.Entry> {
+public class KafkaOutputWrapperManager extends WrapperSetterFactory<KafkaKV> {
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getByteSetter() {
+    protected BaseTypeWrapperSetter.ByteSetter<KafkaKV> getByteSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getShortSetter() {
+    protected BaseTypeWrapperSetter.ShortSetter<KafkaKV> getShortSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getIntegerSetter() {
+    protected BaseTypeWrapperSetter.IntegerSetter<KafkaKV> getIntegerSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getLongSetter() {
+    protected BaseTypeWrapperSetter.LongSetter<KafkaKV> getLongSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getLonglongSetter() {
+    protected BaseTypeWrapperSetter.LonglongSetter<KafkaKV> getLonglongSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getFloatSetter() {
+    protected BaseTypeWrapperSetter.FloatSetter<KafkaKV> getFloatSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getDoubleSetter() {
+    protected BaseTypeWrapperSetter.DoubleSetter<KafkaKV> getDoubleSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getDecimalSetter() {
+    protected BaseTypeWrapperSetter.DecimalSetter<KafkaKV> getDecimalSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getBooleanSetter() {
+    protected BaseTypeWrapperSetter.BooleanSetter<KafkaKV> getBooleanSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getStringSetter() {
+    protected BaseTypeWrapperSetter.StringSetter<KafkaKV> getStringSetter() {
+        return new BaseTypeWrapperSetter.StringSetter<KafkaKV>() {
+            @Override
+            protected void setNull(KafkaKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(KafkaKV.KafkaKVValue.initialize(getType(), null), columnName);
+            }
+
+            @Override
+            protected void setNonnullValue(String value, KafkaKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(KafkaKV.KafkaKVValue.initialize(getType(), value), columnName);
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DateSetter<KafkaKV> getDateSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getDateSetter() {
+    protected BaseTypeWrapperSetter.TimeSetter<KafkaKV> getTimeSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getTimeSetter() {
+    protected BaseTypeWrapperSetter.DatetimeSetter<KafkaKV> getDatetimeSetter() {
         return null;
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getDatetimeSetter() {
-        return null;
+    protected BaseTypeWrapperSetter.BytesSetter<KafkaKV> getBytesSetter() {
+        return new BaseTypeWrapperSetter.BytesSetter<KafkaKV>() {
+            @Override
+            protected void setNull(KafkaKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(KafkaKV.KafkaKVValue.initialize(getType(), null), columnName);
+            }
+
+            @Override
+            protected void setNonnullValue(byte[] value, KafkaKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(KafkaKV.KafkaKVValue.initialize(getType(), value), columnName);
+            }
+        };
     }
 
     @Override
-    protected WrapperSetter<CanalEntry.Entry> getBytesSetter() {
-        return null;
-    }
-
-    @Override
-    protected WrapperSetter<CanalEntry.Entry> getNullSetter() {
+    protected BaseTypeWrapperSetter.NullSetter<KafkaKV> getNullSetter() {
         return null;
     }
 }

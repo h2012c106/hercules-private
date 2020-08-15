@@ -3,9 +3,8 @@ package com.xiaohongshu.db.hercules.kafka;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.OptionsConf;
-import com.xiaohongshu.db.hercules.core.schema.DataTypeConverterGenerator;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
@@ -14,47 +13,45 @@ import com.xiaohongshu.db.hercules.kafka.option.KafkaOptionConf;
 import com.xiaohongshu.db.hercules.kafka.schema.KafkaDataTypeConverter;
 import com.xiaohongshu.db.hercules.kafka.schema.KafkaSchemaFetcher;
 import com.xiaohongshu.db.hercules.kafka.schema.manager.KafkaManager;
-import com.xiaohongshu.db.hercules.kafka.schema.manager.KafkaManagerInitializer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-public class KafkaAssemblySupplier extends BaseAssemblySupplier
-        implements KafkaManagerInitializer, DataTypeConverterGenerator<KafkaDataTypeConverter> {
+public class KafkaAssemblySupplier extends BaseAssemblySupplier {
 
     private static final Log LOG = LogFactory.getLog(KafkaAssemblySupplier.class);
 
     @Override
-    public DataSource getDataSource() {
+    protected DataSource innerGetDataSource() {
         return new KafkaDataSource();
     }
 
     @Override
-    public OptionsConf getInputOptionsConf() {
+    protected OptionsConf innerGetInputOptionsConf() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public OptionsConf getOutputOptionsConf() {
+    protected OptionsConf innerGetOutputOptionsConf() {
         return new KafkaOptionConf();
     }
 
     @Override
-    public Class<? extends HerculesInputFormat> getInputFormatClass() {
+    protected Class<? extends HerculesInputFormat<?>> innerGetInputFormatClass() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Class<? extends HerculesOutputFormat> getOutputFormatClass() {
+    protected Class<? extends HerculesOutputFormat<?>> innerGetOutputFormatClass() {
         return KafkaOutPutFormat.class;
     }
 
     @Override
-    public SchemaFetcher getSchemaFetcher() {
-        return new KafkaSchemaFetcher(options, generateConverter());
+    protected SchemaFetcher innerGetSchemaFetcher() {
+        return new KafkaSchemaFetcher(options);
     }
 
     @Override
-    public KafkaDataTypeConverter generateConverter() {
+    protected DataTypeConverter<?, ?> innerGetDataTypeConverter() {
         return new KafkaDataTypeConverter();
     }
 
@@ -64,7 +61,7 @@ public class KafkaAssemblySupplier extends BaseAssemblySupplier
         return new KafkaManager(options);
     }
 
-    synchronized public final KafkaManager getManager() {
+    synchronized protected final KafkaManager getManager() {
         if (manager == null) {
             LOG.debug(String.format("Initializing KafkaManager of [%s]...", getClass().getSimpleName()));
             manager = innerGetManager();

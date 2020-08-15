@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.xiaohongshu.db.hercules.core.option.KvOptionsConf.SUPPLIER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.SUPPLIER;
 
 public final class HerculesContext {
 

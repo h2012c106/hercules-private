@@ -1,8 +1,10 @@
-package com.xiaohongshu.db.hercules.core.option;
+package com.xiaohongshu.db.hercules.core.option.optionsconf;
 
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -12,6 +14,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN;
+
 /**
  * 所有data source的OptionsConf应当继承自此
  */
@@ -20,13 +24,6 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
     public static final String DATE_FORMAT = "date-format";
     public static final String TIME_FORMAT = "time-format";
     public static final String DATETIME_FORMAT = "datetime-format";
-
-    public static final String COLUMN = "column";
-    public static final String COLUMN_TYPE = "column-type";
-    public static final String INDEX = "index";
-    public static final String UNIQUE_KEY = "unique-key";
-
-    private final static JSONObject DEFAULT_COLUMN_TYPE = new JSONObject();
 
     private final static String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
     private final static String DEFAULT_TIME_FORMAT = "HH:mm:ss";
@@ -64,35 +61,6 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
                 .defaultStringValue(DEFAULT_DATETIME_FORMAT)
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(COLUMN)
-                .needArg(true)
-                .description(String.format("The table column name list, delimited by %s.", COLUMN_DELIMITER))
-                .list(true)
-                .listDelimiter(COLUMN_DELIMITER)
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(COLUMN_TYPE)
-                .needArg(true)
-                .description(String.format("The table column type map, formatted in json, type: %s.", Arrays.toString(BaseDataType.values())))
-                .defaultStringValue(DEFAULT_COLUMN_TYPE.toJSONString())
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(INDEX)
-                .needArg(true)
-                .description(String.format("The table index group list, group separated by: %s, column delimited by: %s.", GROUP_DELIMITER, COLUMN_DELIMITER))
-                .defaultStringValue("")
-                .list(true)
-                .listDelimiter(GROUP_DELIMITER)
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(UNIQUE_KEY)
-                .needArg(true)
-                .description(String.format("The table unique key group list, group separated by: %s, column delimited by: %s.", GROUP_DELIMITER, COLUMN_DELIMITER))
-                .defaultStringValue("")
-                .list(true)
-                .listDelimiter(GROUP_DELIMITER)
-                .build());
-        tmpList.add(SingleOptionConf.builder()
                 .name(HELP)
                 .needArg(false)
                 .description("")
@@ -118,8 +86,8 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
         validateDateFormat(options.getString(BaseDataSourceOptionsConf.DATETIME_FORMAT, null),
                 "datetime");
 
-        if (options.hasProperty(BaseDataSourceOptionsConf.COLUMN)) {
-            ParseUtils.assertTrue(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, null).length > 0,
+        if (options.hasProperty(COLUMN)) {
+            ParseUtils.assertTrue(options.getTrimmedStringArray(COLUMN, null).length > 0,
                     "It's meaningless to set a zero-length column name list.");
         }
     }

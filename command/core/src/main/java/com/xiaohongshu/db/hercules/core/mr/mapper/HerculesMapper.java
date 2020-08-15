@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.xiaohongshu.db.hercules.core.option.BaseInputOptionsConf.BLACK_COLUMN;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseInputOptionsConf.BLACK_COLUMN;
 
 public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWritable, NullWritable, HerculesWritable> {
 

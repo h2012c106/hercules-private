@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.core.schema;
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;

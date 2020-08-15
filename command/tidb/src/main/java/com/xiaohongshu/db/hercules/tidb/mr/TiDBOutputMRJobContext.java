@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.tidb.mr;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;

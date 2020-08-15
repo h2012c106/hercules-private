@@ -9,17 +9,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class KafkaSchemaFetcher extends BaseSchemaFetcher {
-
-    public KafkaSchemaFetcher(GenericOptions options, KafkaDataTypeConverter converter) {
-        super(options, converter);
+    public KafkaSchemaFetcher(GenericOptions options) {
+        super(options);
     }
 
     @Override
-    protected List<String> getColumnNameList() {
+    protected List<String> innerGetColumnNameList() {
         return null;
     }
 
-    protected Map<String, DataType> getColumnTypeMap(Set<String> columnNameSet) {
+    @Override
+    protected Map<String, DataType> innerGetColumnTypeMap() {
         return null;
     }
 }

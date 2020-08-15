@@ -7,7 +7,7 @@ import com.xiaohongshu.db.xlog.oplog.OperatorPB;
 import com.xiaohongshu.db.xlog.oplog.OplogManagerPB;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;

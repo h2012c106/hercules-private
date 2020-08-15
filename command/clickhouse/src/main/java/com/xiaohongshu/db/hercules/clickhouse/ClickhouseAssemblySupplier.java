@@ -9,7 +9,7 @@ import com.xiaohongshu.db.hercules.clickhouse.schema.manager.ClickhouseManager;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.option.OptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;

@@ -1,8 +1,14 @@
-package com.xiaohongshu.db.hercules.core.option;
+package com.xiaohongshu.db.hercules.core.option.optionsconf;
+
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN;
 
 public final class BaseInputOptionsConf extends BaseOptionsConf {
 
@@ -21,10 +27,10 @@ public final class BaseInputOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(BLACK_COLUMN)
                 .needArg(true)
-                .description(String.format("The table column name black list, delimited by %s. The constraint is stronger than '--%s'.", BaseDataSourceOptionsConf.COLUMN_DELIMITER, BaseDataSourceOptionsConf.COLUMN))
-                .defaultStringValue(String.join(BaseDataSourceOptionsConf.COLUMN_DELIMITER, DEFAULT_BLACK_COLUMN))
+                .description(String.format("The table column name black list, delimited by %s. The constraint is stronger than '--%s'.", COLUMN_DELIMITER, COLUMN))
+                .defaultStringValue(String.join(COLUMN_DELIMITER, DEFAULT_BLACK_COLUMN))
                 .list(true)
-                .listDelimiter(BaseDataSourceOptionsConf.COLUMN_DELIMITER)
+                .listDelimiter(COLUMN_DELIMITER)
                 .build());
         return tmpList;
     }

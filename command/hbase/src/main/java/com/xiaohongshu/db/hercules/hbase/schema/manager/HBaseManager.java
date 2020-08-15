@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.hbase.schema.manager;
 
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;

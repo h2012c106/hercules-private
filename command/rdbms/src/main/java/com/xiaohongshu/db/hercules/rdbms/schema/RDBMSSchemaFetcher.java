@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.schema;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -17,7 +16,7 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_TYPE;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN_TYPE;
 
 public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
 

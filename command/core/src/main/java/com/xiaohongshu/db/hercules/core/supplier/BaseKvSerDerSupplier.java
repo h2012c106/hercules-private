@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.core.supplier;
 
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.OptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;

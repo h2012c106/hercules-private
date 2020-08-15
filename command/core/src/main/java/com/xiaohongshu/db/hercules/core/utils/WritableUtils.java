@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;

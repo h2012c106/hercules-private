@@ -2,13 +2,11 @@ package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.*;
-import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOutputOptionsConf;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import static com.xiaohongshu.db.hercules.core.option.KvOptionsConf.SUPPLIER;
 
 public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
@@ -64,14 +62,6 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-        if (!options.getString(SUPPLIER,"").contains("BlankKvConverterSupplier")){
-            ParseUtils.validateDependency(options,
-                    SUPPLIER,
-                    null,
-                    Lists.newArrayList(CONVERT_COLUMN_NAME),
-                    null);
-        }
-
 //        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
 //        List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
 //        if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {

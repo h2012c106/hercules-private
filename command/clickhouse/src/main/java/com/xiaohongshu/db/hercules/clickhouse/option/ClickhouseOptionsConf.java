@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.clickhouse.option;
 
-import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 

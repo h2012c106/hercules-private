@@ -2,6 +2,8 @@ package com.xiaohongshu.db.hercules.core.parser;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.option.*;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import hercules.shaded.org.apache.commons.cli.*;
 import lombok.NonNull;
 

@@ -2,9 +2,7 @@ package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.context.BaseMRJobContext;
-import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,7 +15,7 @@ import org.apache.parquet.schema.MessageTypeParser;
 
 import java.io.IOException;
 
-import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_TYPE;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN_TYPE;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf.COMPRESSION_CODEC;

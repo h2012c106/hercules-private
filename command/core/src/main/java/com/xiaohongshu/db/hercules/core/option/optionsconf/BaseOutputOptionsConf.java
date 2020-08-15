@@ -1,4 +1,7 @@
-package com.xiaohongshu.db.hercules.core.option;
+package com.xiaohongshu.db.hercules.core.option.optionsconf;
+
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 
 import java.util.Collections;
 import java.util.List;

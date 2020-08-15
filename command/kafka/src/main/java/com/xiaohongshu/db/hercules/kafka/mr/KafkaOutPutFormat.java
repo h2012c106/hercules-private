@@ -1,90 +1,83 @@
 package com.xiaohongshu.db.hercules.kafka.mr;
 
-import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.cloudera.sqoop.mapreduce.NullOutputCommitter;
-import com.xiaohongshu.db.hercules.core.supplier.KvSerializerSupplier;
-import com.xiaohongshu.db.hercules.converter.blank.BlankKvConverterSupplier;
+import com.xiaohongshu.db.hercules.core.mr.output.HerculesKvRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.kafka.option.KafkaOptionConf;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.schema.Schema;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.kafka.KafkaKV;
 import com.xiaohongshu.db.hercules.kafka.schema.manager.KafkaManager;
-import com.xiaohongshu.db.hercules.kafka.schema.manager.KafkaManagerInitializer;
-import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
-public class KafkaOutPutFormat extends HerculesOutputFormat {
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.VALUE_NAME;
+import static com.xiaohongshu.db.hercules.kafka.mr.KafkaOutPutFormat.KEY_SEQ;
+import static com.xiaohongshu.db.hercules.kafka.mr.KafkaOutPutFormat.VALUE_SEQ;
 
-    @SneakyThrows
+public class KafkaOutPutFormat extends HerculesOutputFormat<KafkaKV> {
+
+    public static final int KEY_SEQ = 0;
+    public static final int VALUE_SEQ = 1;
+
     @Override
-    public HerculesRecordWriter<?> getRecordWriter(TaskAttemptContext context) {
-        WrappingOptions options = new WrappingOptions();
-        options.fromConfiguration(context.getConfiguration());
-        GenericOptions targetOptions = options.getTargetOptions();
-        KafkaManager manager = initializeManager(targetOptions);
-        KvSerializerSupplier kvSerializerSupplier = (KvSerializerSupplier) Class.forName(options.getTargetOptions().getString(KvOptionsConf.SUPPLIER, ""))
-                .getConstructor(GenericOptions.class).newInstance(options.getTargetOptions());
-        return new KafkaRecordWriter(manager, context, kvSerializerSupplier);
+    protected HerculesRecordWriter<KafkaKV> innerGetRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+        return new KafkaRecordWriter(context);
     }
 
     @Override
-    public void checkOutputSpecs(JobContext jobContext) throws IOException, InterruptedException {
-
-    }
-
-    @Override
-    public OutputCommitter getOutputCommitter(TaskAttemptContext taskAttemptContext) throws IOException, InterruptedException {
-        return new NullOutputCommitter();
-    }
-
-    @Override
-    public KafkaManager initializeManager(GenericOptions options) {
-        return new KafkaManager(options);
+    protected WrapperSetterFactory<KafkaKV> createWrapperSetterFactory() {
+        return new KafkaOutputWrapperManager();
     }
 }
 
-class KafkaRecordWriter extends HerculesRecordWriter<CanalEntry.Entry> {
+class KafkaRecordWriter extends HerculesKvRecordWriter<KafkaKV> {
 
     private static final Log LOG = LogFactory.getLog(KafkaRecordWriter.class);
-    private final KafkaManager manager;
-    private final GenericOptions targetOptions;
-    private final KvSerializerSupplier kvSerializerSupplier;
-    private final String kafkaKeyCol;
 
+    @GeneralAssembly
+    private final KafkaManager manager = null;
 
-    public KafkaRecordWriter(KafkaManager manager, TaskAttemptContext context, KvSerializerSupplier kvSerializerSupplier) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
-        super(context, kvSerializerSupplier.getWrapperSetterFactory());
-        this.targetOptions = options.getTargetOptions();
-        this.kafkaKeyCol = this.targetOptions.getString(KafkaOptionConf.KAFKA_KEY, "");
-        this.manager = manager;
-        this.kvSerializerSupplier = kvSerializerSupplier;
-        if (this.kvSerializerSupplier instanceof BlankKvConverterSupplier) {
-            throw new RuntimeException("BlankKvConverterSupplier is not supported in kafka writer. Please specify a valid kvConverter.");
+    @Options(type = OptionsType.TARGET)
+    private final GenericOptions targetOptions = null;
+
+    @SchemaInfo
+    private Schema schema;
+
+    public KafkaRecordWriter(TaskAttemptContext context) {
+        super(context);
+    }
+
+    @Override
+    protected void innerWriteKV(BaseWrapper<?> key, BaseWrapper<?> value) throws IOException, InterruptedException {
+        String keyName = targetOptions.getString(KEY_NAME, null);
+        String valueName = targetOptions.getString(VALUE_NAME, null);
+
+        KafkaKV kv = new KafkaKV();
+        try {
+            getWrapperSetter(schema.getColumnTypeMap().getOrDefault(keyName, key.getType()))
+                    .set(key, kv, null, null, KEY_SEQ);
+            getWrapperSetter(schema.getColumnTypeMap().getOrDefault(valueName, value.getType()))
+                    .set(value, kv, null, null, VALUE_SEQ);
+        } catch (Exception e) {
+            throw new IOException(e);
         }
-    }
-
-    // 若给定columnType，则以给定的为准，否则以wrapper的DataType为准。
-    @Override
-    protected void innerColumnWrite(HerculesWritable value) {
-        String key = value.get(kafkaKeyCol).asString();
-//        manager.send(Thread.currentThread().getName(), kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
-        manager.send(key, kvSerializerSupplier.getKvSerializer().generateValue(value, targetOptions, columnTypeMap, columnNameList));
-//        manager.send(kvConverterSupplier.getKvConverter().getKey(), kvConverterSupplier.getKvConverter().generateValue(value, targetOptions, columnTypeMap, columnNameList));
+        manager.send(kv);
     }
 
     @Override
-    protected void innerWrite(HerculesWritable value) {
-        innerColumnWrite(value);
+    protected WritableUtils.FilterUnexistOption getColumnUnexistOption() {
+        return WritableUtils.FilterUnexistOption.IGNORE;
     }
 
     @Override

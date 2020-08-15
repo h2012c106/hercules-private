@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.option;
 
-import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 

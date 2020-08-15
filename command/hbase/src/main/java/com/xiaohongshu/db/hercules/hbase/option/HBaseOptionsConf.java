@@ -3,20 +3,20 @@ package com.xiaohongshu.db.hercules.hbase.option;
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
-import com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
-import com.xiaohongshu.db.hercules.core.option.KvOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN;
-import static com.xiaohongshu.db.hercules.core.option.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
 public final class HBaseOptionsConf extends BaseOptionsConf {
 
@@ -34,7 +34,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
         return Lists.newArrayList(
-                new KvOptionsConf()
+                new KVOptionsConf()
         );
     }
 
