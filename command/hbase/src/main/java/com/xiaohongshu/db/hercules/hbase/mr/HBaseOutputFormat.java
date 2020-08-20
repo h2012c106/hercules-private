@@ -27,7 +27,12 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 
 public class HBaseOutputFormat extends HerculesOutputFormat<Put> {
 
@@ -81,7 +86,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     @Override
     protected void innerAfterInject() {
         columnFamily = options.getString(HBaseOutputOptionsConf.COLUMN_FAMILY, null);
-        rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
+        rowKeyCol = options.getString(KEY_NAME, null);
 //        mutator = HBaseManager.getBufferedMutator(manager.getConf(), manager);
         table = HBaseManager.getTable(options.getString(HBaseOptionsConf.TABLE, null), manager.getConnection(configuration));
         columnNameList = schema.getColumnNameList();

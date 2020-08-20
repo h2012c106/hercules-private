@@ -78,5 +78,27 @@
                 <include>**/hercules-command-*.jar</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>../kafka/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../myhub/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+
+        <fileSet>
+            <directory>../xhs-serder/target</directory>
+            <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>**/hercules-xhs-serder-*.jar</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </assembly>

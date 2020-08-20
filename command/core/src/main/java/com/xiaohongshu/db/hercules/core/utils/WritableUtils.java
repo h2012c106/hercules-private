@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
@@ -75,50 +75,53 @@ public final class WritableUtils {
                 : columnNameListStr + BaseDataSourceOptionsConf.NESTED_COLUMN_NAME_DELIMITER + column;
     }
 
-    public static BaseWrapper get(MapWrapper wrapper, List<String> columnNameList) {
+    public static BaseWrapper<?> get(MapWrapper wrapper, String columnName) {
+        List<String> columnEmbedList = splitColumnRaw(columnName);
         MapWrapper tmpMapWrapper = wrapper;
         int i;
-        for (i = 0; i < columnNameList.size() - 1; ++i) {
-            String columnName = columnNameList.get(i);
-            BaseWrapper tmpWrapper = tmpMapWrapper.get(columnName);
+        for (i = 0; i < columnEmbedList.size() - 1; ++i) {
+            String tmpColumnName = columnEmbedList.get(i);
+            BaseWrapper<?> tmpWrapper = tmpMapWrapper.get(tmpColumnName);
             // 如果不包含这列或者这列不是Map，说明不存在
             if (!(tmpWrapper instanceof MapWrapper)) {
                 return null;
             }
             tmpMapWrapper = (MapWrapper) tmpWrapper;
         }
-        return tmpMapWrapper.get(columnNameList.get(i));
+        return tmpMapWrapper.get(columnEmbedList.get(i));
     }
 
-    public static void put(MapWrapper wrapper, List<String> columnNameList, @NonNull BaseWrapper value) {
+    public static void put(MapWrapper wrapper, String columnName, @NonNull BaseWrapper<?> value) {
+        List<String> columnEmbedList = splitColumnRaw(columnName);
         MapWrapper tmpMapWrapper = wrapper;
         int i;
-        for (i = 0; i < columnNameList.size() - 1; ++i) {
-            String columnName = columnNameList.get(i);
-            BaseWrapper tmpWrapper = tmpMapWrapper.get(columnName);
+        for (i = 0; i < columnEmbedList.size() - 1; ++i) {
+            String tmpColumnName = columnEmbedList.get(i);
+            BaseWrapper tmpWrapper = tmpMapWrapper.get(tmpColumnName);
             // 如果已经有值但不是Map类型的直接覆盖
             if (!(tmpWrapper instanceof MapWrapper)) {
                 tmpWrapper = new MapWrapper();
-                tmpMapWrapper.put(columnName, tmpWrapper);
+                tmpMapWrapper.put(tmpColumnName, tmpWrapper);
             }
             tmpMapWrapper = (MapWrapper) tmpWrapper;
         }
-        tmpMapWrapper.put(columnNameList.get(i), value);
+        tmpMapWrapper.put(columnEmbedList.get(i), value);
     }
 
-    public static BaseWrapper remove(MapWrapper wrapper, List<String> columnNameList) {
+    public static BaseWrapper<?> remove(MapWrapper wrapper, String columnName) {
+        List<String> columnEmbedList = splitColumnRaw(columnName);
         MapWrapper tmpMapWrapper = wrapper;
         int i;
-        for (i = 0; i < columnNameList.size() - 1; ++i) {
-            String columnName = columnNameList.get(i);
-            BaseWrapper tmpWrapper = tmpMapWrapper.get(columnName);
+        for (i = 0; i < columnEmbedList.size() - 1; ++i) {
+            String tmpColumnName = columnEmbedList.get(i);
+            BaseWrapper<?> tmpWrapper = tmpMapWrapper.get(tmpColumnName);
             // 如果不包含这列或者这列不是Map，说明不存在
             if (!(tmpWrapper instanceof MapWrapper)) {
                 return null;
             }
             tmpMapWrapper = (MapWrapper) tmpWrapper;
         }
-        return tmpMapWrapper.remove(columnNameList.get(i));
+        return tmpMapWrapper.remove(columnEmbedList.get(i));
     }
 
     /**
@@ -133,24 +136,21 @@ public final class WritableUtils {
         for (Map.Entry<String, String> entry : columnMap.entrySet()) {
             String from = entry.getKey();
             String to = entry.getValue();
-            List<String> fromList = splitColumnRaw(from);
-            List<String> toList = splitColumnRaw(to);
-            BaseWrapper fromValue = remove(baseWrapper, fromList);
+            BaseWrapper<?> fromValue = remove(baseWrapper, from);
             // MapWrapper里不可能存null值，所以null一定代表不存在
             if (fromValue != null) {
-                missionList.add(new ConvertMission(fromValue, toList));
+                missionList.add(new ConvertMission(fromValue, to));
             }
         }
         for (ConvertMission mission : missionList) {
-            put(baseWrapper, mission.getToList(), mission.getWrapper());
+            put(baseWrapper, mission.getTo(), mission.getWrapper());
         }
     }
 
     public static MapWrapper copyColumn(MapWrapper in, List<String> whiteNameList, @NonNull FilterUnexistOption option) {
         MapWrapper out = new MapWrapper(whiteNameList.size());
         for (String columnName : whiteNameList) {
-            List<String> splitColumnName = splitColumnRaw(columnName);
-            BaseWrapper<?> value = get(in, splitColumnName);
+            BaseWrapper<?> value = get(in, columnName);
             // MapWrapper里不可能存null值，所以null一定代表不存在
             if (value == null) {
                 if (option == FilterUnexistOption.IGNORE) {
@@ -161,33 +161,32 @@ public final class WritableUtils {
                     value = NullWrapper.INSTANCE;
                 }
             }
-            put(out, splitColumnName, value);
+            put(out, columnName, value);
         }
         return out;
     }
 
     public static void filterColumn(MapWrapper in, List<String> blackNameList) {
         for (String columnName : blackNameList) {
-            List<String> splitColumnName = splitColumnRaw(columnName);
-            remove(in, splitColumnName);
+            remove(in, columnName);
         }
     }
 
     private static class ConvertMission {
-        private BaseWrapper wrapper;
-        private List<String> toList;
+        private BaseWrapper<?> wrapper;
+        private String to;
 
-        public ConvertMission(BaseWrapper wrapper, List<String> toList) {
+        public ConvertMission(BaseWrapper<?> wrapper, String to) {
             this.wrapper = wrapper;
-            this.toList = toList;
+            this.to = to;
         }
 
-        public BaseWrapper getWrapper() {
+        public BaseWrapper<?> getWrapper() {
             return wrapper;
         }
 
-        public List<String> getToList() {
-            return toList;
+        public String getTo() {
+            return to;
         }
     }
 

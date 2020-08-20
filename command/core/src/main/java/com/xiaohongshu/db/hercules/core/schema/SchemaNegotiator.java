@@ -10,10 +10,11 @@ import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -44,11 +45,11 @@ public final class SchemaNegotiator {
     @Options(type = OptionsType.TARGET)
     private GenericOptions targetOptions;
 
-    @Options(type = OptionsType.SOURCE_SERDER)
-    private GenericOptions sourceSerDerOptions;
+    @Options(type = OptionsType.DER)
+    private GenericOptions derOptions;
 
-    @Options(type = OptionsType.TARGET_SERDER)
-    private GenericOptions targetSerDerOptions;
+    @Options(type = OptionsType.SER)
+    private GenericOptions serOptions;
 
     @GeneralAssembly(role = DataSourceRole.SOURCE)
     private SchemaFetcher sourceSchemaFetcher;
@@ -68,11 +69,23 @@ public final class SchemaNegotiator {
     @GeneralAssembly(role = DataSourceRole.TARGET, getMethodName = "getSchemaNegotiatorContextAsTarget")
     private SchemaNegotiatorContext targetContext;
 
+    @SerDerAssembly(role = DataSourceRole.DER, getMethodName = "getSchemaNegotiatorContextAsSource")
+    private SchemaNegotiatorContext derContext;
+
+    @SerDerAssembly(role = DataSourceRole.SER, getMethodName = "getSchemaNegotiatorContextAsTarget")
+    private SchemaNegotiatorContext serContext;
+
     @SchemaInfo(role = DataSourceRole.SOURCE)
     private Schema sourceSchema;
 
     @SchemaInfo(role = DataSourceRole.TARGET)
     private Schema targetSchema;
+
+    @SchemaInfo(role = DataSourceRole.DER)
+    private Schema derSchema;
+
+    @SchemaInfo(role = DataSourceRole.SER)
+    private Schema serSchema;
 
     private static final Log LOG = LogFactory.getLog(SchemaNegotiator.class);
 
@@ -236,6 +249,12 @@ public final class SchemaNegotiator {
         return res == null ? new ArrayList<>(0) : res;
     }
 
+    /**
+     * @param list
+     * @param columnMap
+     * @param role      抄袭者
+     * @return
+     */
     private List<Set<String>> copyIndex(List<Set<String>> list, BiMap<String, String> columnMap, DataSourceRole role) {
         if (role == DataSourceRole.SOURCE) {
             columnMap = columnMap.inverse();
@@ -248,12 +267,23 @@ public final class SchemaNegotiator {
                 .collect(Collectors.toList());
     }
 
-    private boolean hasSerDer(DataSource dataSource, DataSourceRole role) {
-        return dataSource.hasKvSerDer()
-                && HerculesContext.instance().hasSerDer(role);
-    }
-
-    public void negotiate() {
+    /**
+     * negotiate一对schema，可以是数据源-数据源、DER-SER、DER-数据源、数据源-SER，总之是在Mapper两侧的处理逻辑的schema需要negotiate
+     *
+     * @param sourceSchema
+     * @param targetSchema
+     * @param sourceSchemaFetcher
+     * @param targetSchemaFetcher
+     * @param sourceOptions
+     * @param targetOptions
+     * @param sourceContext
+     * @param targetContext
+     */
+    private void negotiatePair(Schema sourceSchema, Schema targetSchema,
+                               SchemaFetcher sourceSchemaFetcher, SchemaFetcher targetSchemaFetcher,
+                               GenericOptions sourceOptions, GenericOptions targetOptions,
+                               SchemaNegotiatorContext sourceContext, SchemaNegotiatorContext targetContext,
+                               boolean sourceCopyKey, boolean targetCopyKey) {
 
         //+++++++++++++列名映射+++++++++++++//
 
@@ -371,6 +401,13 @@ public final class SchemaNegotiator {
         targetIndexGroupList = getIndex(targetIndexGroupList, aVoid -> targetSchemaFetcher.getIndexGroupList());
         targetContext.afterReadIndexGroupList(targetIndexGroupList);
 
+        if (sourceCopyKey && CollectionUtils.isEmpty(sourceIndexGroupList) && !CollectionUtils.isEmpty(targetIndexGroupList)) {
+            sourceIndexGroupList = copyIndex(targetIndexGroupList, biColumnMap, DataSourceRole.SOURCE);
+        }
+        if (targetCopyKey && CollectionUtils.isEmpty(targetIndexGroupList) && !CollectionUtils.isEmpty(sourceIndexGroupList)) {
+            targetIndexGroupList = copyIndex(sourceIndexGroupList, biColumnMap, DataSourceRole.TARGET);
+        }
+
         LOG.info("The source index group is: " + sourceIndexGroupList);
         LOG.info("The target index group is: " + targetIndexGroupList);
 
@@ -380,6 +417,13 @@ public final class SchemaNegotiator {
         sourceContext.afterReadUniqueKeyGroupList(sourceUniqueKeyGroupList);
         targetUniqueKeyGroupList = getIndex(targetUniqueKeyGroupList, aVoid -> targetSchemaFetcher.getUniqueKeyGroupList());
         targetContext.afterReadUniqueKeyGroupList(targetUniqueKeyGroupList);
+
+        if (sourceCopyKey && CollectionUtils.isEmpty(sourceUniqueKeyGroupList) && !CollectionUtils.isEmpty(targetUniqueKeyGroupList)) {
+            sourceUniqueKeyGroupList = copyIndex(targetUniqueKeyGroupList, biColumnMap, DataSourceRole.SOURCE);
+        }
+        if (targetCopyKey && CollectionUtils.isEmpty(targetUniqueKeyGroupList) && !CollectionUtils.isEmpty(sourceUniqueKeyGroupList)) {
+            targetUniqueKeyGroupList = copyIndex(sourceUniqueKeyGroupList, biColumnMap, DataSourceRole.TARGET);
+        }
 
         LOG.info("The source unique key group is: " + sourceUniqueKeyGroupList);
         LOG.info("The target unique key group is: " + targetUniqueKeyGroupList);
@@ -401,5 +445,64 @@ public final class SchemaNegotiator {
 
         sourceContext.afterAll(sourceColumnNameList, sourceColumnTypeMap);
         targetContext.afterAll(targetColumnNameList, targetColumnTypeMap);
+    }
+
+    public void negotiate() {
+        SchemaFetcher derFetcher = new BaseSchemaFetcher(derOptions) {
+            @Override
+            protected List<String> innerGetColumnNameList() {
+                return null;
+            }
+
+            @Override
+            protected Map<String, DataType> innerGetColumnTypeMap() {
+                return null;
+            }
+        };
+        SchemaFetcher serFetcher = new BaseSchemaFetcher(serOptions) {
+            @Override
+            protected List<String> innerGetColumnNameList() {
+                return null;
+            }
+
+            @Override
+            protected Map<String, DataType> innerGetColumnTypeMap() {
+                return null;
+            }
+        };
+        if (derSchema == null && serSchema == null) {
+            // 大家都是数据源了，key信息只有自己的才是真的，不抄
+            negotiatePair(
+                    sourceSchema, targetSchema,
+                    sourceSchemaFetcher, targetSchemaFetcher,
+                    sourceOptions, targetOptions,
+                    sourceContext, targetContext,
+                    false, false
+            );
+        } else if (derSchema == null) {
+            negotiatePair(
+                    sourceSchema, serSchema,
+                    sourceSchemaFetcher, serFetcher,
+                    sourceOptions, serOptions,
+                    sourceContext, serContext,
+                    false, true
+            );
+        } else if (serSchema == null) {
+            negotiatePair(
+                    derSchema, targetSchema,
+                    derFetcher, targetSchemaFetcher,
+                    derOptions, targetOptions,
+                    derContext, targetContext,
+                    true, false
+            );
+        } else {
+            negotiatePair(
+                    derSchema, serSchema,
+                    derFetcher, serFetcher,
+                    derOptions, serOptions,
+                    derContext, serContext,
+                    true, true
+            );
+        }
     }
 }

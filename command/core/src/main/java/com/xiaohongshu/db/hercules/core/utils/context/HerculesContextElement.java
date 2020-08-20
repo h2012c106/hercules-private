@@ -28,7 +28,7 @@ public enum HerculesContextElement {
         @Override
         public Object pulloutValueFromContext(HerculesContext context, final Field field,
                                               GeneralAssembly annotation, DataSourceRole role) {
-            AssemblySupplier assemblySupplier = context.getAssemblySupplierPair().getItem(getRole(annotation.role(), role));
+            AssemblySupplier assemblySupplier = context.getAssemblySupplierPair().getDataSourceItem(getRole(annotation.role(), role));
 
             // 如果用户给了方法名了，直接反射就完事儿了
             String annotatedMethodName = annotation.getMethodName();
@@ -75,7 +75,7 @@ public enum HerculesContextElement {
         @Override
         public Object pulloutValueFromContext(HerculesContext context, final Field field,
                                               SerDerAssembly annotation, DataSourceRole role) {
-            KvSerDerSupplier serDerSupplier = context.getKvSerDerSupplierPair().getItem(getRole(annotation.role(), role));
+            KvSerDerSupplier serDerSupplier = context.getKvSerDerSupplierPair().getSerDerItem(getRole(annotation.role(), role));
             if (serDerSupplier == null) {
                 LOG.debug(String.format("%s KvSerDerSupplier is null, inject the assembly field [%s] with null.", annotation.role(), field));
                 return null;
@@ -135,7 +135,7 @@ public enum HerculesContextElement {
         @Override
         public Object pulloutValueFromContext(HerculesContext context, Field field,
                                               SchemaInfo annotation, DataSourceRole role) {
-            return context.getSchemaPair().getItem(getRole(annotation.role(), role));
+            return context.getSchemaFamily().getItem(getRole(annotation.role(), role));
         }
     });
 

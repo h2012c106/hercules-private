@@ -7,7 +7,6 @@ import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
-import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseInputFormat;
@@ -17,7 +16,6 @@ import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseDataTypeConverter;
 import com.xiaohongshu.db.hercules.hbase.schema.HBaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.hbase.schema.HBaseSchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -59,16 +57,6 @@ public class HBaseAssemblySupplier extends BaseAssemblySupplier {
     @Override
     protected MRJobContext innerGetJobContextAsTarget() {
         return new HBaseOutputMRJobContext(options);
-    }
-
-    @Override
-    protected SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsSource() {
-        return new HBaseSchemaNegotiatorContext(options);
-    }
-
-    @Override
-    protected SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsTarget() {
-        return new HBaseSchemaNegotiatorContext(options);
     }
 
     @Override

@@ -2,9 +2,9 @@ package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.*;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,28 +82,11 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .description("Set the maximum number of values to return for each call to next().")
                 .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
-                .needArg(true)
-                .description("Specify the name of the row key col passed to the recordWriter.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(KV_COLUMN)
-                .needArg(true)
-                .description("Specify key-value column if a converter is used.")
-                .build());
         return tmpList;
     }
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        if (rowKeyCol != null) {
-            List<String> columnNameList = Arrays.asList(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-            if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {
-                throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
-            }
-        }
     }
 
 }

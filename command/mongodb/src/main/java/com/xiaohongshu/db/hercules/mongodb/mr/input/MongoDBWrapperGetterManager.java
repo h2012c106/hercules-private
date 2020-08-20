@@ -221,7 +221,7 @@ public class MongoDBWrapperGetterManager extends WrapperGetterFactory<Document> 
 
             @Override
             protected ExtendedDate getNonnullValue(Document row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.get(columnName, Date.class));
+                return ExtendedDate.initialize(row.get(columnName, Date.class));
             }
         };
     }

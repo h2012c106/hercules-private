@@ -16,7 +16,6 @@ public class RDBMSDataTypeConverter implements DataTypeConverter<Integer, Result
         switch (standard) {
             case Types.NULL:
                 return BaseDataType.NULL;
-            case Types.BIT:
             case Types.TINYINT:
                 return BaseDataType.BYTE;
             case Types.SMALLINT:
@@ -25,6 +24,8 @@ public class RDBMSDataTypeConverter implements DataTypeConverter<Integer, Result
                 return BaseDataType.INTEGER;
             case Types.BIGINT:
                 return BaseDataType.LONG;
+            case Types.BIT:
+                return BaseDataType.LONGLONG;
             case Types.BOOLEAN:
                 return BaseDataType.BOOLEAN;
             case Types.REAL:
@@ -57,6 +58,47 @@ public class RDBMSDataTypeConverter implements DataTypeConverter<Integer, Result
                 return BaseDataType.BYTES;
             default:
                 throw new SchemaException("Unsupported sql type, type code: " + standard);
+        }
+    }
+
+    /**
+     * 这里不用加一级，convert的时候加好了
+     *
+     * @param type
+     * @return
+     */
+    @Override
+    public Integer getElementType(DataType type) {
+        switch (type.getBaseDataType()) {
+            case BYTES:
+                return Types.BLOB;
+            case BYTE:
+                return Types.TINYINT;
+            case SHORT:
+                return Types.SMALLINT;
+            case INTEGER:
+                return Types.INTEGER;
+            case LONG:
+            case LONGLONG:
+                return Types.BIGINT;
+            case FLOAT:
+                return Types.FLOAT;
+            case DOUBLE:
+                return Types.DOUBLE;
+            case DECIMAL:
+                return Types.DECIMAL;
+            case BOOLEAN:
+                return Types.BOOLEAN;
+            case STRING:
+                return Types.VARCHAR;
+            case DATE:
+                return Types.DATE;
+            case DATETIME:
+                return Types.TIMESTAMP;
+            case TIME:
+                return Types.TIME;
+            default:
+                throw new RuntimeException("Unknown column type: " + type.getBaseDataType().name());
         }
     }
 

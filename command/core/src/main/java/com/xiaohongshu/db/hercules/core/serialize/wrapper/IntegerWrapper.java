@@ -90,7 +90,7 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
 
     @Override
     public ExtendedDate asDate() {
-        return new ExtendedDate(new Date(asLong()));
+        return ExtendedDate.initialize(new Date(asLong()));
     }
 
     @Override

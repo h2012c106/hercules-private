@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.hbase.schema.manager;
 
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
@@ -75,7 +75,7 @@ public class HBaseManager {
         if (null != options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)) {
             scan.setBatch(options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null));
         }
-        List<String> scanColumns = Arrays.asList(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0]));
+        List<String> scanColumns = Arrays.asList(options.getTrimmedStringArray(TableOptionsConf.COLUMN, new String[0]));
         if (scanColumns.size() != 0) {
             for (String qualifier : scanColumns) {
                 scan.addColumn(Bytes.toBytes(scanColumnFamily), Bytes.toBytes(qualifier));

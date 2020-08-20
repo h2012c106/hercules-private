@@ -54,7 +54,7 @@ public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager 
         return new BaseTypeWrapperGetter.DateGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.getGroup().getLong(columnName, row.getValueSeq()));
+                return ExtendedDate.initialize(row.getGroup().getLong(columnName, row.getValueSeq()));
             }
 
             @Override
@@ -69,7 +69,7 @@ public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager 
         return new BaseTypeWrapperGetter.TimeGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.getGroup().getLong(columnName, row.getValueSeq()));
+                return ExtendedDate.initialize(row.getGroup().getLong(columnName, row.getValueSeq()));
             }
 
             @Override
@@ -84,7 +84,7 @@ public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager 
         return new BaseTypeWrapperGetter.DatetimeGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.getGroup().getLong(columnName, row.getValueSeq()));
+                return ExtendedDate.initialize(row.getGroup().getLong(columnName, row.getValueSeq()));
             }
 
             @Override

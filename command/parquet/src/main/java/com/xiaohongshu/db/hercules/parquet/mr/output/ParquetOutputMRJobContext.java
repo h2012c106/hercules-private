@@ -15,7 +15,7 @@ import org.apache.parquet.schema.MessageTypeParser;
 
 import java.io.IOException;
 
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN_TYPE;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN_TYPE;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf.COMPRESSION_CODEC;

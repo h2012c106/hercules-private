@@ -5,7 +5,7 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
-import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
+import com.xiaohongshu.db.hercules.core.serder.KVSer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
@@ -25,8 +25,8 @@ public abstract class HerculesOutputFormat<T> extends OutputFormat<NullWritable,
     @GeneralAssembly(role = DataSourceRole.TARGET)
     private DataSource dataSource;
 
-    @SerDerAssembly(role = DataSourceRole.TARGET)
-    private KvSerDer<?, ?> kvSerDer;
+    @SerDerAssembly(role = DataSourceRole.SER)
+    private KVSer<?> kvSer;
 
     public HerculesOutputFormat() {
     }
@@ -74,9 +74,9 @@ public abstract class HerculesOutputFormat<T> extends OutputFormat<NullWritable,
         HerculesRecordWriter<T> delegate = innerGetRecordWriter(context);
 
         RecordWriter<NullWritable, HerculesWritable> res;
-        if (dataSource.hasKvSerDer() && kvSerDer != null) {
+        if (dataSource.hasKvSerDer() && kvSer != null) {
             HerculesContext.instance().inject(delegate);
-            res = new HerculesSerDerRecordWriter(kvSerDer, delegate);
+            res = new HerculesSerDerRecordWriter(kvSer, delegate);
         } else {
             res = delegate;
         }

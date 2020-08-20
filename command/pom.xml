@@ -27,9 +27,9 @@
         <module>myhub</module>
         <module>kafka</module>
 
-        <module>assemble</module>
+        <module>xhs-serder</module>
 
-<!--        <module>xhs-converter</module>-->
+        <module>assemble</module>
     </modules>
 
     <dependencies>

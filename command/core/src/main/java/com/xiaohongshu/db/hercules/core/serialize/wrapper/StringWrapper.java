@@ -78,7 +78,7 @@ public class StringWrapper extends BaseWrapper<String> {
 
     @Override
     public ExtendedDate asDate() {
-        return new ExtendedDate(DateUtils.stringToDate(getValue(), DateUtils.getSourceDateFormat()));
+        return ExtendedDate.initialize(DateUtils.stringToDate(getValue(), DateUtils.getSourceDateFormat()));
     }
 
     @Override

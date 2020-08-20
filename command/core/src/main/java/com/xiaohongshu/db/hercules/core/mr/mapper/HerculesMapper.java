@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseInputOptionsConf.BLACK_COLUMN;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf.BLACK_COLUMN;
 
 public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWritable, NullWritable, HerculesWritable> {
 
@@ -97,6 +97,10 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     @Override
     protected void map(NullWritable key, HerculesWritable value, Context context)
             throws IOException, InterruptedException {
+        // 如果上游读出来个null，无视这一行
+        if (value == null) {
+            return;
+        }
         long start = System.currentTimeMillis();
         context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
         value = rowTransfer(value);

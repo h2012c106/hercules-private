@@ -21,7 +21,7 @@ import org.bson.types.Decimal128;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 
-class MongoDBWrapperSetterManager extends WrapperSetterFactory<Document> {
+public class MongoDBWrapperSetterManager extends WrapperSetterFactory<Document> {
 
     private boolean decimalAsString;
 

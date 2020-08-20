@@ -69,8 +69,4 @@ public final class ConfigUtils {
         return moduleConf;
     }
 
-    public static AssemblySupplier getAssemblySupplier(ModuleConfig moduleConfig) {
-        return ReflectUtils.loadJarClass(moduleConfig.getJar(), moduleConfig.getAssemblyClass(), AssemblySupplier.class);
-    }
-
 }

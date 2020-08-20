@@ -15,7 +15,6 @@ import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
-import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.schema.manager.HBaseManager;
 import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
@@ -36,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf.TABLE;
 
 /**
@@ -50,6 +50,9 @@ public class HBaseInputFormat extends HerculesInputFormat<byte[]> {
 
     @Options(type = OptionsType.SOURCE)
     private GenericOptions sourceOptions;
+
+    @SchemaInfo
+    private Schema schema;
 
     private Connection connection;
 
@@ -149,7 +152,10 @@ public class HBaseInputFormat extends HerculesInputFormat<byte[]> {
 
     @Override
     protected HerculesRecordReader<byte[]> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) {
-        String rowKeyCol = sourceOptions.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
+        String rowKeyCol = sourceOptions.getString(KEY_NAME, null);
+        if (rowKeyCol != null && !schema.getColumnNameList().contains(rowKeyCol)) {
+            rowKeyCol = null;
+        }
         if (rowKeyCol != null) {
             LOG.info("rowKeyCol name has been set to: " + rowKeyCol);
         } else {

@@ -3,8 +3,8 @@ package com.xiaohongshu.db.hercules.core.schema;
 import com.alibaba.fastjson.JSONObject;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
@@ -62,18 +62,18 @@ public class Schema {
     }
 
     public void toOptions(GenericOptions options) {
-        options.set(BaseDataSourceOptionsConf.COLUMN, columnNameList.toArray(new String[0]));
-        options.set(BaseDataSourceOptionsConf.COLUMN_TYPE, SchemaUtils.convertTypeToOption(columnTypeMap).toJSONString());
-        options.set(BaseDataSourceOptionsConf.INDEX, SchemaUtils.convertIndexToOption(indexGroupList));
-        options.set(BaseDataSourceOptionsConf.UNIQUE_KEY, SchemaUtils.convertIndexToOption(uniqueKeyGroupList));
+        options.set(TableOptionsConf.COLUMN, columnNameList.toArray(new String[0]));
+        options.set(TableOptionsConf.COLUMN_TYPE, SchemaUtils.convertTypeToOption(columnTypeMap).toJSONString());
+        options.set(TableOptionsConf.INDEX, SchemaUtils.convertIndexToOption(indexGroupList));
+        options.set(TableOptionsConf.UNIQUE_KEY, SchemaUtils.convertIndexToOption(uniqueKeyGroupList));
     }
 
     public static Schema fromOptions(GenericOptions options, CustomDataTypeManager<?, ?> customDataTypeManager) {
         Schema res = new Schema();
-        res.setColumnNameList(SchemaUtils.convertNameFromOption(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0])));
-        res.setColumnTypeMap(SchemaUtils.convertTypeFromOption(options.getJson(BaseDataSourceOptionsConf.COLUMN_TYPE, new JSONObject()), customDataTypeManager));
-        res.setIndexGroupList(SchemaUtils.convertIndexFromOption(options.getTrimmedStringArray(BaseDataSourceOptionsConf.INDEX, new String[0])));
-        res.setUniqueKeyGroupList(SchemaUtils.convertIndexFromOption(options.getTrimmedStringArray(BaseDataSourceOptionsConf.UNIQUE_KEY, new String[0])));
+        res.setColumnNameList(SchemaUtils.convertNameFromOption(options.getTrimmedStringArray(TableOptionsConf.COLUMN, new String[0])));
+        res.setColumnTypeMap(SchemaUtils.convertTypeFromOption(options.getJson(TableOptionsConf.COLUMN_TYPE, new JSONObject()), customDataTypeManager));
+        res.setIndexGroupList(SchemaUtils.convertIndexFromOption(options.getTrimmedStringArray(TableOptionsConf.INDEX, new String[0])));
+        res.setUniqueKeyGroupList(SchemaUtils.convertIndexFromOption(options.getTrimmedStringArray(TableOptionsConf.UNIQUE_KEY, new String[0])));
         return res;
     }
 

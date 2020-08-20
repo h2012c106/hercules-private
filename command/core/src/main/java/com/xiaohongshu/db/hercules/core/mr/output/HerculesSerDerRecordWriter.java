@@ -4,7 +4,7 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
+import com.xiaohongshu.db.hercules.core.serder.KVSer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
@@ -20,14 +20,14 @@ import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.
 public class HerculesSerDerRecordWriter extends RecordWriter<NullWritable, HerculesWritable>
         implements DataSourceRoleGetter, InjectedClass {
 
-    private final KvSerDer<?, ?> serDer;
+    private final KVSer<?> ser;
     private final HerculesRecordWriter<?> writer;
 
     @Options(type = OptionsType.TARGET)
     private GenericOptions options;
 
-    public HerculesSerDerRecordWriter(KvSerDer<?, ?> serDer, HerculesRecordWriter<?> writer) {
-        this.serDer = serDer;
+    public HerculesSerDerRecordWriter(KVSer<?> ser, HerculesRecordWriter<?> writer) {
+        this.ser = ser;
         this.writer = writer;
     }
 
@@ -39,8 +39,8 @@ public class HerculesSerDerRecordWriter extends RecordWriter<NullWritable, Hercu
         if (keyName == null || valueName == null) {
             throw new RuntimeException("Must use kv options to config to use serder.");
         }
-        serDer.setKeyName(keyName);
-        serDer.setValueName(valueName);
+        ser.setKeyName(keyName);
+        ser.setValueName(valueName);
     }
 
     @Override
@@ -50,7 +50,11 @@ public class HerculesSerDerRecordWriter extends RecordWriter<NullWritable, Hercu
 
     @Override
     public void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
-        writer.write(key, serDer.write(value));
+        value = ser.write(value);
+        // 如果ser返回null，则不写这行
+        if (value != null) {
+            writer.write(key, value);
+        }
     }
 
     @Override
