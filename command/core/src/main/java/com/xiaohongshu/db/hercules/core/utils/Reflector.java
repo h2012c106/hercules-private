@@ -26,6 +26,7 @@ public class Reflector {
     }
 
     public Reflector(List<String> jarListToLoad) {
+        LOG.info("Initialize ClassLoader for: " + jarListToLoad);
         classLoader = URLClassLoader.newInstance(jarListToLoad.stream().map(jarName -> {
             try {
                 return new URL("jar:" + new File(jarName).toURI().toURL() + "!/");

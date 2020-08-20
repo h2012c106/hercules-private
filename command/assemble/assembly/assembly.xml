@@ -23,6 +23,14 @@
             </includes>
         </fileSet>
         <fileSet>
+            <directory>../core/target/classes/bin</directory>
+            <outputDirectory>/bin</outputDirectory>
+            <fileMode>0777</fileMode>
+            <includes>
+                <include>**/*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
             <directory>../rdbms/target</directory>
             <outputDirectory>module-lib</outputDirectory>
             <includes>

@@ -29,7 +29,7 @@ public class Hercules {
     private static final String LIB_DIR = "lib";
 
     private static List<String> getJarList(ModuleConfig sourceModuleConfig, ModuleConfig targetModuleConfig) {
-        List<String> res = ReflectUtils.listJarList(Hercules.class.getResource("/" + LIB_DIR).getPath());
+        List<String> res = ReflectUtils.listJarList(ConfigUtils.getAbsolutePath(LIB_DIR));
         res.add(sourceModuleConfig.getJar());
         if (!StringUtils.equals(sourceModuleConfig.getJar(), targetModuleConfig.getJar())) {
             res.add(targetModuleConfig.getJar());
