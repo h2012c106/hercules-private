@@ -85,7 +85,7 @@ public final class HerculesContext {
         } else {
             LOCK.writeLock().lock();
             try {
-                INSTANCE = new HerculesContext(wrappingOptions, sourceSupplier, targetSupplier,reflector);
+                INSTANCE = new HerculesContext(wrappingOptions, sourceSupplier, targetSupplier, reflector);
             } finally {
                 LOCK.writeLock().unlock();
             }
@@ -210,8 +210,13 @@ public final class HerculesContext {
             }
 
             HerculesContextElement contextElement = contextElementList.get(0);
-            Object fieldValueFromContext = contextElement.getContextReader()
-                    .pulloutValueFromContext(this, field, annotation, classConfiguredRole);
+            Object fieldValueFromContext;
+            try {
+                fieldValueFromContext = contextElement.getContextReader()
+                        .pulloutValueFromContext(this, field, annotation, classConfiguredRole);
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Inject [%s] failed.", obj.getClass().getCanonicalName()), e);
+            }
 
             boolean accessible = field.isAccessible();
             try {

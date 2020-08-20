@@ -30,7 +30,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
     private Schema schema;
 
     @GeneralAssembly
-    private final ParquetDataTypeConverter converter = null;
+    private final ParquetDataTypeConverter dataTypeConverter = null;
 
     /**
      * 注意！由于parquet没有null值，所以一个无值的optional类型有两种语义：null/无值。这个很matter，打个比方，
@@ -42,7 +42,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
         int repeatedTime = group.getFieldRepetitionCount(columnName);
         ListWrapper res = new ListWrapper(repeatedTime);
         // 由于类型一定一致，所以可以在循环外取
-        DataType columnType = converter.convertElementType(new ParquetType(group.getType().getType(columnName), false));
+        DataType columnType = dataTypeConverter.convertElementType(new ParquetType(group.getType().getType(columnName), false));
         WrapperGetter<GroupWithSchemaInfo> wrapperGetter = getWrapperGetter(columnType);
         for (int i = 0; i < repeatedTime; ++i) {
             // 不可能是empty
@@ -64,7 +64,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
             }
 
             String fullColumnName = WritableUtils.concatColumn(groupPosition, columnName);
-            DataType columnType = schema.getColumnTypeMap().getOrDefault(fullColumnName, converter.convertElementType(new ParquetType(type)));
+            DataType columnType = schema.getColumnTypeMap().getOrDefault(fullColumnName, dataTypeConverter.convertElementType(new ParquetType(type)));
             // 先写一下这里无脑new出来GroupWithRepeatedInfo的理由，以防以后忘了：
             // 由于parquet schema里逻辑LIST与其他类型在同一层定义，所以会有不同（比如一个repeated int32既是一个LIST也是一个INTEGER）
             // 流程逻辑是如果读到其他类型，直接获得函数返回（一层）；如果读到LIST，调用ListGetter调用repeatedToListWrapper二次判断真正类型，然后根据这个类型获得的函数循环（valueSeq）获得每个元素的值（三层）。
