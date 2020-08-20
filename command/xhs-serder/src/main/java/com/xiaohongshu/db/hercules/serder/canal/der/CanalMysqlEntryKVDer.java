@@ -9,6 +9,7 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
+import com.xiaohongshu.db.hercules.rdbms.schema.ColumnInfo;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import org.apache.commons.collections.CollectionUtils;
 
@@ -72,7 +73,7 @@ public abstract class CanalMysqlEntryKVDer extends KVDer<CanalEntry.Column> impl
                     String columnName = column.getName();
                     // 筛选往下游传的列
                     if (!CollectionUtils.isEmpty(columnNameSet) && columnNameSet.contains(columnName)) {
-                        DataType type = dataTypeConverter.convertElementType(column.getSqlType());
+                        DataType type = dataTypeConverter.convertElementType(new ColumnInfo(column.getSqlType()));
                         try {
                             record.put(column.getName(), getWrapperGetter(type).get(column, null, column.getName(), 0));
                         } catch (Exception e) {

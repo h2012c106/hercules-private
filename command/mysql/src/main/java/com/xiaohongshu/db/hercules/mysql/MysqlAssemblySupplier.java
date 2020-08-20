@@ -2,9 +2,13 @@ package com.xiaohongshu.db.hercules.mysql;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
+import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
+import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.mysql.option.MysqlInputOptionsConf;
 import com.xiaohongshu.db.hercules.mysql.option.MysqlOutputOptionsConf;
+import com.xiaohongshu.db.hercules.mysql.schema.MysqlDataTypeConverter;
+import com.xiaohongshu.db.hercules.mysql.schema.MysqlSchemaFetcher;
 import com.xiaohongshu.db.hercules.mysql.schema.MysqlSchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.mysql.schema.manager.MysqlManager;
 import com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier;
@@ -25,6 +29,16 @@ public class MysqlAssemblySupplier extends RDBMSAssemblySupplier {
     @Override
     protected OptionsConf innerGetOutputOptionsConf() {
         return new MysqlOutputOptionsConf();
+    }
+
+    @Override
+    protected DataTypeConverter<?, ?> innerGetDataTypeConverter() {
+        return new MysqlDataTypeConverter();
+    }
+
+    @Override
+    protected SchemaFetcher innerGetSchemaFetcher() {
+        return new MysqlSchemaFetcher(options);
     }
 
     @Override

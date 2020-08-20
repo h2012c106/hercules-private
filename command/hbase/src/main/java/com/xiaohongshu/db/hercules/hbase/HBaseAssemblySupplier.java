@@ -10,6 +10,7 @@ import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseInputFormat;
+import com.xiaohongshu.db.hercules.hbase.mr.HBaseInputMRJobContext;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseOutputFormat;
 import com.xiaohongshu.db.hercules.hbase.mr.HBaseOutputMRJobContext;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
@@ -52,6 +53,11 @@ public class HBaseAssemblySupplier extends BaseAssemblySupplier {
     @Override
     protected SchemaFetcher innerGetSchemaFetcher() {
         return new HBaseSchemaFetcher(options);
+    }
+
+    @Override
+    protected MRJobContext innerGetJobContextAsSource() {
+        return new HBaseInputMRJobContext(options);
     }
 
     @Override

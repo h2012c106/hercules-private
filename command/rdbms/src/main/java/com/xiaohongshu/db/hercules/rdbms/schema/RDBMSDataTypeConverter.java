@@ -9,30 +9,59 @@ import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.Map;
 
-public class RDBMSDataTypeConverter implements DataTypeConverter<Integer, ResultSet> {
+public class RDBMSDataTypeConverter implements DataTypeConverter<ColumnInfo, ResultSet> {
 
     @Override
-    public DataType convertElementType(Integer standard) {
-        switch (standard) {
+    public DataType convertElementType(ColumnInfo standard) {
+        int type = standard.getSqlType();
+        switch (type) {
             case Types.NULL:
                 return BaseDataType.NULL;
             case Types.TINYINT:
-                return BaseDataType.BYTE;
-            case Types.SMALLINT:
-                return BaseDataType.SHORT;
-            case Types.INTEGER:
-                return BaseDataType.INTEGER;
-            case Types.BIGINT:
-                return BaseDataType.LONG;
+                if (standard.isSigned()) {
+                    return BaseDataType.BYTE;
+                } else {
+                    return BaseDataType.SHORT;
+                }
             case Types.BIT:
-                return BaseDataType.LONGLONG;
+                if (standard.getPrecision() == 1) {
+                    return BaseDataType.BYTE;
+                } else {
+                    return BaseDataType.BYTES;
+                }
+            case Types.SMALLINT:
+                if (standard.isSigned()) {
+                    return BaseDataType.SHORT;
+                } else {
+                    return BaseDataType.INTEGER;
+                }
+            case Types.INTEGER:
+                if (standard.isSigned()) {
+                    return BaseDataType.INTEGER;
+                } else {
+                    return BaseDataType.LONG;
+                }
+            case Types.BIGINT:
+                if (standard.isSigned()) {
+                    return BaseDataType.LONG;
+                } else {
+                    return BaseDataType.LONGLONG;
+                }
             case Types.BOOLEAN:
                 return BaseDataType.BOOLEAN;
             case Types.REAL:
             case Types.FLOAT:
-                return BaseDataType.FLOAT;
+                if (standard.isSigned()) {
+                    return BaseDataType.FLOAT;
+                } else {
+                    return BaseDataType.DOUBLE;
+                }
             case Types.DOUBLE:
-                return BaseDataType.DOUBLE;
+                if (standard.isSigned()) {
+                    return BaseDataType.DOUBLE;
+                } else {
+                    return BaseDataType.DECIMAL;
+                }
             case Types.NUMERIC:
             case Types.DECIMAL:
                 return BaseDataType.DECIMAL;
@@ -68,38 +97,53 @@ public class RDBMSDataTypeConverter implements DataTypeConverter<Integer, Result
      * @return
      */
     @Override
-    public Integer getElementType(DataType type) {
+    public ColumnInfo getElementType(DataType type) {
+        int sqlType;
         switch (type.getBaseDataType()) {
             case BYTES:
-                return Types.BLOB;
+                sqlType = Types.BLOB;
+                break;
             case BYTE:
-                return Types.TINYINT;
+                sqlType = Types.TINYINT;
+                break;
             case SHORT:
-                return Types.SMALLINT;
+                sqlType = Types.SMALLINT;
+                break;
             case INTEGER:
-                return Types.INTEGER;
+                sqlType = Types.INTEGER;
+                break;
             case LONG:
             case LONGLONG:
-                return Types.BIGINT;
+                sqlType = Types.BIGINT;
+                break;
             case FLOAT:
-                return Types.FLOAT;
+                sqlType = Types.FLOAT;
+                break;
             case DOUBLE:
-                return Types.DOUBLE;
+                sqlType = Types.DOUBLE;
+                break;
             case DECIMAL:
-                return Types.DECIMAL;
+                sqlType = Types.DECIMAL;
+                break;
             case BOOLEAN:
-                return Types.BOOLEAN;
+                sqlType = Types.BOOLEAN;
+                break;
             case STRING:
-                return Types.VARCHAR;
+                sqlType = Types.VARCHAR;
+                break;
             case DATE:
-                return Types.DATE;
-            case DATETIME:
-                return Types.TIMESTAMP;
+                sqlType = Types.DATE;
+                break;
             case TIME:
-                return Types.TIME;
+                sqlType = Types.TIME;
+                break;
+            case DATETIME:
+                sqlType = Types.TIMESTAMP;
+                break;
             default:
                 throw new RuntimeException("Unknown column type: " + type.getBaseDataType().name());
         }
+        return new ColumnInfo(sqlType);
     }
 
     /**

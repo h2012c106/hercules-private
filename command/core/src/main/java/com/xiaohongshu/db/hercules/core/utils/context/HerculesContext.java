@@ -216,7 +216,7 @@ public final class HerculesContext {
             boolean accessible = field.isAccessible();
             try {
                 field.setAccessible(true);
-                field.set(obj, fieldValueFromContext);
+                field.set(obj, field.getType().cast(fieldValueFromContext));
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             } finally {

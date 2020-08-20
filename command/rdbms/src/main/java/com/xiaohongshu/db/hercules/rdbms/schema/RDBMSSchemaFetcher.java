@@ -28,7 +28,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
     private RDBMSManager manager;
 
     @GeneralAssembly
-    private RDBMSDataTypeConverter converter;
+    private RDBMSDataTypeConverter dataTypeConverter;
 
     protected final String baseSql;
 
@@ -41,7 +41,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
         return SqlUtils.addWhere(baseSql, "1 = 0");
     }
 
-    private void getSchemaInfo(String baseSql, BiFunction<String, Integer, Void> dealWithColumnSchemaFunc) {
+    private void getSchemaInfo(String baseSql, BiFunction<String, ColumnInfo, Void> dealWithColumnSchemaFunc) {
         String sql = getNoneLineSql(baseSql);
         ResultSet resultSet = null;
         Statement statement = null;
@@ -68,7 +68,14 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
                     type = YEAR_TYPE;
                 }
 
-                dealWithColumnSchemaFunc.apply(colName, type);
+                ColumnInfo columnInfo = new ColumnInfo(
+                        metadata.isSigned(i),
+                        metadata.getPrecision(i),
+                        metadata.getScale(i),
+                        metadata.getColumnType(i),
+                        metadata.getColumnTypeName(i)
+                );
+                dealWithColumnSchemaFunc.apply(colName, columnInfo);
             }
         } catch (SQLException e) {
             throw new SchemaException(e);
@@ -80,9 +87,9 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
     @Override
     protected List<String> innerGetColumnNameList() {
         final List<String> res = new ArrayList<>();
-        getSchemaInfo(baseSql, new BiFunction<String, Integer, Void>() {
+        getSchemaInfo(baseSql, new BiFunction<String, ColumnInfo, Void>() {
             @Override
-            public Void apply(String s, Integer integer) {
+            public Void apply(String s, ColumnInfo info) {
                 res.add(s);
                 return null;
             }
@@ -103,12 +110,12 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
         // 只是为了获得列名，只要拿key即可
         Set<String> configuredTypeNameSet = getOptions().getJson(COLUMN_TYPE, null).keySet();
 
-        final Map<String, Integer> sqlTypeMap = new HashMap<>();
-        getSchemaInfo(sql, new BiFunction<String, Integer, Void>() {
+        final Map<String, ColumnInfo> sqlTypeMap = new HashMap<>();
+        getSchemaInfo(sql, new BiFunction<String, ColumnInfo, Void>() {
             @Override
-            public Void apply(String s, Integer integer) {
+            public Void apply(String s, ColumnInfo info) {
                 // 此处key为数据库里拿出来的列名
-                sqlTypeMap.put(s, integer);
+                sqlTypeMap.put(s, info);
                 return null;
             }
         });
@@ -119,7 +126,7 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
                 .collect(Collectors.toMap(entry -> {
                     String configuredName = findCaseInsensitiveInCollection(configuredTypeNameSet, entry.getKey());
                     return configuredName == null ? entry.getKey() : configuredName;
-                }, entry -> converter.convertElementType(entry.getValue())));
+                }, entry -> dataTypeConverter.convertElementType(entry.getValue())));
     }
 
     @Override
@@ -135,11 +142,11 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
     public int getColumnSqlType(String baseSql, final String column) {
         String sql = SqlUtils.replaceSelectItem(baseSql, column);
         final Map<String, Integer> resMap = new HashMap<>(1);
-        getSchemaInfo(sql, new BiFunction<String, Integer, Void>() {
+        getSchemaInfo(sql, new BiFunction<String, ColumnInfo, Void>() {
             @Override
-            public Void apply(String s, Integer integer) {
+            public Void apply(String s, ColumnInfo info) {
                 if (StringUtils.equalsIgnoreCase(s, column)) {
-                    resMap.put(column, integer);
+                    resMap.put(column, info.getSqlType());
                 }
                 return null;
             }

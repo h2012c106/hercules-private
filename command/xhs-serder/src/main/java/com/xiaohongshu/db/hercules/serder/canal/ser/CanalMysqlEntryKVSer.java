@@ -71,7 +71,7 @@ public abstract class CanalMysqlEntryKVSer extends KVSer<CanalEntry.Column.Build
             DataType type = schema.getColumnTypeMap().getOrDefault(columnName, columnValue.getType());
             CanalEntry.Column.Builder columnBuilder = CanalEntry.Column.newBuilder()
                     .setName(columnName)
-                    .setSqlType(dataTypeConverter.getElementType(type));
+                    .setSqlType(dataTypeConverter.getElementType(type).getSqlType());
             try {
                 getWrapperSetter(type).set(columnValue, columnBuilder, null, null, 0);
             } catch (Exception e) {
