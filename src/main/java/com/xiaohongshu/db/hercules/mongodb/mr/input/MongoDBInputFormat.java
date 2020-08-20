@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.mongodb.mr.input;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
@@ -23,11 +24,15 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf.IGNORE_SPLIT_KEY_CHECK;
 
@@ -92,7 +97,7 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
             }
             int splitPointCount = numSplits - 1;
             int chunkDocCount = docCount / numSplits;
-            ArrayList<Object> splitPoints = new ArrayList<Object>();
+            List<Object> splitPoints = new ArrayList<Object>();
 
             // test if user has splitVector role(clusterManager)
             boolean supportSplitVector = true;
@@ -155,17 +160,71 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
                     throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, IGNORE_SPLIT_KEY_CHECK));
                 }
 
-                for (int i = 0; i < splitPointCount; i++) {
-                    Document doc = col.find(findQuery)
-                            .projection(projectionQuery)
-                            .sort(new Document(splitBy, 1))
-                            .skip(skipCount)
-                            .limit(1)
-                            .first();
-                    Object id = doc.get(splitBy);
-                    splitPoints.add(id);
-                    skipCount += chunkDocCount;
+                // 直接按ObjectId的时间戳切分，没辙了，如果_id不是ObjectId，那只能`--num-mapper 1`
+                ObjectId min = col.find(findQuery)
+                        .projection(projectionQuery)
+                        .sort(new Document(splitBy, 1))
+                        .limit(1)
+                        .first()
+                        .getObjectId(splitBy);
+                ObjectId max = col.find(findQuery)
+                        .projection(projectionQuery)
+                        .sort(new Document(splitBy, -1))
+                        .limit(1)
+                        .first()
+                        .getObjectId(splitBy);
+                LOG.info(String.format("Min objectId is: %s; Max objectId is: %s.", min, max));
+                Date minTs = min.getDate();
+                Date maxTs = max.getDate();
+
+                // 从RDBMS复制过来的
+                List<BigDecimal> splits = new ArrayList<BigDecimal>();
+
+                BigDecimal decimalMinVal = new BigDecimal(minTs.getTime());
+                BigDecimal decimalMaxVal = new BigDecimal(maxTs.getTime());
+                BigDecimal decimalNumSplits = BigDecimal.valueOf(numSplits);
+
+                BigDecimal splitSize = tryDivide(decimalMaxVal.subtract(decimalMinVal), (decimalNumSplits));
+                if (splitSize.compareTo(MIN_INCREMENT) < 0) {
+                    splitSize = MIN_INCREMENT;
+                    LOG.warn("Set BigDecimal splitSize to MIN_INCREMENT: " + MIN_INCREMENT.toPlainString());
                 }
+
+                BigDecimal curVal = decimalMinVal;
+
+                // min值不可能大于max值，所以数组里至少有一个min
+                while (curVal.compareTo(decimalMaxVal) <= 0) {
+                    splits.add(curVal);
+                    curVal = curVal.add(splitSize);
+                }
+
+                // 转换回来
+                splitPoints = splits
+                        .stream()
+                        .map(item -> new ObjectId(new Date(item.longValueExact())))
+                        .collect(Collectors.toList());
+                // 确保不漏
+                splitPoints.add(0, min);
+                splitPoints.add(max);
+                // 去掉界外值+去重+排序
+                splitPoints = splitPoints.stream()
+                        .filter(item -> ((ObjectId) item).compareTo(min) >= 0 && ((ObjectId) item).compareTo(max) <= 0)
+                        .distinct()
+                        .sorted()
+                        .collect(Collectors.toList());
+
+                // mongo避免使用skip，且貌似分片的表不支持skip语句
+//                for (int i = 0; i < splitPointCount; i++) {
+//                    Document doc = col.find(findQuery)
+//                            .projection(projectionQuery)
+//                            .sort(new Document(splitBy, 1))
+//                            .skip(skipCount)
+//                            .limit(1)
+//                            .first();
+//                    Object id = doc.get(splitBy);
+//                    splitPoints.add(id);
+//                    skipCount += chunkDocCount;
+//                }
             }
 
             Object lastObjectId = null;
@@ -216,5 +275,17 @@ public class MongoDBInputFormat extends HerculesInputFormat implements MongoDBMa
     @Override
     public MongoDBManager generateManager(GenericOptions options) {
         return new MongoDBManager(options);
+    }
+
+    private static final BigDecimal MIN_INCREMENT =
+            new BigDecimal(10000 * Double.MIN_VALUE);
+
+    protected BigDecimal tryDivide(BigDecimal numerator, BigDecimal denominator) {
+        try {
+            return numerator.divide(denominator);
+        } catch (ArithmeticException ae) {
+            // 由于ROUND_UP，不可能取到0值
+            return numerator.divide(denominator, BigDecimal.ROUND_UP);
+        }
     }
 }
