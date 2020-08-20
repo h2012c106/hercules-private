@@ -56,7 +56,7 @@ public abstract class HerculesInputFormat extends InputFormat<NullWritable, Herc
         // 换算各个mapper实际的qps
         if (options.getCommonOptions().hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
             double maxWriteQps = options.getCommonOptions().getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
-            double maxWriteQpsPerMap = maxWriteQps / (double) actualNumSplits;
+            double maxWriteQpsPerMap = maxWriteQps / (double) Math.min(actualNumSplits, configuration.getLong("mapreduce.job.running.map.limit", Long.MAX_VALUE));
             LOG.info("Max write qps per map is: " + maxWriteQpsPerMap);
             // 在这里设置options吊用没有，这里的和别的地方的是深拷贝关系，要设置Configuration
             // options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
