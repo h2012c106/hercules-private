@@ -57,12 +57,6 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
                 .description("Job parameter that specifies the input table.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(TABLE)
-                .needArg(true)
-                .necessary(true)
-                .description("Job parameter that specifies the input table.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
                 .name(VALUE_NAME)
                 .needArg(true)
                 .description("Specify the hbase column name, split by: " + COLUMN_DELIMITER)
@@ -119,7 +113,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
         String keyName = options.getString(KEY_NAME, null);
         columnList.add(keyName);
         // 其实这里可以直接插String，因为内部保存的时候已经是用内部分隔符保存了，而且比较挫没加转义之类的玩意，所以裸加也ok，但不能趁人之挫，挫上加挫
-        columnList.addAll(Arrays.asList(options.getTrimmedStringArray(VALUE_NAME, null)));
+        columnList.addAll(Arrays.asList(options.getTrimmedStringArray(VALUE_NAME, new String[0])));
         options.set(COLUMN, columnList.toArray(new String[0]));
 
         JSONObject json;
