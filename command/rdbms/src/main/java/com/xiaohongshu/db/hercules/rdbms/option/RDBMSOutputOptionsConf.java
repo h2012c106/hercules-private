@@ -1,10 +1,10 @@
 package com.xiaohongshu.db.hercules.rdbms.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import org.apache.commons.lang3.StringUtils;
@@ -100,13 +100,13 @@ public final class RDBMSOutputOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(RECORD_PER_STATEMENT)
                 .needArg(true)
-                .description("The record num each statement executes.")
+                .description("The record num each statement executes, default to: " + DEFAULT_RECORD_PER_STATEMENT)
                 .defaultStringValue(Long.toString(DEFAULT_RECORD_PER_STATEMENT))
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(STATEMENT_PER_COMMIT)
                 .needArg(true)
-                .description("The statement num each commit commits.")
+                .description("The statement num each commit commits, if not specified, default to unlimited statement per commit.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(AUTOCOMMIT)
