@@ -1,0 +1,116 @@
+package com.xiaohongshu.db.hercules.redis.mr;
+
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
+import com.xiaohongshu.db.hercules.redis.RedisKV;
+
+/**
+ * Created by jamesqq on 2020/8/17.
+ */
+public class RedisOutputWrapperManager  extends WrapperSetterFactory<RedisKV> {
+
+    @Override
+    protected BaseTypeWrapperSetter.ByteSetter<RedisKV> getByteSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.ShortSetter<RedisKV> getShortSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.IntegerSetter<RedisKV> getIntegerSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.LongSetter<RedisKV> getLongSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.LonglongSetter<RedisKV> getLonglongSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.FloatSetter<RedisKV> getFloatSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DoubleSetter<RedisKV> getDoubleSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DecimalSetter<RedisKV> getDecimalSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.BooleanSetter<RedisKV> getBooleanSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.StringSetter<RedisKV> getStringSetter() {
+        return new BaseTypeWrapperSetter.StringSetter<RedisKV>() {
+            @Override
+            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
+            }
+
+            @Override
+            protected void setNonnullValue(String value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+            }
+        };
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DateSetter<RedisKV> getDateSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.TimeSetter<RedisKV> getTimeSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.DatetimeSetter<RedisKV> getDatetimeSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.BytesSetter<RedisKV> getBytesSetter() {
+        return null;
+    }
+
+    @Override
+    protected BaseTypeWrapperSetter.NullSetter<RedisKV> getNullSetter() {
+        return null;
+    }
+
+    @Override
+    protected WrapperSetter<RedisKV> getMapSetter(){
+        return new MapWrapperSetter<RedisKV>() {
+            @Override
+            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
+            }
+
+            @Override
+            protected void setNonnull(BaseWrapper<?> value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+            }
+        };
+    }
+
+
+}
