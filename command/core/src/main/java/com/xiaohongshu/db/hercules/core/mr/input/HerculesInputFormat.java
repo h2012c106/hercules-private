@@ -71,11 +71,13 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
         // 换算各个mapper实际的qps
         if (commonOptions.hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
             double maxWriteQps = commonOptions.getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
+            long mapNumLimit = context.getConfiguration().getLong(MAP_NUM_LIMIT_PROPERTY, Long.MAX_VALUE);
             double parallelNum;
-            if (context.getConfiguration().get(MAP_NUM_LIMIT_PROPERTY, null) == null) {
+            // 这个值为0时，hadoop不限制map并行度，直接用map数量算，外加0也不能做分母
+            if (mapNumLimit == 0L) {
                 parallelNum = actualNumSplits;
             } else {
-                parallelNum = context.getConfiguration().getLong(MAP_NUM_LIMIT_PROPERTY, Long.MAX_VALUE);
+                parallelNum = Math.min(actualNumSplits, mapNumLimit);
             }
             double maxWriteQpsPerMap = maxWriteQps / parallelNum;
             LOG.info("Max write qps per map is: " + maxWriteQpsPerMap);
