@@ -1,14 +1,12 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
-import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Map;
 import java.util.Properties;
 
@@ -38,6 +36,17 @@ public final class ConfigUtils {
         LOG.info(String.format("Current HERCULES version is [%s], built at [%s]", version, buildTime));
     }
 
+    private static final String HERCULES_PATH = System.getenv("HERCULES_PATH");
+
+    public static String getAbsolutePath(String relativePath) {
+        // 不能使用class.getResource方法，因为这一波类都会因为hadoop jar被解在/tmp/hadoop-unjar...的文件夹内后重新加载，而非直接从fatjar中加载，故无法找到真正的jar包位置
+        // 现在使用环境变量的方式借助外部操作系统加载到jar包位置
+        if (StringUtils.isEmpty(HERCULES_PATH)) {
+            throw new RuntimeException("Empty [HERCULES_PATH] system env, please set it to core jar posioition.");
+        }
+        return HERCULES_PATH + "/" + relativePath;
+    }
+
     /**
      * 从jar包目录下conf文件夹内找module.yml文件，采用集中式配置的方法。
      * 不采用类似dataX的分布式由插件自行提供配置文件的理由在于——若插件自行提供在jar包内，那么势必一开始需要加载所有插件jar包(都是fatjar)，
@@ -47,8 +56,13 @@ public final class ConfigUtils {
      * @return
      */
     public static ModuleConfig getModuleConfig(String dataSourceName) {
-        String confPath = String.format("/%s/%s", CONF_DIR, MODULE_CONF_FILE);
-        InputStream is = ConfigUtils.class.getResourceAsStream(confPath);
+        String confPath = getAbsolutePath(String.format("%s/%s", CONF_DIR, MODULE_CONF_FILE));
+        InputStream is = null;
+        try {
+            is = new FileInputStream(new File(confPath));
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         Yaml yaml = new Yaml();
         LOG.info(String.format("Reading module config file [%s]...", confPath));
         Map<String, Map<String, String>> conf = yaml.load(is);
@@ -63,14 +77,10 @@ public final class ConfigUtils {
             throw new RuntimeException(String.format("Cannot find [%s] module registered in %s/%s, registered module: %s",
                     dataSourceName, CONF_DIR, MODULE_CONF_FILE, conf.keySet()));
         }
-        String jarFile = ConfigUtils.class.getResource(String.format("/%s/%s", MODULE_JAR_DIR, moduleConf.getJar())).getPath();
+        String jarFile = getAbsolutePath(String.format("%s/%s", MODULE_JAR_DIR, moduleConf.getJar()));
         // 设置成绝对路径
         moduleConf.setJar(jarFile);
         return moduleConf;
-    }
-
-    public static AssemblySupplier getAssemblySupplier(ModuleConfig moduleConfig) {
-        return ReflectUtils.loadJarClass(moduleConfig.getJar(), moduleConfig.getAssemblyClass(), AssemblySupplier.class);
     }
 
 }

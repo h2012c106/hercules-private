@@ -3,11 +3,11 @@ package com.xiaohongshu.db.hercules.core.mr;
 import com.cloudera.sqoop.config.ConfigurationHelper;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
-import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
-import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper;
+import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandExecutor;
@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.common.option.CommonOptionsConf.JOB_NAME;
 
@@ -50,8 +51,7 @@ public class MRJob {
 
     private WrappingOptions options;
 
-    private String sourceJar;
-    private String targetJar;
+    private List<String> jarList;
 
     @GeneralAssembly(role = DataSourceRole.SOURCE)
     private Class<? extends HerculesInputFormat<?>> inputFormatClass;
@@ -65,10 +65,8 @@ public class MRJob {
     @GeneralAssembly(role = DataSourceRole.TARGET)
     private MRJobContext jobContextAsTarget;
 
-    public MRJob(WrappingOptions options, String sourceJar, String targetJar) {
+    public MRJob(WrappingOptions options) {
         this.options = options;
-        this.sourceJar = sourceJar;
-        this.targetJar = targetJar;
     }
 
     private void configure(Configuration configuration, String value, String... keys) {
@@ -196,14 +194,18 @@ public class MRJob {
         }
     }
 
-    private String qualifyTmpJar(String tmpPath, Configuration conf) throws IOException {
-        FileSystem fs = FileSystem.getLocal(conf);
+    private String qualifyTmpJar(String tmpPath, Configuration conf) {
+        FileSystem fs = null;
+        try {
+            fs = FileSystem.getLocal(conf);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return new Path(tmpPath).makeQualified(fs).toString();
     }
 
-    public void setJar(String sourceJar, String targetJar) {
-        this.sourceJar = sourceJar;
-        this.targetJar = targetJar;
+    public void setJarList(List<String> jarList) {
+        this.jarList = jarList;
     }
 
     public void run(String... args) throws IOException, ClassNotFoundException, InterruptedException {
@@ -243,8 +245,9 @@ public class MRJob {
         if (!StringUtils.isEmpty(tmpJars)) {
             tmpJarList.add(tmpJars);
         }
-        tmpJarList.add(qualifyTmpJar(sourceJar, configuration));
-        tmpJarList.add(qualifyTmpJar(targetJar, configuration));
+        tmpJarList.addAll(jarList.stream()
+                .map(jarName -> qualifyTmpJar(jarName, job.getConfiguration()))
+                .collect(Collectors.toList()));
 //        LOG.info("System path.separator: " + System.getProperty("path.separator"));
 //        String tmpJarsStr = StringUtils.join(tmpJarList, System.getProperty("path.separator"));
         String tmpJarsStr = StringUtils.join(tmpJarList, ",");

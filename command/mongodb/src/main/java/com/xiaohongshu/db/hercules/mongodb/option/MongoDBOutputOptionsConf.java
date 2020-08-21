@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.mongodb.option;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOutputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
 public final class MongoDBOutputOptionsConf extends BaseOptionsConf {
 

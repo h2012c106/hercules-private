@@ -1,8 +1,10 @@
 package com.xiaohongshu.db.hercules.parquet.option;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
 
 import java.util.ArrayList;
@@ -18,7 +20,9 @@ public class ParquetOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
-        return null;
+        return Lists.newArrayList(
+                new TableOptionsConf()
+        );
     }
 
     @Override

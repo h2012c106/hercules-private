@@ -117,10 +117,10 @@ public class CmdParser implements Parser<String[]> {
             case COMMON:
                 helpHeader = "Common param:\n\n";
                 break;
-            case SOURCE_SERDER:
+            case DER:
                 helpHeader = "Source converter param:\n\n";
                 break;
-            case TARGET_SERDER:
+            case SER:
                 helpHeader = "Target converter param:\n\n";
                 break;
             default:

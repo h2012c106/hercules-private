@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
@@ -10,8 +10,8 @@ import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN;
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN;
 import static com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf.TABLE;
 
 public final class RDBMSInputOptionsConf extends BaseOptionsConf {
@@ -95,7 +95,7 @@ public final class RDBMSInputOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(FETCH_SIZE)
                 .needArg(true)
-                .description("The select fetch size, if not specified will not use this feature.")
+                .description("The select fetch size, if specified will use server cursor, or will use client cursor.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(IGNORE_SPLIT_KEY_CHECK)

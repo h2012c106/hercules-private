@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.core.utils;
 import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;

@@ -1,10 +1,13 @@
 package com.xiaohongshu.db.hercules.core.supplier;
 
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
-import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
+import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
+import com.xiaohongshu.db.hercules.core.serder.KVDer;
+import com.xiaohongshu.db.hercules.core.serder.KVSer;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,18 +27,32 @@ public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
     protected void afterSetOptions() {
     }
 
-    private KvSerDer<?, ?> kvSerDer = null;
+    private KVSer<?> KVSer = null;
 
-    abstract protected KvSerDer<?, ?> innerGetKvSerDer();
+    abstract protected KVSer<?> innerGetKVSer();
 
     @Override
-    synchronized public final KvSerDer<?, ?> getKvSerDer() {
-        if (kvSerDer == null) {
-            LOG.debug(String.format("Initializing KvSerDer of [%s]...", getClass().getSimpleName()));
-            kvSerDer = innerGetKvSerDer();
-            HerculesContext.instance().inject(kvSerDer);
+    synchronized public final KVSer<?> getKVSer() {
+        if (KVSer == null) {
+            LOG.debug(String.format("Initializing KVSer of [%s]...", getClass().getSimpleName()));
+            KVSer = innerGetKVSer();
+            HerculesContext.instance().inject(KVSer);
         }
-        return kvSerDer;
+        return KVSer;
+    }
+
+    private KVDer<?> KVDer = null;
+
+    abstract protected KVDer<?> innerGetKVDer();
+
+    @Override
+    synchronized public final KVDer<?> getKVDer() {
+        if (KVDer == null) {
+            LOG.debug(String.format("Initializing KVSer of [%s]...", getClass().getSimpleName()));
+            KVDer = innerGetKVDer();
+            HerculesContext.instance().inject(KVDer);
+        }
+        return KVDer;
     }
 
     private OptionsConf inputOptionsConf = null;
@@ -80,7 +97,9 @@ public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
 
     private CustomDataTypeManager<?, ?> customDataTypeManager = null;
 
-    abstract protected CustomDataTypeManager<?, ?> innerGetCustomDataTypeManager();
+    protected CustomDataTypeManager<?, ?> innerGetCustomDataTypeManager() {
+        return NullCustomDataTypeManager.INSTANCE;
+    }
 
     @Override
     synchronized public final CustomDataTypeManager<?, ?> getCustomDataTypeManager() {
@@ -89,5 +108,37 @@ public abstract class BaseKvSerDerSupplier implements KvSerDerSupplier {
             customDataTypeManager = innerGetCustomDataTypeManager();
         }
         return customDataTypeManager;
+    }
+
+    private SchemaNegotiatorContext schemaNegotiatorContextAsSource = null;
+
+    protected SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsSource() {
+        return SchemaNegotiatorContext.NULL_INSTANCE;
+    }
+
+    @Override
+    synchronized public final SchemaNegotiatorContext getSchemaNegotiatorContextAsSource() {
+        if (schemaNegotiatorContextAsSource == null) {
+            LOG.debug(String.format("Initializing SchemaNegotiatorContextAsSource of [%s]...", getClass().getSimpleName()));
+            schemaNegotiatorContextAsSource = innerGetSchemaNegotiatorContextAsSource();
+            HerculesContext.instance().inject(schemaNegotiatorContextAsSource);
+        }
+        return schemaNegotiatorContextAsSource;
+    }
+
+    private SchemaNegotiatorContext schemaNegotiatorContextAsTarget = null;
+
+    protected SchemaNegotiatorContext innerGetSchemaNegotiatorContextAsTarget() {
+        return SchemaNegotiatorContext.NULL_INSTANCE;
+    }
+
+    @Override
+    synchronized public final SchemaNegotiatorContext getSchemaNegotiatorContextAsTarget() {
+        if (schemaNegotiatorContextAsTarget == null) {
+            LOG.debug(String.format("Initializing SchemaNegotiatorContextAsTarget of [%s]...", getClass().getSimpleName()));
+            schemaNegotiatorContextAsTarget = innerGetSchemaNegotiatorContextAsTarget();
+            HerculesContext.instance().inject(schemaNegotiatorContextAsTarget);
+        }
+        return schemaNegotiatorContextAsTarget;
     }
 }

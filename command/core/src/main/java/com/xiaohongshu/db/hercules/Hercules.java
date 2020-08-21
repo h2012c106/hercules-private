@@ -10,11 +10,9 @@ import com.xiaohongshu.db.hercules.core.parser.CmdParser;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
-import com.xiaohongshu.db.hercules.core.utils.ConfigUtils;
-import com.xiaohongshu.db.hercules.core.utils.LogUtils;
-import com.xiaohongshu.db.hercules.core.utils.ModuleConfig;
-import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.core.utils.*;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,10 +20,22 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class Hercules {
 
     private static final Log LOG = LogFactory.getLog(Hercules.class);
+
+    private static final String LIB_DIR = "lib";
+
+    private static List<String> getJarList(ModuleConfig sourceModuleConfig, ModuleConfig targetModuleConfig) {
+        List<String> res = ReflectUtils.listJarList(ConfigUtils.getAbsolutePath(LIB_DIR));
+        res.add(sourceModuleConfig.getJar());
+        if (!StringUtils.equals(sourceModuleConfig.getJar(), targetModuleConfig.getJar())) {
+            res.add(targetModuleConfig.getJar());
+        }
+        return res;
+    }
 
     public static void main(String[] args) {
         LogUtils.configureLog4J();
@@ -44,8 +54,17 @@ public class Hercules {
 
         ModuleConfig sourceModuleConfig = ConfigUtils.getModuleConfig(sourceDataSourceName);
         ModuleConfig targetModuleConfig = ConfigUtils.getModuleConfig(targetDataSourceName);
-        AssemblySupplier sourceSupplier = ConfigUtils.getAssemblySupplier(sourceModuleConfig);
-        AssemblySupplier targetSupplier = ConfigUtils.getAssemblySupplier(targetModuleConfig);
+
+        Reflector reflector = new Reflector(getJarList(sourceModuleConfig, targetModuleConfig));
+
+        AssemblySupplier sourceSupplier = reflector.constructWithNonArgsConstructor(
+                sourceModuleConfig.getAssemblyClass(),
+                AssemblySupplier.class
+        );
+        AssemblySupplier targetSupplier = reflector.constructWithNonArgsConstructor(
+                targetModuleConfig.getAssemblyClass(),
+                AssemblySupplier.class
+        );
 
         DataSource sourceDataSource = sourceSupplier.getDataSource();
         DataSource targetDataSource = targetSupplier.getDataSource();
@@ -72,7 +91,7 @@ public class Hercules {
 
         WrappingOptions wrappingOptions = new WrappingOptions(commonOptions, sourceOptions, targetOptions);
 
-        HerculesContext context = HerculesContext.initialize(wrappingOptions, sourceSupplier, targetSupplier);
+        HerculesContext context = HerculesContext.initialize(wrappingOptions, sourceSupplier, targetSupplier, reflector);
 
         KvSerDerSupplier sourceKvSerDerSupplier;
         if (sourceDataSource.hasKvSerDer()
@@ -80,7 +99,7 @@ public class Hercules {
             wrappingOptions.add(new CmdParser(
                     sourceKvSerDerSupplier.getInputOptionsConf(),
                     sourceDataSource,
-                    OptionsType.SOURCE_SERDER
+                    OptionsType.DER
             ).parse(args));
         }
         KvSerDerSupplier targetKvSerDerSupplier;
@@ -89,7 +108,7 @@ public class Hercules {
             wrappingOptions.add(new CmdParser(
                     targetKvSerDerSupplier.getOutputOptionsConf(),
                     targetDataSource,
-                    OptionsType.TARGET_SERDER
+                    OptionsType.SER
             ).parse(args));
         }
 
@@ -113,8 +132,9 @@ public class Hercules {
         context.inject(schemaNegotiator);
         schemaNegotiator.negotiate();
 
-        MRJob job = new MRJob(wrappingOptions,sourceModuleConfig.getJar(), targetModuleConfig.getJar());
+        MRJob job = new MRJob(wrappingOptions);
         context.inject(job);
+        job.setJarList(reflector.getJarListLoaded());
 
         int ret;
         try {

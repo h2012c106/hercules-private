@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.hbase.option;
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.*;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOutputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseOutputOptionsConf;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +38,6 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
                 .description("Column Family to Scan.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
-                .name(HBaseOptionsConf.ROW_KEY_COL_NAME)
-                .needArg(true)
-                .description("The column specified to be the row key of PUT or DELETE operations")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
                 .name(WRITE_BUFFER_SIZE)
                 .needArg(true)
                 .description(String.format("The write buffer size, default %d bytes.", DEFAULT_WRITE_BUFFER_SIZE))
@@ -52,20 +47,15 @@ public final class HBaseOutputOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .description(String.format("The write maximum threads num, default %d threads.", DEFAULT_MAX_WRITE_THREAD_NUM))
                 .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(CONVERT_COLUMN_NAME)
-                .needArg(true)
-                .description(String.format("The qualifier to put converted bytes. Note that only one qualifier is supported for a converted value."))
-                .build());
+//        tmpList.add(SingleOptionConf.builder()
+//                .name(CONVERT_COLUMN_NAME)
+//                .needArg(true)
+//                .description("The qualifier to put converted bytes. Note that only one qualifier is supported for a converted value.")
+//                .build());
         return tmpList;
     }
 
     @Override
     public void innerValidateOptions(GenericOptions options) {
-//        String rowKeyCol = options.getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-//        List<String> columnNameList = Arrays.asList(options.getStringArray(BaseDataSourceOptionsConf.COLUMN, null));
-//        if (columnNameList.size() > 0 && !columnNameList.contains(rowKeyCol)) {
-//            throw new RuntimeException("Missing row key col in column name list: " + columnNameList);
-//        }
     }
 }

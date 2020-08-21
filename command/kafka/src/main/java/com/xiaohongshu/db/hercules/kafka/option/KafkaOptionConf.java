@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOutputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseOutputOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf;
 
 import java.util.ArrayList;

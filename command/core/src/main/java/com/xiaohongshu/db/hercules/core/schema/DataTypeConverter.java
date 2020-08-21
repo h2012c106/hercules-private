@@ -22,11 +22,11 @@ public interface DataTypeConverter<T, L> {
     DataType convertElementType(T standard);
 
     /**
-     * 对单个数据元素判断内部类型
-     *
+     * 往回转
+     * @param type
      * @return
      */
-    default T convertElementType(DataType type){
+    default T getElementType(DataType type){
         throw new UnsupportedOperationException();
     }
 

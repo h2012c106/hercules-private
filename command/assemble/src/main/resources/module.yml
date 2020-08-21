@@ -29,3 +29,11 @@ clickhouse:
 hbase:
   jar: hercules-command-hbase-dev.jar
   assemblyClass: com.xiaohongshu.db.hercules.hbase.HBaseAssemblySupplier
+
+kafka:
+  jar: hercules-command-kafka-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.kafka.KafkaAssemblySupplier
+
+myhub:
+  jar: hercules-command-myhub-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.myhub.MyhubAssemblySupplier

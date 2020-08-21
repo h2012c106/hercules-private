@@ -68,6 +68,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
             LOG.info("The map max qps is limited to: " + qps);
             rateLimiter = RateLimiter.create(qps);
         }
+        innerAfterInject();
     }
 
     /**

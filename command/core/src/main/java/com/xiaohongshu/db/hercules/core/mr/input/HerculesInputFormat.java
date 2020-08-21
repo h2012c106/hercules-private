@@ -7,7 +7,7 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.serder.KvSerDer;
+import com.xiaohongshu.db.hercules.core.serder.KVDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
@@ -26,6 +26,8 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
+    private static final String MAP_NUM_LIMIT_PROPERTY = "mapreduce.job.running.map.limit";
+
     public HerculesInputFormat() {
     }
 
@@ -38,8 +40,8 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
     @GeneralAssembly(role = DataSourceRole.SOURCE)
     private DataSource dataSource;
 
-    @SerDerAssembly(role = DataSourceRole.SOURCE)
-    private KvSerDer<?, ?> kvSerDer;
+    @SerDerAssembly(role = DataSourceRole.DER)
+    private KVDer<?> kvDer;
 
     @Override
     public final DataSourceRole getRole() {
@@ -69,7 +71,7 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
         // 换算各个mapper实际的qps
         if (commonOptions.hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
             double maxWriteQps = commonOptions.getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
-            double maxWriteQpsPerMap = maxWriteQps / (double) actualNumSplits;
+            double maxWriteQpsPerMap = maxWriteQps / (double) Math.min(actualNumSplits, context.getConfiguration().getLong(MAP_NUM_LIMIT_PROPERTY, Long.MAX_VALUE));
             LOG.info("Max write qps per map is: " + maxWriteQpsPerMap);
             // 在这里设置options吊用没有，这里的和别的地方的是深拷贝关系，要设置Configuration
             // options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
@@ -92,9 +94,9 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
         HerculesRecordReader<T> delegate = innerCreateRecordReader(split, context);
 
         RecordReader<NullWritable, HerculesWritable> res;
-        if (dataSource.hasKvSerDer() && kvSerDer != null) {
+        if (dataSource.hasKvSerDer() && kvDer != null) {
             HerculesContext.instance().inject(delegate);
-            res = new HerculesSerDerRecordReader(kvSerDer, delegate);
+            res = new HerculesSerDerRecordReader(kvDer, delegate);
         } else {
             res = delegate;
         }

@@ -1,11 +1,11 @@
 package com.xiaohongshu.db.hercules.mongodb.schema;
 
+import com.google.common.collect.Sets;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
-import org.apache.commons.compress.utils.Sets;
 import org.bson.Document;
 import java.util.*;
 

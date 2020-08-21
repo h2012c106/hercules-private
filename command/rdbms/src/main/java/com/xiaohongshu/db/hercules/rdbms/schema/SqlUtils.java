@@ -8,8 +8,8 @@ import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
@@ -130,10 +130,10 @@ public final class SqlUtils {
     public static ExtendedDate getTimestamp(ResultSet resultSet, int seq) throws SQLException {
         try {
             Timestamp res = resultSet.getTimestamp(seq);
-            return res == null ? null : new ExtendedDate(res);
+            return res == null ? null : ExtendedDate.initialize(res);
         } catch (SQLException e) {
             if (StringUtils.contains(e.getMessage(), "0000")) {
-                return new ExtendedDate();
+                return ExtendedDate.ZERO_INSTANCE;
             } else {
                 throw e;
             }
@@ -166,7 +166,7 @@ public final class SqlUtils {
             return options.getString(RDBMSInputOptionsConf.QUERY, null);
         } else {
             List<String> columnNameList;
-            if (!options.hasProperty(BaseDataSourceOptionsConf.COLUMN)) {
+            if (!options.hasProperty(TableOptionsConf.COLUMN)) {
                 if (useAsterisk) {
                     columnNameList = Lists.newArrayList("*");
                 } else {
@@ -174,7 +174,7 @@ public final class SqlUtils {
                 }
             } else {
                 columnNameList
-                        = Arrays.asList(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+                        = Arrays.asList(options.getTrimmedStringArray(TableOptionsConf.COLUMN, null));
             }
             String where = options.hasProperty(RDBMSInputOptionsConf.CONDITION)
                     ? " WHERE " + options.getString(RDBMSInputOptionsConf.CONDITION, null)

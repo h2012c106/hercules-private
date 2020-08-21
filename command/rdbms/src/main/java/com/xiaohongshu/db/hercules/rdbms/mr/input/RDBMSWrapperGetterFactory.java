@@ -163,7 +163,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
         return new BaseTypeWrapperGetter.DateGetter<ResultSet>() {
             @Override
             protected ExtendedDate getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.getDate(columnSeq));
+                return ExtendedDate.initialize(row.getDate(columnSeq));
             }
 
             @Override
@@ -178,7 +178,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
         return new BaseTypeWrapperGetter.TimeGetter<ResultSet>() {
             @Override
             protected ExtendedDate getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.getTime(columnSeq));
+                return ExtendedDate.initialize(row.getTime(columnSeq));
             }
 
             @Override

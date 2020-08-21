@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.hbase.schema.manager;
 
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOutputOptionsConf;
@@ -21,12 +21,7 @@ public class HBaseManager {
 
     private static final Log LOG = LogFactory.getLog(HBaseManager.class);
 
-    private final GenericOptions options;
-    private volatile Connection conn;
-
-    public HBaseManager(GenericOptions options) {
-        this.options = options;
-    }
+    private volatile Connection conn = null;
 
     public Connection getConnection(Configuration configuration) throws IOException {
         if (null == conn) {
@@ -75,7 +70,7 @@ public class HBaseManager {
         if (null != options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null)) {
             scan.setBatch(options.getInteger(HBaseInputOptionsConf.SCAN_BATCHSIZE, null));
         }
-        List<String> scanColumns = Arrays.asList(options.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, new String[0]));
+        List<String> scanColumns = Arrays.asList(options.getTrimmedStringArray(TableOptionsConf.COLUMN, new String[0]));
         if (scanColumns.size() != 0) {
             for (String qualifier : scanColumns) {
                 scan.addColumn(Bytes.toBytes(scanColumnFamily), Bytes.toBytes(qualifier));
@@ -111,6 +106,15 @@ public class HBaseManager {
         return connection.getTable(hTableName);
     }
 
+    public static void checkIfTableExists(TableName tableName, HBaseManager manager, Configuration configuration) throws IOException {
+        Admin hbaseAdmin = manager.getConnection(configuration).getAdmin();
+        boolean exists = hbaseAdmin.tableExists(tableName);
+        hbaseAdmin.close();
+        if (!exists) {
+            throw new RuntimeException("Table " + tableName.getNameAsString() + " not exists in HBase. Please make sure the table is created before running this task.");
+        }
+    }
+
     /**
      * 通过配置好的conf以及manager来获取BufferedMutator(Async).
      */
@@ -118,6 +122,8 @@ public class HBaseManager {
         String userTable = options.getString(HBaseOptionsConf.TABLE, null);
         long writeBufferSize = options.getLong(HBaseOutputOptionsConf.WRITE_BUFFER_SIZE, HBaseOutputOptionsConf.DEFAULT_WRITE_BUFFER_SIZE);
         TableName hTableName = TableName.valueOf(userTable);
+        // HBase 1.xx版本不支持
+        // checkIfTableExists(hTableName, manager);
         Admin admin = null;
         BufferedMutator bufferedMutator;
         try {

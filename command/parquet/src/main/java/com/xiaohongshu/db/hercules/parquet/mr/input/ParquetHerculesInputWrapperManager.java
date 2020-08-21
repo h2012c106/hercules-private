@@ -100,7 +100,7 @@ public class ParquetHerculesInputWrapperManager extends ParquetInputWrapperManag
         return new BaseTypeWrapperGetter.DateGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(ParquetUtils.intToDate(row.getGroup().getInteger(columnName, row.getValueSeq())));
+                return ExtendedDate.initialize(ParquetUtils.intToDate(row.getGroup().getInteger(columnName, row.getValueSeq())));
             }
 
             @Override
@@ -115,7 +115,7 @@ public class ParquetHerculesInputWrapperManager extends ParquetInputWrapperManag
         return new BaseTypeWrapperGetter.TimeGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(ParquetUtils.intToTime(row.getGroup().getInteger(columnName, row.getValueSeq())));
+                return ExtendedDate.initialize(ParquetUtils.intToTime(row.getGroup().getInteger(columnName, row.getValueSeq())));
             }
 
             @Override
@@ -130,7 +130,7 @@ public class ParquetHerculesInputWrapperManager extends ParquetInputWrapperManag
         return new BaseTypeWrapperGetter.DatetimeGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(ParquetUtils.longToDatetime(row.getGroup().getLong(columnName, row.getValueSeq())));
+                return ExtendedDate.initialize(ParquetUtils.longToDatetime(row.getGroup().getLong(columnName, row.getValueSeq())));
             }
 
             @Override

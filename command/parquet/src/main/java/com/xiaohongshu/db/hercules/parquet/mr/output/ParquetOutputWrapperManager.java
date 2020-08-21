@@ -15,10 +15,6 @@ import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
 import lombok.NonNull;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.io.api.Binary;
-import org.apache.parquet.schema.Type;
-
-import java.util.List;
-import java.util.Map;
 
 import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_NAME_USED_BY_LIST;
 
@@ -29,7 +25,7 @@ import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_N
 public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<Group> {
 
     @GeneralAssembly
-    private final ParquetDataTypeConverter converter = null;
+    private final ParquetDataTypeConverter dataTypeConverter = null;
 
     /**
      * 当上游不是list时，做一个singleton list
@@ -41,7 +37,7 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
      */
     private void wrapperToRepeated(BaseWrapper wrapper, Group res, String columnName) throws Exception {
         // 由于类型一定一致，所以可以事先取
-        DataType columnType = converter.convertElementType(new ParquetType(res.getType().getType(columnName), false));
+        DataType columnType = dataTypeConverter.convertElementType(new ParquetType(res.getType().getType(columnName), false));
         WrapperSetter<Group> wrapperSetter = getWrapperSetter(columnType);
         if (wrapper.getType() == BaseDataType.LIST) {
             ListWrapper listWrapper = (ListWrapper) wrapper;

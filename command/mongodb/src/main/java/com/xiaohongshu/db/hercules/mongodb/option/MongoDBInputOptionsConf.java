@@ -1,10 +1,10 @@
 package com.xiaohongshu.db.hercules.mongodb.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseInputOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
 
 import java.util.ArrayList;
@@ -15,6 +15,9 @@ public final class MongoDBInputOptionsConf extends BaseOptionsConf {
     public static final String QUERY = "query";
     public static final String SPLIT_BY = "split-by";
     public static final String IGNORE_SPLIT_KEY_CHECK = "ignore-split-key-check";
+    public static final String BATCH_SIZE = "batch-size";
+
+    private static final int DEFAULT_BATCH_SIZE = 101;
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -43,6 +46,12 @@ public final class MongoDBInputOptionsConf extends BaseOptionsConf {
                 .name(IGNORE_SPLIT_KEY_CHECK)
                 .needArg(false)
                 .description("If specified, will not abandon the situation that specifying a non-key column as split key.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(BATCH_SIZE)
+                .needArg(true)
+                .description("The batch size documents fetched from server, default to: " + DEFAULT_BATCH_SIZE)
+                .defaultStringValue(String.valueOf(DEFAULT_BATCH_SIZE))
                 .build());
         return tmpList;
     }

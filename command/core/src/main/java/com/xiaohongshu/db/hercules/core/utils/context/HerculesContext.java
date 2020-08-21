@@ -10,6 +10,7 @@ import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
 import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
+import com.xiaohongshu.db.hercules.core.utils.Reflector;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,19 +26,19 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf.SUPPLIER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.SERDER_SUPPLIER;
 
 public final class HerculesContext {
 
     private static final Log LOG = LogFactory.getLog(BaseSchemaFetcher.class);
 
-    private final Pair<AssemblySupplier> assemblySupplierPair;
+    private final Family<AssemblySupplier> assemblySupplierPair;
 
-    private final Pair<KvSerDerSupplier> kvSerDerSupplierPair;
+    private final Family<KvSerDerSupplier> kvSerDerSupplierPair;
 
     private final WrappingOptions wrappingOptions;
 
-    private final Pair<Schema> schemaPair;
+    private final Family<Schema> schemaFamily;
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
     private static HerculesContext INSTANCE;
@@ -52,6 +53,8 @@ public final class HerculesContext {
      * 避免还在初始化instance就有人要取之，用来加读写锁，其实不会出现写锁冲突，这点由INITIALIZED保证，主要用来解读写与读读的问题
      */
     private static final ReentrantReadWriteLock LOCK = new ReentrantReadWriteLock();
+
+    private final Reflector reflector;
 
     public static HerculesContext initialize(Configuration configuration) {
         WrappingOptions options = new WrappingOptions();
@@ -75,13 +78,14 @@ public final class HerculesContext {
 
     public static HerculesContext initialize(WrappingOptions wrappingOptions,
                                              AssemblySupplier sourceSupplier,
-                                             AssemblySupplier targetSupplier) {
+                                             AssemblySupplier targetSupplier,
+                                             Reflector reflector) {
         if (INITIALIZED.getAndSet(true)) {
             LOG.debug("Initialize HerculesContext repeatedly, ignore this init.");
         } else {
             LOCK.writeLock().lock();
             try {
-                INSTANCE = new HerculesContext(wrappingOptions, sourceSupplier, targetSupplier);
+                INSTANCE = new HerculesContext(wrappingOptions, sourceSupplier, targetSupplier, reflector);
             } finally {
                 LOCK.writeLock().unlock();
             }
@@ -103,27 +107,31 @@ public final class HerculesContext {
     }
 
     private HerculesContext(WrappingOptions wrappingOptions) {
+        this.reflector = new Reflector();
+
         this.wrappingOptions = wrappingOptions;
         this.assemblySupplierPair = extractAssemblySupplierPair(wrappingOptions);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
-        this.schemaPair = extractSchemaPair(wrappingOptions, this.assemblySupplierPair);
+        this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
 
         // setOptions
         assemblySupplierPair.getSourceItem().setOptions(wrappingOptions.getSourceOptions());
         assemblySupplierPair.getTargetItem().setOptions(wrappingOptions.getTargetOptions());
         if (hasSerDer(DataSourceRole.SOURCE)) {
-            kvSerDerSupplierPair.getSourceItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SOURCE_SERDER));
+            kvSerDerSupplierPair.getSourceItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.DER));
         }
         if (hasSerDer(DataSourceRole.TARGET)) {
-            kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.TARGET_SERDER));
+            kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SER));
         }
     }
 
-    private HerculesContext(WrappingOptions wrappingOptions, AssemblySupplier sourceSupplier, AssemblySupplier targetSupplier) {
+    private HerculesContext(WrappingOptions wrappingOptions, AssemblySupplier sourceSupplier, AssemblySupplier targetSupplier, Reflector reflector) {
+        this.reflector = reflector;
+
         this.wrappingOptions = wrappingOptions;
-        this.assemblySupplierPair = new Pair<>(sourceSupplier, targetSupplier);
+        this.assemblySupplierPair = Family.initializeDataSource(sourceSupplier, targetSupplier);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
-        this.schemaPair = extractSchemaPair(wrappingOptions, this.assemblySupplierPair);
+        this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
 
         // 把supplier计入options中
         assemblySupplierToOptions(sourceSupplier, wrappingOptions.getSourceOptions());
@@ -133,10 +141,10 @@ public final class HerculesContext {
         assemblySupplierPair.getSourceItem().setOptions(wrappingOptions.getSourceOptions());
         assemblySupplierPair.getTargetItem().setOptions(wrappingOptions.getTargetOptions());
         if (hasSerDer(DataSourceRole.SOURCE)) {
-            kvSerDerSupplierPair.getSourceItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SOURCE_SERDER));
+            kvSerDerSupplierPair.getSourceItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.DER));
         }
         if (hasSerDer(DataSourceRole.TARGET)) {
-            kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.TARGET_SERDER));
+            kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SER));
         }
     }
 
@@ -202,13 +210,18 @@ public final class HerculesContext {
             }
 
             HerculesContextElement contextElement = contextElementList.get(0);
-            Object fieldValueFromContext = contextElement.getContextReader()
-                    .pulloutValueFromContext(this, field, annotation, classConfiguredRole);
+            Object fieldValueFromContext;
+            try {
+                fieldValueFromContext = contextElement.getContextReader()
+                        .pulloutValueFromContext(this, field, annotation, classConfiguredRole);
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("Inject [%s] failed.", obj.getClass().getCanonicalName()), e);
+            }
 
             boolean accessible = field.isAccessible();
             try {
                 field.setAccessible(true);
-                field.set(obj, fieldValueFromContext);
+                field.set(obj, field.getType().cast(fieldValueFromContext));
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             } finally {
@@ -227,22 +240,24 @@ public final class HerculesContext {
         return obj;
     }
 
-    private Pair<AssemblySupplier> extractAssemblySupplierPair(WrappingOptions wrappingOptions) {
-        return new Pair<>(
+    private Family<AssemblySupplier> extractAssemblySupplierPair(WrappingOptions wrappingOptions) {
+        return Family.initializeDataSource(
                 assemblySupplierFromOptions(wrappingOptions.getSourceOptions()),
                 assemblySupplierFromOptions(wrappingOptions.getTargetOptions())
         );
     }
 
-    private Pair<KvSerDerSupplier> extractKvSerDerSupplierPair(WrappingOptions wrappingOptions) {
-        return new Pair<>(
+    private Family<KvSerDerSupplier> extractKvSerDerSupplierPair(WrappingOptions wrappingOptions) {
+        return Family.initializeSerDer(
                 kvSupplierFromOptions(wrappingOptions.getSourceOptions()),
                 kvSupplierFromOptions(wrappingOptions.getTargetOptions())
         );
     }
 
-    private Pair<Schema> extractSchemaPair(WrappingOptions wrappingOptions, Pair<AssemblySupplier> assemblySupplierPair) {
-        return new Pair<>(
+    private Family<Schema> extractSchemaFamily(WrappingOptions wrappingOptions,
+                                               Family<AssemblySupplier> assemblySupplierPair,
+                                               Family<KvSerDerSupplier> serDerSupplierPair) {
+        return Family.initialize(
                 Schema.fromOptions(
                         wrappingOptions.getSourceOptions(),
                         assemblySupplierPair.getSourceItem().getCustomDataTypeManager()
@@ -250,15 +265,27 @@ public final class HerculesContext {
                 Schema.fromOptions(
                         wrappingOptions.getTargetOptions(),
                         assemblySupplierPair.getTargetItem().getCustomDataTypeManager()
+                ),
+                hasSerDer(DataSourceRole.DER)
+                        ? Schema.fromOptions(
+                        wrappingOptions.getGenericOptions(OptionsType.DER),
+                        serDerSupplierPair.getDerItem().getCustomDataTypeManager()
                 )
+                        : null,
+                hasSerDer(DataSourceRole.SER)
+                        ? Schema.fromOptions(
+                        wrappingOptions.getGenericOptions(OptionsType.SER),
+                        serDerSupplierPair.getSerItem().getCustomDataTypeManager()
+                )
+                        : null
         );
     }
 
-    public Pair<AssemblySupplier> getAssemblySupplierPair() {
+    public Family<AssemblySupplier> getAssemblySupplierPair() {
         return assemblySupplierPair;
     }
 
-    public Pair<KvSerDerSupplier> getKvSerDerSupplierPair() {
+    public Family<KvSerDerSupplier> getKvSerDerSupplierPair() {
         return kvSerDerSupplierPair;
     }
 
@@ -266,8 +293,8 @@ public final class HerculesContext {
         return wrappingOptions;
     }
 
-    public Pair<Schema> getSchemaPair() {
-        return schemaPair;
+    public Family<Schema> getSchemaFamily() {
+        return schemaFamily;
     }
 
     private static final String ASSEMBLY_SUPPLIER_CLASS_NAME = "assembly-supplier-class-name-internal";
@@ -277,18 +304,18 @@ public final class HerculesContext {
     }
 
     private AssemblySupplier assemblySupplierFromOptions(GenericOptions options) {
-        return ReflectUtils.constructWithNonArgsConstructor(
+        return reflector.constructWithNonArgsConstructor(
                 options.getString(ASSEMBLY_SUPPLIER_CLASS_NAME, null),
                 AssemblySupplier.class
         );
     }
 
     private KvSerDerSupplier kvSupplierFromOptions(GenericOptions options) {
-        String supplierName = options.getString(SUPPLIER, null);
+        String supplierName = options.getString(SERDER_SUPPLIER, null);
         if (supplierName == null) {
             return null;
         } else {
-            KvSerDerSupplier res = ReflectUtils.constructWithNonArgsConstructor(
+            KvSerDerSupplier res = reflector.constructWithNonArgsConstructor(
                     supplierName,
                     KvSerDerSupplier.class
             );

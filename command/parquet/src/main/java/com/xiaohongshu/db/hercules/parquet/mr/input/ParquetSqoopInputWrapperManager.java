@@ -1,14 +1,8 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
-import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.DateWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.DoubleWrapper;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetSqoopDataTypeConverter;
 
 import java.math.BigDecimal;
 
@@ -21,12 +15,32 @@ public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager 
 
     @Override
     protected BaseTypeWrapperGetter.ByteGetter<GroupWithSchemaInfo> getByteGetter() {
-        return null;
+        return new BaseTypeWrapperGetter.ByteGetter<GroupWithSchemaInfo>() {
+            @Override
+            protected Byte getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return OverflowUtils.numberToByte(row.getGroup().getInteger(columnName, row.getValueSeq()));
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
+            }
+        };
     }
 
     @Override
     protected BaseTypeWrapperGetter.ShortGetter<GroupWithSchemaInfo> getShortGetter() {
-        return null;
+        return new BaseTypeWrapperGetter.ShortGetter<GroupWithSchemaInfo>() {
+            @Override
+            protected Short getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return OverflowUtils.numberToShort(row.getGroup().getInteger(columnName, row.getValueSeq()));
+            }
+
+            @Override
+            protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.isEmpty();
+            }
+        };
     }
 
     @Override
@@ -54,7 +68,7 @@ public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager 
         return new BaseTypeWrapperGetter.DateGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.getGroup().getLong(columnName, row.getValueSeq()));
+                return ExtendedDate.initialize(row.getGroup().getLong(columnName, row.getValueSeq()));
             }
 
             @Override
@@ -69,7 +83,7 @@ public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager 
         return new BaseTypeWrapperGetter.TimeGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.getGroup().getLong(columnName, row.getValueSeq()));
+                return ExtendedDate.initialize(row.getGroup().getLong(columnName, row.getValueSeq()));
             }
 
             @Override
@@ -84,7 +98,7 @@ public class ParquetSqoopInputWrapperManager extends ParquetInputWrapperManager 
         return new BaseTypeWrapperGetter.DatetimeGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(row.getGroup().getLong(columnName, row.getValueSeq()));
+                return ExtendedDate.initialize(row.getGroup().getLong(columnName, row.getValueSeq()));
             }
 
             @Override

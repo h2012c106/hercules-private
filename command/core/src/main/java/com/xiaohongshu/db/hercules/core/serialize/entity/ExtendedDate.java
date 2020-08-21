@@ -9,22 +9,26 @@ public class ExtendedDate {
     private final Date date;
     private final boolean isZero;
 
-    public ExtendedDate(@NonNull String date) {
-        this.date = DateUtils.stringToDate(date, DateUtils.getSourceDateFormat());
-        this.isZero = false;
+    public static ExtendedDate initialize(@NonNull String date){
+        return new ExtendedDate(DateUtils.stringToDate(date, DateUtils.getSourceDateFormat()));
     }
 
-    public ExtendedDate(@NonNull Long date) {
-        this.date = new Date(date);
-        this.isZero = false;
+    public static ExtendedDate initialize(@NonNull Long date){
+        return new ExtendedDate(new Date(date));
     }
 
-    public ExtendedDate(@NonNull Date date) {
+    public static ExtendedDate initialize(@NonNull Date date){
+        return new ExtendedDate(date);
+    }
+
+    public static ExtendedDate ZERO_INSTANCE = new ExtendedDate();
+
+    private ExtendedDate(Date date) {
         this.date = date;
         this.isZero = false;
     }
 
-    public ExtendedDate() {
+    private ExtendedDate() {
         this.date = null;
         this.isZero = true;
     }

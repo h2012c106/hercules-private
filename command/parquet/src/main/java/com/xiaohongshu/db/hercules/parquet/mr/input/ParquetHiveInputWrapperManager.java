@@ -83,7 +83,7 @@ public class ParquetHiveInputWrapperManager extends ParquetInputWrapperManager {
         return new BaseTypeWrapperGetter.DateGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(ParquetUtils.intToDate(row.getGroup().getInteger(columnName, row.getValueSeq())));
+                return ExtendedDate.initialize(ParquetUtils.intToDate(row.getGroup().getInteger(columnName, row.getValueSeq())));
             }
 
             @Override
@@ -103,7 +103,7 @@ public class ParquetHiveInputWrapperManager extends ParquetInputWrapperManager {
         return new BaseTypeWrapperGetter.DatetimeGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return new ExtendedDate(ParquetUtils.bytesToDatetime(row.getGroup().getInt96(columnName, row.getValueSeq())));
+                return ExtendedDate.initialize(ParquetUtils.bytesToDatetime(row.getGroup().getInt96(columnName, row.getValueSeq())));
             }
 
             @Override

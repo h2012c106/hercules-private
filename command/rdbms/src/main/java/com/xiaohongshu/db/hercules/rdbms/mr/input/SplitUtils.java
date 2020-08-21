@@ -97,7 +97,7 @@ public final class SplitUtils {
 
         // 检查key上是否有索引
         boolean ignoreCheckKey = sourceOptions.getBoolean(RDBMSInputOptionsConf.IGNORE_SPLIT_KEY_CHECK, false);
-        if (!ignoreCheckKey && schema.getIndexGroupList().contains(Sets.newHashSet(splitBy))) {
+        if (!ignoreCheckKey && !schema.getIndexGroupList().contains(Sets.newHashSet(splitBy))) {
             throw new RuntimeException(String.format("Cannot specify a non-key split key [%s]. If you insist, please use '--%s'.", splitBy, RDBMSInputOptionsConf.IGNORE_SPLIT_KEY_CHECK));
         }
 

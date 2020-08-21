@@ -4,7 +4,9 @@ import com.xiaohongshu.db.hercules.core.option.OptionsType;
 
 public enum DataSourceRole {
     SOURCE(OptionsType.SOURCE),
-    TARGET(OptionsType.TARGET);
+    TARGET(OptionsType.TARGET),
+    DER(OptionsType.DER),
+    SER(OptionsType.SER);
 
     private OptionsType optionsType;
 

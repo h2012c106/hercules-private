@@ -62,24 +62,16 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher {
 
     @Override
     public Map<String, DataType> innerGetColumnTypeMap() {
-        String rowKeyCol = getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null);
-        if (rowKeyCol != null) {
-            columnTypeMap.put(rowKeyCol, BaseDataType.BYTES);
-        }
         return columnTypeMap;
     }
 
     @Override
     protected List<Set<String>> innerGetIndexGroupList() {
-        List<Set<String>> res = new LinkedList<>();
-        res.add(Sets.newHashSet(getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null)));
-        return res;
+        return new LinkedList<>();
     }
 
     @Override
     protected List<Set<String>> innerGetUniqueKeyGroupList() {
-        List<Set<String>> res = new LinkedList<>();
-        res.add(Sets.newHashSet(getOptions().getString(HBaseOptionsConf.ROW_KEY_COL_NAME, null)));
-        return res;
+        return new LinkedList<>();
     }
 }

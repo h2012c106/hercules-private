@@ -61,7 +61,7 @@ public class KafkaAssemblySupplier extends BaseAssemblySupplier {
         return new KafkaManager(options);
     }
 
-    synchronized protected final KafkaManager getManager() {
+    synchronized public final KafkaManager getManager() {
         if (manager == null) {
             LOG.debug(String.format("Initializing KafkaManager of [%s]...", getClass().getSimpleName()));
             manager = innerGetManager();

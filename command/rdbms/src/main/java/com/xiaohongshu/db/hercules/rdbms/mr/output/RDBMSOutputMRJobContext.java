@@ -5,8 +5,8 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.mr.context.BaseMRJobContext;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseDataSourceOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
@@ -100,7 +100,7 @@ public class RDBMSOutputMRJobContext extends BaseMRJobContext {
                         null));
                 StatementGetter statementGetter = StatementGetterFactory.get(exportType);
 
-                List<String> columnNameList = Arrays.asList(targetOptions.getTrimmedStringArray(BaseDataSourceOptionsConf.COLUMN, null));
+                List<String> columnNameList = Arrays.asList(targetOptions.getTrimmedStringArray(TableOptionsConf.COLUMN, null));
                 String migrateSql = statementGetter.getMigrateSql(targetTable, stagingTable, columnNameList);
                 String deleteSql = String.format("DELETE FROM `%s`", stagingTable);
 

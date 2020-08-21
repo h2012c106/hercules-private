@@ -2,7 +2,6 @@ package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetSqoopDataTypeConverter;
 import org.apache.parquet.example.data.Group;
 
 import java.math.BigDecimal;
@@ -11,12 +10,30 @@ public class ParquetSqoopOutputWrapperManager extends ParquetOutputWrapperManage
 
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<Group> getByteSetter() {
-        return null;
+        return new BaseTypeWrapperSetter.ByteSetter<Group>() {
+            @Override
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Byte value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value);
+            }
+        };
     }
 
     @Override
     protected BaseTypeWrapperSetter.ShortSetter<Group> getShortSetter() {
-        return null;
+        return new BaseTypeWrapperSetter.ShortSetter<Group>() {
+            @Override
+            protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
+            }
+
+            @Override
+            protected void setNonnullValue(Short value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.add(columnName, value);
+            }
+        };
     }
 
     @Override

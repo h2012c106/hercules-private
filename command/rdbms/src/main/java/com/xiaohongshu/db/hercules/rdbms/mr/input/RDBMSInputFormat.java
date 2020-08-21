@@ -38,9 +38,6 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> implements 
     @GeneralAssembly(role = DataSourceRole.SOURCE)
     private RDBMSSchemaFetcher schemaFetcher;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
-    private RDBMSDataTypeConverter dataTypeConverter;
-
     @SchemaInfo(role = DataSourceRole.SOURCE)
     private Schema schema;
 
