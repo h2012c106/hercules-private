@@ -31,7 +31,6 @@
         <module>manager</module>
         <module>node</module>
         <module>share</module>
-        <module>command/untitled</module>
     </modules>
 
     <repositories>
