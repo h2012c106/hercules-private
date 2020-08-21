@@ -29,7 +29,7 @@ public abstract class HerculesKvRecordWriter<T> extends HerculesRecordWriter<T> 
 
     @Override
     protected final void innerWrite(HerculesWritable value) throws IOException, InterruptedException {
-        if (options.hasProperty(KEY_NAME) || options.hasProperty(VALUE_NAME)) {
+        if (!options.hasProperty(KEY_NAME) || !options.hasProperty(VALUE_NAME)) {
             // 用kv writer的说明一定是kv类型的数据源，你kv数据源不用kv options conf是不是不太合适
             throw new RuntimeException("If use kv writer, must use kv options.");
         }
