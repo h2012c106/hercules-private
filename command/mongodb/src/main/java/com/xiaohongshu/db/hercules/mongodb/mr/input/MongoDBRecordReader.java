@@ -9,7 +9,6 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
@@ -29,6 +28,8 @@ import org.bson.Document;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf.BATCH_SIZE;
 
 public class MongoDBRecordReader extends HerculesRecordReader<Document> {
 
@@ -86,7 +87,7 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
                 filter = new Document("$and", Arrays.asList(filter, queryFilter));
             }
 
-            FindIterable<Document> iterable = collection.find(filter);
+            FindIterable<Document> iterable = collection.find(filter).batchSize(sourceOptions.getInteger(BATCH_SIZE, null));
             if (!schema.getColumnNameList().isEmpty()) {
                 Document columnProjection = makeColumnProjection(schema.getColumnNameList());
                 iterable.projection(columnProjection);

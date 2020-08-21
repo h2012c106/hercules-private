@@ -95,7 +95,7 @@ public final class RDBMSInputOptionsConf extends BaseOptionsConf {
         tmpList.add(SingleOptionConf.builder()
                 .name(FETCH_SIZE)
                 .needArg(true)
-                .description("The select fetch size, if not specified will not use this feature.")
+                .description("The select fetch size, if specified will use server cursor, or will use client cursor.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(IGNORE_SPLIT_KEY_CHECK)

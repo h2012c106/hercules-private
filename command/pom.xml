@@ -16,6 +16,7 @@
         <module>shade</module>
         <module>core</module>
 
+        <module>hbase</module>
         <module>rdbms</module>
         <module>mysql</module>
         <module>tidb</module>
@@ -23,7 +24,6 @@
         <module>mongodb</module>
         <module>parquet-schema</module>
         <module>clickhouse</module>
-        <module>hbase</module>
         <module>myhub</module>
         <module>kafka</module>
 

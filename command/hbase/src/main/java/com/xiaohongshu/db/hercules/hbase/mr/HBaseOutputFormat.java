@@ -164,10 +164,11 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             put = generatePut(record);
 //            mutator.mutate(put);
             put.setDurability(Durability.SKIP_WAL);
+//            mutator.mutate(put);
             putsBuffer.add(put);
             if (putsBuffer.size() > PUT_BUFFER_SIZE) {
                 table.batch(putsBuffer, null);
-//                table.put(putsBuffer);
+                table.put(putsBuffer);
                 putsBuffer.clear();
             }
         } catch (Exception e) {
@@ -197,7 +198,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             table.close();
             manager.closeConnection();
         } catch (IOException | InterruptedException e) {
-            throw new IOException();
+            throw new IOException(e);
         }
     }
 }

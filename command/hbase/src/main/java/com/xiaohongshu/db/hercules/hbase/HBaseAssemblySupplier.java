@@ -73,7 +73,7 @@ public class HBaseAssemblySupplier extends BaseAssemblySupplier {
     private HBaseManager manager = null;
 
     protected HBaseManager innerGetManager() {
-        return new HBaseManager(options);
+        return new HBaseManager();
     }
 
     synchronized public final HBaseManager getManager() {
