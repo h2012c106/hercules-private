@@ -80,7 +80,9 @@ public class KafkaManager {
     }
 
     public void close() {
-        producer.flush();
-        producer.close();
+        if (producer != null) {
+            producer.flush();
+            producer.close();
+        }
     }
 }
