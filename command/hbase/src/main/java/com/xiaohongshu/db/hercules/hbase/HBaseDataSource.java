@@ -12,4 +12,9 @@ public class HBaseDataSource implements DataSource {
     public String getFilePositionParam() {
         return null;
     }
+
+    @Override
+    public boolean hasKvSerDer() {
+        return true;
+    }
 }

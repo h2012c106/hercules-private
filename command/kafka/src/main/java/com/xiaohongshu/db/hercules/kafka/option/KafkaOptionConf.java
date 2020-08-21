@@ -22,7 +22,6 @@ public class KafkaOptionConf extends BaseOptionsConf {
     public final static String RETRIES_DEFAULT = "3";
 
     public final static String TOPIC = "kafka-topic";
-    public final static String KAFKA_KEY = "kafka-key";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -64,12 +63,6 @@ public class KafkaOptionConf extends BaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("Kafka topic to send message.")
-                .build());
-        tmpList.add(SingleOptionConf.builder()
-                .name(KAFKA_KEY)
-                .needArg(true)
-                .necessary(true)
-                .description("Bootstrap servers used to connect kafka.")
                 .build());
         return tmpList;
     }
