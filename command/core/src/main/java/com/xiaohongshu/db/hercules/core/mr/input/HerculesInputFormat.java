@@ -102,7 +102,7 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
         HerculesRecordReader<T> delegate = innerCreateRecordReader(split, context);
 
         RecordReader<NullWritable, HerculesWritable> res;
-        if (dataSource.hasKvSerDer() && kvDer != null) {
+        if (kvDer != null) {
             HerculesContext.instance().inject(delegate);
             res = new HerculesSerDerRecordReader(kvDer, delegate);
         } else {

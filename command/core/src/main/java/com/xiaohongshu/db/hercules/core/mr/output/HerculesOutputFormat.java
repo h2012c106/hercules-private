@@ -74,7 +74,7 @@ public abstract class HerculesOutputFormat<T> extends OutputFormat<NullWritable,
         HerculesRecordWriter<T> delegate = innerGetRecordWriter(context);
 
         RecordWriter<NullWritable, HerculesWritable> res;
-        if (dataSource.hasKvSerDer() && kvSer != null) {
+        if (kvSer != null) {
             HerculesContext.instance().inject(delegate);
             res = new HerculesSerDerRecordWriter(kvSer, delegate);
         } else {

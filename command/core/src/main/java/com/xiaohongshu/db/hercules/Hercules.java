@@ -94,8 +94,7 @@ public class Hercules {
         HerculesContext context = HerculesContext.initialize(wrappingOptions, sourceSupplier, targetSupplier, reflector);
 
         KvSerDerSupplier sourceKvSerDerSupplier;
-        if (sourceDataSource.hasKvSerDer()
-                && (sourceKvSerDerSupplier = context.getKvSerDerSupplierPair().getSourceItem()) != null) {
+        if ((sourceKvSerDerSupplier = context.getKvSerDerSupplierPair().getSourceItem()) != null) {
             wrappingOptions.add(new CmdParser(
                     sourceKvSerDerSupplier.getInputOptionsConf(),
                     sourceDataSource,
@@ -103,8 +102,7 @@ public class Hercules {
             ).parse(args));
         }
         KvSerDerSupplier targetKvSerDerSupplier;
-        if (targetDataSource.hasKvSerDer()
-                && (targetKvSerDerSupplier = context.getKvSerDerSupplierPair().getTargetItem()) != null) {
+        if ((targetKvSerDerSupplier = context.getKvSerDerSupplierPair().getTargetItem()) != null) {
             wrappingOptions.add(new CmdParser(
                     targetKvSerDerSupplier.getOutputOptionsConf(),
                     targetDataSource,

@@ -2,11 +2,11 @@ package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
-import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -75,7 +75,17 @@ public class RDBMSWrapperSetterFactory extends WrapperSetterFactory<PreparedStat
 
     @Override
     protected BaseTypeWrapperSetter.LonglongSetter<PreparedStatement> getLonglongSetter() {
-        throw new UnsupportedOperationException();
+        return new BaseTypeWrapperSetter.LonglongSetter<PreparedStatement>() {
+            @Override
+            protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setNull(columnSeq, Types.BIGINT);
+            }
+
+            @Override
+            protected void setNonnullValue(BigInteger value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.setString(columnSeq, value.toString());
+            }
+        };
     }
 
     @Override
