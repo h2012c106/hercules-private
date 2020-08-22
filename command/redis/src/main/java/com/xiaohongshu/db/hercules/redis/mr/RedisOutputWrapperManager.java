@@ -29,7 +29,17 @@ public class RedisOutputWrapperManager  extends WrapperSetterFactory<RedisKV> {
 
     @Override
     protected BaseTypeWrapperSetter.LongSetter<RedisKV> getLongSetter() {
-        return null;
+        return new BaseTypeWrapperSetter.LongSetter<RedisKV>() {
+            @Override
+            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
+            }
+
+            @Override
+            protected void setNonnullValue(Long value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+            }
+        };
     }
 
     @Override

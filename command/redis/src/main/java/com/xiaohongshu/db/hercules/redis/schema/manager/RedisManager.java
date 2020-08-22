@@ -62,11 +62,16 @@ public class RedisManager {
 
         String key = String.valueOf(kv.getKey().getValue());
         RedisKV.RedisKVValue value = kv.getValue();
+        if(key == null || value == null){
+            log.debug("the key or value is null: key:" + key + " value:" + String.valueOf(value.getValue()));
+            return;
+        }
         switch ((BaseDataType) value.getDataType()) {
             case STRING:
                 String string_value = String.valueOf(value.getValue());
                 jedis.set(key, string_value);
             case LIST:
+                log.warn("the key is ：" + key + " , value: " + String.valueOf(value.getValue()));
                 throw new RuntimeException("The type List is not supported by redis yet.");
             case MAP:
                 Map<String, String> map_value = obj2Map(value.getValue());
@@ -75,7 +80,6 @@ public class RedisManager {
                 throw new RuntimeException(String.format("The type [%s] is not supported by redis.", value.getDataType().toString()));
         }
     }
-
 
     private static Map<String, String> obj2Map(Object obj) {
         Map<String, String> map = new HashMap<String, String>();

@@ -62,7 +62,7 @@ public class RedisAssemblySupplier extends BaseAssemblySupplier {
         return new RedisManager(options);
     }
 
-    synchronized protected final RedisManager getManager() {
+    synchronized public final RedisManager getManager() {
         if (manager == null) {
             LOG.debug(String.format("Initializing RedisManager of [%s]...", getClass().getSimpleName()));
             manager = innerGetManager();
