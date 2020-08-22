@@ -25,6 +25,12 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <relocations>
+                                <relocation>
+                                    <pattern>org.apache.hadoop.hbase.client</pattern>
+                                    <shadedPattern>hercules.shaded.org.apache.hadoop.hbase.client</shadedPattern>
+                                </relocation>
+                            </relocations>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>

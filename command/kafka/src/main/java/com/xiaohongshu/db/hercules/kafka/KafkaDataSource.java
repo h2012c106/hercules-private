@@ -12,4 +12,9 @@ public class KafkaDataSource implements DataSource {
     public String getFilePositionParam() {
         return null;
     }
+
+    @Override
+    public boolean hasKvSerDer() {
+        return true;
+    }
 }

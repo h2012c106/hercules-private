@@ -12,6 +12,7 @@ import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
 import com.xiaohongshu.db.hercules.core.utils.*;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -94,8 +95,7 @@ public class Hercules {
         HerculesContext context = HerculesContext.initialize(wrappingOptions, sourceSupplier, targetSupplier, reflector);
 
         KvSerDerSupplier sourceKvSerDerSupplier;
-        if (sourceDataSource.hasKvSerDer()
-                && (sourceKvSerDerSupplier = context.getKvSerDerSupplierPair().getSourceItem()) != null) {
+        if ((sourceKvSerDerSupplier = context.getKvSerDerSupplierPair().getDerItem()) != null) {
             wrappingOptions.add(new CmdParser(
                     sourceKvSerDerSupplier.getInputOptionsConf(),
                     sourceDataSource,
@@ -103,8 +103,7 @@ public class Hercules {
             ).parse(args));
         }
         KvSerDerSupplier targetKvSerDerSupplier;
-        if (targetDataSource.hasKvSerDer()
-                && (targetKvSerDerSupplier = context.getKvSerDerSupplierPair().getTargetItem()) != null) {
+        if ((targetKvSerDerSupplier = context.getKvSerDerSupplierPair().getSerItem()) != null) {
             wrappingOptions.add(new CmdParser(
                     targetKvSerDerSupplier.getOutputOptionsConf(),
                     targetDataSource,

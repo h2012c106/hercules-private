@@ -71,7 +71,15 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
         // 换算各个mapper实际的qps
         if (commonOptions.hasProperty(CommonOptionsConf.MAX_WRITE_QPS)) {
             double maxWriteQps = commonOptions.getDouble(CommonOptionsConf.MAX_WRITE_QPS, null);
-            double maxWriteQpsPerMap = maxWriteQps / (double) Math.min(actualNumSplits, context.getConfiguration().getLong(MAP_NUM_LIMIT_PROPERTY, Long.MAX_VALUE));
+            long mapNumLimit = context.getConfiguration().getLong(MAP_NUM_LIMIT_PROPERTY, Long.MAX_VALUE);
+            double parallelNum;
+            // 这个值为0时，hadoop不限制map并行度，直接用map数量算，外加0也不能做分母
+            if (mapNumLimit == 0L) {
+                parallelNum = actualNumSplits;
+            } else {
+                parallelNum = Math.min(actualNumSplits, mapNumLimit);
+            }
+            double maxWriteQpsPerMap = maxWriteQps / parallelNum;
             LOG.info("Max write qps per map is: " + maxWriteQpsPerMap);
             // 在这里设置options吊用没有，这里的和别的地方的是深拷贝关系，要设置Configuration
             // options.getCommonOptions().set(CommonOptionsConf.MAX_WRITE_QPS, maxWriteQpsPerMap);
@@ -94,7 +102,7 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
         HerculesRecordReader<T> delegate = innerCreateRecordReader(split, context);
 
         RecordReader<NullWritable, HerculesWritable> res;
-        if (dataSource.hasKvSerDer() && kvDer != null) {
+        if (kvDer != null) {
             HerculesContext.instance().inject(delegate);
             res = new HerculesSerDerRecordReader(kvDer, delegate);
         } else {

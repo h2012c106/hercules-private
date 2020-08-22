@@ -25,6 +25,12 @@
                         </goals>
                         <configuration>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.protobuf</pattern>
+                                    <shadedPattern>hercules.shaded.com.google.protobuf</shadedPattern>
+                                </relocation>
+                            </relocations>
                             <minimizeJar>true</minimizeJar>
                             <filters>
                                 <filter>

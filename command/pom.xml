@@ -13,7 +13,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>shade</module>
         <module>core</module>
 
         <module>hbase</module>

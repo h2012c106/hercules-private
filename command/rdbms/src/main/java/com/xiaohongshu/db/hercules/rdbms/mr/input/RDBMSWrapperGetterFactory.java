@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.ResultSet;
 
 public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
@@ -77,7 +78,17 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
 
     @Override
     protected BaseTypeWrapperGetter.LonglongGetter<ResultSet> getLonglongGetter() {
-        throw new UnsupportedOperationException();
+        return new BaseTypeWrapperGetter.LonglongGetter<ResultSet>(){
+            @Override
+            protected BigInteger getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return new BigInteger(row.getString(columnSeq));
+            }
+
+            @Override
+            protected boolean isNull(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.getString(columnSeq) == null;
+            }
+        };
     }
 
     @Override

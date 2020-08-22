@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.core.mr.output;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
@@ -14,7 +15,6 @@ import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
-import hercules.shaded.com.google.common.util.concurrent.RateLimiter;
 import lombok.NonNull;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
