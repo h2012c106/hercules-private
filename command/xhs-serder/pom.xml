@@ -58,7 +58,7 @@
         </dependency>
         <dependency>
             <groupId>com.xiaohongshu.db</groupId>
-            <artifactId>hercules-command-rdbms</artifactId>
+            <artifactId>hercules-command-mysql</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
