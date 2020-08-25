@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.serder.canal.mysql;
 
+import com.xiaohongshu.db.hercules.mysql.schema.MysqlDataTypeConverter;
 import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlInputOptionConf;
 import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlOutputOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
@@ -31,7 +32,7 @@ public class MysqlCanalKvSerDerSupplier extends BaseKvSerDerSupplier {
 
     @Override
     protected DataTypeConverter<?, ?> innerGetDataTypeConverter() {
-        return new RDBMSDataTypeConverter();
+        return new MysqlDataTypeConverter();
     }
 
 }
