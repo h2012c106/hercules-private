@@ -1,8 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
@@ -16,7 +14,6 @@ import java.util.List;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.*;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN;
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN_TYPE;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
 public final class HBaseOptionsConf extends BaseOptionsConf {
@@ -97,7 +94,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
 
     @Override
     protected List<String> deleteOptions() {
-        return Lists.newArrayList(KEY_TYPE);
+        return null;
     }
 
     @Override
@@ -126,14 +123,5 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
             columnList.addAll(Arrays.asList(options.getTrimmedStringArray(VALUE_NAME, new String[0])));
             options.set(COLUMN, columnList.toArray(new String[0]));
         }
-
-        JSONObject json;
-        if (options.hasProperty(VALUE_TYPE)) {
-            json = options.getJson(VALUE_TYPE, null);
-        } else {
-            json = new JSONObject();
-        }
-        json.put(keyName, BaseDataType.BYTES);
-        options.set(COLUMN_TYPE, json.toJSONString());
     }
 }

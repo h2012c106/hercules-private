@@ -20,6 +20,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
@@ -27,10 +28,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 
@@ -64,11 +62,10 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
     private Table table;
     private final List<Put> putsBuffer = new LinkedList<>();
     private final int PUT_BUFFER_SIZE = 10000;
-
     private List<String> columnNameList;
     private Map<String, DataType> columnTypeMap;
-
     private final Configuration configuration;
+    private static String fakeRowKey = "FAKE_ROW_KEY";
 
     @Options(type = OptionsType.TARGET)
     private GenericOptions options;
@@ -98,10 +95,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         if (columnNameList.size() == 0) {
             throw new RuntimeException("Column name list failed to fetch(no column name found).");
         }
-//        if (!options.getString(KvOptionsConf.SUPPLIER, "").contains("BlankKvConverterSupplier")) {
-//            columnNameList.clear();
-//            columnNameList.addAll(columnTypeMap.keySet());
-//        }
     }
 
     /**
@@ -114,7 +107,15 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         if (record.get(rowKeyCol) == null) {
             throw new RuntimeException("Row key col not found in the HerculesWritable object.");
         }
-        Put put = new Put(Bytes.toBytes(record.get(rowKeyCol).asString()));
+
+        // rowkey 列通过同一套wrapper系统设定值
+        BaseWrapper rowKeyWrapper = record.get(rowKeyCol);
+        Put fakeRowKeyPut = new Put(Bytes.toBytes(fakeRowKey));
+        constructPut(fakeRowKeyPut, rowKeyWrapper, rowKeyCol);
+        Cell rowKeyCell = fakeRowKeyPut.get(columnFamily.getBytes(), rowKeyCol.getBytes()).get(0);
+        byte[] rowBytes = Arrays.copyOfRange(rowKeyCell.getValueArray(), rowKeyCell.getValueOffset(), rowKeyCell.getValueOffset()+rowKeyCell.getValueLength());
+        Put put = new Put(rowBytes);
+
         BaseWrapper<?> wrapper;
         if (columnNameList.size() == 0) {
             for (Map.Entry<String, BaseWrapper<?>> colVal : record.getRow().entrySet()) {
@@ -144,10 +145,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             }
             return;
         }
-        if (qualifier.equals(rowKeyCol)) {
-            // if the qualifier is the row key col, don't put it into the Put object
-            return;
-        }
         // 优先从columnTypeMap中获取对应的DataType，如果为null，则从wrapper中获取。
         DataType dt = columnTypeMap.get(qualifier);
         if (dt == null) {
@@ -164,7 +161,6 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
             put = generatePut(record);
 //            mutator.mutate(put);
             put.setDurability(Durability.SKIP_WAL);
-//            mutator.mutate(put);
             putsBuffer.add(put);
             if (putsBuffer.size() > PUT_BUFFER_SIZE) {
                 table.batch(putsBuffer, null);
