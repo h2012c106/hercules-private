@@ -2,6 +2,8 @@ package com.xiaohongshu.db.hercules.core.utils.context;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
+import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.filter.parser.DruidParser;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
@@ -26,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.xiaohongshu.db.hercules.common.option.CommonOptionsConf.FILTER;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.SERDER_SUPPLIER;
 
 public final class HerculesContext {
@@ -39,6 +42,8 @@ public final class HerculesContext {
     private final WrappingOptions wrappingOptions;
 
     private final Family<Schema> schemaFamily;
+
+    private final Expr filter;
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
     private static HerculesContext INSTANCE;
@@ -113,6 +118,7 @@ public final class HerculesContext {
         this.assemblySupplierPair = extractAssemblySupplierPair(wrappingOptions);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
         this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
+        this.filter = extractFilter(wrappingOptions);
 
         // setOptions
         assemblySupplierPair.getSourceItem().setOptions(wrappingOptions.getSourceOptions());
@@ -132,6 +138,7 @@ public final class HerculesContext {
         this.assemblySupplierPair = Family.initializeDataSource(sourceSupplier, targetSupplier);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
         this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
+        this.filter = extractFilter(wrappingOptions);
 
         // 把supplier计入options中
         assemblySupplierToOptions(sourceSupplier, wrappingOptions.getSourceOptions());
@@ -146,6 +153,10 @@ public final class HerculesContext {
         if (hasSerDer(DataSourceRole.TARGET)) {
             kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SER));
         }
+    }
+
+    public Reflector getReflector() {
+        return reflector;
     }
 
     public boolean hasSerDer(DataSourceRole role) {
@@ -281,6 +292,14 @@ public final class HerculesContext {
         );
     }
 
+    private Expr extractFilter(WrappingOptions wrappingOptions) {
+        if (wrappingOptions.getCommonOptions().hasProperty(FILTER)) {
+            return new DruidParser().parse(wrappingOptions.getCommonOptions().getString(FILTER, null));
+        } else {
+            return null;
+        }
+    }
+
     public Family<AssemblySupplier> getAssemblySupplierPair() {
         return assemblySupplierPair;
     }
@@ -295,6 +314,10 @@ public final class HerculesContext {
 
     public Family<Schema> getSchemaFamily() {
         return schemaFamily;
+    }
+
+    public Expr getFilter() {
+        return filter;
     }
 
     private static final String ASSEMBLY_SUPPLIER_CLASS_NAME = "assembly-supplier-class-name-internal";

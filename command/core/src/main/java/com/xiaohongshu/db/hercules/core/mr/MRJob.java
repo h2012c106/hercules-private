@@ -268,7 +268,7 @@ public class MRJob {
             numRecords = 0;
         } else {
             perfCounters.addBytes(jobCounters.getGroup(HerculesMapper.HERCULES_GROUP_NAME)
-                    .findCounter(HerculesMapper.ESTIMATED_BYTE_SIZE_COUNTER_NAME).getValue());
+                    .findCounter(HerculesMapper.ESTIMATED_WRITE_BYTE_SIZE_COUNTER_NAME).getValue());
             LOG.info("Transferred " + perfCounters.toString());
             numRecords = ConfigurationHelper.getNumMapOutputRecords(job);
         }

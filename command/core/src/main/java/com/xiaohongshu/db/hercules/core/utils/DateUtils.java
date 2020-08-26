@@ -13,6 +13,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf.*;
+
 public final class DateUtils {
 
     private static final Log LOG = LogFactory.getLog(DateUtils.class);
@@ -40,13 +42,13 @@ public final class DateUtils {
 
     public static void setFormats(GenericOptions sourceOptions, GenericOptions targetOptions) {
         DateUtils.sourceDateFormat = new DateFormatWrapper(
-                sourceOptions.getString(BaseDataSourceOptionsConf.DATE_FORMAT, null),
-                sourceOptions.getString(BaseDataSourceOptionsConf.TIME_FORMAT, null),
-                sourceOptions.getString(BaseDataSourceOptionsConf.DATETIME_FORMAT, null));
+                sourceOptions.getString(DATE_FORMAT, DEFAULT_DATE_FORMAT),
+                sourceOptions.getString(TIME_FORMAT, DEFAULT_TIME_FORMAT),
+                sourceOptions.getString(DATETIME_FORMAT, DEFAULT_DATETIME_FORMAT));
         DateUtils.targetDateFormat = new DateFormatWrapper(
-                targetOptions.getString(BaseDataSourceOptionsConf.DATE_FORMAT, null),
-                targetOptions.getString(BaseDataSourceOptionsConf.TIME_FORMAT, null),
-                targetOptions.getString(BaseDataSourceOptionsConf.DATETIME_FORMAT, null));
+                targetOptions.getString(DATE_FORMAT, DEFAULT_DATE_FORMAT),
+                targetOptions.getString(TIME_FORMAT, DEFAULT_TIME_FORMAT),
+                targetOptions.getString(DATETIME_FORMAT, DEFAULT_DATETIME_FORMAT));
     }
 
     public static DateFormatterWrapper getSourceDateFormat() {

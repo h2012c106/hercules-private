@@ -122,4 +122,9 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> {
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().asDefault()));
     }
+
+    @Override
+    public int compareTo(BaseWrapper<?> o) {
+        throw  new UnsupportedOperationException();
+    }
 }

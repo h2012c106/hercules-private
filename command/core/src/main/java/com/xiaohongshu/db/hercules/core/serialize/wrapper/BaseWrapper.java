@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
@@ -13,12 +14,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
 
 /**
  * @param <T> 底层用于存储数据的真正数据类型
  */
-public abstract class BaseWrapper<T> {
+public abstract class BaseWrapper<T> implements Comparable<BaseWrapper<?>> {
     /**
      * 不接受任何null值，一个wrapper里永远存着meaningful信息，null值全部扔到{@link NullWrapper}
      */
@@ -151,6 +151,20 @@ public abstract class BaseWrapper<T> {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("value", value)
+                .append("type", type)
                 .toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BaseWrapper<?> that = (BaseWrapper<?>) o;
+        return Objects.equal(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
     }
 }

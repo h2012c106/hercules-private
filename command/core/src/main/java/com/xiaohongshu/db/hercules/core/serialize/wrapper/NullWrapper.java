@@ -103,4 +103,9 @@ public class NullWrapper extends BaseWrapper<String> {
     public Object asDefault() {
         return null;
     }
+
+    @Override
+    public int compareTo(BaseWrapper<?> o) {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -44,6 +44,10 @@ public class Reflector {
         return jarListLoaded;
     }
 
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
     @Deprecated
     public <T> T loadJarClass(String jarName, String className, Class<T> clazz) {
         try {

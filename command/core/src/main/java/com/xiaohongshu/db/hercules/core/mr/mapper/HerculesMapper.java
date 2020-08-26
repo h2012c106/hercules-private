@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.mr.mapper;
 import com.alibaba.fastjson.JSONObject;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
 import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
@@ -10,6 +11,7 @@ import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Filter;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,16 +30,19 @@ import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.Bas
 public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWritable, NullWritable, HerculesWritable> {
 
     public static final String HERCULES_GROUP_NAME = "Hercules Counters";
-    public static final String ESTIMATED_BYTE_SIZE_COUNTER_NAME = "Estimated byte size";
+    public static final String ESTIMATED_WRITE_BYTE_SIZE_COUNTER_NAME = "Estimated write byte size";
+    public static final String READ_RECORDS_COUNTER_NAME = "Read records num";
+    public static final String WRITE_RECORDS_COUNTER_NAME = "Write records num";
 
     private static final Log LOG = LogFactory.getLog(HerculesMapper.class);
 
-    private long time = 0;
+    private long rowProcessTime = 0L;
+    private long filterTime = 0L;
 
     private Map<String, String> columnMap;
     private List<String> blackColumnList;
 
-    private long readRecordNum = 0L;
+    private long mappedRecordNum = 0L;
 
     @Options(type = OptionsType.COMMON)
     private GenericOptions commonOptions;
@@ -47,6 +52,9 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
     @Options(type = OptionsType.TARGET)
     private GenericOptions targetOptions;
+
+    @Filter
+    private Expr filter;
 
     public HerculesMapper() {
     }
@@ -97,15 +105,30 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     @Override
     protected void map(NullWritable key, HerculesWritable value, Context context)
             throws IOException, InterruptedException {
+        ++mappedRecordNum;
+
+        // 读入行数++，因为可能存在把多行包进一行的序列化结构，故有DER的时候本值可能会偏大
+        context.getCounter(HERCULES_GROUP_NAME, READ_RECORDS_COUNTER_NAME).increment(1L);
+
         // 如果上游读出来个null，无视这一行
         if (value == null) {
             return;
         }
-        long start = System.currentTimeMillis();
-        context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
+        long start;
+
+        start = System.currentTimeMillis();
+        // 有filter，且本行filter结果为false，本行不写下去
+        if (filter != null && !filter.getResult(value).asBoolean()) {
+            return;
+        }
+        filterTime += (System.currentTimeMillis() - start);
+
+        context.getCounter(HERCULES_GROUP_NAME, WRITE_RECORDS_COUNTER_NAME).increment(1L);
+        context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_WRITE_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
+
+        start = System.currentTimeMillis();
         value = rowTransfer(value);
-        time += (System.currentTimeMillis() - start);
-        ++readRecordNum;
+        rowProcessTime += (System.currentTimeMillis() - start);
         context.write(key, value);
     }
 
@@ -113,10 +136,12 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     protected void cleanup(Context context) throws IOException, InterruptedException {
         long start = System.currentTimeMillis();
         super.cleanup(context);
-        time += (System.currentTimeMillis() - start);
-        LOG.info(String.format("Map %s transferred %d record(s) using %.3fs.",
+        long cleanTime = (System.currentTimeMillis() - start);
+        LOG.info(String.format("Map %s transferred %d record(s) using %.3fs for filter, %.3fs for row process and %.3fs for cleanup.",
                 context.getTaskAttemptID().getTaskID().toString(),
-                readRecordNum,
-                (double) time / 1000.0));
+                mappedRecordNum,
+                (double) rowProcessTime / 1000.0,
+                (double) filterTime / 1000.0,
+                (double) cleanTime / 1000.0));
     }
 }

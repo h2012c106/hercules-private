@@ -107,4 +107,9 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
     public JSON asJson() {
         throw new SerializeException("Unsupported to convert number to json.");
     }
+
+    @Override
+    public int compareTo(BaseWrapper<?> o) {
+        return getValue().compareTo(o.asBigInteger());
+    }
 }

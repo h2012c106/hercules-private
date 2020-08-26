@@ -8,18 +8,24 @@ import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
 
 public class BooleanWrapper extends BaseWrapper<Boolean> {
 
     private final static DataType DATA_TYPE = BaseDataType.BOOLEAN;
 
+    private final static BooleanWrapper TRUE_BOOLEAN_WRAPPER = new BooleanWrapper(true);
+    private final static BooleanWrapper FALSE_BOOLEAN_WRAPPER = new BooleanWrapper(false);
+
     private BooleanWrapper(Boolean value) {
         super(value, DATA_TYPE, 1);
     }
 
-    public static BaseWrapper get(Boolean value) {
-        return value == null ? NullWrapper.get(DATA_TYPE) : new BooleanWrapper(value);
+    public static BaseWrapper<?> get(Boolean value) {
+        if (value == null) {
+            return NullWrapper.get(DATA_TYPE);
+        } else {
+            return value ? TRUE_BOOLEAN_WRAPPER : FALSE_BOOLEAN_WRAPPER;
+        }
     }
 
     @Override
@@ -65,5 +71,10 @@ public class BooleanWrapper extends BaseWrapper<Boolean> {
     @Override
     public JSON asJson() {
         throw new SerializeException("Unsupported to convert boolean to json.");
+    }
+
+    @Override
+    public int compareTo(BaseWrapper<?> o) {
+        return getValue().compareTo(o.asBoolean());
     }
 }

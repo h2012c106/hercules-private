@@ -98,4 +98,9 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper>> {
                 .map(BaseWrapper::asDefault)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public int compareTo(BaseWrapper<?> o) {
+        throw new UnsupportedOperationException();
+    }
 }
