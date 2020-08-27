@@ -1,0 +1,14 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaohongshu.db.hercules.manager.dao.mapper.NodeMapper">
+    <resultMap id="nodeResultMap" type="com.xiaohongshu.db.share.entity.Node">
+        <id property="id" column="id"/>
+        <result property="clusterId" column="cluster_id"/>
+        <result property="host" column="host"/>
+        <result property="port" column="port"/>
+        <result property="status" column="status" javaType="com.xiaohongshu.db.share.entity.Node$NodeStatus"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.NodeStatusTypeHandler"/>
+    </resultMap>
+</mapper>

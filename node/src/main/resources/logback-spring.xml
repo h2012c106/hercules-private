@@ -1,0 +1,48 @@
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <springProperty scope="context" name="level" source="hercules.logging.level" defaultValue="INFO"/>
+    <springProperty scope="context" name="home" source="logging.file.path" defaultValue="../logs"/>
+    <springProperty scope="context" name="taskLogName" source="hercules.logging.task.log.name" defaultValue="task"/>
+
+    <appender name="COMMON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <append>true</append>
+        <file>${home}/node.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${home}/node.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>30MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder charset="UTF-8">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="TASK" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <Key>taskId</Key>
+            <DefaultValue>null</DefaultValue>
+        </discriminator>
+        <sift>
+            <appender name="TASK-${taskId}" class="ch.qos.logback.core.FileAppender">
+                <append>true</append>
+                <file>${home}/${taskId}/${taskLogName}.log</file>
+                <encoder charset="UTF-8">
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </sift>
+    </appender>
+
+    <root level="${level}">
+        <appender-ref ref="COMMON"/>
+    </root>
+
+    <logger name="com.xiaohongshu.db.node.utils.HerculesExecutor" level="${level}" additivity="false">
+        <appender-ref ref="TASK"/>
+        <appender-ref ref="COMMON"/>
+    </logger>
+
+</configuration>

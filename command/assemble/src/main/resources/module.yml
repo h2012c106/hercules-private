@@ -1,0 +1,43 @@
+rdbms:
+  jar: hercules-command-rdbms-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.rdbms.RDBMSAssemblySupplier
+
+mysql:
+  jar: hercules-command-mysql-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.mysql.MysqlAssemblySupplier
+
+tidb:
+  jar: hercules-command-tidb-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.tidb.TiDBAssemblySupplier
+
+parquet:
+  jar: hercules-command-parquet-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.parquet.ParquetAssemblySupplier
+
+mongodb:
+  jar: hercules-command-mongodb-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.mongodb.MongoDBAssemblySupplier
+
+parquetschema:
+  jar: hercules-command-parquet-schema-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.parquetschema.ParquetSchemaAssemblySupplier
+
+clickhouse:
+  jar: hercules-command-clickhouse-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.clickhouse.ClickhouseAssemblySupplier
+
+hbase:
+  jar: hercules-command-hbase-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.hbase.HBaseAssemblySupplier
+
+kafka:
+  jar: hercules-command-kafka-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.kafka.KafkaAssemblySupplier
+
+myhub:
+  jar: hercules-command-myhub-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.myhub.MyhubAssemblySupplier
+
+redis:
+  jar: hercules-command-redis-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.redis.RedisAssemblySupplier

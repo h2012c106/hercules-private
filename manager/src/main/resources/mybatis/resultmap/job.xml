@@ -1,0 +1,41 @@
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xiaohongshu.db.hercules.manager.dao.mapper.JobMapper">
+    <resultMap id="jobResultMap" type="com.xiaohongshu.db.share.entity.Job">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="desc" column="desc"/>
+        <result property="source" column="source" javaType="com.xiaohongshu.db.hercules.core.datasource.DataSource"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.DataSourceTypeHandler"/>
+        <result property="target" column="target" javaType="com.xiaohongshu.db.hercules.core.datasource.DataSource"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.DataSourceTypeHandler"/>
+        <result property="sourceParam" column="source_param" javaType="java.util.Map"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.MapTypeHandler"/>
+        <result property="targetParam" column="target_param" javaType="java.util.Map"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.MapTypeHandler"/>
+        <result property="commonParam" column="common_param" javaType="java.util.Map"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.MapTypeHandler"/>
+        <result property="dParam" column="D_param" javaType="java.util.Map"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.MapTypeHandler"/>
+        <result property="sourceTemplateParam" column="source_template_param" javaType="java.util.Map"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.MapTypeHandler"/>
+        <result property="targetTemplateParam" column="target_template_param" javaType="java.util.Map"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.MapTypeHandler"/>
+        <result property="commonTemplateParam" column="common_template_param" javaType="java.util.Map"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.MapTypeHandler"/>
+        <result property="dTemplateParam" column="D_template_param" javaType="java.util.Map"
+                jdbcType="VARCHAR"
+                typeHandler="com.xiaohongshu.db.hercules.manager.dao.typehandler.MapTypeHandler"/>
+        <result property="runningTaskId" column="running_task_id"/>
+    </resultMap>
+</mapper>
