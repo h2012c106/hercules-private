@@ -16,7 +16,7 @@ public class RedisOptionConf extends BaseOptionsConf {
     public final static String REDIS_HOST = "redis_host";
     public final static String REDIS_PORT = "redis_port";
     public static final String REDIS_PIPE_SIZE = "pipe_size";
-    public static final long DEFAULT_STATEMENT_PER_BULK = 5000;
+    public static final long DEFAULT_PIPE_SIZE = 5000;
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -45,7 +45,7 @@ public class RedisOptionConf extends BaseOptionsConf {
                 .name(REDIS_PIPE_SIZE)
                 .needArg(true)
                 .description("redis pipeline size submits.")
-                .defaultStringValue(String.valueOf(DEFAULT_STATEMENT_PER_BULK))
+                .defaultStringValue(String.valueOf(DEFAULT_PIPE_SIZE))
                 .build());
 
         return tmpList;

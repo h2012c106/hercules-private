@@ -61,7 +61,6 @@ class RedisRecordWriter extends HerculesKvRecordWriter<RedisKV> {
     protected void innerWriteKV(BaseWrapper<?> key, BaseWrapper<?> value) throws IOException, InterruptedException {
         String keyName = targetOptions.getString(KEY_NAME, null);
         String valueName = targetOptions.getString(VALUE_NAME, null);
-        long pipe_size = targetOptions.getLong(RedisOptionConf.REDIS_PIPE_SIZE, RedisOptionConf.DEFAULT_STATEMENT_PER_BULK);
 
         RedisKV kv = new RedisKV();
         try {
@@ -72,7 +71,7 @@ class RedisRecordWriter extends HerculesKvRecordWriter<RedisKV> {
         } catch (Exception e) {
             throw new IOException(e);
         }
-        manager.set(kv, pipe_size);
+        manager.set(kv);
     }
 
     @Override
