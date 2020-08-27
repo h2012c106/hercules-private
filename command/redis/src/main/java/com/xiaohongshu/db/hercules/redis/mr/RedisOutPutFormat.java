@@ -13,6 +13,7 @@ import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
+import com.xiaohongshu.db.hercules.redis.option.RedisOptionConf;
 import com.xiaohongshu.db.hercules.redis.schema.manager.RedisManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,6 +61,7 @@ class RedisRecordWriter extends HerculesKvRecordWriter<RedisKV> {
     protected void innerWriteKV(BaseWrapper<?> key, BaseWrapper<?> value) throws IOException, InterruptedException {
         String keyName = targetOptions.getString(KEY_NAME, null);
         String valueName = targetOptions.getString(VALUE_NAME, null);
+        long pipe_size = targetOptions.getLong(RedisOptionConf.REDIS_PIPE_SIZE, RedisOptionConf.DEFAULT_STATEMENT_PER_BULK);
 
         RedisKV kv = new RedisKV();
         try {
@@ -70,8 +72,7 @@ class RedisRecordWriter extends HerculesKvRecordWriter<RedisKV> {
         } catch (Exception e) {
             throw new IOException(e);
         }
-        manager.set(kv);
-
+        manager.set(kv, pipe_size);
     }
 
     @Override

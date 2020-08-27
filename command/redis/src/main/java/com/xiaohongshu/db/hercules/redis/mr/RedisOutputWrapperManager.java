@@ -1,11 +1,17 @@
 package com.xiaohongshu.db.hercules.redis.mr;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.xiaohongshu.db.hercules.redis.RedisKV.VALUE_SEQ;
 
 /**
  * Created by jamesqq on 2020/8/17.
@@ -29,17 +35,7 @@ public class RedisOutputWrapperManager  extends WrapperSetterFactory<RedisKV> {
 
     @Override
     protected BaseTypeWrapperSetter.LongSetter<RedisKV> getLongSetter() {
-        return new BaseTypeWrapperSetter.LongSetter<RedisKV>() {
-            @Override
-            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
-            }
-
-            @Override
-            protected void setNonnullValue(Long value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
-            }
-        };
+        return null;
     }
 
     @Override
@@ -117,7 +113,14 @@ public class RedisOutputWrapperManager  extends WrapperSetterFactory<RedisKV> {
 
             @Override
             protected void setNonnull(BaseWrapper<?> value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+                MapWrapper mapWrapper = (MapWrapper)value;
+                Map<String, String> map = new HashMap<>();
+                for(Map.Entry<String, BaseWrapper<?>> entry : mapWrapper.entrySet()){
+                    RedisKV tmp = new RedisKV();
+                    getWrapperSetter(BaseDataType.STRING).set(entry.getValue(), tmp, null, null, VALUE_SEQ);
+                    map.put(entry.getKey(), String.valueOf(tmp.getValue().getValue()));
+                }
+                row.set(RedisKV.RedisKVValue.initialize(getType(), map), columnSeq);
             }
         };
     }

@@ -26,9 +26,8 @@
         <module>myhub</module>
         <module>kafka</module>
         <module>redis</module>
-        <module>assemble</module>
         <module>xhs-serder</module>
-        <!--<module>assemble</module>-->
+        <module>assemble</module>
     </modules>
 
     <dependencies>
