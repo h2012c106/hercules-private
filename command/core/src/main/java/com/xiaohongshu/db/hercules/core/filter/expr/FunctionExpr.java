@@ -37,6 +37,10 @@ public class FunctionExpr extends AbstractExpr {
         paramList = Arrays.asList(params);
     }
 
+    public Method getMethod() {
+        return method;
+    }
+
     @SneakyThrows
     @Override
     public BaseWrapper<?> getResult(final HerculesWritable row) {

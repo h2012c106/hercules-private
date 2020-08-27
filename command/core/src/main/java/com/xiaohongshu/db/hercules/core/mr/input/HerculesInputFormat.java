@@ -4,12 +4,15 @@ import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
+import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.filter.pushdown.FilterPushdownJudger;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serder.KVDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Filter;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
@@ -42,6 +45,9 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
 
     @SerDerAssembly(role = DataSourceRole.DER)
     private KVDer<?> kvDer;
+
+    @Filter
+    private Expr filter;
 
     @Override
     public final DataSourceRole getRole() {
@@ -106,6 +112,15 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
             HerculesContext.instance().inject(delegate);
             res = new HerculesSerDerRecordReader(kvDer, delegate);
         } else {
+            // 有der了说明做了反序列化，那么filter对数据源侧一定驴头对马嘴，没必要下推
+            FilterPushdownJudger<?> judger = createFilterPushdownJudger();
+            // 只有给了judger才下推
+            if (judger != null) {
+                HerculesContext.instance().inject(judger);
+                Object pushdownFilter = judger.pushdown(filter);
+                delegate.setFilter(pushdownFilter);
+            }
+
             res = delegate;
         }
         HerculesContext.instance().inject(res);
@@ -122,4 +137,8 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
             throws IOException, InterruptedException;
 
     abstract protected WrapperGetterFactory<T> createWrapperGetterFactory();
+
+    protected FilterPushdownJudger<?> createFilterPushdownJudger() {
+        return null;
+    }
 }

@@ -35,10 +35,20 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
     protected WrapperGetterFactory<T> wrapperGetterFactory;
 
+    private Object filter = null;
+
     @SchemaInfo(role = DataSourceRole.SOURCE)
     private Schema schema;
 
     public HerculesRecordReader(TaskAttemptContext context) {
+    }
+
+    protected Object getFilter() {
+        return filter;
+    }
+
+    public void setFilter(Object filter) {
+        this.filter = filter;
     }
 
     @Override

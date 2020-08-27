@@ -9,8 +9,6 @@ import com.alibaba.druid.util.JdbcConstants;
 import com.google.common.primitives.Bytes;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.filter.expr.*;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -20,87 +18,16 @@ import java.util.stream.Collectors;
 /**
  * 基于Druid AST的parser，将来有追求可以搞一个javacc的版本
  */
-public class DruidParser implements Parser {
-
-    private static final Log LOG = LogFactory.getLog(DruidParser.class);
-
-    private boolean canOptimize(Expr expr) {
-        return expr instanceof CombinationExpr && ((CombinationExpr) expr).getType().isAnd();
-    }
-
-    /**
-     * 优化，遇到OR子树就不用往下看，遇到AND子树就向下看后就向上合并，方便判断下推
-     *
-     * @param root
-     */
-    private void optimize(Expr root) {
-        if (!canOptimize(root)) {
-            return;
-        }
-        for (Expr child : root.getChildren()) {
-            optimize(child);
-        }
-        List<Integer> removeSeqList = new LinkedList<>();
-        List<Expr> addList = new LinkedList<>();
-        for (int i = 0; i < root.getChildren().size(); ++i) {
-            Expr child = root.getChildren().get(i);
-            if (!canOptimize(child)) {
-                continue;
-            }
-            removeSeqList.add(i);
-            for (Expr grandChild : child.getChildren()) {
-                grandChild.setParent(root);
-                addList.add(grandChild);
-            }
-            child.getChildren().clear();
-        }
-        Collections.reverse(removeSeqList);
-        for (int i : removeSeqList) {
-            root.getChildren().remove(i).setParent(null);
-        }
-        root.getChildren().addAll(addList);
-    }
-
-    /**
-     * 现在只使用幂等率简化，但是未来可以使用吸收率、同一律、零率继续简化
-     *
-     * @param expr
-     */
-    private void simplify(Expr expr) {
-        for (Expr child : expr.getChildren()) {
-            simplify(child);
-        }
-        if (expr instanceof CombinationExpr) {
-            List<Integer> removeSeqList = new LinkedList<>();
-            for (int i = 0; i < expr.getChildren().size(); ++i) {
-                for (int j = 0; j < i; ++j) {
-                    if (expr.getChildren().get(i).equals(expr.getChildren().get(j))) {
-                        removeSeqList.add(i);
-                        break;
-                    }
-                }
-            }
-            Collections.reverse(removeSeqList);
-            for (int i : removeSeqList) {
-                expr.getChildren().remove(i).setParent(null);
-            }
-        }
-    }
+public class DruidParser extends AbstractParser {
 
     @Override
-    public Expr parse(String str) {
+    protected Expr innerParse(String str) {
         // 由于用户输入的内容仅包括where条件的内容，而我暂不知道druid只parse where子句的姿势，故拼一个头
         String fakeSql = "select * from fake_table where " + str;
         SQLSelectStatement selectStatement = (SQLSelectStatement) SQLUtils.parseSingleStatement(fakeSql, JdbcConstants.MYSQL);
         SQLSelectQueryBlock selectQueryBlock = (SQLSelectQueryBlock) selectStatement.getSelect().getQuery();
         SQLExpr where = selectQueryBlock.getWhere();
-        Expr res = convert(where);
-        LOG.info("Filter parsed as: " + res.toString());
-        optimize(res);
-        LOG.info("Filter optimized as: " + res.toString());
-        simplify(res);
-        LOG.info("Filter simplified as: " + res.toString());
-        return res;
+        return convert(where);
     }
 
     private static final Map<Class<?>, ConvertFunction> CONVERT_MAP = new HashMap<>();
