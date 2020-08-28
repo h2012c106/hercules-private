@@ -25,7 +25,7 @@ public class MyhubShardRecordReader extends MyhubRecordReader {
     }
 
     @Override
-    protected String makeSql(GenericOptions sourceOptions, InputSplit split) {
+    protected String innerMakeSql(GenericOptions sourceOptions, InputSplit split) {
         String querySql = SqlUtils.makeBaseQuery(sourceOptions);
         return String.format(
                 "/*MYHUB SHARD_NODES:%s; SLAVE_PREFER*/",

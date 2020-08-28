@@ -11,6 +11,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class RDBMSFilterPushdownJudger extends FilterPushdownJudger<String> {
+
+    @Override
+    protected boolean canColumnSelfAsCondition() {
+        return true;
+    }
+
     @Override
     protected Function<Expr, String> getColumnExprFunction() {
         return new Function<Expr, String>() {

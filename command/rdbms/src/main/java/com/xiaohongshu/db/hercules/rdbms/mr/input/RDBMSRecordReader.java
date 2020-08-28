@@ -53,11 +53,21 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
         super(context);
     }
 
-    protected String makeSql(GenericOptions sourceOptions, InputSplit split) {
+    protected String innerMakeSql(GenericOptions sourceOptions, InputSplit split) {
         String querySql = SqlUtils.makeBaseQuery(sourceOptions);
         String splitBoundary = String.format("%s AND %s", ((RDBMSInputSplit) split).getLowerClause(),
                 ((RDBMSInputSplit) split).getUpperClause());
-        return SqlUtils.addWhere(querySql, splitBoundary);
+        querySql = SqlUtils.addWhere(querySql, splitBoundary);
+        return querySql;
+    }
+
+    protected final String makeSql(GenericOptions sourceOptions, InputSplit split) {
+        String querySql = innerMakeSql(sourceOptions, split);
+        String filterQuery = (String) getFilter();
+        if (filterQuery != null) {
+            querySql = SqlUtils.addWhere(querySql, filterQuery);
+        }
+        return querySql;
     }
 
     protected void start(String querySql, Integer fetchSize) throws IOException {
@@ -81,9 +91,6 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
         String querySql = makeSql(sourceOptions, split);
-        if (getFilter() != null) {
-            querySql = SqlUtils.addWhere(querySql, (String) getFilter());
-        }
 
         Integer fetchSize = sourceOptions.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
 

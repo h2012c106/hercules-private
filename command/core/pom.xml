@@ -36,6 +36,10 @@
                                     <pattern>com.google.common</pattern>
                                     <shadedPattern>hercules.shaded.com.google.common</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>org.apache.commons.lang3.reflect</pattern>
+                                    <shadedPattern>hercules.shaded.org.apache.commons.lang3.reflect</shadedPattern>
+                                </relocation>
                                 <!-- hadoop集群用的1.2版本，GNUParser存在将'abcd"'解析成abcd(即强行漏掉最后一个粘连的双引号)的bug -->
                                 <relocation>
                                     <pattern>org.apache.commons.cli</pattern>
@@ -78,6 +82,12 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>28.2-jre</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.9</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
         <dependency>

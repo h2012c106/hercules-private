@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.core.utils.context;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
-import com.xiaohongshu.db.hercules.core.filter.parser.DruidParser;
+import com.xiaohongshu.db.hercules.core.filter.parser.Parser;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
@@ -13,6 +13,7 @@ import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
 import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import com.xiaohongshu.db.hercules.core.utils.reflect.Reflector;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -293,8 +294,10 @@ public final class HerculesContext {
     }
 
     private Expr extractFilter(WrappingOptions wrappingOptions) {
-        if (wrappingOptions.getCommonOptions().hasProperty(FILTER)) {
-            return new DruidParser().parse(wrappingOptions.getCommonOptions().getString(FILTER, null));
+        String filterStr = wrappingOptions.getCommonOptions().getString(FILTER, null);
+        filterStr = filterStr == null ? null : filterStr.trim();
+        if (!StringUtils.isEmpty(filterStr)) {
+            return Parser.INSTANCE.parse(filterStr);
         } else {
             return null;
         }

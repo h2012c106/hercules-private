@@ -4,6 +4,7 @@ import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BooleanWrapper;
 import lombok.NonNull;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -26,7 +27,11 @@ public class CombinationExpr extends AbstractExpr {
 
     @Override
     public BooleanWrapper getResult(HerculesWritable row) {
-        return type.getCombinationFunction().combine(row, conditionList.toArray(new Expr[0]));
+        if (CollectionUtils.isEmpty(conditionList)) {
+            return (BooleanWrapper) BooleanWrapper.get(true);
+        } else {
+            return type.getCombinationFunction().combine(row, conditionList.toArray(new Expr[0]));
+        }
     }
 
     @Override

@@ -18,6 +18,20 @@ public abstract class AbstractParser implements Parser {
     }
 
     /**
+     * 保证根节点是AND
+     *
+     * @param expr
+     * @return
+     */
+    private Expr checkRootAnd(Expr expr) {
+        if (expr instanceof CombinationExpr && ((CombinationExpr) expr).getType().isAnd()) {
+            return expr;
+        } else {
+            return new CombinationExpr(CombinationExpr.CombinationType.AND, expr);
+        }
+    }
+
+    /**
      * 优化，遇到OR子树就不用往下看，遇到AND子树就向下看后就向上合并，方便判断下推
      *
      * @param root
@@ -82,6 +96,8 @@ public abstract class AbstractParser implements Parser {
     public final Expr parse(String str) {
         Expr res = innerParse(str);
         LOG.info("Filter parsed as: " + res.toString());
+        // 先把根结点转为AND
+        res = checkRootAnd(res);
         optimize(res);
         LOG.info("Filter optimized as: " + res.toString());
         simplify(res);

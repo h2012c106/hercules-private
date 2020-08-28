@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.List;
 
-public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> implements InjectedClass {
+public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
@@ -48,8 +48,12 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> implements 
     protected String baseSql;
 
     @Override
-    public void afterInject() {
+    public void innerAfterInject() {
         baseSql = SqlUtils.makeBaseQuery(sourceOptions);
+        String filterQuery = (String) getPushdownFilter();
+        if (filterQuery != null) {
+            baseSql = SqlUtils.addWhere(baseSql, filterQuery);
+        }
     }
 
     protected SplitGetter getSplitGetter(GenericOptions options) {
