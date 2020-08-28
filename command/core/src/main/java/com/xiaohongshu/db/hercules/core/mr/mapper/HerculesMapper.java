@@ -33,6 +33,7 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     public static final String ESTIMATED_WRITE_BYTE_SIZE_COUNTER_NAME = "Estimated write byte size";
     public static final String READ_RECORDS_COUNTER_NAME = "Read records num";
     public static final String WRITE_RECORDS_COUNTER_NAME = "Write records num";
+    public static final String FILTERED_RECORDS_COUNTER_NAME = "Filtered records num";
 
     private static final Log LOG = LogFactory.getLog(HerculesMapper.class);
 
@@ -119,6 +120,7 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         start = System.currentTimeMillis();
         // 有filter，且本行filter结果为false，本行不写下去
         if (filter != null && !filter.getResult(value).asBoolean()) {
+            context.getCounter(HERCULES_GROUP_NAME, FILTERED_RECORDS_COUNTER_NAME).increment(1L);
             return;
         }
         filterTime += (System.currentTimeMillis() - start);
@@ -140,8 +142,8 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         LOG.info(String.format("Map %s transferred %d record(s) using %.3fs for filter, %.3fs for row process and %.3fs for cleanup.",
                 context.getTaskAttemptID().getTaskID().toString(),
                 mappedRecordNum,
-                (double) rowProcessTime / 1000.0,
                 (double) filterTime / 1000.0,
+                (double) rowProcessTime / 1000.0,
                 (double) cleanTime / 1000.0));
     }
 }
