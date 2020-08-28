@@ -73,7 +73,7 @@ public class TiDBRecordReader extends RDBMSRecordReader {
                 manager, querySql, new RDBMSBalanceSplitGetter());
         querySqlIterator = secondarySplitResult.getInputSplitList()
                 .stream()
-                .map(split -> makeSql(sourceOptions, (RDBMSInputSplit) split))
+                .map(split -> makeSql(querySql, (RDBMSInputSplit) split, false))
                 .collect(Collectors.toList()).iterator();
 
         statement = null;

@@ -53,19 +53,30 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
         super(context);
     }
 
-    protected String innerMakeSql(GenericOptions sourceOptions, InputSplit split) {
-        String querySql = SqlUtils.makeBaseQuery(sourceOptions);
+    protected String makeSplitSql(String querySql, InputSplit split) {
         String splitBoundary = String.format("%s AND %s", ((RDBMSInputSplit) split).getLowerClause(),
                 ((RDBMSInputSplit) split).getUpperClause());
         querySql = SqlUtils.addWhere(querySql, splitBoundary);
         return querySql;
     }
 
-    protected final String makeSql(GenericOptions sourceOptions, InputSplit split) {
-        String querySql = innerMakeSql(sourceOptions, split);
-        String filterQuery = (String) getFilter();
-        if (filterQuery != null) {
-            querySql = SqlUtils.addWhere(querySql, filterQuery);
+    protected String makeSql(String querySql, InputSplit split) {
+        return makeSql(querySql, split, true);
+    }
+
+    /**
+     * @param querySql
+     * @param split
+     * @param considerFilter tidb二次切分后再拼sql时，若再无脑用这个函数会导致filter参数又重新加一遍，没必要
+     * @return
+     */
+    protected String makeSql(String querySql, InputSplit split, boolean considerFilter) {
+        querySql = makeSplitSql(querySql, split);
+        if (considerFilter) {
+            String filterQuery = (String) getFilter();
+            if (filterQuery != null) {
+                querySql = SqlUtils.addWhere(querySql, filterQuery);
+            }
         }
         return querySql;
     }
@@ -90,7 +101,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
-        String querySql = makeSql(sourceOptions, split);
+        String querySql = makeSql(SqlUtils.makeBaseQuery(sourceOptions), split);
 
         Integer fetchSize = sourceOptions.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
 
