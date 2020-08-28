@@ -7,7 +7,7 @@ import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
+import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;

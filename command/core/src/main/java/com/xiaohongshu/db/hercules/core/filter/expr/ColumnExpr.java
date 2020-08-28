@@ -13,6 +13,10 @@ public class ColumnExpr extends AbstractExpr {
         this.columnName = columnName;
     }
 
+    public String getColumnName() {
+        return columnName;
+    }
+
     @Override
     public BaseWrapper<?> getResult(HerculesWritable row) {
         BaseWrapper<?> res = WritableUtils.get(row.getRow(), columnName);

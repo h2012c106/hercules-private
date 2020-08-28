@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.core.utils;
+package com.xiaohongshu.db.hercules.core.utils.entity;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -9,7 +9,7 @@ import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
-import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
+import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import lombok.NonNull;

@@ -118,7 +118,9 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
             if (judger != null) {
                 HerculesContext.instance().inject(judger);
                 Object pushdownFilter = judger.pushdown(filter);
-                delegate.setFilter(pushdownFilter);
+                if (pushdownFilter != null) {
+                    delegate.setFilter(pushdownFilter);
+                }
             }
 
             res = delegate;

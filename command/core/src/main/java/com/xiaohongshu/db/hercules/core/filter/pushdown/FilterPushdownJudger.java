@@ -2,12 +2,12 @@ package com.xiaohongshu.db.hercules.core.filter.pushdown;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.filter.expr.*;
-import com.xiaohongshu.db.hercules.core.utils.StingyMap;
+import com.xiaohongshu.db.hercules.core.utils.entity.StingyMap;
+import org.apache.commons.lang3.reflect.MethodUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -16,6 +16,8 @@ import java.util.function.Function;
  * @param <T>
  */
 public abstract class FilterPushdownJudger<T> {
+
+    private static final Log LOG = LogFactory.getLog(FilterPushdownJudger.class);
 
     private Map<Class<? extends Expr>, Function<Expr, T>> convertMap;
     private List<FilterFunctionChecker> pushdownableMethodList;
@@ -32,12 +34,47 @@ public abstract class FilterPushdownJudger<T> {
                 : this.pushdownableMethodList;
     }
 
+    abstract protected Function<Expr, T> getColumnExprFunction();
+
+    abstract protected Function<Expr, T> getCombinationExprFunction();
+
+    abstract protected Function<Expr, T> getFunctionExprFunction();
+
+    abstract protected Function<Expr, T> getListExprFunction();
+
+    abstract protected Function<Expr, T> getValueExprFunction();
+
+    private void setConvertMap(Class<? extends Expr> clazz, Map<Class<? extends Expr>, Function<Expr, T>> map) {
+        try {
+            Function<Expr, T> function = (Function<Expr, T>) MethodUtils.invokeMethod(this, true, "get" + clazz.getSimpleName() + "Function");
+            if (function == null) {
+                throw new UnsupportedOperationException();
+            } else {
+                map.put(clazz, function);
+            }
+        } catch (Exception e) {
+            LOG.warn(String.format("Unsupported pushdown filter class: %s, exception: %s.", clazz.getCanonicalName(), e.getMessage()));
+        }
+    }
+
     /**
      * 为每个Expr提供转查询介质的方法，若不提供则默认不支持
      *
      * @return
      */
-    abstract protected Map<Class<? extends Expr>, Function<Expr, T>> getConvertMap();
+    private Map<Class<? extends Expr>, Function<Expr, T>> getConvertMap() {
+        Map<Class<? extends Expr>, Function<Expr, T>> res = new HashMap<>();
+        setConvertMap(ColumnExpr.class, res);
+        setConvertMap(CombinationExpr.class, res);
+        setConvertMap(FunctionExpr.class, res);
+        setConvertMap(ListExpr.class, res);
+        setConvertMap(ValueExpr.class, res);
+        return res;
+    }
+
+    protected T convert(Expr expr) {
+        return convertMap.get(expr.getClass()).apply(expr);
+    }
 
     /**
      * 是否支持列名自成一查询条件而无相关逻辑判断符，如mysql'select * from tb where col;'是合法的
@@ -161,7 +198,7 @@ public abstract class FilterPushdownJudger<T> {
             }
             CombinationExpr combinationExpr
                     = new CombinationExpr(CombinationExpr.CombinationType.AND, pushdownedExprList.toArray(new Expr[0]));
-            return convertMap.get(combinationExpr.getClass()).apply(combinationExpr);
+            return convert(combinationExpr);
         } else {
             return null;
         }

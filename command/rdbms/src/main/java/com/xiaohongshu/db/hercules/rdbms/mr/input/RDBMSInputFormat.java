@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.filter.pushdown.FilterPushdownJudger;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
@@ -11,8 +12,8 @@ import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.rdbms.filter.RDBMSFilterPushdownJudger;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
@@ -77,5 +78,10 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> implements 
     @Override
     protected WrapperGetterFactory<ResultSet> createWrapperGetterFactory() {
         return new RDBMSWrapperGetterFactory();
+    }
+
+    @Override
+    protected FilterPushdownJudger<?> createFilterPushdownJudger() {
+        return new RDBMSFilterPushdownJudger();
     }
 }

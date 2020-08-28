@@ -9,6 +9,8 @@ import com.alibaba.druid.util.JdbcConstants;
 import com.google.common.primitives.Bytes;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.filter.expr.*;
+import com.xiaohongshu.db.hercules.core.utils.BytesUtils;
+import org.apache.commons.compress.utils.ByteUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -151,17 +153,7 @@ public class DruidParser extends AbstractParser {
             @Override
             public Expr convert(DruidParser parser, SQLExpr expr) {
                 SQLBinaryExpr binaryExpr = (SQLBinaryExpr) expr;
-                List<Byte> value = new ArrayList<>(binaryExpr.getText().length());
-                for (char ch : binaryExpr.getText().toCharArray()) {
-                    if (ch == '0') {
-                        value.add((byte) 0x00);
-                    } else if (ch == '1') {
-                        value.add((byte) 0x01);
-                    } else {
-                        throw new RuntimeException("Unknown binary char: " + ch);
-                    }
-                }
-                return new ValueExpr(Bytes.toArray(value), BaseDataType.BYTES);
+                return new ValueExpr(BytesUtils.binStrToBytes(binaryExpr.getText()), BaseDataType.BYTES);
             }
         });
         CONVERT_MAP.put(SQLInListExpr.class, new ConvertFunction() {

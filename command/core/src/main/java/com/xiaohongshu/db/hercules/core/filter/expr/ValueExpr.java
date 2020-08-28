@@ -19,6 +19,10 @@ public class ValueExpr extends AbstractExpr {
         this.value = dataType.getReadFunction().apply(value);
     }
 
+    public BaseDataType getDataType() {
+        return dataType;
+    }
+
     public Object getValue() {
         return dataType.getWriteFunction().apply(value);
     }
