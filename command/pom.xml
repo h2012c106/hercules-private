@@ -25,9 +25,8 @@
         <module>clickhouse</module>
         <module>myhub</module>
         <module>kafka</module>
-
+        <module>redis</module>
         <module>xhs-serder</module>
-
         <module>assemble</module>
     </modules>
 

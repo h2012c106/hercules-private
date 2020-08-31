@@ -37,3 +37,7 @@ kafka:
 myhub:
   jar: hercules-command-myhub-dev.jar
   assemblyClass: com.xiaohongshu.db.hercules.myhub.MyhubAssemblySupplier
+
+redis:
+  jar: hercules-command-redis-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.redis.RedisAssemblySupplier
