@@ -35,6 +35,7 @@ public final class SplitUtils {
                 case SHORT:
                 case INTEGER:
                 case LONG:
+                case LONGLONG:
                     return new IntegerSplitter(minMaxCountResult);
                 case FLOAT:
                 case DOUBLE:
