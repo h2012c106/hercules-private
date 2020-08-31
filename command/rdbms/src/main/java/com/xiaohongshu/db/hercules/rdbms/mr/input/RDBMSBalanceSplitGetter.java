@@ -49,6 +49,7 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
                     singleByteSize = 16;
                     break;
                 case STRING:
+                case LONGLONG:
                     singleByteSize = 128;
                     LOG.warn(String.format("The string split-by column may cause oom when use balance mode, " +
                             "if happened, try '--%s'", RDBMSInputOptionsConf.BALANCE_SPLIT_SAMPLE_MAX_ROW));
