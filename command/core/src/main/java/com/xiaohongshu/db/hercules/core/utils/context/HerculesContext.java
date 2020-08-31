@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.xiaohongshu.db.hercules.common.option.CommonOptionsConf.FILTER;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.FILTER;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.SERDER_SUPPLIER;
 
 public final class HerculesContext {

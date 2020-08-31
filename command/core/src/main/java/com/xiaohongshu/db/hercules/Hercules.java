@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules;
 
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;

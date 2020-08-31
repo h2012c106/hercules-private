@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input.splitter;
 
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 

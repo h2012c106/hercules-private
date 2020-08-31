@@ -113,6 +113,7 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     @Override
     protected void innerProcessOptions(GenericOptions options) {
         String keyName = options.getString(KEY_NAME, null);
+        // 覆写map，不然会导致用列表形状的value_name值做key，而value是json形状的value_type
         JSONObject columnType = new JSONObject();
         columnType.put(options.getString(KEY_NAME, null), BaseDataType.BYTES.name());
         // 因为KvOptionsConf validate不允许为空，但是这里可以为空，所以有占位符

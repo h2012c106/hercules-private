@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.core.mr;
 
 import com.cloudera.sqoop.config.ConfigurationHelper;
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
@@ -34,7 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.xiaohongshu.db.hercules.common.option.CommonOptionsConf.JOB_NAME;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.JOB_NAME;
 
 public class MRJob {
 

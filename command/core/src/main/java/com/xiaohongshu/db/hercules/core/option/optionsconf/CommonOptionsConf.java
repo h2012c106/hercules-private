@@ -1,7 +1,6 @@
-package com.xiaohongshu.db.hercules.common.option;
+package com.xiaohongshu.db.hercules.core.option.optionsconf;
 
 import com.alibaba.fastjson.JSONObject;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;

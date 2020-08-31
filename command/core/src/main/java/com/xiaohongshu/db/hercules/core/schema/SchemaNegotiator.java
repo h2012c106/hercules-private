@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.core.schema;
 
 import com.google.common.collect.BiMap;
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;

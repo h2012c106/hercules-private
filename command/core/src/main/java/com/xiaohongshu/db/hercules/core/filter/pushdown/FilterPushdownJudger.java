@@ -301,9 +301,10 @@ public abstract class FilterPushdownJudger<T> {
 
             List<Expr> pushdownedExprList = new LinkedList<>();
             for (int seq : canPushdownSeq) {
-                // 此处会把下推的条件从hercules filter逻辑中去掉，如若想在hercules内再走一遍全部的filter确保一下，可以使用如下代码
-                // pushdownedExprList.add(root.getChildren().get(seq));
-                pushdownedExprList.add(removeChild(root, seq));
+                // 若想在hercules内再走一遍全部的filter确保一下，可以使用如下代码
+                pushdownedExprList.add(root.getChildren().get(seq));
+                // 此处会把下推条件从hercules的filter内去掉
+                // pushdownedExprList.add(removeChild(root, seq));
             }
             if (pushdownedExprList.size() == 0) {
                 return null;

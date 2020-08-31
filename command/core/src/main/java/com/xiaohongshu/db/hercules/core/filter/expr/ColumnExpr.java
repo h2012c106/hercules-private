@@ -19,12 +19,7 @@ public class ColumnExpr extends AbstractExpr {
 
     @Override
     public BaseWrapper<?> getResult(HerculesWritable row) {
-        BaseWrapper<?> res = WritableUtils.get(row.getRow(), columnName);
-        if (res == null) {
-            throw new RuntimeException(String.format("The column [%s] doesn't exist in row: %s", columnName, row));
-        } else {
-            return res;
-        }
+        return WritableUtils.get(row.getRow(), columnName);
     }
 
     @Override

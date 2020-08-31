@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.mongodb.mr.input;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
@@ -8,6 +9,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
+import com.xiaohongshu.db.hercules.core.filter.pushdown.FilterPushdownJudger;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
@@ -17,6 +19,7 @@ import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
+import com.xiaohongshu.db.hercules.mongodb.filter.MongoDBFilterPushdownJudger;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import org.apache.commons.lang3.StringUtils;
@@ -136,6 +139,10 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> {
                 if (!StringUtils.isEmpty(query)) {
                     findQuery = Document.parse(query);
                 }
+                if (getPushdownFilter() != null) {
+                    findQuery = new Document("$and", Lists.newArrayList(findQuery, ((MongoDBFilterPushdownJudger.KeyValue) getPushdownFilter()).getValue()));
+                }
+                LOG.info("Use condition to get split min & max: " + findQuery);
 
                 Document projectionQuery = new Document();
                 // 先把_id置0，就算真的按照_id，也会在下一行置1
@@ -263,6 +270,11 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> {
     @Override
     protected WrapperGetterFactory<Document> createWrapperGetterFactory() {
         return new MongoDBWrapperGetterManager();
+    }
+
+    @Override
+    protected FilterPushdownJudger<?> createFilterPushdownJudger() {
+        return new MongoDBFilterPushdownJudger();
     }
 
     private static final BigDecimal MIN_INCREMENT =

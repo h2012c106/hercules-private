@@ -9,7 +9,25 @@ public class FilterCoreFunction {
 
     public static final FilterCoreFunction INSTANCE = new FilterCoreFunction();
 
+    /**
+     * 判断是否有null，代表找不到列，普通行为应该是若无此列，一切比大小都是false
+     *
+     * @param wrappers
+     * @return
+     */
+    private static boolean hasNull(BaseWrapper<?>... wrappers) {
+        for (BaseWrapper<?> wrapper : wrappers) {
+            if (wrapper == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static BaseWrapper<?> gt(BaseWrapper<?> left, BaseWrapper<?> right) {
+        if (hasNull(left, right)) {
+            return BooleanWrapper.get(false);
+        }
         boolean res;
         try {
             res = left.compareTo(right) > 0;
@@ -21,6 +39,9 @@ public class FilterCoreFunction {
     }
 
     public static BaseWrapper<?> gte(BaseWrapper<?> left, BaseWrapper<?> right) {
+        if (hasNull(left, right)) {
+            return BooleanWrapper.get(false);
+        }
         boolean res;
         try {
             res = left.compareTo(right) >= 0;
@@ -32,6 +53,9 @@ public class FilterCoreFunction {
     }
 
     public static BaseWrapper<?> lt(BaseWrapper<?> left, BaseWrapper<?> right) {
+        if (hasNull(left, right)) {
+            return BooleanWrapper.get(false);
+        }
         boolean res;
         try {
             res = left.compareTo(right) < 0;
@@ -43,6 +67,9 @@ public class FilterCoreFunction {
     }
 
     public static BaseWrapper<?> lte(BaseWrapper<?> left, BaseWrapper<?> right) {
+        if (hasNull(left, right)) {
+            return BooleanWrapper.get(false);
+        }
         boolean res;
         try {
             res = left.compareTo(right) <= 0;
@@ -54,6 +81,9 @@ public class FilterCoreFunction {
     }
 
     public static BaseWrapper<?> eq(BaseWrapper<?> left, BaseWrapper<?> right) {
+        if (hasNull(left, right)) {
+            return BooleanWrapper.get(false);
+        }
         boolean res;
         if (left.isNull() && right.isNull()) {
             res = true;
@@ -66,6 +96,9 @@ public class FilterCoreFunction {
     }
 
     public static BaseWrapper<?> neq(BaseWrapper<?> left, BaseWrapper<?> right) {
+        if (hasNull(left, right)) {
+            return BooleanWrapper.get(false);
+        }
         boolean res;
         if (left.isNull() && right.isNull()) {
             res = true;
@@ -78,6 +111,9 @@ public class FilterCoreFunction {
     }
 
     public static BaseWrapper<?> in(BaseWrapper<?> val, BaseWrapper<?> tmp) {
+        if (hasNull(val)) {
+            return BooleanWrapper.get(false);
+        }
         ListWrapper list = (ListWrapper) tmp;
         boolean in = false;
         for (int i = 0; i < list.size(); ++i) {

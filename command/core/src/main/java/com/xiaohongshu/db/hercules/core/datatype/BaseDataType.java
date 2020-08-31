@@ -181,13 +181,21 @@ public enum BaseDataType implements DataType {
         return writeFunction;
     }
 
-    public boolean isNumber() {
+    public boolean isInteger() {
         switch (this) {
             case BYTE:
             case SHORT:
             case INTEGER:
             case LONG:
             case LONGLONG:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isFloat() {
+        switch (this) {
             case FLOAT:
             case DOUBLE:
             case DECIMAL:
@@ -195,6 +203,10 @@ public enum BaseDataType implements DataType {
             default:
                 return false;
         }
+    }
+
+    public boolean isNumber() {
+        return isInteger() || isFloat();
     }
 
     public boolean isBoolean() {
