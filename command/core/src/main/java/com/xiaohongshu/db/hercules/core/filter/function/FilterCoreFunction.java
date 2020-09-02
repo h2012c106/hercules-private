@@ -136,4 +136,12 @@ public class FilterCoreFunction {
         DataType dataType = DataType.valueOfIgnoreCase(typeName, SOURCE_CUSTOM_TYPE_MANAGER);
         return dataType.getReadFunction().apply(dataType.getWriteFunction().apply(from));
     }
+
+    public static BaseWrapper<?> pushdown(BaseWrapper<?> wrapper) {
+        throw new UnsupportedOperationException();
+    }
+
+    public static BaseWrapper<?> notPushdown(BaseWrapper<?> wrapper) {
+        throw new UnsupportedOperationException();
+    }
 }

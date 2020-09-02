@@ -14,4 +14,13 @@ public interface Expr {
     public Expr getParent();
 
     public List<Expr> getChildren();
+
+    public void setForcePushdown();
+
+    public void setForceNotPushdown();
+
+    public boolean isForcePushdown();
+
+    public boolean isForceNotPushdown();
+
 }

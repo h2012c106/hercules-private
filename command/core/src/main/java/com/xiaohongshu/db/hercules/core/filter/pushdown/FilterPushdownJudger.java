@@ -255,8 +255,17 @@ public abstract class FilterPushdownJudger<T> {
         // 只看and，or没必要看
         if (root instanceof CombinationExpr && ((CombinationExpr) root).getType().isAnd()) {
             Map<String, Set<Integer>> mayPushdownColumnExprSeqMap = new HashMap<>();
+            List<Integer> forcePushdownList = new LinkedList<>();
             for (int i = 0; i < root.getChildren().size(); ++i) {
                 Expr child = root.getChildren().get(i);
+                // 若强制不下推，这个条件看都不用看
+                if (child.isForceNotPushdown()) {
+                    continue;
+                }
+                // 若强制下推，也不用看条件，直接塞
+                if (child.isForcePushdown()) {
+                    forcePushdownList.add(i);
+                }
                 if (canColumnSelfAsCondition() && isColumn(child)) {
                     mayPushdownColumnExprSeqMap.computeIfAbsent(((ColumnExpr) child).getColumnName(), key -> new HashSet<>()).add(i);
                 } else if (isFunction(child)) {
@@ -286,7 +295,7 @@ public abstract class FilterPushdownJudger<T> {
                 }
             }
 
-            List<Integer> canPushdownSeq = canPushdownColumnExprSeqMap.values()
+            Set<Integer> canPushdownSeqSet = canPushdownColumnExprSeqMap.values()
                     .stream()
                     .reduce(new HashSet<>(), new BinaryOperator<Set<Integer>>() {
                         @Override
@@ -294,13 +303,14 @@ public abstract class FilterPushdownJudger<T> {
                             integers.addAll(integers2);
                             return integers;
                         }
-                    })
-                    .stream()
+                    });
+            canPushdownSeqSet.addAll(forcePushdownList);
+            List<Integer> canPushdownSeqList = canPushdownSeqSet.stream()
                     .sorted(Comparator.reverseOrder())
                     .collect(Collectors.toList());
 
             List<Expr> pushdownedExprList = new LinkedList<>();
-            for (int seq : canPushdownSeq) {
+            for (int seq : canPushdownSeqList) {
                 // 若想在hercules内再走一遍全部的filter确保一下，可以使用如下代码
                 pushdownedExprList.add(root.getChildren().get(seq));
                 // 此处会把下推条件从hercules的filter内去掉
@@ -309,9 +319,8 @@ public abstract class FilterPushdownJudger<T> {
             if (pushdownedExprList.size() == 0) {
                 return null;
             } else {
-                // 这里的顺序是反的，反正是and，无所谓了
                 CombinationExpr combinationExpr
-                        = new CombinationExpr(CombinationExpr.CombinationType.AND, pushdownedExprList.toArray(new Expr[0]));
+                        = new CombinationExpr(CombinationExpr.CombinationType.AND, Lists.reverse(pushdownedExprList).toArray(new Expr[0]));
                 return convert(combinationExpr);
             }
         } else {

@@ -2,9 +2,14 @@ package com.xiaohongshu.db.hercules.core.filter.parser;
 
 import com.xiaohongshu.db.hercules.core.filter.expr.CombinationExpr;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.filter.expr.FunctionExpr;
+import com.xiaohongshu.db.hercules.core.filter.function.FilterCoreFunction;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +17,19 @@ import java.util.List;
 public abstract class AbstractParser implements Parser {
 
     private static final Log LOG = LogFactory.getLog(DruidParser.class);
+
+    private static final String PUSHDOWN_MARK_METHOD_NAME = "pushdown";
+    private static final Method PUSHDOWN_MARK_METHOD = MethodUtils.getAccessibleMethod(
+            FilterCoreFunction.class,
+            PUSHDOWN_MARK_METHOD_NAME,
+            BaseWrapper.class
+    );
+    private static final String NOT_PUSHDOWN_MARK_METHOD_NAME = "notPushdown";
+    private static final Method NOT_PUSHDOWN_MARK_METHOD = MethodUtils.getAccessibleMethod(
+            FilterCoreFunction.class,
+            NOT_PUSHDOWN_MARK_METHOD_NAME,
+            BaseWrapper.class
+    );
 
     private boolean canOptimize(Expr expr) {
         return expr instanceof CombinationExpr && ((CombinationExpr) expr).getType().isAnd();
@@ -90,6 +108,37 @@ public abstract class AbstractParser implements Parser {
         }
     }
 
+    /**
+     * 只处理根节点下第一层条件，再往下看没有任何意义
+     *
+     * @param root
+     */
+    private void dealWithPushdownMark(Expr root) {
+        for (int i = 0; i < root.getChildren().size(); ++i) {
+            Expr child = root.getChildren().get(i);
+            if (child instanceof FunctionExpr) {
+                FunctionExpr functionChild = (FunctionExpr) child;
+                if (functionChild.getMethod() == PUSHDOWN_MARK_METHOD) {
+                    Expr grandChild = functionChild.getChildren().get(0);
+                    grandChild.setForcePushdown();
+                    // 把孙子拉成儿子
+                    grandChild.setParent(root);
+                    root.getChildren().set(i, grandChild);
+                    child.getChildren().clear();
+                    child.setParent(null);
+                } else if (functionChild.getMethod() == NOT_PUSHDOWN_MARK_METHOD) {
+                    Expr grandChild = functionChild.getChildren().get(0);
+                    grandChild.setForceNotPushdown();
+                    // 把孙子拉成儿子
+                    grandChild.setParent(root);
+                    root.getChildren().set(i, grandChild);
+                    child.getChildren().clear();
+                    child.setParent(null);
+                }
+            }
+        }
+    }
+
     abstract protected Expr innerParse(String str);
 
     @Override
@@ -102,6 +151,7 @@ public abstract class AbstractParser implements Parser {
         LOG.info("Filter optimized as: " + res.toString());
         simplify(res);
         LOG.info("Filter simplified as: " + res.toString());
+        dealWithPushdownMark(res);
         return res;
     }
 }

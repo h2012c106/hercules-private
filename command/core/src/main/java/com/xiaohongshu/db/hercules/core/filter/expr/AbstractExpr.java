@@ -7,6 +7,9 @@ public abstract class AbstractExpr implements Expr {
 
     private Expr parent;
 
+    private boolean forcePushdown = false;
+    private boolean forceNotPushdown = false;
+
     @Override
     public List<Expr> getChildren() {
         return Collections.emptyList();
@@ -27,4 +30,24 @@ public abstract class AbstractExpr implements Expr {
 
     @Override
     abstract public boolean equals(Object obj);
+
+    @Override
+    public boolean isForcePushdown() {
+        return forcePushdown;
+    }
+
+    @Override
+    public void setForcePushdown() {
+        this.forcePushdown = true;
+    }
+
+    @Override
+    public boolean isForceNotPushdown() {
+        return forceNotPushdown;
+    }
+
+    @Override
+    public void setForceNotPushdown() {
+        this.forceNotPushdown = true;
+    }
 }
