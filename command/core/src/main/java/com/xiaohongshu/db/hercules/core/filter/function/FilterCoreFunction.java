@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.filter.function;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.filter.function.annotation.IgnoreOptimize;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import lombok.NonNull;
 import org.apache.commons.lang3.RandomUtils;
@@ -135,14 +136,17 @@ public class FilterCoreFunction {
         return dataType.getReadFunction().apply(dataType.getWriteFunction().apply(from));
     }
 
+    @IgnoreOptimize
     public static BaseWrapper<?> pushdown(BaseWrapper<?> wrapper) {
         throw new UnsupportedOperationException();
     }
 
+    @IgnoreOptimize
     public static BaseWrapper<?> notPushdown(BaseWrapper<?> wrapper) {
         throw new UnsupportedOperationException();
     }
 
+    @IgnoreOptimize
     public static BaseWrapper<?> random() {
         return DoubleWrapper.get(RandomUtils.nextDouble(0, 1));
     }

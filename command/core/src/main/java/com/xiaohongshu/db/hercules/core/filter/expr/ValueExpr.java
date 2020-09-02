@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.core.filter.expr;
 
 import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 
@@ -11,15 +12,20 @@ public class ValueExpr extends AbstractExpr {
     /**
      * 这里肯定不能支持特殊数据类型，filter是给大家用的，且parser是druid，也parse不出特殊类型
      */
-    private final BaseDataType dataType;
+    private final DataType dataType;
     private final BaseWrapper<?> value;
 
-    public ValueExpr(Object value, BaseDataType dataType) {
+    public ValueExpr(Object value, DataType dataType) {
         this.dataType = dataType;
         this.value = dataType.getReadFunction().apply(value);
     }
 
-    public BaseDataType getDataType() {
+    public ValueExpr(BaseWrapper<?> wrapper) {
+        this.dataType = wrapper.getType();
+        this.value = wrapper;
+    }
+
+    public DataType getDataType() {
         return dataType;
     }
 

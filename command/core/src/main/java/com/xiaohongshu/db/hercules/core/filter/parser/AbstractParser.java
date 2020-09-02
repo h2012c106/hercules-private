@@ -1,9 +1,8 @@
 package com.xiaohongshu.db.hercules.core.filter.parser;
 
-import com.xiaohongshu.db.hercules.core.filter.expr.CombinationExpr;
-import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
-import com.xiaohongshu.db.hercules.core.filter.expr.FunctionExpr;
+import com.xiaohongshu.db.hercules.core.filter.expr.*;
 import com.xiaohongshu.db.hercules.core.filter.function.FilterCoreFunction;
+import com.xiaohongshu.db.hercules.core.filter.function.annotation.IgnoreOptimize;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import org.apache.commons.lang3.reflect.MethodUtils;
 import org.apache.commons.logging.Log;
@@ -49,17 +48,59 @@ public abstract class AbstractParser implements Parser {
         }
     }
 
+    private boolean canPrecalc(Expr root) {
+        if (root instanceof ColumnExpr) {
+            return false;
+        } else if (root instanceof FunctionExpr) {
+            FunctionExpr functionExpr = (FunctionExpr) root;
+            Method method = functionExpr.getMethod();
+            if (method.getAnnotation(IgnoreOptimize.class) != null) {
+                return false;
+            }
+        }
+        for (Expr child : root.getChildren()) {
+            if (!canPrecalc(child)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 进行预计算简化
+     *
+     * @param root
+     */
+    private Expr precalc(Expr root) {
+        if (root instanceof ValueExpr) {
+            return root;
+        } else if (canPrecalc(root)) {
+            // 如果自己能直接预计算，那么说明子树均可，直接算就完事了
+            // TODO 这里在递归规程中，子树的canPrecalc函数会被多次调用重复计算，其实可以搞一个Map之类的存起来，不过懒得弄了，反正是一次性函数
+            Expr res = new ValueExpr(root.getResult(null));
+            res.setParent(root.getParent());
+            root.setParent(null);
+            return res;
+        } else {
+            for (int i = 0; i < root.getChildren().size(); ++i) {
+                Expr child = root.getChildren().get(i);
+                root.getChildren().set(i, precalc(child));
+            }
+            return root;
+        }
+    }
+
     /**
      * 优化，遇到OR子树就不用往下看，遇到AND子树就向下看后就向上合并，方便判断下推
      *
      * @param root
      */
-    private void optimize(Expr root) {
+    private void mergeAndTree(Expr root) {
         if (!canOptimize(root)) {
             return;
         }
         for (Expr child : root.getChildren()) {
-            optimize(child);
+            mergeAndTree(child);
         }
         List<Integer> removeSeqList = new LinkedList<>();
         List<Expr> addList = new LinkedList<>();
@@ -87,9 +128,9 @@ public abstract class AbstractParser implements Parser {
      *
      * @param expr
      */
-    private void simplify(Expr expr) {
+    private void idempotent(Expr expr) {
         for (Expr child : expr.getChildren()) {
-            simplify(child);
+            idempotent(child);
         }
         if (expr instanceof CombinationExpr) {
             List<Integer> removeSeqList = new LinkedList<>();
@@ -145,13 +186,12 @@ public abstract class AbstractParser implements Parser {
     public final Expr parse(String str) {
         Expr res = innerParse(str);
         LOG.info("Filter parsed as: " + res.toString());
-        // 先把根结点转为AND
+        res = precalc(res);
         res = checkRootAnd(res);
-        optimize(res);
-        LOG.info("Filter optimized as: " + res.toString());
-        simplify(res);
-        LOG.info("Filter simplified as: " + res.toString());
+        mergeAndTree(res);
+        idempotent(res);
         dealWithPushdownMark(res);
+        LOG.info("Filter optimized as: " + res.toString());
         return res;
     }
 }

@@ -9,15 +9,15 @@ public class ExtendedDate {
     private final Date date;
     private final boolean isZero;
 
-    public static ExtendedDate initialize(@NonNull String date){
+    public static ExtendedDate initialize(@NonNull String date) {
         return new ExtendedDate(DateUtils.stringToDate(date, DateUtils.getSourceDateFormat()));
     }
 
-    public static ExtendedDate initialize(@NonNull Long date){
+    public static ExtendedDate initialize(@NonNull Long date) {
         return new ExtendedDate(new Date(date));
     }
 
-    public static ExtendedDate initialize(@NonNull Date date){
+    public static ExtendedDate initialize(@NonNull Date date) {
         return new ExtendedDate(date);
     }
 
@@ -43,5 +43,10 @@ public class ExtendedDate {
 
     public boolean isZero() {
         return isZero;
+    }
+
+    @Override
+    public String toString() {
+        return isZero ? "ZERO_DATE" : String.valueOf(date);
     }
 }

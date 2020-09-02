@@ -12,7 +12,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * @author huanghanxiang
  */
-@Target({FIELD})
+@Target(FIELD)
 @Retention(RUNTIME)
 @Documented
 public @interface Options {
