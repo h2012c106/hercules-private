@@ -18,7 +18,7 @@ import java.math.BigInteger;
 /**
  * @param <T> 底层用于存储数据的真正数据类型
  */
-public abstract class BaseWrapper<T> implements Comparable<BaseWrapper<?>> {
+public abstract class BaseWrapper<T> implements Comparable<T> {
     /**
      * 不接受任何null值，一个wrapper里永远存着meaningful信息，null值全部扔到{@link NullWrapper}
      */
@@ -90,13 +90,17 @@ public abstract class BaseWrapper<T> implements Comparable<BaseWrapper<?>> {
         return asBigDecimal().intValueExact();
     }
 
-    abstract public Long asLong();
+    public Long asLong() {
+        return asBigInteger().longValueExact();
+    }
 
     public Float asFloat() {
         return OverflowUtils.numberToFloat(asBigDecimal());
     }
 
-    abstract public Double asDouble();
+     public Double asDouble(){
+         return OverflowUtils.numberToDouble(asBigDecimal());
+    }
 
     abstract public BigDecimal asBigDecimal();
 
@@ -147,24 +151,23 @@ public abstract class BaseWrapper<T> implements Comparable<BaseWrapper<?>> {
         }
     }
 
+    /**
+     * @return null代表不可比，其他与compareTo方法相同
+     */
+    public Integer compareWith(BaseWrapper<?> that) {
+        if (this.getClass() != that.getClass()) {
+            return null;
+        } else {
+            T thatValue = (T) that.getValue();
+            return compareTo(thatValue);
+        }
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("value", value)
                 .append("type", type)
                 .toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BaseWrapper<?> that = (BaseWrapper<?>) o;
-        return Objects.equal(value, that.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(value);
     }
 }

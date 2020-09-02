@@ -1,12 +1,18 @@
 package com.xiaohongshu.db.hercules.core.datatype;
 
 import com.google.common.base.Objects;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * 定义特殊数据源类型
@@ -14,23 +20,39 @@ import java.util.List;
  * 2. 必须包含公共无参构造函数。
  * 3. 不得和{@link BaseDataType}出现同名类型
  * TODO 以上两点在单元测试中检查
- *
- * @param <I> 读时数据源类型，如ResultSet
- * @param <O> 写时数据源类型，如PreparedStatement
  */
-public abstract class CustomDataType<I, O> implements DataType {
+public abstract class CustomDataType<I, O, T> implements DataType {
 
     private String name;
     private BaseDataType baseType;
     private Class<?> storageClass;
     private List<String> params;
+    private final Function<Object, BaseWrapper<?>> readFunction;
+    private final Function<BaseWrapper<?>, Object> writeFunction;
+    private final WrapperGetter<I> wrapperGetter;
+    private final WrapperSetter<O> wrapperSetter;
 
-    protected CustomDataType(String name, BaseDataType baseType, Class<?> storageClass) {
+    protected CustomDataType(String name, BaseDataType baseType, Class<?> storageClass,
+                             Function<Object, BaseWrapper<?>> readFunction) {
         this.name = name;
         this.baseType = baseType;
         this.storageClass = storageClass;
         this.params = new ArrayList<>(0);
+        this.readFunction = readFunction;
+        this.writeFunction = new Function<BaseWrapper<?>, Object>() {
+            @SneakyThrows
+            @Override
+            public Object apply(BaseWrapper<?> wrapper) {
+                return write(wrapper);
+            }
+        };
+        this.wrapperGetter = createWrapperGetter(this);
+        this.wrapperSetter = createWrapperSetter(this);
     }
+
+    abstract protected BaseTypeWrapperGetter<T, I> createWrapperGetter(final CustomDataType<I, O, T> self);
+
+    abstract protected BaseTypeWrapperSetter<T, O> createWrapperSetter(final CustomDataType<I, O, T> self);
 
     public void initialize(List<String> params) {
         // 记录params
@@ -61,105 +83,93 @@ public abstract class CustomDataType<I, O> implements DataType {
         return true;
     }
 
-    abstract public boolean isNull(I row, String rowName, String columnName, int columnSeq) throws Exception;
-
-    /**
-     * 确保下游抄类型作业能抄到特殊类型
-     *
-     * @param row
-     * @param rowName
-     * @param columnName
-     * @param columnSeq
-     * @return
-     * @throws Exception
-     */
-    public final BaseWrapper<?> read(I row, String rowName, String columnName, int columnSeq) throws Exception {
-        BaseWrapper<?> res = innerRead(row, rowName, columnName, columnSeq);
-        res.setType(this);
-        return res;
-    }
-
-    /**
-     * 此处可以返回一个特殊wrapper，用于定义与众不同的各个as方法，当然也可以返回一个预定义好的wrapper
-     *
-     * @param row
-     * @param rowName
-     * @param columnName
-     * @param columnSeq
-     * @return
-     * @throws Exception
-     */
-    abstract protected BaseWrapper<?> innerRead(I row, String rowName, String columnName, int columnSeq) throws Exception;
-
-    abstract public void writeNull(O row, String rowName, String columnName, int columnSeq) throws Exception;
-
-    public void write(@NonNull BaseWrapper<?> wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    public T write(@NonNull BaseWrapper<?> wrapper) throws Exception {
         if (wrapper.getClass() == IntegerWrapper.class) {
-            innerWrite((IntegerWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((IntegerWrapper) wrapper);
         } else if (wrapper.getClass() == BooleanWrapper.class) {
-            innerWrite((BooleanWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((BooleanWrapper) wrapper);
         } else if (wrapper.getClass() == DoubleWrapper.class) {
-            innerWrite((DoubleWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((DoubleWrapper) wrapper);
         } else if (wrapper.getClass() == StringWrapper.class) {
-            innerWrite((StringWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((StringWrapper) wrapper);
         } else if (wrapper.getClass() == BytesWrapper.class) {
-            innerWrite((BytesWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((BytesWrapper) wrapper);
         } else if (wrapper.getClass() == DateWrapper.class) {
-            innerWrite((DateWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((DateWrapper) wrapper);
         } else if (wrapper.getClass() == NullWrapper.class) {
-            innerWrite((NullWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((NullWrapper) wrapper);
         } else if (wrapper.getClass() == ListWrapper.class) {
-            innerWrite((ListWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((ListWrapper) wrapper);
         } else if (wrapper.getClass() == MapWrapper.class) {
-            innerWrite((MapWrapper) wrapper, row, rowName, columnName, columnSeq);
+            return innerWrite((MapWrapper) wrapper);
         } else {
-            innerSpecialWrite(wrapper, row, rowName, columnName, columnSeq);
+            return innerSpecialWrite(wrapper);
         }
     }
 
-    protected void innerWrite(IntegerWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(IntegerWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    protected void innerWrite(BooleanWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(BooleanWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    protected void innerWrite(DoubleWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(DoubleWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    protected void innerWrite(StringWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(StringWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    protected void innerWrite(BytesWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(BytesWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    protected void innerWrite(DateWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(DateWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    abstract protected void innerWrite(NullWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception;
-
-    protected void innerWrite(ListWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(NullWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    protected void innerWrite(MapWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(ListWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
     }
 
-    protected void innerSpecialWrite(BaseWrapper wrapper, O row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected T innerWrite(MapWrapper wrapper) throws Exception {
         throw new UnsupportedOperationException();
+    }
+
+    protected T innerSpecialWrite(BaseWrapper<?> wrapper) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public final Function<Object, BaseWrapper<?>> getReadFunction() {
+        return readFunction;
+    }
+
+    @Override
+    public final Function<BaseWrapper<?>, Object> getWriteFunction() {
+        return writeFunction;
+    }
+
+    public final WrapperGetter<I> getWrapperGetter() {
+        return wrapperGetter;
+    }
+
+    public final WrapperSetter<O> getWrapperSetter() {
+        return wrapperSetter;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CustomDataType<?, ?> that = (CustomDataType<?, ?>) o;
+        CustomDataType that = (CustomDataType) o;
         return Objects.equal(name, that.name) &&
                 baseType == that.baseType &&
                 Objects.equal(storageClass, that.storageClass) &&

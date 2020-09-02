@@ -173,10 +173,12 @@ public enum BaseDataType implements DataType {
         return false;
     }
 
+    @Override
     public Function<Object, BaseWrapper<?>> getReadFunction() {
         return readFunction;
     }
 
+    @Override
     public Function<BaseWrapper<?>, Object> getWriteFunction() {
         return writeFunction;
     }

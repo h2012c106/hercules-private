@@ -101,7 +101,7 @@ public class StringWrapper extends BaseWrapper<String> {
     }
 
     @Override
-    public int compareTo(BaseWrapper<?> o) {
-        return getValue().compareTo(o.asString());
+    public int compareTo(String o) {
+        return getValue().compareTo(o);
     }
 }

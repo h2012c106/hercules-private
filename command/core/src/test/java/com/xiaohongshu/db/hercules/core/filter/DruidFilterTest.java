@@ -1,6 +1,8 @@
 package com.xiaohongshu.db.hercules.core.filter;
 
+import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.filter.function.FilterCoreFunction;
 import com.xiaohongshu.db.hercules.core.filter.parser.DruidParser;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
@@ -23,7 +25,7 @@ public class DruidFilterTest {
         row.put("id", IntegerWrapper.get(1000));
         row.put("date", DateWrapper.getDate(ExtendedDate.initialize("2020-09-01")));
         HerculesWritable herculesWritable = new HerculesWritable(row);
-        Expr expr = parser.parse("id > 0 and date >= '2020-08-24' and id = 1000");
+        Expr expr = parser.parse("id > 0 and date >= kast('2020-08-24', 'date') and id = 1000");
         Assertions.assertEquals(expr.getResult(herculesWritable).asBoolean(), true);
     }
 

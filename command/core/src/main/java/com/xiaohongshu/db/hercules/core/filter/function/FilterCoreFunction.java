@@ -1,9 +1,13 @@
 package com.xiaohongshu.db.hercules.core.filter.function;
 
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BooleanWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.IntegerWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
+import lombok.NonNull;
 
 public class FilterCoreFunction {
 
@@ -28,86 +32,67 @@ public class FilterCoreFunction {
         if (hasNull(left, right)) {
             return BooleanWrapper.get(false);
         }
-        boolean res;
-        try {
-            res = left.compareTo(right) > 0;
-        } catch (Exception ignored) {
-            // 不可比则这行过不了筛查，类似mongo的处理方式，类型不同则不会被filter出来
-            res = false;
-        }
-        return BooleanWrapper.get(res);
+        Integer compareRes = left.compareWith(right);
+        return BooleanWrapper.get(compareRes != null && compareRes > 0);
     }
 
     public static BaseWrapper<?> gte(BaseWrapper<?> left, BaseWrapper<?> right) {
         if (hasNull(left, right)) {
             return BooleanWrapper.get(false);
         }
-        boolean res;
-        try {
-            res = left.compareTo(right) >= 0;
-        } catch (Exception ignored) {
-            // 不可比则这行过不了筛查，类似mongo的处理方式，类型不同则不会被filter出来
-            res = false;
-        }
-        return BooleanWrapper.get(res);
+        Integer compareRes = left.compareWith(right);
+        return BooleanWrapper.get(compareRes != null && compareRes >= 0);
     }
 
     public static BaseWrapper<?> lt(BaseWrapper<?> left, BaseWrapper<?> right) {
         if (hasNull(left, right)) {
             return BooleanWrapper.get(false);
         }
-        boolean res;
-        try {
-            res = left.compareTo(right) < 0;
-        } catch (Exception ignored) {
-            // 不可比则这行过不了筛查，类似mongo的处理方式，类型不同则不会被filter出来
-            res = false;
-        }
-        return BooleanWrapper.get(res);
+        Integer compareRes = left.compareWith(right);
+        return BooleanWrapper.get(compareRes != null && compareRes < 0);
     }
 
     public static BaseWrapper<?> lte(BaseWrapper<?> left, BaseWrapper<?> right) {
         if (hasNull(left, right)) {
             return BooleanWrapper.get(false);
         }
-        boolean res;
-        try {
-            res = left.compareTo(right) <= 0;
-        } catch (Exception ignored) {
-            // 不可比则这行过不了筛查，类似mongo的处理方式，类型不同则不会被filter出来
-            res = false;
-        }
-        return BooleanWrapper.get(res);
+        Integer compareRes = left.compareWith(right);
+        return BooleanWrapper.get(compareRes != null && compareRes <= 0);
     }
 
     public static BaseWrapper<?> eq(BaseWrapper<?> left, BaseWrapper<?> right) {
         if (hasNull(left, right)) {
             return BooleanWrapper.get(false);
         }
-        boolean res;
-        if (left.isNull() && right.isNull()) {
-            res = true;
-        } else if (left.isNull() || right.isNull()) {
-            res = false;
-        } else {
-            res = left.equals(right);
-        }
-        return BooleanWrapper.get(res);
+        Integer compareRes = left.compareWith(right);
+        return BooleanWrapper.get(compareRes != null && compareRes == 0);
     }
 
     public static BaseWrapper<?> neq(BaseWrapper<?> left, BaseWrapper<?> right) {
         if (hasNull(left, right)) {
             return BooleanWrapper.get(false);
         }
-        boolean res;
-        if (left.isNull() && right.isNull()) {
-            res = true;
-        } else if (left.isNull() || right.isNull()) {
-            res = false;
-        } else {
-            res = left.equals(right);
+        Integer compareRes = left.compareWith(right);
+        return BooleanWrapper.get(compareRes != null && compareRes != 0);
+    }
+
+    public static BaseWrapper<?> properEq(BaseWrapper<?> left, BaseWrapper<?> right) {
+        if (hasNull(left, right) || left.getType() != right.getType()) {
+            return BooleanWrapper.get(false);
         }
-        return BooleanWrapper.get(!res);
+        Integer compareRes = left.compareWith(right);
+        return BooleanWrapper.get(compareRes != null && compareRes == 0);
+    }
+
+    public static BaseWrapper<?> properNeq(BaseWrapper<?> left, BaseWrapper<?> right) {
+        if (hasNull(left, right)) {
+            return BooleanWrapper.get(false);
+        }
+        if (left.getType() != right.getType()) {
+            return BooleanWrapper.get(true);
+        }
+        Integer compareRes = left.compareWith(right);
+        return BooleanWrapper.get(compareRes != null && compareRes != 0);
     }
 
     public static BaseWrapper<?> in(BaseWrapper<?> val, BaseWrapper<?> tmp) {
@@ -117,7 +102,7 @@ public class FilterCoreFunction {
         ListWrapper list = (ListWrapper) tmp;
         boolean in = false;
         for (int i = 0; i < list.size(); ++i) {
-            if (val.equals(list.get(i))) {
+            if (val.compareWith(list.get(i)) == 0) {
                 in = true;
                 break;
             }
@@ -131,5 +116,24 @@ public class FilterCoreFunction {
         } else {
             return IntegerWrapper.get(val.asString().length());
         }
+    }
+
+    private static CustomDataTypeManager<?, ?> SOURCE_CUSTOM_TYPE_MANAGER = NullCustomDataTypeManager.INSTANCE;
+
+    public static void registerCustomTypeManager(@NonNull CustomDataTypeManager<?, ?> manager) {
+        SOURCE_CUSTOM_TYPE_MANAGER = manager;
+    }
+
+    /**
+     * 避免和druid解析的时候cast函数冲突
+     *
+     * @param from
+     * @param typeNameWrapper
+     * @return
+     */
+    public static BaseWrapper<?> kast(BaseWrapper<?> from, BaseWrapper<?> typeNameWrapper) {
+        String typeName = typeNameWrapper.asString();
+        DataType dataType = DataType.valueOfIgnoreCase(typeName, SOURCE_CUSTOM_TYPE_MANAGER);
+        return dataType.getReadFunction().apply(dataType.getWriteFunction().apply(from));
     }
 }

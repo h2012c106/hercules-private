@@ -124,7 +124,7 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> {
     }
 
     @Override
-    public int compareTo(BaseWrapper<?> o) {
+    public int compareTo(Map<String, BaseWrapper<?>> o) {
         throw  new UnsupportedOperationException();
     }
 }

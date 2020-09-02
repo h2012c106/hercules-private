@@ -98,9 +98,8 @@ public class DateWrapper extends BaseWrapper<ExtendedDate> {
     }
 
     @Override
-    public int compareTo(BaseWrapper<?> o) {
+    public int compareTo(ExtendedDate thatValue) {
         ExtendedDate thisValue = getValue();
-        ExtendedDate thatValue = o.asDate();
         if (thisValue.isZero() && thatValue.isZero()) {
             return 0;
         } else if (thisValue.isZero()) {

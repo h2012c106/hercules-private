@@ -23,16 +23,17 @@ public abstract class BaseCustomDataTypeManager<I, O> implements CustomDataTypeM
 
     private static final Log LOG = LogFactory.getLog(BaseCustomDataTypeManager.class);
 
-    private final Map<String, Class<? extends CustomDataType<I, O>>> factory = new HashMap<>();
+    private final Map<String, Class<? extends CustomDataType<I, O, ?>>> factory = new HashMap<>();
 
     public BaseCustomDataTypeManager() {
-        for (Class<? extends CustomDataType<I, O>> item : generateTypeList()) {
-            String typeName;
+        for (Class<? extends CustomDataType<I, O, ?>> item : generateTypeList()) {
+            CustomDataType<I, O, ?> itemInstance;
             try {
-                typeName = item.newInstance().getName();
+                itemInstance = item.newInstance();
             } catch (InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
+            String typeName = itemInstance.getName();
             if (factory.containsKey(typeName)) {
                 throw new RuntimeException("Duplicate definition of custom type: " + typeName);
             } else {
@@ -41,7 +42,7 @@ public abstract class BaseCustomDataTypeManager<I, O> implements CustomDataTypeM
         }
     }
 
-    abstract protected List<Class<? extends CustomDataType<I, O>>> generateTypeList();
+    abstract protected List<Class<? extends CustomDataType<I, O, ?>>> generateTypeList();
 
     private static class DataTypeInfo {
         private String dataTypeName;
@@ -90,17 +91,17 @@ public abstract class BaseCustomDataTypeManager<I, O> implements CustomDataTypeM
     }
 
     @Override
-    public CustomDataType<I, O> get(String name) {
+    public CustomDataType<I, O, ?> get(String name) {
         DataTypeInfo dataTypeInfo = parseDataType(name);
         String dataTypeName = dataTypeInfo.getDataTypeName();
         List<String> params = dataTypeInfo.getParams();
 
-        Class<? extends CustomDataType<I, O>> customDataTypeClass = factory.get(dataTypeName);
+        Class<? extends CustomDataType<I, O, ?>> customDataTypeClass = factory.get(dataTypeName);
         if (customDataTypeClass == null) {
             throw new RuntimeException("Cannot get special data type with name: " + name);
         }
         try {
-            CustomDataType<I, O> customDataType = customDataTypeClass.newInstance();
+            CustomDataType<I, O, ?> customDataType = customDataTypeClass.newInstance();
             customDataType.initialize(params);
             return customDataType;
         } catch (InstantiationException | IllegalAccessException e) {
@@ -109,15 +110,15 @@ public abstract class BaseCustomDataTypeManager<I, O> implements CustomDataTypeM
     }
 
     @Override
-    public CustomDataType<I, O> getIgnoreCase(String name) {
+    public CustomDataType<I, O, ?> getIgnoreCase(String name) {
         DataTypeInfo dataTypeInfo = parseDataType(name);
         String dataTypeName = dataTypeInfo.getDataTypeName();
         List<String> params = dataTypeInfo.getParams();
 
-        for (Map.Entry<String, Class<? extends CustomDataType<I, O>>> entry : factory.entrySet()) {
+        for (Map.Entry<String, Class<? extends CustomDataType<I, O, ?>>> entry : factory.entrySet()) {
             if (StringUtils.equalsIgnoreCase(dataTypeName, entry.getKey())) {
                 try {
-                    CustomDataType<I, O> customDataType = entry.getValue().newInstance();
+                    CustomDataType<I, O, ?> customDataType = entry.getValue().newInstance();
                     customDataType.initialize(params);
                     return customDataType;
                 } catch (InstantiationException | IllegalAccessException e) {

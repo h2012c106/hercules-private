@@ -21,6 +21,10 @@ public interface DataType {
 
     public boolean isCustom();
 
+    public Function<Object, BaseWrapper<?>> getReadFunction();
+
+    public Function<BaseWrapper<?>, Object> getWriteFunction();
+
     public static DataType valueOfIgnoreCase(String typeName, @NonNull CustomDataTypeManager<?, ?> manager) {
         // 先看基本类型（同名以基本类型为准）
         try {

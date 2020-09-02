@@ -88,7 +88,16 @@ public class DoubleWrapper extends BaseWrapper<BigDecimal> {
     }
 
     @Override
-    public int compareTo(BaseWrapper<?> o) {
-        return getValue().compareTo(o.asBigDecimal());
+    public Integer compareWith(BaseWrapper<?> that) {
+        // 不优雅
+        if (that.getClass() == IntegerWrapper.class) {
+            return asBigDecimal().compareTo(that.asBigDecimal());
+        }
+        return super.compareWith(that);
+    }
+
+    @Override
+    public int compareTo(BigDecimal o) {
+        return getValue().compareTo(o);
     }
 }

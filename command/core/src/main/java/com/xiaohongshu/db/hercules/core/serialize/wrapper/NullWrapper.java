@@ -105,7 +105,7 @@ public class NullWrapper extends BaseWrapper<String> {
     }
 
     @Override
-    public int compareTo(BaseWrapper<?> o) {
-        throw new UnsupportedOperationException();
+    public int compareTo(String o) {
+        return 0;
     }
 }

@@ -2,14 +2,19 @@ package com.xiaohongshu.db.hercules.mongodb.datatype;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.DateWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.StringWrapper;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
-public class ObjectIdCustomDataType extends CustomDataType<Document, Document> {
+import java.util.function.Function;
+
+public class ObjectIdCustomDataType extends CustomDataType<Document, Document, ObjectId> {
 
     private static final String NAME = "OBJECTID";
     private static final BaseDataType BASE_DATA_TYPE = BaseDataType.STRING;
@@ -18,43 +23,81 @@ public class ObjectIdCustomDataType extends CustomDataType<Document, Document> {
     public static final ObjectIdCustomDataType INSTANCE = new ObjectIdCustomDataType();
 
     public ObjectIdCustomDataType() {
-        super(NAME, BASE_DATA_TYPE, STORAGE_CLASS);
+        super(NAME, BASE_DATA_TYPE, STORAGE_CLASS, new Function<Object, BaseWrapper<?>>() {
+            @Override
+            public BaseWrapper<?> apply(Object o) {
+                return ObjectIdWrapper.get((ObjectId) o);
+            }
+        });
     }
 
     @Override
-    public boolean isNull(Document row, String rowName, String columnName, int columnSeq) throws Exception {
-        return row.get(columnName) == null;
+    protected BaseTypeWrapperGetter<ObjectId, Document> createWrapperGetter(final CustomDataType<Document, Document, ObjectId> self) {
+        return new BaseTypeWrapperGetter<ObjectId, Document>() {
+            @Override
+            protected DataType getType() {
+                return self;
+            }
+
+            @Override
+            protected boolean isNull(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.get(columnName) == null;
+            }
+
+            @Override
+            protected ObjectId getNonnullValue(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                return row.get(columnName, ObjectId.class);
+            }
+        };
     }
 
     @Override
-    protected BaseWrapper<?> innerRead(Document row, String rowName, String columnName, int columnSeq) throws Exception {
-        ObjectId value = row.get(columnName, ObjectId.class);
-        return StringWrapper.get(value == null ? null : value.toString());
+    protected BaseTypeWrapperSetter<ObjectId, Document> createWrapperSetter(final CustomDataType<Document, Document, ObjectId> self) {
+        return new BaseTypeWrapperSetter<ObjectId, Document>() {
+            @Override
+            protected void setNull(Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.put(columnName, null);
+            }
+
+            @Override
+            protected DataType getType() {
+                return self;
+            }
+
+            @Override
+            protected void setNonnullValue(ObjectId value, Document row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.put(columnName, value);
+            }
+        };
     }
 
     @Override
-    public void writeNull(Document row, String rowName, String columnName, int columnSeq) throws Exception {
-        row.put(columnName, null);
-    }
-
-    @Override
-    protected void innerWrite(StringWrapper wrapper, Document row, String rowName, String columnName, int columnSeq) throws Exception {
+    protected ObjectId innerWrite(StringWrapper wrapper) throws Exception {
         String res = wrapper.asString();
         if (ObjectId.isValid(res)) {
-            row.put(columnName, new ObjectId(res));
+            return new ObjectId(res);
         } else {
             throw new IllegalArgumentException("Illegal object id form: " + res);
         }
     }
 
     @Override
-    protected void innerWrite(BytesWrapper wrapper, Document row, String rowName, String columnName, int columnSeq) throws Exception {
-        row.put(columnName, new ObjectId(wrapper.asBytes()));
+    protected ObjectId innerWrite(DateWrapper wrapper) throws Exception {
+        return new ObjectId(wrapper.asDate().getDate());
     }
 
     @Override
-    protected void innerWrite(NullWrapper wrapper, Document row, String rowName, String columnName, int columnSeq) throws Exception {
-        row.put(columnName, null);
+    protected ObjectId innerWrite(BytesWrapper wrapper) throws Exception {
+        return new ObjectId(wrapper.asBytes());
+    }
+
+    @Override
+    protected ObjectId innerSpecialWrite(BaseWrapper<?> wrapper) throws Exception {
+        if (wrapper.getClass() == ObjectIdWrapper.class) {
+            return (ObjectId) wrapper.asDefault();
+        } else {
+            return super.innerSpecialWrite(wrapper);
+        }
     }
 
     @Override

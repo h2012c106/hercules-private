@@ -74,7 +74,7 @@ public class BooleanWrapper extends BaseWrapper<Boolean> {
     }
 
     @Override
-    public int compareTo(BaseWrapper<?> o) {
-        return getValue().compareTo(o.asBoolean());
+    public int compareTo(Boolean o) {
+        return getValue().compareTo(o);
     }
 }

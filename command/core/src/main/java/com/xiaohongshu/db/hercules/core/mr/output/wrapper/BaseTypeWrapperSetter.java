@@ -18,7 +18,7 @@ public abstract class BaseTypeWrapperSetter<T, O> extends WrapperSetter<O> {
     abstract protected DataType getType();
 
     private T getValue(BaseWrapper<?> wrapper) {
-        return (T) getType().getBaseDataType().getWriteFunction().apply(wrapper);
+        return (T) getType().getWriteFunction().apply(wrapper);
     }
 
     abstract protected void setNonnullValue(T value, O row, String rowName, String columnName, int columnSeq) throws Exception;

@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.utils.context;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.filter.function.FilterCoreFunction;
 import com.xiaohongshu.db.hercules.core.filter.parser.Parser;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
@@ -297,6 +298,12 @@ public final class HerculesContext {
         String filterStr = wrappingOptions.getCommonOptions().getString(FILTER, null);
         filterStr = filterStr == null ? null : filterStr.trim();
         if (!StringUtils.isEmpty(filterStr)) {
+            // 注册Custom Type Manager，用于注册kast函数
+            FilterCoreFunction.registerCustomTypeManager(assemblySupplierPair.getSourceItem().getCustomDataTypeManager());
+            // 若有der则覆写
+            if (kvSerDerSupplierPair.getDerItem() != null) {
+                FilterCoreFunction.registerCustomTypeManager(kvSerDerSupplierPair.getDerItem().getCustomDataTypeManager());
+            }
             return Parser.INSTANCE.parse(filterStr);
         } else {
             return null;

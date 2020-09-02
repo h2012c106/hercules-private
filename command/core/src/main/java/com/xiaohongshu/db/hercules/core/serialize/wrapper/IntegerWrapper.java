@@ -63,17 +63,6 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
     }
 
     @Override
-    public Long asLong() {
-        return getValue().longValueExact();
-    }
-
-    @Override
-    public Double asDouble() {
-        BigDecimal value = asBigDecimal();
-        return OverflowUtils.numberToDouble(value);
-    }
-
-    @Override
     public BigDecimal asBigDecimal() {
         return new BigDecimal(getValue());
     }
@@ -109,7 +98,16 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
     }
 
     @Override
-    public int compareTo(BaseWrapper<?> o) {
-        return getValue().compareTo(o.asBigInteger());
+    public Integer compareWith(BaseWrapper<?> that) {
+        // 不优雅
+        if (that.getClass() == DoubleWrapper.class) {
+            return asBigDecimal().compareTo(that.asBigDecimal());
+        }
+        return super.compareWith(that);
+    }
+
+    @Override
+    public int compareTo(BigInteger o) {
+        return getValue().compareTo(o);
     }
 }

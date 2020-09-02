@@ -6,7 +6,6 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -83,24 +82,9 @@ public abstract class WrapperGetterFactory<T> implements DataSourceRoleGetter {
     public final WrapperGetter<T> getWrapperGetter(@NonNull DataType dataType) {
         WrapperGetter<T> res;
         if (dataType.isCustom()) {
-            final CustomDataType<T, ?> customDataType = (CustomDataType<T, ?>) dataType;
+            final CustomDataType<T, ?,?> customDataType = (CustomDataType<T, ?,?>) dataType;
             // 运行时赋
-            res = wrapperGetterMap.computeIfAbsent(customDataType, key -> new WrapperGetter<T>() {
-                @Override
-                protected DataType getType() {
-                    return customDataType;
-                }
-
-                @Override
-                protected boolean isNull(T row, String rowName, String columnName, int columnSeq) throws Exception {
-                    return customDataType.isNull(row, rowName, columnName, columnSeq);
-                }
-
-                @Override
-                protected BaseWrapper<?> getNonnull(T row, String rowName, String columnName, int columnSeq) throws Exception {
-                    return customDataType.read(row, rowName, columnName, columnSeq);
-                }
-            });
+            res = wrapperGetterMap.computeIfAbsent(customDataType, key -> customDataType.getWrapperGetter());
         } else {
             res = wrapperGetterMap.get(dataType);
             if (res == null) {
