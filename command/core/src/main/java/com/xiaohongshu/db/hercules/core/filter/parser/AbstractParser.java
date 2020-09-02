@@ -30,10 +30,6 @@ public abstract class AbstractParser implements Parser {
             BaseWrapper.class
     );
 
-    private boolean canOptimize(Expr expr) {
-        return expr instanceof CombinationExpr && ((CombinationExpr) expr).getType().isAnd();
-    }
-
     /**
      * 保证根节点是AND
      *
@@ -90,36 +86,37 @@ public abstract class AbstractParser implements Parser {
         }
     }
 
+    private boolean isAndExpr(Expr expr) {
+        return expr instanceof CombinationExpr && ((CombinationExpr) expr).getType().isAnd();
+    }
+
     /**
      * 优化，遇到OR子树就不用往下看，遇到AND子树就向下看后就向上合并，方便判断下推
      *
      * @param root
      */
     private void mergeAndTree(Expr root) {
-        if (!canOptimize(root)) {
+        if (!isAndExpr(root)) {
             return;
         }
         for (Expr child : root.getChildren()) {
             mergeAndTree(child);
         }
-        List<Integer> removeSeqList = new LinkedList<>();
         List<Expr> addList = new LinkedList<>();
         for (int i = 0; i < root.getChildren().size(); ++i) {
             Expr child = root.getChildren().get(i);
-            if (!canOptimize(child)) {
-                continue;
+            if (!isAndExpr(child)) {
+                addList.add(child);
+            } else {
+                for (Expr grandChild : child.getChildren()) {
+                    grandChild.setParent(root);
+                    addList.add(grandChild);
+                }
+                child.getChildren().clear();
+                child.setParent(null);
             }
-            removeSeqList.add(i);
-            for (Expr grandChild : child.getChildren()) {
-                grandChild.setParent(root);
-                addList.add(grandChild);
-            }
-            child.getChildren().clear();
         }
-        Collections.reverse(removeSeqList);
-        for (int i : removeSeqList) {
-            root.getChildren().remove(i).setParent(null);
-        }
+        root.getChildren().clear();
         root.getChildren().addAll(addList);
     }
 

@@ -1,9 +1,11 @@
 package com.xiaohongshu.db.hercules.mongodb.filter;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.filter.expr.*;
 import com.xiaohongshu.db.hercules.core.filter.pushdown.FilterPushdownJudger;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
+import com.xiaohongshu.db.hercules.mongodb.datatype.ObjectIdCustomDataType;
 import lombok.NonNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.bson.Document;
@@ -151,18 +153,28 @@ public class MongoDBFilterPushdownJudger extends FilterPushdownJudger<MongoDBFil
             @Override
             public KeyValue apply(Expr expr) {
                 ValueExpr valueExpr = (ValueExpr) expr;
-                BaseDataType dataType = valueExpr.getDataType();
-                Object res;
-                if (dataType.isInteger()) {
-                    res = valueExpr.getResult().asBigInteger().longValueExact();
-                } else if (dataType.isFloat()) {
-                    res = OverflowUtils.numberToDouble(valueExpr.getResult().asBigDecimal());
-                } else if (dataType.isBoolean() || dataType.isNull() || dataType.isString() || dataType.isDate()) {
-                    res = valueExpr.getValue();
+                DataType dataType = valueExpr.getDataType();
+                Object res = null;
+                if (dataType.isCustom()) {
+                    if (dataType == ObjectIdCustomDataType.INSTANCE) {
+                        // 这里是一个ObjectId
+                        res = valueExpr.getResult().asDefault();
+                    }
                 } else {
-                    throw new UnsupportedOperationException("Unsupported pushdown base datatype: " + dataType);
+                    BaseDataType baseDataType = dataType.getBaseDataType();
+                    if (baseDataType.isInteger()) {
+                        res = valueExpr.getResult().asBigInteger().longValueExact();
+                    } else if (baseDataType.isFloat()) {
+                        res = OverflowUtils.numberToDouble(valueExpr.getResult().asBigDecimal());
+                    } else if (baseDataType.isBoolean() || baseDataType.isNull() || baseDataType.isString() || baseDataType.isDate()) {
+                        res = valueExpr.getValue();
+                    }
                 }
-                return KeyValue.initializeValue(res);
+                if (res == null) {
+                    throw new UnsupportedOperationException("Unsupported pushdown datatype: " + dataType);
+                } else {
+                    return KeyValue.initializeValue(res);
+                }
             }
         };
     }

@@ -1,12 +1,10 @@
 package com.xiaohongshu.db.hercules.core.filter.expr;
 
-import com.google.common.base.Objects;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.filter.function.FilterCoreFunction;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-
-import java.util.List;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BooleanWrapper;
 
 public class ValueExpr extends AbstractExpr {
     /**
@@ -53,6 +51,6 @@ public class ValueExpr extends AbstractExpr {
         if (o == null || getClass() != o.getClass()) return false;
         ValueExpr valueExpr = (ValueExpr) o;
         return dataType == valueExpr.dataType &&
-                Objects.equal(value, valueExpr.value);
+                FilterCoreFunction.properEq(value, valueExpr.value).asBoolean();
     }
 }

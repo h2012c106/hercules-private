@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.filter;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.filter.expr.*;
 import com.xiaohongshu.db.hercules.core.filter.pushdown.FilterPushdownJudger;
 import com.xiaohongshu.db.hercules.core.utils.BytesUtils;
@@ -103,18 +104,23 @@ public class RDBMSFilterPushdownJudger extends FilterPushdownJudger<String> {
             @Override
             public String apply(Expr expr) {
                 ValueExpr valueExpr = (ValueExpr) expr;
-                BaseDataType dataType = valueExpr.getDataType();
-                if (dataType.isNumber() || dataType.isBoolean()) {
-                    return valueExpr.getResult().asString();
-                } else if (dataType.isBytes()) {
-                    byte[] bytesValue = valueExpr.getResult().asBytes();
-                    return "b'" + BytesUtils.bytesToBinStr(bytesValue) + "'";
-                } else if (dataType.isNull()) {
-                    return "NULL";
-                } else if (dataType.isString() || dataType.isDate()) {
-                    return "'" + valueExpr.getResult().asString() + "'";
+                DataType dataType = valueExpr.getDataType();
+                if (dataType.isCustom()) {
+                    throw new UnsupportedOperationException("Unsupported pushdown custom datatype: " + dataType);
                 } else {
-                    throw new UnsupportedOperationException("Unsupported pushdown base datatype: " + dataType);
+                    BaseDataType baseDataType = dataType.getBaseDataType();
+                    if (baseDataType.isNumber() || baseDataType.isBoolean()) {
+                        return valueExpr.getResult().asString();
+                    } else if (baseDataType.isBytes()) {
+                        byte[] bytesValue = valueExpr.getResult().asBytes();
+                        return "b'" + BytesUtils.bytesToBinStr(bytesValue) + "'";
+                    } else if (baseDataType.isNull()) {
+                        return "NULL";
+                    } else if (baseDataType.isString() || baseDataType.isDate()) {
+                        return "'" + valueExpr.getResult().asString() + "'";
+                    } else {
+                        throw new UnsupportedOperationException("Unsupported pushdown base datatype: " + dataType);
+                    }
                 }
             }
         };
