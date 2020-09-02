@@ -12,7 +12,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FunctionExpr extends AbstractExpr {
 
@@ -34,7 +36,7 @@ public class FunctionExpr extends AbstractExpr {
         for (Expr param : params) {
             param.setParent(this);
         }
-        paramList = Arrays.asList(params);
+        paramList = Arrays.stream(params).collect(Collectors.toCollection(LinkedList::new));
     }
 
     public Method getMethod() {

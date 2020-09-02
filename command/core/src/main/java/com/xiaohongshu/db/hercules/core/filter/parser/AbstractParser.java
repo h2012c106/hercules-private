@@ -156,7 +156,7 @@ public abstract class AbstractParser implements Parser {
             Expr child = root.getChildren().get(i);
             if (child instanceof FunctionExpr) {
                 FunctionExpr functionChild = (FunctionExpr) child;
-                if (functionChild.getMethod() == PUSHDOWN_MARK_METHOD) {
+                if (functionChild.getMethod().equals(PUSHDOWN_MARK_METHOD)) {
                     Expr grandChild = functionChild.getChildren().get(0);
                     grandChild.setForcePushdown();
                     // 把孙子拉成儿子
@@ -164,7 +164,7 @@ public abstract class AbstractParser implements Parser {
                     root.getChildren().set(i, grandChild);
                     child.getChildren().clear();
                     child.setParent(null);
-                } else if (functionChild.getMethod() == NOT_PUSHDOWN_MARK_METHOD) {
+                } else if (functionChild.getMethod().equals(NOT_PUSHDOWN_MARK_METHOD)) {
                     Expr grandChild = functionChild.getChildren().get(0);
                     grandChild.setForceNotPushdown();
                     // 把孙子拉成儿子
