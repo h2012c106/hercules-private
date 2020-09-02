@@ -11,6 +11,7 @@ public interface DataType {
 
     /**
      * 实际在java中的类型，可能没啥用
+     *
      * @return
      */
     public Class<?> getJavaClass();

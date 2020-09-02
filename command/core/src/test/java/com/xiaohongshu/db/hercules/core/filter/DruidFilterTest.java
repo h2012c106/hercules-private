@@ -1,8 +1,6 @@
 package com.xiaohongshu.db.hercules.core.filter;
 
-import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
-import com.xiaohongshu.db.hercules.core.filter.function.FilterCoreFunction;
 import com.xiaohongshu.db.hercules.core.filter.parser.DruidParser;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
@@ -19,7 +17,7 @@ public class DruidFilterTest {
 
     @Test
     public void testFilter() {
-        DateUtils.setFormats(new GenericOptions(OptionsType.SOURCE),new GenericOptions(OptionsType.TARGET));
+        DateUtils.setFormats(new GenericOptions(OptionsType.SOURCE), new GenericOptions(OptionsType.TARGET));
         DruidParser parser = new DruidParser();
         MapWrapper row = new MapWrapper(2);
         row.put("id", IntegerWrapper.get(1000));

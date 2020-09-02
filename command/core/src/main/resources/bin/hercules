@@ -1,4 +1,7 @@
-binDir=$(cd "$(dirname "$0")" || exit 1;pwd)
+binDir=$(
+  cd "$(dirname "$0")" || exit 1
+  pwd
+)
 coreJarDir=${binDir}/../
 export HERCULES_PATH=${coreJarDir}
 echo "HERCULES_PATH: ${HERCULES_PATH}"

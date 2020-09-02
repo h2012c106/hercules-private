@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.redis;
 
 
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 
 public class RedisKV {
@@ -37,7 +36,7 @@ public class RedisKV {
         }
     }
 
-public static class RedisKVValue{
+    public static class RedisKVValue {
         private DataType dataType;
         private Object value;
 

@@ -109,7 +109,7 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
 
             @Override
             protected void setNonnullValue(Float value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.add(columnName,value);
+                row.add(columnName, value);
             }
         };
     }
@@ -123,7 +123,7 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
 
             @Override
             protected void setNonnullValue(Double value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.add(columnName,value);
+                row.add(columnName, value);
             }
         };
     }
@@ -137,7 +137,7 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
 
             @Override
             protected void setNonnullValue(Boolean value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.add(columnName,value);
+                row.add(columnName, value);
             }
         };
     }

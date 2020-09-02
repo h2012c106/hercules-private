@@ -38,8 +38,8 @@ public interface AssemblySupplier {
 
     public SchemaNegotiatorContext getSchemaNegotiatorContextAsTarget();
 
-    public DataTypeConverter<?,?> getDataTypeConverter();
+    public DataTypeConverter<?, ?> getDataTypeConverter();
 
-    public CustomDataTypeManager<?,?> getCustomDataTypeManager();
+    public CustomDataTypeManager<?, ?> getCustomDataTypeManager();
 
 }

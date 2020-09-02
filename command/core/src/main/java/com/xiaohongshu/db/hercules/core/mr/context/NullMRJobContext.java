@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.core.mr.context;
 
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import org.apache.hadoop.mapreduce.Job;
 
 public class NullMRJobContext implements MRJobContext {

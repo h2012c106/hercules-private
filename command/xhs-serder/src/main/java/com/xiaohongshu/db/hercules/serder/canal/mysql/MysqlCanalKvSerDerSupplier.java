@@ -1,12 +1,11 @@
 package com.xiaohongshu.db.hercules.serder.canal.mysql;
 
-import com.xiaohongshu.db.hercules.mysql.schema.MysqlDataTypeConverter;
-import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlInputOptionConf;
-import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlOutputOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.supplier.BaseKvSerDerSupplier;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
+import com.xiaohongshu.db.hercules.mysql.schema.MysqlDataTypeConverter;
+import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlInputOptionConf;
+import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlOutputOptionConf;
 
 public class MysqlCanalKvSerDerSupplier extends BaseKvSerDerSupplier {
 

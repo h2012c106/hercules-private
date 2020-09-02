@@ -4,7 +4,6 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.filter.function.FilterCoreFunction;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BooleanWrapper;
 
 public class ValueExpr extends AbstractExpr {
     /**

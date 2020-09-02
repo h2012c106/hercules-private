@@ -113,7 +113,7 @@ class HBaseRecordWriter extends HerculesRecordWriter<Put> {
         Put fakeRowKeyPut = new Put(Bytes.toBytes(fakeRowKey));
         constructPut(fakeRowKeyPut, rowKeyWrapper, rowKeyCol);
         Cell rowKeyCell = fakeRowKeyPut.get(columnFamily.getBytes(), rowKeyCol.getBytes()).get(0);
-        byte[] rowBytes = Arrays.copyOfRange(rowKeyCell.getValueArray(), rowKeyCell.getValueOffset(), rowKeyCell.getValueOffset()+rowKeyCell.getValueLength());
+        byte[] rowBytes = Arrays.copyOfRange(rowKeyCell.getValueArray(), rowKeyCell.getValueOffset(), rowKeyCell.getValueOffset() + rowKeyCell.getValueLength());
         Put put = new Put(rowBytes);
 
         BaseWrapper<?> wrapper;

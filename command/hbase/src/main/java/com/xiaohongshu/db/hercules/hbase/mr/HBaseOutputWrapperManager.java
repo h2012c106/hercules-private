@@ -43,7 +43,7 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
 
     @Override
     protected BaseTypeWrapperSetter.LongSetter<Put> getLongSetter() {
-        return new BaseTypeWrapperSetter.LongSetter<Put> () {
+        return new BaseTypeWrapperSetter.LongSetter<Put>() {
             @Override
             protected void setNull(Put row, String rowName, String columnName, int columnSeq) throws Exception {
             }
@@ -62,7 +62,7 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
 
     @Override
     protected BaseTypeWrapperSetter.FloatSetter<Put> getFloatSetter() {
-        return new BaseTypeWrapperSetter.FloatSetter<Put>(){
+        return new BaseTypeWrapperSetter.FloatSetter<Put>() {
             @Override
             protected void setNull(Put row, String rowName, String columnName, int columnSeq) throws Exception {
             }
@@ -76,7 +76,7 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
 
     @Override
     protected BaseTypeWrapperSetter.DoubleSetter<Put> getDoubleSetter() {
-        return new BaseTypeWrapperSetter.DoubleSetter<Put>(){
+        return new BaseTypeWrapperSetter.DoubleSetter<Put>() {
             @Override
             protected void setNull(Put row, String rowName, String columnName, int columnSeq) throws Exception {
             }
@@ -90,7 +90,7 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
 
     @Override
     protected BaseTypeWrapperSetter.DecimalSetter<Put> getDecimalSetter() {
-        return new BaseTypeWrapperSetter.DecimalSetter<Put>(){
+        return new BaseTypeWrapperSetter.DecimalSetter<Put>() {
             @Override
             protected void setNull(Put row, String rowName, String columnName, int columnSeq) throws Exception {
             }
@@ -104,7 +104,7 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
 
     @Override
     protected BaseTypeWrapperSetter.BooleanSetter<Put> getBooleanSetter() {
-        return new BaseTypeWrapperSetter.BooleanSetter<Put>(){
+        return new BaseTypeWrapperSetter.BooleanSetter<Put>() {
             @Override
             protected void setNull(Put row, String rowName, String columnName, int columnSeq) throws Exception {
             }
@@ -118,7 +118,7 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
 
     @Override
     protected BaseTypeWrapperSetter.StringSetter<Put> getStringSetter() {
-        return new  BaseTypeWrapperSetter.StringSetter<Put>(){
+        return new BaseTypeWrapperSetter.StringSetter<Put>() {
             @Override
             protected void setNull(Put row, String rowName, String columnName, int columnSeq) throws Exception {
             }
@@ -147,7 +147,7 @@ public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
 
     @Override
     protected BaseTypeWrapperSetter.BytesSetter<Put> getBytesSetter() {
-        return new BaseTypeWrapperSetter.BytesSetter<Put>(){
+        return new BaseTypeWrapperSetter.BytesSetter<Put>() {
             @Override
             protected void setNull(Put row, String rowName, String columnName, int columnSeq) throws Exception {
             }

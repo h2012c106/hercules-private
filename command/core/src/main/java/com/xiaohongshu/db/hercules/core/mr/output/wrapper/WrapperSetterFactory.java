@@ -90,7 +90,7 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
     public final WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
         WrapperSetter<T> res;
         if (dataType.isCustom()) {
-            final CustomDataType<?, T,?> customDataType = (CustomDataType<?, T,?>) dataType;
+            final CustomDataType<?, T, ?> customDataType = (CustomDataType<?, T, ?>) dataType;
             res = wrapperSetterMap.computeIfAbsent(customDataType, key -> customDataType.getWrapperSetter());
         } else {
             res = wrapperSetterMap.get(dataType);

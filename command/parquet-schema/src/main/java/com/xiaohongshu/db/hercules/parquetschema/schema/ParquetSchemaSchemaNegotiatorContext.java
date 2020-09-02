@@ -2,7 +2,6 @@ package com.xiaohongshu.db.hercules.parquetschema.schema;
 
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.schema.BaseSchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetSchemaNegotiatorContext;
 import org.apache.commons.lang3.StringUtils;
 

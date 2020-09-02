@@ -24,7 +24,7 @@ public class ParquetRecordWriter extends HerculesRecordWriter<Group> implements 
 
     private SimpleGroupFactory groupFactory;
 
-    @Options(type= OptionsType.TARGET)
+    @Options(type = OptionsType.TARGET)
     private GenericOptions options;
 
     public ParquetRecordWriter(TaskAttemptContext context, RecordWriter<Void, Group> delegate) {

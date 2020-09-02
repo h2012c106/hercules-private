@@ -47,7 +47,7 @@ public final class BytesUtils {
             sb.append(fillByte(binStr));
         }
         // 把头部的0trim掉
-        return StringUtils.stripStart(sb.toString(),"0");
+        return StringUtils.stripStart(sb.toString(), "0");
     }
 
 }

@@ -3,7 +3,6 @@ package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.common.base.Objects;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
@@ -98,8 +97,8 @@ public abstract class BaseWrapper<T> implements Comparable<T> {
         return OverflowUtils.numberToFloat(asBigDecimal());
     }
 
-     public Double asDouble(){
-         return OverflowUtils.numberToDouble(asBigDecimal());
+    public Double asDouble() {
+        return OverflowUtils.numberToDouble(asBigDecimal());
     }
 
     abstract public BigDecimal asBigDecimal();

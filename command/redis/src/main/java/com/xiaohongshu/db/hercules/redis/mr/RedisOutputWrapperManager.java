@@ -16,7 +16,7 @@ import static com.xiaohongshu.db.hercules.redis.RedisKV.VALUE_SEQ;
 /**
  * Created by jamesqq on 2020/8/17.
  */
-public class RedisOutputWrapperManager  extends WrapperSetterFactory<RedisKV> {
+public class RedisOutputWrapperManager extends WrapperSetterFactory<RedisKV> {
 
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<RedisKV> getByteSetter() {
@@ -104,7 +104,7 @@ public class RedisOutputWrapperManager  extends WrapperSetterFactory<RedisKV> {
     }
 
     @Override
-    protected WrapperSetter<RedisKV> getMapSetter(){
+    protected WrapperSetter<RedisKV> getMapSetter() {
         return new MapWrapperSetter<RedisKV>() {
             @Override
             protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
@@ -113,9 +113,9 @@ public class RedisOutputWrapperManager  extends WrapperSetterFactory<RedisKV> {
 
             @Override
             protected void setNonnull(BaseWrapper<?> value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
-                MapWrapper mapWrapper = (MapWrapper)value;
+                MapWrapper mapWrapper = (MapWrapper) value;
                 Map<String, String> map = new HashMap<>();
-                for(Map.Entry<String, BaseWrapper<?>> entry : mapWrapper.entrySet()){
+                for (Map.Entry<String, BaseWrapper<?>> entry : mapWrapper.entrySet()) {
                     RedisKV tmp = new RedisKV();
                     getWrapperSetter(BaseDataType.STRING).set(entry.getValue(), tmp, null, null, VALUE_SEQ);
                     map.put(entry.getKey(), String.valueOf(tmp.getValue().getValue()));

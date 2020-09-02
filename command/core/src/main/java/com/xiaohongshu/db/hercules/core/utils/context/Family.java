@@ -18,14 +18,14 @@ public class Family<T> {
         return res;
     }
 
-    public static  <T> Family<T> initializeDataSource(T sourceItem, T targetItem) {
+    public static <T> Family<T> initializeDataSource(T sourceItem, T targetItem) {
         Family<T> res = new Family<>();
         res.sourceItem = sourceItem;
         res.targetItem = targetItem;
         return res;
     }
 
-    public static  <T> Family<T> initializeSerDer(T derItem, T serItem) {
+    public static <T> Family<T> initializeSerDer(T derItem, T serItem) {
         Family<T> res = new Family<>();
         res.derItem = derItem;
         res.serItem = serItem;

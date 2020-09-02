@@ -82,7 +82,7 @@ public abstract class WrapperGetterFactory<T> implements DataSourceRoleGetter {
     public final WrapperGetter<T> getWrapperGetter(@NonNull DataType dataType) {
         WrapperGetter<T> res;
         if (dataType.isCustom()) {
-            final CustomDataType<T, ?,?> customDataType = (CustomDataType<T, ?,?>) dataType;
+            final CustomDataType<T, ?, ?> customDataType = (CustomDataType<T, ?, ?>) dataType;
             // 运行时赋
             res = wrapperGetterMap.computeIfAbsent(customDataType, key -> customDataType.getWrapperGetter());
         } else {

@@ -1,10 +1,10 @@
 package com.xiaohongshu.db.hercules.parquet.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
 
 import java.util.ArrayList;

@@ -2,10 +2,10 @@ package com.xiaohongshu.db.hercules.core.mr.mapper;
 
 import com.alibaba.fastjson.JSONObject;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;

@@ -1,11 +1,11 @@
 package com.xiaohongshu.db.hercules.serder.mongo;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.serder.SerOptionsConf;
-import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ public class MongoOplogOutputOptionConf extends BaseOptionsConf {
 
     public final static String OP = "upsert";
 
-    public enum OplogFormat{
+    public enum OplogFormat {
         DEFAULT,
         JSON;
 
