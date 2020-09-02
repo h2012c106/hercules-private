@@ -89,9 +89,6 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
                 )
         );
 
-        // 注册时间格式
-        DateUtils.setFormats(sourceOptions, targetOptions);
-
         // 注册columnMap
         columnMap = commonOptions
                 .getJson(CommonOptionsConf.COLUMN_MAP, new JSONObject())

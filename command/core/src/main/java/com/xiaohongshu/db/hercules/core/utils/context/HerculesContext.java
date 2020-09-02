@@ -12,6 +12,7 @@ import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
+import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import com.xiaohongshu.db.hercules.core.utils.reflect.Reflector;
 import org.apache.commons.lang.StringUtils;
@@ -116,6 +117,9 @@ public final class HerculesContext {
     private HerculesContext(WrappingOptions wrappingOptions) {
         this.reflector = new Reflector();
 
+        // 注册时间格式，先放在这，不太美观就是
+        DateUtils.setFormats(wrappingOptions.getSourceOptions(), wrappingOptions.getTargetOptions());
+
         this.wrappingOptions = wrappingOptions;
         this.assemblySupplierPair = extractAssemblySupplierPair(wrappingOptions);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
@@ -135,6 +139,9 @@ public final class HerculesContext {
 
     private HerculesContext(WrappingOptions wrappingOptions, AssemblySupplier sourceSupplier, AssemblySupplier targetSupplier, Reflector reflector) {
         this.reflector = reflector;
+
+        // 注册时间格式，先放在这，不太美观就是
+        DateUtils.setFormats(wrappingOptions.getSourceOptions(), wrappingOptions.getTargetOptions());
 
         this.wrappingOptions = wrappingOptions;
         this.assemblySupplierPair = Family.initializeDataSource(sourceSupplier, targetSupplier);
