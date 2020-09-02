@@ -3,11 +3,9 @@ package com.xiaohongshu.db.hercules.core.filter.function;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BooleanWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.IntegerWrapper;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import lombok.NonNull;
+import org.apache.commons.lang3.RandomUtils;
 
 public class FilterCoreFunction {
 
@@ -143,5 +141,9 @@ public class FilterCoreFunction {
 
     public static BaseWrapper<?> notPushdown(BaseWrapper<?> wrapper) {
         throw new UnsupportedOperationException();
+    }
+
+    public static BaseWrapper<?> random() {
+        return DoubleWrapper.get(RandomUtils.nextDouble(0, 1));
     }
 }
