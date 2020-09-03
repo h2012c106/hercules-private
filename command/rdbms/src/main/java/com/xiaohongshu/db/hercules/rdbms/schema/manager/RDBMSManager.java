@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.rdbms.schema.manager;
 
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
@@ -14,8 +15,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 public class RDBMSManager {
 
@@ -127,4 +130,41 @@ public class RDBMSManager {
         }
     }
 
+    private String makeQueryByParts(String tableName, List<String> columnNameList, String condition) {
+        return String.format("SELECT %s FROM %s %s",
+                columnNameList.stream().map(SqlUtils::encloseColumnName).collect(Collectors.joining(", ")),
+                tableName,
+                condition);
+    }
+
+    public String makeBaseQuery() {
+        return makeBaseQuery(false);
+    }
+
+    /**
+     * @param useAsterisk 使用星号去查询，当且仅当schema fetcher获取全部列时为true，在其他情况下column必已被定义好
+     * @return
+     */
+    public String makeBaseQuery(boolean useAsterisk) {
+        if (options.hasProperty(RDBMSInputOptionsConf.QUERY)) {
+            return options.getString(RDBMSInputOptionsConf.QUERY, null);
+        } else {
+            List<String> columnNameList;
+            if (!options.hasProperty(TableOptionsConf.COLUMN)) {
+                if (useAsterisk) {
+                    columnNameList = Lists.newArrayList("*");
+                } else {
+                    throw new RuntimeException();
+                }
+            } else {
+                columnNameList
+                        = Arrays.asList(options.getTrimmedStringArray(TableOptionsConf.COLUMN, null));
+            }
+            String where = options.hasProperty(RDBMSInputOptionsConf.CONDITION)
+                    ? " WHERE " + options.getString(RDBMSInputOptionsConf.CONDITION, null)
+                    : "";
+            String table = options.getString(RDBMSOptionsConf.TABLE, null);
+            return makeQueryByParts(table, columnNameList, where);
+        }
+    }
 }

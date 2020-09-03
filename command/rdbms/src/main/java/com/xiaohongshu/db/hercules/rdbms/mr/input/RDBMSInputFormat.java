@@ -48,7 +48,7 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> {
 
     @Override
     public void innerAfterInject() {
-        baseSql = SqlUtils.makeBaseQuery(sourceOptions);
+        baseSql = manager.makeBaseQuery();
         String filterQuery = (String) getPushdownFilter();
         if (filterQuery != null) {
             baseSql = SqlUtils.addWhere(baseSql, filterQuery);

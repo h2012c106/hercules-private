@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN_TYPE;
 
-public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
+public class RDBMSSchemaFetcher extends BaseSchemaFetcher implements InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(RDBMSSchemaFetcher.class);
 
@@ -30,11 +31,15 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher {
     @GeneralAssembly
     private RDBMSDataTypeConverter dataTypeConverter;
 
-    protected final String baseSql;
+    protected String baseSql;
 
     public RDBMSSchemaFetcher(GenericOptions options) {
         super(options);
-        this.baseSql = SqlUtils.makeBaseQuery(options, true);
+    }
+
+    @Override
+    public void afterInject() {
+        baseSql = manager.makeBaseQuery(true);
     }
 
     protected String getNoneLineSql(String baseSql) {

@@ -37,6 +37,7 @@ public class MyhubSchemaFetcher extends MysqlSchemaFetcher implements InjectedCl
 
     @Override
     public void afterInject() {
+        super.afterInject();
         initializeIsShard(getOptions(), manager);
     }
 
