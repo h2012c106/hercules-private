@@ -47,6 +47,8 @@ public class TiDBRecordReader extends RDBMSRecordReader {
     @SchemaInfo(role = DataSourceRole.SOURCE)
     private Schema schema;
 
+    private long splitSize;
+
     public TiDBRecordReader(TaskAttemptContext context) {
         super(context);
     }
@@ -71,7 +73,7 @@ public class TiDBRecordReader extends RDBMSRecordReader {
                 manager, querySql, new RDBMSBalanceSplitGetter());
         querySqlIterator = secondarySplitResult.getInputSplitList()
                 .stream()
-                .map(split -> makeSql(sourceOptions, (RDBMSInputSplit) split))
+                .map(split -> makeSql(querySql, (RDBMSInputSplit) split, false))
                 .collect(Collectors.toList()).iterator();
 
         statement = null;
@@ -85,6 +87,7 @@ public class TiDBRecordReader extends RDBMSRecordReader {
     }
 
     private boolean executeNewSplit() throws SQLException {
+        splitSize = 0L;
         if (querySqlIterator.hasNext()) {
             String querySql = querySqlIterator.next();
             statement = SqlUtils.makeReadStatement(connection, querySql);
@@ -103,7 +106,9 @@ public class TiDBRecordReader extends RDBMSRecordReader {
                 return false;
             }
         }
+        ++splitSize;
         while (!resultSet.next()) {
+            LOG.info("Split size: " + (splitSize - 1L));
             // 先清理一波生命周期
             try {
                 resultSet.close();

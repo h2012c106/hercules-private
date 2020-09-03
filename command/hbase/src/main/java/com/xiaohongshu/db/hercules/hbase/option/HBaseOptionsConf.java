@@ -1,6 +1,8 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
@@ -14,6 +16,7 @@ import java.util.List;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.*;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN_TYPE;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
 public final class HBaseOptionsConf extends BaseOptionsConf {
@@ -110,6 +113,9 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
     @Override
     protected void innerProcessOptions(GenericOptions options) {
         String keyName = options.getString(KEY_NAME, null);
+        // 覆写map，不然会导致用列表形状的value_name值做key，而value是json形状的value_type
+        JSONObject columnType = new JSONObject();
+        columnType.put(options.getString(KEY_NAME, null), BaseDataType.BYTES.name());
         // 因为KvOptionsConf validate不允许为空，但是这里可以为空，所以有占位符
         if (StringUtils.equals(options.getString(VALUE_NAME, null), VALUE_EMPTY)) {
             options.set(VALUE_NAME, "");
@@ -122,6 +128,10 @@ public final class HBaseOptionsConf extends BaseOptionsConf {
             // 其实这里可以直接插String，因为内部保存的时候已经是用内部分隔符保存了，而且比较挫没加转义之类的玩意，所以裸加也ok，但不能趁人之挫，挫上加挫
             columnList.addAll(Arrays.asList(options.getTrimmedStringArray(VALUE_NAME, new String[0])));
             options.set(COLUMN, columnList.toArray(new String[0]));
+
+            JSONObject valueType = options.getJson(VALUE_TYPE, new JSONObject());
+            columnType.putAll(valueType);
         }
+        options.set(COLUMN_TYPE, columnType.toJSONString());
     }
 }

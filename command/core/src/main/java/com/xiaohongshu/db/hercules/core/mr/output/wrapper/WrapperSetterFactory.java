@@ -9,9 +9,9 @@ import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
-import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
@@ -90,18 +90,8 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
     public final WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
         WrapperSetter<T> res;
         if (dataType.isCustom()) {
-            final CustomDataType<?, T> customDataType = (CustomDataType<?, T>) dataType;
-            res = wrapperSetterMap.computeIfAbsent(customDataType, key -> new WrapperSetter<T>() {
-                @Override
-                protected void setNull(T row, String rowName, String columnName, int columnSeq) throws Exception {
-                    customDataType.writeNull(row, rowName, columnName, columnSeq);
-                }
-
-                @Override
-                protected void setNonnull(@NonNull BaseWrapper<?> wrapper, T row, String rowName, String columnName, int columnSeq) throws Exception {
-                    customDataType.write(wrapper, row, rowName, columnName, columnSeq);
-                }
-            });
+            final CustomDataType<?, T, ?> customDataType = (CustomDataType<?, T, ?>) dataType;
+            res = wrapperSetterMap.computeIfAbsent(customDataType, key -> customDataType.getWrapperSetter());
         } else {
             res = wrapperSetterMap.get(dataType);
             if (res == null) {

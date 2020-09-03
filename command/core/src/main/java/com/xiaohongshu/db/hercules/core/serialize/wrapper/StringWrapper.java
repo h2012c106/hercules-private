@@ -11,7 +11,6 @@ import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
 
 public class StringWrapper extends BaseWrapper<String> {
 
@@ -99,5 +98,10 @@ public class StringWrapper extends BaseWrapper<String> {
     @Override
     public JSON asJson() {
         return parseJson(getValue());
+    }
+
+    @Override
+    public int compareTo(String o) {
+        return getValue().compareTo(o);
     }
 }

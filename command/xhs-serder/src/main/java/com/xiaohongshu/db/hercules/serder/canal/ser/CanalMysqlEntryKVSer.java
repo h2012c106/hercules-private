@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.serder.canal.ser;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
-import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlOutputOptionConf;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
@@ -14,6 +13,7 @@ import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
+import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlOutputOptionConf;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;

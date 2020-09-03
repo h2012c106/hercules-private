@@ -1,11 +1,13 @@
 package com.xiaohongshu.db.hercules.core.parser;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
-import com.xiaohongshu.db.hercules.core.option.*;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
-import org.apache.commons.cli.*;
 import lombok.NonNull;
+import org.apache.commons.cli.*;
 
 import java.util.ListIterator;
 import java.util.Map;

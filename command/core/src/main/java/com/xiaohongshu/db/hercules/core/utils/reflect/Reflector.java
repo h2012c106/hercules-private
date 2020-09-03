@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.core.utils;
+package com.xiaohongshu.db.hercules.core.utils.reflect;
 
 import com.cloudera.sqoop.util.ClassLoaderStack;
 import org.apache.commons.logging.Log;
@@ -42,6 +42,10 @@ public class Reflector {
 
     public List<String> getJarListLoaded() {
         return jarListLoaded;
+    }
+
+    public ClassLoader getClassLoader() {
+        return classLoader;
     }
 
     @Deprecated

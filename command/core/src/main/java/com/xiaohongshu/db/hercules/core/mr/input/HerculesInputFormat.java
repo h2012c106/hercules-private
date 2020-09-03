@@ -1,15 +1,19 @@
 package com.xiaohongshu.db.hercules.core.mr.input;
 
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
+import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.filter.pushdown.FilterPushdownJudger;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.serder.KVDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Filter;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
@@ -22,7 +26,7 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, HerculesWritable>
-        implements DataSourceRoleGetter {
+        implements DataSourceRoleGetter, InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(HerculesInputFormat.class);
 
@@ -43,9 +47,36 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
     @SerDerAssembly(role = DataSourceRole.DER)
     private KVDer<?> kvDer;
 
+    @Filter
+    private Expr filter;
+
+    private Object pushdownFilter = null;
+
     @Override
     public final DataSourceRole getRole() {
         return DataSourceRole.SOURCE;
+    }
+
+    protected Object getPushdownFilter() {
+        return pushdownFilter;
+    }
+
+    protected void innerAfterInject() {
+    }
+
+    @Override
+    public final void afterInject() {
+        FilterPushdownJudger<?> judger;
+        // 只有给了judger才下推
+        if (filter != null && (judger = createFilterPushdownJudger()) != null) {
+            HerculesContext.instance().inject(judger);
+            pushdownFilter = judger.pushdown(filter);
+            if (pushdownFilter != null) {
+                LOG.info("Filter pushdowned as: " + pushdownFilter);
+            }
+        }
+
+        innerAfterInject();
     }
 
     abstract protected List<InputSplit> innerGetSplits(JobContext context, int numSplits) throws IOException, InterruptedException;
@@ -103,9 +134,13 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
 
         RecordReader<NullWritable, HerculesWritable> res;
         if (kvDer != null) {
+            // 有der了说明做了反序列化，那么filter对数据源侧一定驴头对马嘴，没必要下推
             HerculesContext.instance().inject(delegate);
             res = new HerculesSerDerRecordReader(kvDer, delegate);
         } else {
+            if (pushdownFilter != null) {
+                delegate.setFilter(pushdownFilter);
+            }
             res = delegate;
         }
         HerculesContext.instance().inject(res);
@@ -122,4 +157,8 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
             throws IOException, InterruptedException;
 
     abstract protected WrapperGetterFactory<T> createWrapperGetterFactory();
+
+    protected FilterPushdownJudger<?> createFilterPushdownJudger() {
+        return null;
+    }
 }

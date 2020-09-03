@@ -11,7 +11,7 @@ public class NullCustomDataTypeManager extends BaseCustomDataTypeManager<Void, V
     }
 
     @Override
-    protected List<Class<? extends CustomDataType<Void, Void>>> generateTypeList() {
+    protected List<Class<? extends CustomDataType<Void, Void, ?>>> generateTypeList() {
         return Collections.emptyList();
     }
 }

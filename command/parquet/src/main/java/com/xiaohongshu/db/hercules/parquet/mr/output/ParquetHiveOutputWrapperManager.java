@@ -1,18 +1,13 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
-import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.parquet.ParquetUtils;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetHiveDataTypeConverter;
-import lombok.NonNull;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.Type;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 public class ParquetHiveOutputWrapperManager extends ParquetOutputWrapperManager {
 

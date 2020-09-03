@@ -14,7 +14,7 @@ public abstract class BaseTypeWrapperGetter<T, I> extends WrapperGetter<I> {
 
     @Override
     protected BaseWrapper<?> getNonnull(I row, String rowName, String columnName, int columnSeq) throws Exception {
-        return getType().getBaseDataType().getReadFunction().apply(getNonnullValue(row, rowName, columnName, columnSeq));
+        return getType().getReadFunction().apply(getNonnullValue(row, rowName, columnName, columnSeq));
     }
 
     public static abstract class ByteGetter<I> extends BaseTypeWrapperGetter<Byte, I> {

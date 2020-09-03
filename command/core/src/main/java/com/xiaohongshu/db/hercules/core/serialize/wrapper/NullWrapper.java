@@ -7,7 +7,6 @@ import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -102,5 +101,10 @@ public class NullWrapper extends BaseWrapper<String> {
     @Override
     public Object asDefault() {
         return null;
+    }
+
+    @Override
+    public int compareTo(String o) {
+        return 0;
     }
 }

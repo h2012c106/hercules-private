@@ -1,7 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input.splitter;
 
-import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputSplit;
+import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.InputSplit;

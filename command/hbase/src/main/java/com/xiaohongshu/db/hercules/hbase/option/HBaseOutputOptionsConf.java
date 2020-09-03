@@ -1,7 +1,8 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.*;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseOutputOptionsConf;
 

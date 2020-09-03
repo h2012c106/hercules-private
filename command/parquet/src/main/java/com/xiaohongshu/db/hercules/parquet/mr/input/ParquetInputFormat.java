@@ -5,7 +5,6 @@ import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
 import org.apache.commons.logging.Log;
@@ -28,7 +27,7 @@ import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.ORIGINAL_SPLIT;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
-public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo> implements InjectedClass {
+public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo> {
 
     private static final Log LOG = LogFactory.getLog(ParquetInputFormat.class);
 
@@ -109,7 +108,7 @@ public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo>
     }
 
     @Override
-    public void afterInject() {
+    public void innerAfterInject() {
         schemaStyle = SchemaStyle.valueOfIgnoreCase(options.getString(SCHEMA_STYLE, null));
     }
 

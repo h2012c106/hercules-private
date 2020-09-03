@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
 import org.bson.Document;
+
 import java.util.*;
 
 import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf.COLLECTION;

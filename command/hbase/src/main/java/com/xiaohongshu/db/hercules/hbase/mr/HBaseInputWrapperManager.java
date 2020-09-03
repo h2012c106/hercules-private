@@ -2,7 +2,6 @@ package com.xiaohongshu.db.hercules.hbase.mr;
 
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.math.BigDecimal;
@@ -174,7 +173,7 @@ public class HBaseInputWrapperManager extends WrapperGetterFactory<byte[]> {
 
     @Override
     protected BaseTypeWrapperGetter.NullGetter<byte[]> getNullGetter() {
-        return new BaseTypeWrapperGetter.NullGetter<byte[]>(){
+        return new BaseTypeWrapperGetter.NullGetter<byte[]>() {
             @Override
             protected boolean isNull(byte[] row, String rowName, String columnName, int columnSeq) throws Exception {
                 return true;

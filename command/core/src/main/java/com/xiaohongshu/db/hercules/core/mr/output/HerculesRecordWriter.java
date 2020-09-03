@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.core.mr.output;
 
 import com.google.common.util.concurrent.RateLimiter;
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
@@ -9,6 +8,7 @@ import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;

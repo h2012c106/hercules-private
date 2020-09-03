@@ -3,7 +3,6 @@ package com.xiaohongshu.db.hercules.parquet.mr.output;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.parquet.ParquetUtils;
-import com.xiaohongshu.db.hercules.parquet.schema.ParquetHerculesDataTypeConverter;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.Type;

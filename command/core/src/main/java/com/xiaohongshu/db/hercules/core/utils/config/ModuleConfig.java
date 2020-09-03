@@ -1,4 +1,4 @@
-package com.xiaohongshu.db.hercules.core.utils;
+package com.xiaohongshu.db.hercules.core.utils.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;

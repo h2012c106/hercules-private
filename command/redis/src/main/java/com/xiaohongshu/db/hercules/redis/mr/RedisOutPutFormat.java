@@ -13,11 +13,11 @@ import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
-import com.xiaohongshu.db.hercules.redis.option.RedisOptionConf;
 import com.xiaohongshu.db.hercules.redis.schema.manager.RedisManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+
 import java.io.IOException;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
@@ -26,7 +26,7 @@ import static com.xiaohongshu.db.hercules.redis.RedisKV.KEY_SEQ;
 import static com.xiaohongshu.db.hercules.redis.RedisKV.VALUE_SEQ;
 
 
-public class RedisOutPutFormat extends HerculesOutputFormat<RedisKV>  {
+public class RedisOutPutFormat extends HerculesOutputFormat<RedisKV> {
 
     @Override
     protected HerculesRecordWriter<RedisKV> innerGetRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {

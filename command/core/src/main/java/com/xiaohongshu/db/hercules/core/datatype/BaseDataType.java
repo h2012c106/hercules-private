@@ -173,11 +173,72 @@ public enum BaseDataType implements DataType {
         return false;
     }
 
+    @Override
     public Function<Object, BaseWrapper<?>> getReadFunction() {
         return readFunction;
     }
 
+    @Override
     public Function<BaseWrapper<?>, Object> getWriteFunction() {
         return writeFunction;
+    }
+
+    public boolean isInteger() {
+        switch (this) {
+            case BYTE:
+            case SHORT:
+            case INTEGER:
+            case LONG:
+            case LONGLONG:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isFloat() {
+        switch (this) {
+            case FLOAT:
+            case DOUBLE:
+            case DECIMAL:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isNumber() {
+        return isInteger() || isFloat();
+    }
+
+    public boolean isBoolean() {
+        return this == BOOLEAN;
+    }
+
+    public boolean isBytes() {
+        return this == BYTES;
+    }
+
+    public boolean isString() {
+        return this == STRING;
+    }
+
+    public boolean isDate() {
+        switch (this) {
+            case DATE:
+            case TIME:
+            case DATETIME:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public boolean isNested() {
+        return this == LIST || this == MAP;
+    }
+
+    public boolean isNull() {
+        return this == NULL;
     }
 }

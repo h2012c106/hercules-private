@@ -1,7 +1,6 @@
-package com.xiaohongshu.db.hercules.common.option;
+package com.xiaohongshu.db.hercules.core.option.optionsconf;
 
 import com.alibaba.fastjson.JSONObject;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
@@ -28,6 +27,7 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String ALLOW_COPY_COLUMN_NAME = "allow-copy-column-name";
     public static final String ALLOW_COPY_COLUMN_TYPE = "allow-copy-column-type";
     public static final String ALLOW_COPY_KEY = "allow-copy-key";
+    public static final String FILTER = "filter";
 
     public static final int DEFAULT_NUM_MAPPER = 4;
     public static final Level DEFAULT_LOG_LEVEL = Level.INFO;
@@ -119,6 +119,11 @@ public class CommonOptionsConf extends BaseOptionsConf {
 //                .description("This option will allow datasource to copy " +
 //                        "the additional column type information which it doesn't has from the other side.")
 //                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(FILTER)
+                .needArg(true)
+                .description("The filter logic in sql syntax.")
+                .build());
         return tmpList;
     }
 

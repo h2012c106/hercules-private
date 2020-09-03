@@ -3,10 +3,7 @@ package com.xiaohongshu.db.hercules.parquetschema.mr;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
-import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
-import com.xiaohongshu.db.hercules.parquet.schema.*;
-import org.apache.hadoop.conf.Configuration;
+import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -15,8 +12,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.io.IOException;
-
-import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
 public class ParquetSchemaOutputFormat extends HerculesOutputFormat<TypeBuilderTreeNode> {
 

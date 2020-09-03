@@ -6,7 +6,6 @@ import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class KafkaSchemaFetcher extends BaseSchemaFetcher {
     public KafkaSchemaFetcher(GenericOptions options) {

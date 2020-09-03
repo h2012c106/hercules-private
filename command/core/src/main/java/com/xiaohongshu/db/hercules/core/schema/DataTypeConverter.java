@@ -23,10 +23,11 @@ public interface DataTypeConverter<T, L> {
 
     /**
      * 往回转
+     *
      * @param type
      * @return
      */
-    default T getElementType(DataType type){
+    default T getElementType(DataType type) {
         throw new UnsupportedOperationException();
     }
 

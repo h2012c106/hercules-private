@@ -86,4 +86,18 @@ public class DoubleWrapper extends BaseWrapper<BigDecimal> {
     public JSON asJson() {
         throw new SerializeException("Unsupported to convert number to json.");
     }
+
+    @Override
+    public Integer compareWith(BaseWrapper<?> that) {
+        // 不优雅
+        if (that.getClass() == IntegerWrapper.class) {
+            return asBigDecimal().compareTo(that.asBigDecimal());
+        }
+        return super.compareWith(that);
+    }
+
+    @Override
+    public int compareTo(BigDecimal o) {
+        return getValue().compareTo(o);
+    }
 }

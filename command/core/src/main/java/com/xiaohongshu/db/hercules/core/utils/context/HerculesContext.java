@@ -2,6 +2,9 @@ package com.xiaohongshu.db.hercules.core.utils.context;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
+import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.filter.function.FilterCoreFunction;
+import com.xiaohongshu.db.hercules.core.filter.parser.Parser;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
@@ -9,8 +12,10 @@ import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
-import com.xiaohongshu.db.hercules.core.utils.ReflectUtils;
-import com.xiaohongshu.db.hercules.core.utils.Reflector;
+import com.xiaohongshu.db.hercules.core.utils.DateUtils;
+import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
+import com.xiaohongshu.db.hercules.core.utils.reflect.Reflector;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.FILTER;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.SERDER_SUPPLIER;
 
 public final class HerculesContext {
@@ -39,6 +45,8 @@ public final class HerculesContext {
     private final WrappingOptions wrappingOptions;
 
     private final Family<Schema> schemaFamily;
+
+    private final Expr filter;
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
     private static HerculesContext INSTANCE;
@@ -109,10 +117,14 @@ public final class HerculesContext {
     private HerculesContext(WrappingOptions wrappingOptions) {
         this.reflector = new Reflector();
 
+        // 注册时间格式，先放在这，不太美观就是
+        DateUtils.setFormats(wrappingOptions.getSourceOptions(), wrappingOptions.getTargetOptions());
+
         this.wrappingOptions = wrappingOptions;
         this.assemblySupplierPair = extractAssemblySupplierPair(wrappingOptions);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
         this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
+        this.filter = extractFilter(wrappingOptions);
 
         // setOptions
         assemblySupplierPair.getSourceItem().setOptions(wrappingOptions.getSourceOptions());
@@ -128,10 +140,14 @@ public final class HerculesContext {
     private HerculesContext(WrappingOptions wrappingOptions, AssemblySupplier sourceSupplier, AssemblySupplier targetSupplier, Reflector reflector) {
         this.reflector = reflector;
 
+        // 注册时间格式，先放在这，不太美观就是
+        DateUtils.setFormats(wrappingOptions.getSourceOptions(), wrappingOptions.getTargetOptions());
+
         this.wrappingOptions = wrappingOptions;
         this.assemblySupplierPair = Family.initializeDataSource(sourceSupplier, targetSupplier);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
         this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
+        this.filter = extractFilter(wrappingOptions);
 
         // 把supplier计入options中
         assemblySupplierToOptions(sourceSupplier, wrappingOptions.getSourceOptions());
@@ -146,6 +162,10 @@ public final class HerculesContext {
         if (hasSerDer(DataSourceRole.TARGET)) {
             kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SER));
         }
+    }
+
+    public Reflector getReflector() {
+        return reflector;
     }
 
     public boolean hasSerDer(DataSourceRole role) {
@@ -281,6 +301,22 @@ public final class HerculesContext {
         );
     }
 
+    private Expr extractFilter(WrappingOptions wrappingOptions) {
+        String filterStr = wrappingOptions.getCommonOptions().getString(FILTER, null);
+        filterStr = filterStr == null ? null : filterStr.trim();
+        if (!StringUtils.isEmpty(filterStr)) {
+            // 注册Custom Type Manager，用于注册kast函数
+            FilterCoreFunction.registerCustomTypeManager(assemblySupplierPair.getSourceItem().getCustomDataTypeManager());
+            // 若有der则覆写
+            if (kvSerDerSupplierPair.getDerItem() != null) {
+                FilterCoreFunction.registerCustomTypeManager(kvSerDerSupplierPair.getDerItem().getCustomDataTypeManager());
+            }
+            return Parser.INSTANCE.parse(filterStr);
+        } else {
+            return null;
+        }
+    }
+
     public Family<AssemblySupplier> getAssemblySupplierPair() {
         return assemblySupplierPair;
     }
@@ -295,6 +331,10 @@ public final class HerculesContext {
 
     public Family<Schema> getSchemaFamily() {
         return schemaFamily;
+    }
+
+    public Expr getFilter() {
+        return filter;
     }
 
     private static final String ASSEMBLY_SUPPLIER_CLASS_NAME = "assembly-supplier-class-name-internal";

@@ -1,7 +1,5 @@
 package com.xiaohongshu.db.hercules.hbase.schema;
 
-import com.google.common.collect.Sets;
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;

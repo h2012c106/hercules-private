@@ -1,13 +1,10 @@
 package com.xiaohongshu.db.hercules.clickhouse.schema;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
-import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
 

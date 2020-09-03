@@ -10,7 +10,6 @@ import lombok.NonNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
 
 /**
  * 使用String型存储
@@ -27,15 +26,15 @@ public class DateWrapper extends BaseWrapper<ExtendedDate> {
         return value == null ? NullWrapper.get(type) : new DateWrapper(value, type);
     }
 
-    public static BaseWrapper<?> getDate(ExtendedDate value){
+    public static BaseWrapper<?> getDate(ExtendedDate value) {
         return get(value, BaseDataType.DATE);
     }
 
-    public static BaseWrapper<?> getTime(ExtendedDate value){
+    public static BaseWrapper<?> getTime(ExtendedDate value) {
         return get(value, BaseDataType.TIME);
     }
 
-    public static BaseWrapper<?> getDatetime(ExtendedDate value){
+    public static BaseWrapper<?> getDatetime(ExtendedDate value) {
         return get(value, BaseDataType.DATETIME);
     }
 
@@ -96,5 +95,19 @@ public class DateWrapper extends BaseWrapper<ExtendedDate> {
     @Override
     public JSON asJson() {
         throw new SerializeException("Unsupported to convert date to json.");
+    }
+
+    @Override
+    public int compareTo(ExtendedDate thatValue) {
+        ExtendedDate thisValue = getValue();
+        if (thisValue.isZero() && thatValue.isZero()) {
+            return 0;
+        } else if (thisValue.isZero()) {
+            return -1;
+        } else if (thatValue.isZero()) {
+            return 1;
+        } else {
+            return thisValue.getDate().compareTo(thatValue.getDate());
+        }
     }
 }

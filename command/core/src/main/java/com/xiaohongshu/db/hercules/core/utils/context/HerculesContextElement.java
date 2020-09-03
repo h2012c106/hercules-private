@@ -3,10 +3,7 @@ package com.xiaohongshu.db.hercules.core.utils.context;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.*;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -136,6 +133,16 @@ public enum HerculesContextElement {
         public Object pulloutValueFromContext(HerculesContext context, Field field,
                                               SchemaInfo annotation, DataSourceRole role) {
             return context.getSchemaFamily().getItem(getRole(annotation.role(), role));
+        }
+    }),
+    /**
+     * filter
+     */
+    FILTER(Filter.class, new ContextReader<Filter>() {
+        @Override
+        public Object pulloutValueFromContext(HerculesContext context, Field field,
+                                              Filter annotation, DataSourceRole role) {
+            return context.getFilter();
         }
     });
 

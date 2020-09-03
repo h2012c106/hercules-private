@@ -23,9 +23,9 @@ public final class BaseDataSourceOptionsConf extends BaseOptionsConf {
     public static final String TIME_FORMAT = "time-format";
     public static final String DATETIME_FORMAT = "datetime-format";
 
-    private final static String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
-    private final static String DEFAULT_TIME_FORMAT = "HH:mm:ss";
-    private final static String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+    public final static String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
+    public final static String DEFAULT_TIME_FORMAT = "HH:mm:ss";
+    public final static String DEFAULT_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
     public static final String COLUMN_DELIMITER = ",";
     public static final String GROUP_DELIMITER = ";";

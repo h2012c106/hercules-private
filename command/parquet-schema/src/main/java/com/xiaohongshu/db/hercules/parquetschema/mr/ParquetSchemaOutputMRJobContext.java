@@ -2,13 +2,11 @@ package com.xiaohongshu.db.hercules.parquetschema.mr;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.context.BaseMRJobContext;
-import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
-import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
-import com.xiaohongshu.db.hercules.parquet.schema.*;
+import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
+import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
 import com.xiaohongshu.db.hercules.parquetschema.option.ParquetSchemaOptionsConf;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,7 +29,6 @@ import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils.GENERATED_MESSAGE_NAME;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
-import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
 public class ParquetSchemaOutputMRJobContext extends BaseMRJobContext {
 

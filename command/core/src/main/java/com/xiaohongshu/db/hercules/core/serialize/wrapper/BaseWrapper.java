@@ -13,12 +13,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
 
 /**
  * @param <T> 底层用于存储数据的真正数据类型
  */
-public abstract class BaseWrapper<T> {
+public abstract class BaseWrapper<T> implements Comparable<T> {
     /**
      * 不接受任何null值，一个wrapper里永远存着meaningful信息，null值全部扔到{@link NullWrapper}
      */
@@ -90,13 +89,17 @@ public abstract class BaseWrapper<T> {
         return asBigDecimal().intValueExact();
     }
 
-    abstract public Long asLong();
+    public Long asLong() {
+        return asBigInteger().longValueExact();
+    }
 
     public Float asFloat() {
         return OverflowUtils.numberToFloat(asBigDecimal());
     }
 
-    abstract public Double asDouble();
+    public Double asDouble() {
+        return OverflowUtils.numberToDouble(asBigDecimal());
+    }
 
     abstract public BigDecimal asBigDecimal();
 
@@ -147,10 +150,23 @@ public abstract class BaseWrapper<T> {
         }
     }
 
+    /**
+     * @return null代表不可比，其他与compareTo方法相同
+     */
+    public Integer compareWith(BaseWrapper<?> that) {
+        if (this.getClass() != that.getClass()) {
+            return null;
+        } else {
+            T thatValue = (T) that.getValue();
+            return compareTo(thatValue);
+        }
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
                 .append("value", value)
+                .append("type", type)
                 .toString();
     }
 }

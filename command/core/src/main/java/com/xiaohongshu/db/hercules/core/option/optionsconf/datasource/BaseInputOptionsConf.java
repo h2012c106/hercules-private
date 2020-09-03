@@ -3,14 +3,13 @@ package com.xiaohongshu.db.hercules.core.option.optionsconf.datasource;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf.COLUMN;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
 public final class BaseInputOptionsConf extends BaseOptionsConf {
 

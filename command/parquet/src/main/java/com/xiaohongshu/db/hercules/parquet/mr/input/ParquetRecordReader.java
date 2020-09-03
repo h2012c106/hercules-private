@@ -3,7 +3,6 @@ package com.xiaohongshu.db.hercules.parquet.mr.input;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
@@ -11,7 +10,6 @@ import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -45,7 +43,7 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     private List<FileSplit> combinedSplitList = new ArrayList<>(0);
     private TaskAttemptContext context = null;
 
-    @Options(type= OptionsType.SOURCE)
+    @Options(type = OptionsType.SOURCE)
     private GenericOptions options;
 
     @SchemaInfo

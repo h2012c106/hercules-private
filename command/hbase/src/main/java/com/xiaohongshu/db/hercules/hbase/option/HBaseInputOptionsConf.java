@@ -1,32 +1,47 @@
 package com.xiaohongshu.db.hercules.hbase.option;
 
 import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.*;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class HBaseInputOptionsConf extends BaseOptionsConf {
 
-    /** Scan start row */
+    /**
+     * Scan start row
+     */
     public static final String SCAN_ROW_START = "row-start";
-    /** Scan stop row */
+    /**
+     * Scan stop row
+     */
     public static final String SCAN_ROW_STOP = "row-stop";
-    /** Column Family to Scan */
+    /**
+     * Column Family to Scan
+     */
     public static final String SCAN_COLUMN_FAMILY = "column-family";
-    /** The timestamp used to filter columns with a specific timestamp. */
+    /**
+     * The timestamp used to filter columns with a specific timestamp.
+     */
     public static final String SCAN_TIMESTAMP = "scan-timestamp";
-    /** The starting timestamp used to filter columns with a specific range of versions. */
+    /**
+     * The starting timestamp used to filter columns with a specific range of versions.
+     */
     public static final String SCAN_TIMERANGE_START = "timerange-start";
-    /** The ending timestamp used to filter columns with a specific range of versions. */
+    /**
+     * The ending timestamp used to filter columns with a specific range of versions.
+     */
     public static final String SCAN_TIMERANGE_END = "timerange-end";
-    /** The number of rows for caching that will be passed to scanners. */
+    /**
+     * The number of rows for caching that will be passed to scanners.
+     */
     public static final String SCAN_CACHEDROWS = "scan-cachedrows";
-    /** Set the maximum number of values to return for each call to next(). */
+    /**
+     * Set the maximum number of values to return for each call to next().
+     */
     public static final String SCAN_BATCHSIZE = "scan-batchsize";
     public static final String KV_COLUMN = "kv-column";
 

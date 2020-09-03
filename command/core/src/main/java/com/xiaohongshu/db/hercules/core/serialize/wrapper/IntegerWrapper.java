@@ -5,7 +5,6 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
-import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -63,17 +62,6 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
     }
 
     @Override
-    public Long asLong() {
-        return getValue().longValueExact();
-    }
-
-    @Override
-    public Double asDouble() {
-        BigDecimal value = asBigDecimal();
-        return OverflowUtils.numberToDouble(value);
-    }
-
-    @Override
     public BigDecimal asBigDecimal() {
         return new BigDecimal(getValue());
     }
@@ -106,5 +94,19 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
     @Override
     public JSON asJson() {
         throw new SerializeException("Unsupported to convert number to json.");
+    }
+
+    @Override
+    public Integer compareWith(BaseWrapper<?> that) {
+        // 不优雅
+        if (that.getClass() == DoubleWrapper.class) {
+            return asBigDecimal().compareTo(that.asBigDecimal());
+        }
+        return super.compareWith(that);
+    }
+
+    @Override
+    public int compareTo(BigInteger o) {
+        return getValue().compareTo(o);
     }
 }

@@ -11,7 +11,6 @@ import lombok.NonNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -121,5 +120,10 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> {
         return getValue().entrySet()
                 .stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().asDefault()));
+    }
+
+    @Override
+    public int compareTo(Map<String, BaseWrapper<?>> o) {
+        throw new UnsupportedOperationException();
     }
 }

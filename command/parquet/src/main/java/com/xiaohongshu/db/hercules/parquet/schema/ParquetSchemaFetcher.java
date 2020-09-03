@@ -20,7 +20,6 @@ import org.apache.parquet.schema.Type;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;

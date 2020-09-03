@@ -3,7 +3,6 @@ package com.xiaohongshu.db.hercules.rdbms.mr.input;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 
 import java.math.BigDecimal;
@@ -78,7 +77,7 @@ public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
 
     @Override
     protected BaseTypeWrapperGetter.LonglongGetter<ResultSet> getLonglongGetter() {
-        return new BaseTypeWrapperGetter.LonglongGetter<ResultSet>(){
+        return new BaseTypeWrapperGetter.LonglongGetter<ResultSet>() {
             @Override
             protected BigInteger getNonnullValue(ResultSet row, String rowName, String columnName, int columnSeq) throws Exception {
                 return new BigInteger(row.getString(columnSeq));

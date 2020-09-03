@@ -1,8 +1,8 @@
 package com.xiaohongshu.db.hercules.mysql.option;
 
-import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 
 import java.util.ArrayList;

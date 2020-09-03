@@ -1,9 +1,7 @@
 package com.xiaohongshu.db.hercules.myhub.mr.input;
 
-import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSRecordReader;
-import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,8 +23,7 @@ public class MyhubShardRecordReader extends MyhubRecordReader {
     }
 
     @Override
-    protected String makeSql(GenericOptions sourceOptions, InputSplit split) {
-        String querySql = SqlUtils.makeBaseQuery(sourceOptions);
+    protected String makeSplitSql(String querySql, InputSplit split) {
         return String.format(
                 "/*MYHUB SHARD_NODES:%s; SLAVE_PREFER*/",
                 ((MyhubInputSplit) split)

@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.core.utils;
 
+import com.xiaohongshu.db.hercules.core.utils.config.ModuleConfig;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;

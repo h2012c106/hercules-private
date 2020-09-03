@@ -1,16 +1,12 @@
 package com.xiaohongshu.db.hercules.clickhouse.mr;
 
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
-import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
-import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSWrapperSetterFactory;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
-import java.sql.Timestamp;
-import java.util.Date;
 
 public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
 
@@ -153,7 +149,7 @@ public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
 
                 @Override
                 protected void setNonnullValue(BigDecimal value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                    row.setBigDecimal(columnSeq,value);
+                    row.setBigDecimal(columnSeq, value);
                 }
             };
         }
@@ -198,7 +194,7 @@ public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
 
                 @Override
                 protected void setNonnullValue(ExtendedDate value, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
-                    row.setDate(columnSeq,  new java.sql.Date(value.getDate().getTime()));
+                    row.setDate(columnSeq, new java.sql.Date(value.getDate().getTime()));
                 }
             };
         }

@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.serialize.wrapper;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.primitives.UnsignedBytes;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
@@ -11,7 +12,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Comparator;
 
 public class BytesWrapper extends BaseWrapper<byte[]> {
 
@@ -120,5 +121,12 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
     @Override
     public JSON asJson() {
         return parseJson(asString());
+    }
+
+    private static final Comparator<byte[]> COMPARATOR = UnsignedBytes.lexicographicalComparator();
+
+    @Override
+    public int compareTo(byte[] o) {
+        return COMPARATOR.compare(getValue(), o);
     }
 }

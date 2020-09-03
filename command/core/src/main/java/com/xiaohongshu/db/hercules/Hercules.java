@@ -1,18 +1,22 @@
 package com.xiaohongshu.db.hercules;
 
-import com.xiaohongshu.db.hercules.common.option.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.mr.MRJob;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.parser.CmdParser;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiator;
 import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
 import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
-import com.xiaohongshu.db.hercules.core.utils.*;
+import com.xiaohongshu.db.hercules.core.utils.ConfigUtils;
+import com.xiaohongshu.db.hercules.core.utils.LogUtils;
+import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
+import com.xiaohongshu.db.hercules.core.utils.config.ModuleConfig;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
-import lombok.SneakyThrows;
+import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
+import com.xiaohongshu.db.hercules.core.utils.reflect.Reflector;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;

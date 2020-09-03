@@ -12,7 +12,7 @@ public class MongoDBCustomDataTypeManager extends BaseCustomDataTypeManager<Docu
     public static final MongoDBCustomDataTypeManager INSTANCE = new MongoDBCustomDataTypeManager();
 
     @Override
-    protected List<Class<? extends CustomDataType<Document, Document>>> generateTypeList() {
+    protected List<Class<? extends CustomDataType<Document, Document, ?>>> generateTypeList() {
         return Lists.newArrayList(ObjectIdCustomDataType.class);
     }
 }

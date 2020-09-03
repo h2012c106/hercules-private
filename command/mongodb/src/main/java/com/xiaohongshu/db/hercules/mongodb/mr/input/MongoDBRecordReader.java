@@ -14,6 +14,7 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
+import com.xiaohongshu.db.hercules.mongodb.filter.MongoDBFilterPushdownJudger;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +27,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf.BATCH_SIZE;
@@ -81,11 +82,16 @@ public class MongoDBRecordReader extends HerculesRecordReader<Document> {
             client = MongoDBUtils.getConnection(sourceOptions);
             MongoCollection<Document> collection = client.getDatabase(databaseStr).withReadPreference(ReadPreference.secondaryPreferred()).getCollection(collectionStr);
 
-            Document filter = splitQuery;
+            ArrayList<Document> filterList = new ArrayList<>(3);
+            filterList.add(splitQuery);
             if (!StringUtils.isEmpty(query)) {
-                Document queryFilter = Document.parse(query);
-                filter = new Document("$and", Arrays.asList(filter, queryFilter));
+                filterList.add(Document.parse(query));
             }
+            if (getFilter() != null) {
+                filterList.add((Document) ((MongoDBFilterPushdownJudger.KeyValue) getFilter()).getValue());
+            }
+            Document filter = filterList.size() == 1 ? filterList.get(0) : new Document("$and", filterList);
+            LOG.info("Use condition: " + filter);
 
             FindIterable<Document> iterable = collection.find(filter).batchSize(sourceOptions.getInteger(BATCH_SIZE, null));
             if (!schema.getColumnNameList().isEmpty()) {

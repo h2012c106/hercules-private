@@ -10,7 +10,6 @@ import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,5 +96,10 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper>> {
         return getValue().stream()
                 .map(BaseWrapper::asDefault)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public int compareTo(List<BaseWrapper> o) {
+        throw new UnsupportedOperationException();
     }
 }

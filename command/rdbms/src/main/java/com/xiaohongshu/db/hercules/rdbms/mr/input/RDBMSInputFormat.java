@@ -1,18 +1,18 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.filter.pushdown.FilterPushdownJudger;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
-import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.rdbms.filter.RDBMSFilterPushdownJudger;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.List;
 
-public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> implements InjectedClass {
+public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> {
 
     private static final Log LOG = LogFactory.getLog(RDBMSInputFormat.class);
 
@@ -47,8 +47,12 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> implements 
     protected String baseSql;
 
     @Override
-    public void afterInject() {
+    public void innerAfterInject() {
         baseSql = SqlUtils.makeBaseQuery(sourceOptions);
+        String filterQuery = (String) getPushdownFilter();
+        if (filterQuery != null) {
+            baseSql = SqlUtils.addWhere(baseSql, filterQuery);
+        }
     }
 
     protected SplitGetter getSplitGetter(GenericOptions options) {
@@ -77,5 +81,10 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> implements 
     @Override
     protected WrapperGetterFactory<ResultSet> createWrapperGetterFactory() {
         return new RDBMSWrapperGetterFactory();
+    }
+
+    @Override
+    protected FilterPushdownJudger<?> createFilterPushdownJudger() {
+        return new RDBMSFilterPushdownJudger();
     }
 }
