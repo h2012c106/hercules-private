@@ -7,12 +7,7 @@ import com.alibaba.druid.sql.ast.expr.SQLIntegerExpr;
 import com.alibaba.druid.sql.ast.statement.SQLSelectItem;
 import com.alibaba.druid.sql.ast.statement.SQLSelectStatement;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
-import com.google.common.collect.Lists;
-import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
-import com.xiaohongshu.db.hercules.rdbms.option.RDBMSInputOptionsConf;
-import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -24,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public final class SqlUtils {
 
@@ -142,46 +136,6 @@ public final class SqlUtils {
 
     public static String addNullCondition(String query, String column, boolean isNull) {
         return SqlUtils.addWhere(query, String.format("%s IS %s NULL", column, isNull ? "" : "NOT"));
-    }
-
-    private static String makeQueryByParts(String tableName, List<String> columnNameList, String condition) {
-        return String.format("SELECT %s FROM %s %s",
-                columnNameList.stream().map(SqlUtils::encloseColumnName).collect(Collectors.joining(", ")),
-                tableName,
-                condition);
-    }
-
-
-    public static String makeBaseQuery(GenericOptions options) {
-        return makeBaseQuery(options, false);
-    }
-
-    /**
-     * @param options
-     * @param useAsterisk 使用星号去查询，当且仅当schema fetcher获取全部列时为true，在其他情况下column必已被定义好
-     * @return
-     */
-    public static String makeBaseQuery(GenericOptions options, boolean useAsterisk) {
-        if (options.hasProperty(RDBMSInputOptionsConf.QUERY)) {
-            return options.getString(RDBMSInputOptionsConf.QUERY, null);
-        } else {
-            List<String> columnNameList;
-            if (!options.hasProperty(TableOptionsConf.COLUMN)) {
-                if (useAsterisk) {
-                    columnNameList = Lists.newArrayList("*");
-                } else {
-                    throw new RuntimeException();
-                }
-            } else {
-                columnNameList
-                        = Arrays.asList(options.getTrimmedStringArray(TableOptionsConf.COLUMN, null));
-            }
-            String where = options.hasProperty(RDBMSInputOptionsConf.CONDITION)
-                    ? " WHERE " + options.getString(RDBMSInputOptionsConf.CONDITION, null)
-                    : "";
-            String table = options.getString(RDBMSOptionsConf.TABLE, null);
-            return makeQueryByParts(table, columnNameList, where);
-        }
     }
 
     /**

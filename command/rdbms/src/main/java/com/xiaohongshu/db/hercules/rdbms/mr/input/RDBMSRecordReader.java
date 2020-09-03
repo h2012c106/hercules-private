@@ -101,7 +101,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
 
         mapAverageRowNum = configuration.getLong(RDBMSInputFormat.AVERAGE_MAP_ROW_NUM, 0L);
 
-        String querySql = makeSql(SqlUtils.makeBaseQuery(sourceOptions), split);
+        String querySql = makeSql(manager.makeBaseQuery(), split);
 
         Integer fetchSize = sourceOptions.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
 
