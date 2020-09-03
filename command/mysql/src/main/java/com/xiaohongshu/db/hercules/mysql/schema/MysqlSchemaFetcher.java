@@ -1,5 +1,10 @@
 package com.xiaohongshu.db.hercules.mysql.schema;
 
+import com.alibaba.druid.sql.ast.SQLStatement;
+import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
+import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
+import com.alibaba.druid.sql.parser.SQLStatementParser;
+import com.alibaba.druid.stat.TableStat;
 import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
@@ -81,24 +86,56 @@ public class MysqlSchemaFetcher extends RDBMSSchemaFetcher {
         }
     }
 
-    @Override
-    protected List<Set<String>> innerGetIndexGroupList() {
-        if (getOptions().hasProperty(QUERY)) {
-            LOG.warn("Unable to fetch index info with a sql.");
-            return super.innerGetIndexGroupList();
-        } else {
-            return getKeyInfo(getOptions().getString(TABLE, null), false);
+    private String fetchTableNameFromQuery(String sql) {
+        // 从sql里把表名撸出来
+        SQLStatementParser parser = new MySqlStatementParser(sql);
+        SQLStatement statement = parser.parseStatement();
+        MySqlSchemaStatVisitor visitor = new MySqlSchemaStatVisitor();
+        statement.accept(visitor);
+        Map<TableStat.Name, ?> tableStats = visitor.getTables();
+        if (tableStats.size() != 1) {
+            LOG.info(String.format("Cannot fetch table name from the sql [%s].", sql));
+            return null;
+        }
+        String table = tableStats.keySet().iterator().next().getName();
+        try {
+            manager.execute("DESC " + table + ";");
+            LOG.info(String.format("The sql [%s]'s table is: %s", sql, table));
+            return table;
+        } catch (SQLException e) {
+            LOG.info(String.format("Cannot fetch table name from the sql [%s], exception: %s.", sql, e.getMessage()));
+            return null;
         }
     }
 
     @Override
-    protected List<Set<String>> innerGetUniqueKeyGroupList() {
+    protected List<Set<String>> innerGetIndexGroupList() {
+        String tableName;
         if (getOptions().hasProperty(QUERY)) {
-            LOG.warn("Unable to fetch unique key info with a sql.");
-            return super.innerGetUniqueKeyGroupList();
+            tableName = fetchTableNameFromQuery(getOptions().getString(QUERY, null));
+            if (tableName == null) {
+                LOG.warn("Unable to fetch index info with sql.");
+                return super.innerGetIndexGroupList();
+            }
         } else {
-            return getKeyInfo(getOptions().getString(TABLE, null), true);
+            tableName = getOptions().getString(TABLE, null);
         }
+        return getKeyInfo(tableName, false);
+    }
+
+    @Override
+    protected List<Set<String>> innerGetUniqueKeyGroupList() {
+        String tableName;
+        if (getOptions().hasProperty(QUERY)) {
+            tableName = fetchTableNameFromQuery(getOptions().getString(QUERY, null));
+            if (tableName == null) {
+                LOG.warn("Unable to fetch unique key info with sql.");
+                return super.innerGetUniqueKeyGroupList();
+            }
+        } else {
+            tableName = getOptions().getString(TABLE, null);
+        }
+        return getKeyInfo(tableName, true);
     }
 
     public Set<String> getAutoincrementColumn() {

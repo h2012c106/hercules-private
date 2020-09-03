@@ -105,6 +105,20 @@ public class RDBMSManager {
         return DriverManager.getConnection(connectString, props);
     }
 
+    public boolean execute(String sql) throws SQLException {
+        Connection connection = null;
+        PreparedStatement statement = null;
+        Integer fetchSize = options.getInteger(RDBMSInputOptionsConf.FETCH_SIZE, null);
+        try {
+            connection = getConnection();
+            statement = SqlUtils.makeReadStatement(connection, sql, fetchSize);
+            LOG.debug("Executing SQL statement: " + sql);
+            return statement.execute();
+        } finally {
+            SqlUtils.release(Lists.newArrayList(statement, connection));
+        }
+    }
+
     public <T> List<T> executeSelect(String sql, int seq, ResultSetGetter<T> resultSetGetter) throws SQLException {
         Connection connection = null;
         PreparedStatement statement = null;
