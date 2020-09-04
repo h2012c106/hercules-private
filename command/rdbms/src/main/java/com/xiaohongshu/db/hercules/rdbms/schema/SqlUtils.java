@@ -18,6 +18,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class SqlUtils {
@@ -224,5 +225,16 @@ public final class SqlUtils {
         }
         statement.setFetchSize(fetchSize);
         return statement;
+    }
+
+    private static final Pattern BACKTICK_PATTERN = Pattern.compile("^`(.*)`$");
+
+    public static String unwrapBacktick(String s){
+        Matcher matcher=BACKTICK_PATTERN.matcher(s);
+        if(matcher.find()){
+            return matcher.group(1);
+        }else{
+            return s;
+        }
     }
 }

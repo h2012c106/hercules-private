@@ -1,6 +1,8 @@
 package com.xiaohongshu.db.hercules.mysql.schema;
 
 import com.alibaba.druid.sql.ast.SQLStatement;
+import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
+import com.alibaba.druid.sql.dialect.mysql.parser.MySqlCreateTableParser;
 import com.alibaba.druid.sql.dialect.mysql.parser.MySqlStatementParser;
 import com.alibaba.druid.sql.dialect.mysql.visitor.MySqlSchemaStatVisitor;
 import com.alibaba.druid.sql.parser.SQLStatementParser;
@@ -11,8 +13,10 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
+import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,6 +36,57 @@ public class MysqlSchemaFetcher extends RDBMSSchemaFetcher {
 
     public MysqlSchemaFetcher(GenericOptions options) {
         super(options);
+    }
+
+    private boolean caseIgnoredIn(String item, Collection<String> c) {
+        for (String cItem : c) {
+            if (StringUtils.equalsIgnoreCase(item, cItem)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected List<String> innerGetColumnNameList() {
+        List<String> superRes = super.innerGetColumnNameList();
+        if (getOptions().getOptionsType().isSource()) {
+            return superRes;
+        } else {
+            // 为下游时，generated列不得被插入
+            String tableName = getOptions().getString(TABLE, null);
+            String sql = String.format("SHOW CREATE TABLE `%s`;", tableName);
+            String createTable;
+            try {
+                createTable = manager.executeSelect(sql, 2, ResultSetGetter.STRING_GETTER).get(0);
+            } catch (SQLException e) {
+                LOG.warn(String.format("Failed to fetch table [%s] generated column info, treated as a normal table, exception: %s.", tableName, e.getMessage()));
+                return superRes;
+            }
+            List<String> generatedColumn = new MySqlCreateTableParser(createTable)
+                    .parseCreateTable()
+                    .getTableElementList()
+                    .stream()
+                    .filter(ele -> ele instanceof SQLColumnDefinition)
+                    .map(ele -> (SQLColumnDefinition) ele)
+                    .filter(ele -> ele.getGeneratedAlawsAs() != null)
+                    .map(ele -> SqlUtils.unwrapBacktick(ele.getColumnName()))
+                    .collect(Collectors.toList());
+            List<String> res = new LinkedList<>();
+            // 保持大小写一致
+            List<String> generatedSameCaseColumn = new LinkedList<>();
+            for (String column : superRes) {
+                if (!caseIgnoredIn(column, generatedColumn)) {
+                    res.add(column);
+                } else {
+                    generatedSameCaseColumn.add(column);
+                }
+            }
+            if (generatedSameCaseColumn.size() > 0) {
+                LOG.info("Fetch generated column, remove from target column list, removed column list is: " + generatedSameCaseColumn);
+            }
+            return res;
+        }
     }
 
     private List<Set<String>> getKeyInfo(String tableName, boolean unique) {
