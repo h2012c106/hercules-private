@@ -21,6 +21,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper.HERCULES_GROUP_NAME;
+
 /**
  * @param <T> 数据源读入时用于表示一行的数据结构，详情可见{@link WrapperGetter}
  */
@@ -29,6 +31,8 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordReader.class);
 
+    public static final String READ_RECORDS_COUNTER_NAME = "Read records num";
+
     private long time = 0;
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -36,6 +40,8 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     protected WrapperGetterFactory<T> wrapperGetterFactory;
 
     private Object filter = null;
+
+    private TaskAttemptContext context;
 
     @SchemaInfo(role = DataSourceRole.SOURCE)
     private Schema schema;
@@ -83,6 +89,8 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
     @Override
     public final void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+        this.context = context;
+
         long start = System.currentTimeMillis();
         myInitialize(split, context);
         time += (System.currentTimeMillis() - start);
@@ -107,6 +115,8 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
     @Override
     public final boolean nextKeyValue() throws IOException, InterruptedException {
+        context.getCounter(HERCULES_GROUP_NAME, READ_RECORDS_COUNTER_NAME).increment(1L);
+
         long start = System.currentTimeMillis();
         boolean res = innerNextKeyValue();
         time += (System.currentTimeMillis() - start);
@@ -118,6 +128,9 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     @Override
     public final void close() throws IOException {
         if (!closed.getAndSet(true)) {
+            // 最后一个nextKeyValue会返回false
+            context.getCounter(HERCULES_GROUP_NAME, READ_RECORDS_COUNTER_NAME).increment(-1L);
+
             long start = System.currentTimeMillis();
             innerClose();
             time += (System.currentTimeMillis() - start);

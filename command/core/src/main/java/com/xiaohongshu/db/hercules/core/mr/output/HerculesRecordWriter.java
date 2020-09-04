@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper.HERCULES_GROUP_NAME;
+
 /**
  * @param <T> 数据源写出时用于表示一行的数据结构，详情可见{@link WrapperSetter}
  */
@@ -34,6 +36,8 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         implements InjectedClass, DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordWriter.class);
+
+    public static final String WRITE_RECORDS_COUNTER_NAME = "Write records num";
 
     private long time = 0;
 
@@ -50,7 +54,10 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
     private RateLimiter rateLimiter = null;
     private double acquireTime = 0;
 
+    private final TaskAttemptContext context;
+
     public HerculesRecordWriter(TaskAttemptContext context) {
+        this.context = context;
     }
 
     @Override
@@ -131,6 +138,8 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
      */
     @Override
     public final void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
+        context.getCounter(HERCULES_GROUP_NAME, WRITE_RECORDS_COUNTER_NAME).increment(1L);
+
         if (rateLimiter != null) {
             acquireTime += rateLimiter.acquire();
         }

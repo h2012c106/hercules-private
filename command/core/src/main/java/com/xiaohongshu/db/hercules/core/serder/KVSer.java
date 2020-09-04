@@ -14,6 +14,7 @@ import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
@@ -35,6 +36,8 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
 
     @Options(type = OptionsType.SER)
     private GenericOptions options;
+
+    private long time = 0L;
 
     public KVSer(WrapperSetterFactory<T> wrapperSetterFactory) {
         this.wrapperSetterFactory = wrapperSetterFactory;
@@ -68,24 +71,39 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
     abstract protected BaseWrapper<?> writeValue(HerculesWritable in) throws IOException, InterruptedException;
 
     public final HerculesWritable write(HerculesWritable in) throws IOException, InterruptedException {
-        HerculesWritable out = new HerculesWritable(2);
-        BaseWrapper<?> key = writeKey(in);
-        // 如果序列化结构中不需要包含key值，则从行中拿走这列再序列化
-        if (options.getBoolean(NOT_CONTAINS_KEY, false)) {
-            WritableUtils.remove(in.getRow(), keyName);
-        }
-        BaseWrapper<?> value = writeValue(in);
-        // 转出一对kv，其中有一个值不存在，则认为这行没意义，不予写下游
-        if (key == null || value == null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(String.format("Meaningless row: %s", in.toString()));
+        long startTime = System.currentTimeMillis();
+        try {
+            HerculesWritable out = new HerculesWritable(2);
+            BaseWrapper<?> key = writeKey(in);
+            // 如果序列化结构中不需要包含key值，则从行中拿走这列再序列化
+            if (options.getBoolean(NOT_CONTAINS_KEY, false)) {
+                WritableUtils.remove(in.getRow(), keyName);
             }
-            return null;
-        } else {
-            out.put(keyName, key);
-            out.put(valueName, value);
-            return out;
+            BaseWrapper<?> value = writeValue(in);
+            // 转出一对kv，其中有一个值不存在，则认为这行没意义，不予写下游
+            if (key == null || value == null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(String.format("Meaningless serialize row: %s", in.toString()));
+                }
+                return null;
+            } else {
+                out.put(keyName, key);
+                out.put(valueName, value);
+                return out;
+            }
+        } finally {
+            time += (System.currentTimeMillis() - startTime);
         }
+    }
+
+    protected void innerClose(TaskAttemptContext context) throws IOException {
+    }
+
+    public final void close(TaskAttemptContext context) throws IOException {
+        long startTime = System.currentTimeMillis();
+        innerClose(context);
+        time += (System.currentTimeMillis() - startTime);
+        LOG.info(String.format("Spent %.3fs on deserialize.", (double) time / 1000.0));
     }
 
     protected final WrapperSetter<T> getWrapperSetter(DataType dataType) {

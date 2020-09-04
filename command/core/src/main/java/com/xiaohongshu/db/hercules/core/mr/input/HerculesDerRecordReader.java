@@ -18,20 +18,27 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper.HERCULES_GROUP_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.VALUE_NAME;
 
 /**
  * 得要支持某种序列化结构中包含多行的情况
  */
-public class HerculesSerDerRecordReader extends RecordReader<NullWritable, HerculesWritable>
+public class HerculesDerRecordReader extends RecordReader<NullWritable, HerculesWritable>
         implements DataSourceRoleGetter, InjectedClass {
+
+    public static final String DER_RECORDS_COUNTER_NAME = "Deserialize records num";
+    public static final String DER_IGNORE_RECORDS_COUNTER_NAME = "Deserialize ignored records num (missing key or value)";
+    public static final String DER_ACTUAL_RECORDS_COUNTER_NAME = "Deserialize actual records num";
 
     private final KVDer<?> der;
     private final HerculesRecordReader<?> reader;
 
     @Options(type = OptionsType.SOURCE)
     private GenericOptions options;
+
+    private TaskAttemptContext context;
 
     /**
      * 模仿迭代器头指针
@@ -40,7 +47,7 @@ public class HerculesSerDerRecordReader extends RecordReader<NullWritable, Hercu
     private List<HerculesWritable> derRes = Collections.emptyList();
     private int derResSeq = SEQ_BEGIN;
 
-    public HerculesSerDerRecordReader(KVDer<?> der, HerculesRecordReader<?> reader) {
+    public HerculesDerRecordReader(KVDer<?> der, HerculesRecordReader<?> reader) {
         this.der = der;
         this.reader = reader;
     }
@@ -64,6 +71,7 @@ public class HerculesSerDerRecordReader extends RecordReader<NullWritable, Hercu
 
     @Override
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+        this.context = context;
         reader.initialize(split, context);
     }
 
@@ -76,13 +84,24 @@ public class HerculesSerDerRecordReader extends RecordReader<NullWritable, Hercu
      */
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
-        while (CollectionUtils.isEmpty(derRes) || ++derResSeq >= derRes.size()) {
-            if (!reader.nextKeyValue()) {
-                return false;
+        boolean first = true;
+        do {
+            context.getCounter(HERCULES_GROUP_NAME, DER_RECORDS_COUNTER_NAME).increment(1L);
+            while (CollectionUtils.isEmpty(derRes) || ++derResSeq >= derRes.size()) {
+                if (!reader.nextKeyValue()) {
+                    return false;
+                }
+                derRes = der.read(reader.getCurrentValue());
+                derResSeq = SEQ_BEGIN;
             }
-            derRes = der.read(reader.getCurrentValue());
-            derResSeq = SEQ_BEGIN;
-        }
+            // 记录因为缺k或v导致返回null的数目
+            if (first) {
+                first = false;
+            } else {
+                context.getCounter(HERCULES_GROUP_NAME, DER_IGNORE_RECORDS_COUNTER_NAME).increment(1L);
+            }
+        } while (getCurrentValue() == null);
+        context.getCounter(HERCULES_GROUP_NAME, DER_ACTUAL_RECORDS_COUNTER_NAME).increment(1L);
         return true;
     }
 
@@ -103,6 +122,8 @@ public class HerculesSerDerRecordReader extends RecordReader<NullWritable, Hercu
 
     @Override
     public void close() throws IOException {
+        context.getCounter(HERCULES_GROUP_NAME, DER_RECORDS_COUNTER_NAME).increment(-1L);
+        der.close();
         reader.close();
     }
 }

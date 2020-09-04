@@ -39,6 +39,8 @@ public abstract class KVDer<T> implements DataSourceRoleGetter {
     @Options(type = OptionsType.DER)
     private GenericOptions options;
 
+    private long time = 0L;
+
     public KVDer(WrapperGetterFactory<T> wrapperGetterFactory) {
         this.wrapperGetterFactory = wrapperGetterFactory;
         HerculesContext.instance().inject(wrapperGetterFactory);
@@ -60,36 +62,51 @@ public abstract class KVDer<T> implements DataSourceRoleGetter {
     abstract protected List<MapWrapper> readValue(BaseWrapper<?> inValue) throws IOException, InterruptedException;
 
     public final List<HerculesWritable> read(HerculesWritable in) throws IOException, InterruptedException {
-        BaseWrapper<?> key = in.get(keyName);
-        BaseWrapper<?> value = in.get(valueName);
-        // 上游给一对kv，其中有一个值不存在，则认为这行没意义，不予处理
-        if (key == null || value == null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(String.format("Meaningless row without non-null key [%s] or value [%s]: %s", keyName, valueName, in.toString()));
-            }
-            return null;
-        } else {
-            List<MapWrapper> valueMapList = readValue(value);
-            // 说明这行der不解，直接跳过
-            if (valueMapList == null) {
+        long startTime = System.currentTimeMillis();
+        try {
+            BaseWrapper<?> key = in.get(keyName);
+            BaseWrapper<?> value = in.get(valueName);
+            // 上游给一对kv，其中有一个值不存在，则认为这行没意义，不予处理
+            if (key == null || value == null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(String.format("Meaningless deserialize row without non-null key [%s] or value [%s]: %s", keyName, valueName, in.toString()));
+                }
                 return null;
-            }
-            List<HerculesWritable> res = new LinkedList<>();
-            for (MapWrapper valueMap : valueMapList) {
-                HerculesWritable out = new HerculesWritable();
-                for (Map.Entry<String, BaseWrapper<?>> derValue : valueMap.entrySet()) {
-                    String columnName = derValue.getKey();
-                    BaseWrapper<?> columnValue = derValue.getValue();
-                    out.put(columnName, columnValue);
+            } else {
+                List<MapWrapper> valueMapList = readValue(value);
+                // 说明这行der不解，直接跳过
+                if (valueMapList == null) {
+                    return null;
                 }
-                // 如果序列化类中不包含key列，则反序列化的时候需要把key信息一并写进行信息中
-                if (options.getBoolean(NOT_CONTAINS_KEY, false)) {
-                    out.put(keyName, key);
+                List<HerculesWritable> res = new LinkedList<>();
+                for (MapWrapper valueMap : valueMapList) {
+                    HerculesWritable out = new HerculesWritable();
+                    for (Map.Entry<String, BaseWrapper<?>> derValue : valueMap.entrySet()) {
+                        String columnName = derValue.getKey();
+                        BaseWrapper<?> columnValue = derValue.getValue();
+                        out.put(columnName, columnValue);
+                    }
+                    // 如果序列化类中不包含key列，则反序列化的时候需要把key信息一并写进行信息中
+                    if (options.getBoolean(NOT_CONTAINS_KEY, false)) {
+                        out.put(keyName, key);
+                    }
+                    res.add(out);
                 }
-                res.add(out);
+                return res;
             }
-            return res;
+        } finally {
+            time += (System.currentTimeMillis() - startTime);
         }
+    }
+
+    protected void innerClose() throws IOException {
+    }
+
+    public final void close() throws IOException {
+        long startTime = System.currentTimeMillis();
+        innerClose();
+        time += (System.currentTimeMillis() - startTime);
+        LOG.info(String.format("Spent %.3fs on deserialize.", (double) time / 1000.0));
     }
 
     protected final WrapperGetter<T> getWrapperGetter(DataType dataType) {

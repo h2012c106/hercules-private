@@ -136,7 +136,7 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
         if (kvDer != null) {
             // 有der了说明做了反序列化，那么filter对数据源侧一定驴头对马嘴，没必要下推
             HerculesContext.instance().inject(delegate);
-            res = new HerculesSerDerRecordReader(kvDer, delegate);
+            res = new HerculesDerRecordReader(kvDer, delegate);
         } else {
             if (pushdownFilter != null) {
                 delegate.setFilter(pushdownFilter);

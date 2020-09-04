@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.schema;
 import com.google.common.collect.BiMap;
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
@@ -217,9 +218,12 @@ public final class SchemaNegotiator {
             if (!tmpTarget.containsKey(columnName)) {
                 // 若抄袭者的custom type中包含被抄的类型的名字，则可以抄，否则抄关联基础类型
                 // 这里的特殊类型名必须大小写都一致，越严格越好，ignoreCase仅用于对用户填写类型时的放宽要求
-                // TODO 需要加个开关允许同名不同类特殊类型抄和warn提示抄了同名不同类特殊类型
                 if (dataType.isCustom() && targetManager.contains(dataType.getName())) {
-                    tmpTarget.put(columnName, targetManager.get(dataType.getName()));
+                    CustomDataType<?, ?, ?> targetCustomType = targetManager.get(dataType.getName());
+                    if (dataType.getClass() != targetCustomType.getClass()) {
+                        LOG.warn(String.format("Different custom data type with same name copied, source vs target: %s vs %s", dataType, targetCustomType));
+                    }
+                    tmpTarget.put(columnName, targetCustomType);
                 } else {
                     tmpTarget.put(columnName, dataType.getBaseDataType());
                 }

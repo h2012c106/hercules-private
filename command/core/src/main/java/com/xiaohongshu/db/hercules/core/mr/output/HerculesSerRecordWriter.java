@@ -14,11 +14,16 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
+import static com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper.HERCULES_GROUP_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.VALUE_NAME;
 
-public class HerculesSerDerRecordWriter extends RecordWriter<NullWritable, HerculesWritable>
+public class HerculesSerRecordWriter extends RecordWriter<NullWritable, HerculesWritable>
         implements DataSourceRoleGetter, InjectedClass {
+
+    public static final String SER_RECORDS_COUNTER_NAME = "Serialize records num";
+    public static final String SER_IGNORE_RECORDS_COUNTER_NAME = "Serialize ignored records num (missing key or value)";
+    public static final String SER_ACTUAL_RECORDS_COUNTER_NAME = "Serialize actual records num";
 
     private final KVSer<?> ser;
     private final HerculesRecordWriter<?> writer;
@@ -26,9 +31,12 @@ public class HerculesSerDerRecordWriter extends RecordWriter<NullWritable, Hercu
     @Options(type = OptionsType.TARGET)
     private GenericOptions options;
 
-    public HerculesSerDerRecordWriter(KVSer<?> ser, HerculesRecordWriter<?> writer) {
+    private final TaskAttemptContext context;
+
+    public HerculesSerRecordWriter(KVSer<?> ser, HerculesRecordWriter<?> writer, TaskAttemptContext context) {
         this.ser = ser;
         this.writer = writer;
+        this.context = context;
     }
 
     @Override
@@ -50,15 +58,20 @@ public class HerculesSerDerRecordWriter extends RecordWriter<NullWritable, Hercu
 
     @Override
     public void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
+        context.getCounter(HERCULES_GROUP_NAME, SER_RECORDS_COUNTER_NAME).increment(1L);
         value = ser.write(value);
         // 如果ser返回null，则不写这行
         if (value != null) {
+            context.getCounter(HERCULES_GROUP_NAME, SER_ACTUAL_RECORDS_COUNTER_NAME).increment(1L);
             writer.write(key, value);
+        } else {
+            context.getCounter(HERCULES_GROUP_NAME, SER_IGNORE_RECORDS_COUNTER_NAME).increment(1L);
         }
     }
 
     @Override
     public void close(TaskAttemptContext context) throws IOException, InterruptedException {
+        ser.close(context);
         writer.close(context);
     }
 

@@ -29,9 +29,7 @@ import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.Bas
 public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWritable, NullWritable, HerculesWritable> {
 
     public static final String HERCULES_GROUP_NAME = "Hercules Counters";
-    public static final String ESTIMATED_WRITE_BYTE_SIZE_COUNTER_NAME = "Estimated write byte size";
-    public static final String READ_RECORDS_COUNTER_NAME = "Read records num";
-    public static final String WRITE_RECORDS_COUNTER_NAME = "Write records num";
+    public static final String ESTIMATED_MAP_BYTE_SIZE_COUNTER_NAME = "Estimated map byte size";
     public static final String FILTERED_RECORDS_COUNTER_NAME = "Filtered records num";
 
     private static final Log LOG = LogFactory.getLog(HerculesMapper.class);
@@ -103,14 +101,6 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     protected void map(NullWritable key, HerculesWritable value, Context context)
             throws IOException, InterruptedException {
         ++mappedRecordNum;
-
-        // 读入行数++，因为可能存在把多行包进一行的序列化结构，故有DER的时候本值可能会偏大
-        context.getCounter(HERCULES_GROUP_NAME, READ_RECORDS_COUNTER_NAME).increment(1L);
-
-        // 如果上游读出来个null，无视这一行
-        if (value == null) {
-            return;
-        }
         long start;
 
         start = System.currentTimeMillis();
@@ -121,8 +111,7 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         }
         filterTime += (System.currentTimeMillis() - start);
 
-        context.getCounter(HERCULES_GROUP_NAME, WRITE_RECORDS_COUNTER_NAME).increment(1L);
-        context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_WRITE_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
+        context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_MAP_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
 
         start = System.currentTimeMillis();
         value = rowTransfer(value);
