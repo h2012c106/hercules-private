@@ -67,7 +67,9 @@ public final class SchemaUtils {
 
     public static JSONObject convertTypeToOption(@NonNull Map<String, DataType> map) {
         JSONObject res = new JSONObject();
-        res.putAll(map);
+        for (Map.Entry<String, DataType> entry : map.entrySet()) {
+            res.put(entry.getKey(), entry.getValue().getName());
+        }
         return res;
     }
 
