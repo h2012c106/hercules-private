@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
-import static com.xiaohongshu.db.hercules.parquet.option.ParquetOutputOptionsConf.DELETE_TARGET_DIR;
 
 public class ParquetSchemaFetcher extends BaseSchemaFetcher {
 
@@ -57,7 +56,7 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher {
             is.readFully(header);
         } catch (IOException ioe) {
             // Error reading header or EOF; assume unknown
-            LOG.warn(String.format("IOException checking input file [%s] header: " + ioe, file.toString()));
+            LOG.warn(String.format("IOException checking input file [%s] header: " + ioe.getMessage(), file.toString()));
             return false;
         } finally {
             try {
@@ -66,14 +65,14 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher {
                 }
             } catch (IOException ioe) {
                 // ignore; closing.
-                LOG.warn("IOException closing input stream: " + ioe + "; ignoring.");
+                LOG.warn("IOException closing input stream: " + ioe.getMessage() + "; ignoring.");
             }
         }
 
         return header[0] == 'P' && header[1] == 'A' && header[2] == 'R';
     }
 
-    private Path firstOfDir(Path dir) {
+    private Path firstParquetOfDir(Path dir, boolean recursive) {
         FileStatus[] fileStatuses;
         try {
             FileSystem fs = FileSystem.get(dir.toUri(), tmpConfiguration);
@@ -88,8 +87,14 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher {
         }
         for (FileStatus fileStatus : fileStatuses) {
             Path tmpPath = fileStatus.getPath();
-            if (isParquet(tmpPath)) {
-                return tmpPath;
+            if (fileStatus.isDirectory()) {
+                if (recursive && (tmpPath = firstParquetOfDir(tmpPath, true)) != null) {
+                    return tmpPath;
+                }
+            } else {
+                if (isParquet(tmpPath)) {
+                    return tmpPath;
+                }
             }
         }
         LOG.warn(String.format("There should be at least one parquet file in dir [%s], now zero.", dir.toString()));
@@ -99,17 +104,17 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher {
     private MessageType fetchMessageType() {
         String dir = getOptions().getString(DIR, null);
         try {
-            Path first = firstOfDir(new Path(dir));
+            Path first = firstParquetOfDir(new Path(dir), true);
             MessageType res = first == null ? null : ParquetFileReader
                     .readFooter(tmpConfiguration, first)
                     .getFileMetaData()
                     .getSchema();
             if (res == null) {
-                LOG.warn("Unable to fetch the column type from parquet file.");
+                throw new RuntimeException("Unable to fetch the column type from parquet file.");
             } else {
                 LOG.info("The schema fetched from parquet file is: " + res.toString());
+                return res;
             }
-            return res;
         } catch (IOException e) {
             throw new SchemaException(e);
         }
@@ -126,13 +131,11 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher {
         // 获得parquet schema
         if (getOptions().hasProperty(MESSAGE_TYPE)) {
             messageType = MessageTypeParser.parseMessageType(getOptions().getString(MESSAGE_TYPE, null));
-        } else if (!options.hasProperty(DELETE_TARGET_DIR)) {
+        } else if (options.getOptionsType().isSource()) {
             // 如果作为目标，自动从原文件取schema可能不太合适，毕竟万一上游动了schema，下游感知不到，故仅在作为上游时取
             messageType = fetchMessageType();
-            if (messageType != null) {
-                // 顺便偷摸把取出来的parquet message type塞到options里，因为之后还有用，不用屡次取了
-                getOptions().set(MESSAGE_TYPE, messageType.toString());
-            }
+            // 顺便偷摸把取出来的parquet message type塞到options里，因为之后还有用，不用屡次取了
+            getOptions().set(MESSAGE_TYPE, messageType.toString());
         }
     }
 

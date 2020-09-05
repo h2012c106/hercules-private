@@ -30,6 +30,8 @@ public class ParquetInputMRJobContext extends BaseMRJobContext {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        // 允许递归地找文件
+        ExampleInputFormat.setInputDirRecursive(job, true);
     }
 
     @Override
