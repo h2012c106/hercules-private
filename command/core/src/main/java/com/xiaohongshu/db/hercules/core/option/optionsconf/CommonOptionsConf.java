@@ -28,6 +28,7 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String ALLOW_COPY_COLUMN_TYPE = "allow-copy-column-type";
     public static final String ALLOW_COPY_KEY = "allow-copy-key";
     public static final String FILTER = "filter";
+    public static final String UDF = "udf";
 
     public static final int DEFAULT_NUM_MAPPER = 4;
     public static final Level DEFAULT_LOG_LEVEL = Level.INFO;
@@ -123,6 +124,12 @@ public class CommonOptionsConf extends BaseOptionsConf {
                 .name(FILTER)
                 .needArg(true)
                 .description("The filter logic in sql syntax.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(UDF)
+                .needArg(true)
+                .description("The row-level transfer logic, can cascade with delimiter <,>.")
+                .list(true)
                 .build());
         return tmpList;
     }

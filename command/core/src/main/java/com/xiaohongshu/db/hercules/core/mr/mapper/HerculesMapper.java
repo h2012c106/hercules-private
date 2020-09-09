@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.mr.mapper;
 import com.alibaba.fastjson.JSONObject;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.mr.udf.HerculesUDF;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
@@ -20,10 +21,12 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.UDF;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf.BLACK_COLUMN;
 
 public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWritable, NullWritable, HerculesWritable> {
@@ -31,11 +34,13 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     public static final String HERCULES_GROUP_NAME = "Hercules Counters";
     public static final String ESTIMATED_MAP_BYTE_SIZE_COUNTER_NAME = "Estimated map byte size";
     public static final String FILTERED_RECORDS_COUNTER_NAME = "Filtered records num";
+    public static final String UDF_IGNORE_RECORDS_COUNTER_NAME = "UDF ignored records num";
 
     private static final Log LOG = LogFactory.getLog(HerculesMapper.class);
 
     private long rowProcessTime = 0L;
     private long filterTime = 0L;
+    private long udfTime = 0L;
 
     private Map<String, String> columnMap;
     private List<String> blackColumnList;
@@ -53,6 +58,8 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
     @Filter
     private Expr filter;
+
+    private final List<HerculesUDF> udfList = new LinkedList<>();
 
     public HerculesMapper() {
     }
@@ -95,6 +102,16 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
                 .collect(Collectors.toMap(Map.Entry::getKey,
                         entry -> (String) entry.getValue()));
         blackColumnList = Arrays.asList(sourceOptions.getTrimmedStringArray(BLACK_COLUMN, null));
+
+        // 反射出UDF
+        if (commonOptions.hasProperty(UDF)) {
+            for (String className : commonOptions.getTrimmedStringArray(UDF, new String[0])) {
+                HerculesUDF tmpUDF = HerculesContext.instance().getReflector().constructWithNonArgsConstructor(className, HerculesUDF.class);
+                HerculesContext.instance().inject(tmpUDF);
+                tmpUDF.initialize(context);
+                udfList.add(tmpUDF);
+            }
+        }
     }
 
     @Override
@@ -111,6 +128,16 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
         }
         filterTime += (System.currentTimeMillis() - start);
 
+        start = System.currentTimeMillis();
+        for (HerculesUDF udf : udfList) {
+            // 若udf返回null，这行不写
+            if ((value = udf.evaluate(value)) == null) {
+                context.getCounter(HERCULES_GROUP_NAME, UDF_IGNORE_RECORDS_COUNTER_NAME).increment(1L);
+                return;
+            }
+        }
+        udfTime += (System.currentTimeMillis() - start);
+
         context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_MAP_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
 
         start = System.currentTimeMillis();
@@ -121,14 +148,18 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
     @Override
     protected void cleanup(Context context) throws IOException, InterruptedException {
+        for (HerculesUDF udf : udfList) {
+            udf.close();
+        }
         long start = System.currentTimeMillis();
         super.cleanup(context);
         long cleanTime = (System.currentTimeMillis() - start);
-        LOG.info(String.format("Map %s transferred %d record(s) using %.3fs for filter, %.3fs for row process and %.3fs for cleanup.",
+        LOG.info(String.format("Map %s transferred %d record(s) using %.3fs for filter, %.3fs for row process, %.3fs for udf and %.3fs for cleanup.",
                 context.getTaskAttemptID().getTaskID().toString(),
                 mappedRecordNum,
                 (double) filterTime / 1000.0,
                 (double) rowProcessTime / 1000.0,
+                (double) udfTime / 1000.0,
                 (double) cleanTime / 1000.0));
     }
 }

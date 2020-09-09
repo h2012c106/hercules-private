@@ -75,7 +75,7 @@ public final class WritableUtils {
                 : columnNameListStr + BaseDataSourceOptionsConf.NESTED_COLUMN_NAME_DELIMITER + column;
     }
 
-    public static BaseWrapper<?> get(MapWrapper wrapper, String columnName) {
+    public static BaseWrapper<?> get(MapWrapper wrapper, @NonNull String columnName) {
         List<String> columnEmbedList = splitColumnRaw(columnName);
         MapWrapper tmpMapWrapper = wrapper;
         int i;
@@ -91,13 +91,13 @@ public final class WritableUtils {
         return tmpMapWrapper.get(columnEmbedList.get(i));
     }
 
-    public static void put(MapWrapper wrapper, String columnName, @NonNull BaseWrapper<?> value) {
+    public static void put(MapWrapper wrapper, @NonNull String columnName, @NonNull BaseWrapper<?> value) {
         List<String> columnEmbedList = splitColumnRaw(columnName);
         MapWrapper tmpMapWrapper = wrapper;
         int i;
         for (i = 0; i < columnEmbedList.size() - 1; ++i) {
             String tmpColumnName = columnEmbedList.get(i);
-            BaseWrapper tmpWrapper = tmpMapWrapper.get(tmpColumnName);
+            BaseWrapper<?> tmpWrapper = tmpMapWrapper.get(tmpColumnName);
             // 如果已经有值但不是Map类型的直接覆盖
             if (!(tmpWrapper instanceof MapWrapper)) {
                 tmpWrapper = new MapWrapper();
@@ -108,7 +108,7 @@ public final class WritableUtils {
         tmpMapWrapper.put(columnEmbedList.get(i), value);
     }
 
-    public static BaseWrapper<?> remove(MapWrapper wrapper, String columnName) {
+    public static BaseWrapper<?> remove(MapWrapper wrapper, @NonNull String columnName) {
         List<String> columnEmbedList = splitColumnRaw(columnName);
         MapWrapper tmpMapWrapper = wrapper;
         int i;
