@@ -2,6 +2,8 @@ package com.xiaohongshu.db.hercules.core.option;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.util.function.Function;
 
 /**
  * 用于配置单个配置项的类
@@ -28,6 +30,18 @@ public final class SingleOptionConf {
     private boolean list = false;
 
     private String listDelimiter = ",";
+
+    private Function<String, Void> validateFunction = null;
+
+    public static final Function<String, Void> NUMBER_AND_GT_ZERO = new Function<String, Void>() {
+        @Override
+        public Void apply(String s) {
+            if (new BigDecimal(s).compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("Unallowed lte zero value: " + s);
+            }
+            return null;
+        }
+    };
 
     public String getName() {
         return name;
@@ -59,6 +73,10 @@ public final class SingleOptionConf {
 
     public boolean isSetDefaultStringValue() {
         return setDefaultStringValue;
+    }
+
+    public Function<String, Void> getValidateFunction() {
+        return validateFunction;
     }
 
     public static Builder builder() {
@@ -102,6 +120,11 @@ public final class SingleOptionConf {
 
         public Builder listDelimiter(String listDelimiter) {
             singleOptionConf.listDelimiter = listDelimiter;
+            return this;
+        }
+
+        public Builder validateFunction(Function<String, Void> validateFunction) {
+            singleOptionConf.validateFunction = validateFunction;
             return this;
         }
 

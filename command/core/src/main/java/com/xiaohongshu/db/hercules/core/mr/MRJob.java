@@ -13,6 +13,8 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandExecutor;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandResult;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,15 +23,14 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.TaskCompletionEvent;
-import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.sqoop.util.PerfCounters;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
+import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -173,25 +174,30 @@ public class MRJob {
         LOG.error(result.getData());
     }
 
-    /**
-     * 反射获得map执行时间，从job拿不到，counters里又是private，逼我来硬的
-     *
-     * @param perfCounters
-     * @return
-     */
-    private Double getMapTaskSec(PerfCounters perfCounters) {
-        try {
-            Field field = perfCounters.getClass().getDeclaredField("nanoseconds");
-            try {
-                field.setAccessible(true);
-                return (double) field.getLong(perfCounters) / 1.0E9D;
-            } finally {
-                field.setAccessible(false);
-            }
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            LOG.warn("Fetch map task sec from PerfCounters failed: " + e.getMessage());
-            return null;
+    private String formatByte(double byteSize) {
+        NumberFormat fmt = NumberFormat.getInstance();
+        fmt.setMaximumFractionDigits(4);
+        double val;
+        String scale;
+        if (byteSize > 1.073741824E9D) {
+            val = byteSize / 1.073741824E9D;
+            scale = "GB";
+        } else if (byteSize > 1048576.0D) {
+            val = byteSize / 1048576.0D;
+            scale = "MB";
+        } else if (byteSize > 1024.0D) {
+            val = byteSize / 1024.0D;
+            scale = "KB";
+        } else {
+            val = byteSize;
+            scale = "B";
         }
+
+        return fmt.format(val) + scale;
+    }
+
+    private long getValue(Job job, HerculesCounter counter) throws IOException {
+        return job.getCounters().getGroup(HerculesStatus.GROUP_NAME).findCounter(counter.getCounterName()).getValue();
     }
 
     private String qualifyTmpJar(String tmpPath, Configuration conf) {
@@ -257,29 +263,23 @@ public class MRJob {
         jobContextAsSource.preRun();
         jobContextAsTarget.preRun();
 
-        PerfCounters perfCounters = new PerfCounters();
-        perfCounters.startClock();
         boolean success = job.waitForCompletion(true);
-        perfCounters.stopClock();
-        Counters jobCounters = job.getCounters();
-        // If the job has been retired, these may be unavailable.
-        long numRecords;
-        if (null == jobCounters) {
-            numRecords = 0;
-        } else {
-            perfCounters.addBytes(jobCounters.getGroup(HerculesMapper.HERCULES_GROUP_NAME)
-                    .findCounter(HerculesMapper.ESTIMATED_MAP_BYTE_SIZE_COUNTER_NAME).getValue());
-            LOG.info("Transferred " + perfCounters.toString());
-            numRecords = ConfigurationHelper.getNumMapOutputRecords(job);
-        }
-        Double runSec = getMapTaskSec(perfCounters);
-        if (runSec != null) {
-            LOG.info(String.format("Retrieved %d records (%.4f row/sec).", numRecords, (double) numRecords / runSec));
-        } else {
-            LOG.info(String.format("Retrieved %d records.", numRecords));
-        }
+        double runMilliSec = (job.getFinishTime() - job.getStartTime()) / 1000.0;
+
+        long readNum = getValue(job, HerculesCounter.READ_RECORDS);
+        long writeNum = getValue(job, HerculesCounter.WRITE_RECORDS);
+        long readBytes = getValue(job, HerculesCounter.ESTIMATED_MAPPER_READ_BYTE_SIZE);
+        long writeBytes = getValue(job, HerculesCounter.ESTIMATED_MAPPER_WRITE_BYTE_SIZE);
+        LOG.info(String.format("Use %.4fs in total.", runMilliSec));
+        LOG.info(String.format("Read %d records (%.4f row/s) estimated at %s (%s/s).",
+                readNum, (double) readNum / runMilliSec,
+                formatByte(readBytes), formatByte((double) readBytes / runMilliSec)));
+        LOG.info(String.format("Written %d records (%.4f row/s) estimated at %s (%s/s).",
+                writeNum, (double) writeNum / runMilliSec,
+                formatByte(writeBytes), formatByte((double) writeBytes / runMilliSec)));
 
         if (!success) {
+            TimeUnit.SECONDS.sleep(2);
             printFailedTaskLog(job);
             throw new MapReduceException("The map reduce job failed.");
         }

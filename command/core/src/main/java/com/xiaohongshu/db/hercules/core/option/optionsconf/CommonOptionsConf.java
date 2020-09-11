@@ -28,10 +28,16 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String ALLOW_COPY_COLUMN_TYPE = "allow-copy-column-type";
     public static final String ALLOW_COPY_KEY = "allow-copy-key";
     public static final String FILTER = "filter";
+    public static final String UDF = "udf";
+    public static final String MAP_STATUS_LOG_INTERVAL = "map-status-log-interval";
 
     public static final int DEFAULT_NUM_MAPPER = 4;
     public static final Level DEFAULT_LOG_LEVEL = Level.INFO;
     public static final JSONObject DEFAULT_COLUMN_MAP = new JSONObject();
+    /**
+     * 10min
+     */
+    public static final long DEFAULT_MAP_STATUS_LOG_INTERVAL = 10 * 60;
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -123,6 +129,18 @@ public class CommonOptionsConf extends BaseOptionsConf {
                 .name(FILTER)
                 .needArg(true)
                 .description("The filter logic in sql syntax.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(UDF)
+                .needArg(true)
+                .description("The row-level transfer logic, can cascade with delimiter <,>.")
+                .list(true)
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(MAP_STATUS_LOG_INTERVAL)
+                .needArg(true)
+                .description(String.format("The interval map logging its status, use second value, default to: %ds.", DEFAULT_MAP_STATUS_LOG_INTERVAL))
+                .defaultStringValue(String.valueOf(DEFAULT_MAP_STATUS_LOG_INTERVAL))
                 .build());
         return tmpList;
     }

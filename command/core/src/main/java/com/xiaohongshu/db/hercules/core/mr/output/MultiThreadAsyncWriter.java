@@ -128,8 +128,8 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
                         LOG.warn(String.format("Thread %s close with exception: %s",
                                 Thread.currentThread().getName(), ExceptionUtils.getStackTrace(e)));
                     }
-                    LOG.info(String.format("Thread %s use %dms for taking mission.",
-                            Thread.currentThread().getName(), takeWaitingTime));
+                    LOG.info(String.format("Thread %s use %.3fs for taking mission.",
+                            Thread.currentThread().getName(), (double) takeWaitingTime / 1000.0));
                 }
             });
         }
@@ -184,7 +184,7 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
 
     public final void done() throws IOException, InterruptedException {
         close();
-        LOG.info(String.format("Use %dms for putting mission.", putWaitTime));
+        LOG.info(String.format("Use %.3fs for putting mission.", (double) putWaitTime / 1000.0));
         // 尘埃落定了再检查有没有抛错
         checkException(false);
     }

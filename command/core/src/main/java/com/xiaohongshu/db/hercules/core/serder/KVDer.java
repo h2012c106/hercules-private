@@ -12,6 +12,8 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -39,8 +41,6 @@ public abstract class KVDer<T> implements DataSourceRoleGetter {
     @Options(type = OptionsType.DER)
     private GenericOptions options;
 
-    private long time = 0L;
-
     public KVDer(WrapperGetterFactory<T> wrapperGetterFactory) {
         this.wrapperGetterFactory = wrapperGetterFactory;
         HerculesContext.instance().inject(wrapperGetterFactory);
@@ -62,6 +62,8 @@ public abstract class KVDer<T> implements DataSourceRoleGetter {
     abstract protected List<MapWrapper> readValue(BaseWrapper<?> inValue) throws IOException, InterruptedException;
 
     public final List<HerculesWritable> read(HerculesWritable in) throws IOException, InterruptedException {
+        HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.DESERIALIZING);
+
         long startTime = System.currentTimeMillis();
         try {
             BaseWrapper<?> key = in.get(keyName);
@@ -95,7 +97,7 @@ public abstract class KVDer<T> implements DataSourceRoleGetter {
                 return res;
             }
         } finally {
-            time += (System.currentTimeMillis() - startTime);
+            HerculesStatus.add(null, HerculesCounter.DER_TIME, System.currentTimeMillis() - startTime);
         }
     }
 
@@ -103,10 +105,8 @@ public abstract class KVDer<T> implements DataSourceRoleGetter {
     }
 
     public final void close() throws IOException {
-        long startTime = System.currentTimeMillis();
         innerClose();
-        time += (System.currentTimeMillis() - startTime);
-        LOG.info(String.format("Spent %.3fs on deserialize.", (double) time / 1000.0));
+        LOG.info(String.format("Spent %s on deserialize.", HerculesStatus.getStrValue(HerculesCounter.DER_TIME)));
     }
 
     protected final WrapperGetter<T> getWrapperGetter(DataType dataType) {

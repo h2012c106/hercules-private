@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.mr.mapper;
 import com.alibaba.fastjson.JSONObject;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.mr.udf.HerculesUDF;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
@@ -12,6 +13,8 @@ import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Filter;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -19,23 +22,24 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.math.RoundingMode;
+import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.MAP_STATUS_LOG_INTERVAL;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.UDF;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf.BLACK_COLUMN;
 
 public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWritable, NullWritable, HerculesWritable> {
 
-    public static final String HERCULES_GROUP_NAME = "Hercules Counters";
-    public static final String ESTIMATED_MAP_BYTE_SIZE_COUNTER_NAME = "Estimated map byte size";
-    public static final String FILTERED_RECORDS_COUNTER_NAME = "Filtered records num";
-
     private static final Log LOG = LogFactory.getLog(HerculesMapper.class);
-
-    private long rowProcessTime = 0L;
-    private long filterTime = 0L;
 
     private Map<String, String> columnMap;
     private List<String> blackColumnList;
@@ -54,17 +58,11 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     @Filter
     private Expr filter;
 
+    private final List<HerculesUDF> udfList = new LinkedList<>();
+
+    private final ScheduledExecutorService timingLoggerService = Executors.newSingleThreadScheduledExecutor();
+
     public HerculesMapper() {
-    }
-
-    private HerculesWritable rowTransfer(HerculesWritable value) {
-        // 黑名单处理
-        WritableUtils.filterColumn(value.getRow(), blackColumnList);
-
-        // 转换列名
-        WritableUtils.convertColumnName(value, columnMap);
-
-        return value;
     }
 
     @Override
@@ -95,40 +93,97 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
                 .collect(Collectors.toMap(Map.Entry::getKey,
                         entry -> (String) entry.getValue()));
         blackColumnList = Arrays.asList(sourceOptions.getTrimmedStringArray(BLACK_COLUMN, null));
+
+        // 反射出UDF
+        if (commonOptions.hasProperty(UDF)) {
+            for (String className : commonOptions.getTrimmedStringArray(UDF, new String[0])) {
+                HerculesUDF tmpUDF = HerculesContext.instance().getReflector().constructWithNonArgsConstructor(className, HerculesUDF.class);
+                HerculesContext.instance().inject(tmpUDF);
+                tmpUDF.initialize(context);
+                udfList.add(tmpUDF);
+            }
+        }
+
+        Long logInterval = commonOptions.getLong(MAP_STATUS_LOG_INTERVAL, null);
+        if (logInterval > 0) {
+            final NumberFormat numberFormat=NumberFormat.getPercentInstance();
+            numberFormat.setMinimumFractionDigits(2);
+            numberFormat.setRoundingMode(RoundingMode.HALF_UP);
+            timingLoggerService.scheduleAtFixedRate(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            LOG.info(String.format("Status <%s> / Progress <%s> / Counters: %s.",
+                                    HerculesStatus.getHerculesMapStatus(),
+                                    numberFormat.format(context.getProgress()),
+                                    HerculesStatus.getStrValues()));
+                        }
+                    },
+                    0,
+                    logInterval,
+                    TimeUnit.SECONDS
+            );
+        }
+    }
+
+    private HerculesWritable rowTransfer(HerculesWritable value) {
+        // 黑名单处理
+        WritableUtils.filterColumn(value.getRow(), blackColumnList);
+
+        // 转换列名
+        WritableUtils.convertColumnName(value, columnMap);
+
+        return value;
     }
 
     @Override
     protected void map(NullWritable key, HerculesWritable value, Context context)
             throws IOException, InterruptedException {
+        HerculesStatus.add(context, HerculesCounter.ESTIMATED_MAPPER_READ_BYTE_SIZE, value.getByteSize());
+
         ++mappedRecordNum;
         long start;
-
+        HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.FILTERING);
         start = System.currentTimeMillis();
         // 有filter，且本行filter结果为false，本行不写下去
         if (filter != null && !filter.getResult(value).asBoolean()) {
-            context.getCounter(HERCULES_GROUP_NAME, FILTERED_RECORDS_COUNTER_NAME).increment(1L);
+            HerculesStatus.increase(context, HerculesCounter.FILTERED_RECORDS);
             return;
         }
-        filterTime += (System.currentTimeMillis() - start);
+        HerculesStatus.add(context, HerculesCounter.FILTER_TIME, System.currentTimeMillis() - start);
 
-        context.getCounter(HERCULES_GROUP_NAME, ESTIMATED_MAP_BYTE_SIZE_COUNTER_NAME).increment(value.getByteSize());
+        HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.UDF);
+        start = System.currentTimeMillis();
+        for (HerculesUDF udf : udfList) {
+            // 若udf返回null，这行不写
+            if ((value = udf.evaluate(value)) == null) {
+                HerculesStatus.increase(context, HerculesCounter.UDF_IGNORE_RECORDS);
+                return;
+            }
+        }
+        HerculesStatus.add(context, HerculesCounter.UDF_TIME, System.currentTimeMillis() - start);
 
+        HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.MAPPING);
         start = System.currentTimeMillis();
         value = rowTransfer(value);
-        rowProcessTime += (System.currentTimeMillis() - start);
+        HerculesStatus.add(context, HerculesCounter.ROW_PROCESS_TIME, System.currentTimeMillis() - start);
         context.write(key, value);
+
+        HerculesStatus.add(context, HerculesCounter.ESTIMATED_MAPPER_WRITE_BYTE_SIZE, value.getByteSize());
     }
 
     @Override
     protected void cleanup(Context context) throws IOException, InterruptedException {
-        long start = System.currentTimeMillis();
+        for (HerculesUDF udf : udfList) {
+            udf.close();
+        }
+        timingLoggerService.shutdownNow();
         super.cleanup(context);
-        long cleanTime = (System.currentTimeMillis() - start);
-        LOG.info(String.format("Map %s transferred %d record(s) using %.3fs for filter, %.3fs for row process and %.3fs for cleanup.",
+        LOG.info(String.format("Map %s transferred %d record(s) using %s for filter, %s for udf and %s for row process.",
                 context.getTaskAttemptID().getTaskID().toString(),
                 mappedRecordNum,
-                (double) filterTime / 1000.0,
-                (double) rowProcessTime / 1000.0,
-                (double) cleanTime / 1000.0));
+                HerculesStatus.getStrValue(HerculesCounter.FILTER_TIME),
+                HerculesStatus.getStrValue(HerculesCounter.UDF_TIME),
+                HerculesStatus.getStrValue(HerculesCounter.ROW_PROCESS_TIME)));
     }
 }

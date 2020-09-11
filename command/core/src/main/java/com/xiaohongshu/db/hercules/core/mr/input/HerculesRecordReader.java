@@ -8,6 +8,8 @@ import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import lombok.NonNull;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,8 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper.HERCULES_GROUP_NAME;
-
 /**
  * @param <T> 数据源读入时用于表示一行的数据结构，详情可见{@link WrapperGetter}
  */
@@ -30,10 +30,6 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
         implements DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordReader.class);
-
-    public static final String READ_RECORDS_COUNTER_NAME = "Read records num";
-
-    private long time = 0;
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
@@ -93,7 +89,7 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
         long start = System.currentTimeMillis();
         myInitialize(split, context);
-        time += (System.currentTimeMillis() - start);
+        HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
     }
 
     @Override
@@ -107,7 +103,7 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     public final HerculesWritable getCurrentValue() throws IOException, InterruptedException {
         long start = System.currentTimeMillis();
         HerculesWritable res = innerGetCurrentValue();
-        time += (System.currentTimeMillis() - start);
+        HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
         return res;
     }
 
@@ -115,11 +111,13 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
     @Override
     public final boolean nextKeyValue() throws IOException, InterruptedException {
-        context.getCounter(HERCULES_GROUP_NAME, READ_RECORDS_COUNTER_NAME).increment(1L);
+        HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.READING);
+
+        HerculesStatus.increase(context, HerculesCounter.READ_RECORDS);
 
         long start = System.currentTimeMillis();
         boolean res = innerNextKeyValue();
-        time += (System.currentTimeMillis() - start);
+        HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
         return res;
     }
 
@@ -129,12 +127,12 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     public final void close() throws IOException {
         if (!closed.getAndSet(true)) {
             // 最后一个nextKeyValue会返回false
-            context.getCounter(HERCULES_GROUP_NAME, READ_RECORDS_COUNTER_NAME).increment(-1L);
+            HerculesStatus.add(context, HerculesCounter.READ_RECORDS, -1L);
 
             long start = System.currentTimeMillis();
             innerClose();
-            time += (System.currentTimeMillis() - start);
-            LOG.info(String.format("Spent %.3fs on read.", (double) time / 1000.0));
+            HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
+            LOG.info(String.format("Spent %s on read.", HerculesStatus.getStrValue(HerculesCounter.READ_TIME)));
         }
     }
 
