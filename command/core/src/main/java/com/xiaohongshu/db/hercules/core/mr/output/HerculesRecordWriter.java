@@ -15,6 +15,8 @@ import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import lombok.NonNull;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,8 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper.HERCULES_GROUP_NAME;
-
 /**
  * @param <T> 数据源写出时用于表示一行的数据结构，详情可见{@link WrapperSetter}
  */
@@ -36,10 +36,6 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         implements InjectedClass, DataSourceRoleGetter {
 
     private static final Log LOG = LogFactory.getLog(HerculesRecordWriter.class);
-
-    public static final String WRITE_RECORDS_COUNTER_NAME = "Write records num";
-
-    private long time = 0;
 
     protected WrapperSetterFactory<T> wrapperSetterFactory;
 
@@ -52,7 +48,6 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
     private GenericOptions commonOptions;
 
     private RateLimiter rateLimiter = null;
-    private double acquireTime = 0;
 
     private final TaskAttemptContext context;
 
@@ -138,10 +133,13 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
      */
     @Override
     public final void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
-        context.getCounter(HERCULES_GROUP_NAME, WRITE_RECORDS_COUNTER_NAME).increment(1L);
+        HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.WRITING);
+
+        HerculesStatus.increase(context, HerculesCounter.WRITE_RECORDS);
 
         if (rateLimiter != null) {
-            acquireTime += rateLimiter.acquire();
+            double acquireTimeSecond = rateLimiter.acquire();
+            HerculesStatus.add(context, HerculesCounter.QPS_CONTROL_WAITING_TIME, new Double(acquireTimeSecond * 1000).longValue());
         }
         long start = System.currentTimeMillis();
         if (schema.getColumnNameList().size() != 0) {
@@ -149,7 +147,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
             value = new HerculesWritable(WritableUtils.copyColumn(value.getRow(), schema.getColumnNameList(), getColumnUnexistOption()));
         }
         innerWrite(value);
-        time += (System.currentTimeMillis() - start);
+        HerculesStatus.add(context, HerculesCounter.WRITE_TIME, System.currentTimeMillis() - start);
     }
 
     abstract protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException;
@@ -159,9 +157,9 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         if (!closed.getAndSet(true)) {
             long start = System.currentTimeMillis();
             innerClose(context);
-            time += (System.currentTimeMillis() - start);
-            LOG.info(String.format("Spent %.3fs of blocking on qps control.", acquireTime));
-            LOG.info(String.format("Spent %.3fs on write.", (double) time / 1000.0));
+            HerculesStatus.add(context, HerculesCounter.WRITE_TIME, System.currentTimeMillis() - start);
+            LOG.info(String.format("Spent %s of blocking on qps control.", HerculesStatus.getStrValue(HerculesCounter.QPS_CONTROL_WAITING_TIME)));
+            LOG.info(String.format("Spent %s on write.", HerculesStatus.getStrValue(HerculesCounter.WRITE_TIME)));
         }
     }
 

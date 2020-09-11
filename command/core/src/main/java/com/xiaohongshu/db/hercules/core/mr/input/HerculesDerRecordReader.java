@@ -8,6 +8,8 @@ import com.xiaohongshu.db.hercules.core.serder.KVDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -18,7 +20,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper.HERCULES_GROUP_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.VALUE_NAME;
 
@@ -27,10 +28,6 @@ import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.
  */
 public class HerculesDerRecordReader extends RecordReader<NullWritable, HerculesWritable>
         implements DataSourceRoleGetter, InjectedClass {
-
-    public static final String DER_RECORDS_COUNTER_NAME = "Deserialize records num";
-    public static final String DER_IGNORE_RECORDS_COUNTER_NAME = "Deserialize ignored records num (missing key or value)";
-    public static final String DER_ACTUAL_RECORDS_COUNTER_NAME = "Deserialize actual records num";
 
     private final KVDer<?> der;
     private final HerculesRecordReader<?> reader;
@@ -86,7 +83,7 @@ public class HerculesDerRecordReader extends RecordReader<NullWritable, Hercules
     public boolean nextKeyValue() throws IOException, InterruptedException {
         boolean first = true;
         do {
-            context.getCounter(HERCULES_GROUP_NAME, DER_RECORDS_COUNTER_NAME).increment(1L);
+            HerculesStatus.increase(context, HerculesCounter.DER_RECORDS);
             while (CollectionUtils.isEmpty(derRes) || ++derResSeq >= derRes.size()) {
                 if (!reader.nextKeyValue()) {
                     return false;
@@ -98,10 +95,10 @@ public class HerculesDerRecordReader extends RecordReader<NullWritable, Hercules
             if (first) {
                 first = false;
             } else {
-                context.getCounter(HERCULES_GROUP_NAME, DER_IGNORE_RECORDS_COUNTER_NAME).increment(1L);
+                HerculesStatus.increase(context, HerculesCounter.DER_IGNORE_RECORDS);
             }
         } while (getCurrentValue() == null);
-        context.getCounter(HERCULES_GROUP_NAME, DER_ACTUAL_RECORDS_COUNTER_NAME).increment(1L);
+        HerculesStatus.increase(context, HerculesCounter.DER_ACTUAL_RECORDS);
         return true;
     }
 
@@ -122,7 +119,7 @@ public class HerculesDerRecordReader extends RecordReader<NullWritable, Hercules
 
     @Override
     public void close() throws IOException {
-        context.getCounter(HERCULES_GROUP_NAME, DER_RECORDS_COUNTER_NAME).increment(-1L);
+        HerculesStatus.add(context, HerculesCounter.DER_RECORDS, -1L);
         der.close();
         reader.close();
     }

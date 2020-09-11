@@ -12,6 +12,8 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -36,8 +38,6 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
 
     @Options(type = OptionsType.SER)
     private GenericOptions options;
-
-    private long time = 0L;
 
     public KVSer(WrapperSetterFactory<T> wrapperSetterFactory) {
         this.wrapperSetterFactory = wrapperSetterFactory;
@@ -71,6 +71,8 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
     abstract protected BaseWrapper<?> writeValue(HerculesWritable in) throws IOException, InterruptedException;
 
     public final HerculesWritable write(HerculesWritable in) throws IOException, InterruptedException {
+        HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.SERIALIZING);
+
         long startTime = System.currentTimeMillis();
         try {
             HerculesWritable out = new HerculesWritable(2);
@@ -92,7 +94,7 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
                 return out;
             }
         } finally {
-            time += (System.currentTimeMillis() - startTime);
+            HerculesStatus.add(null, HerculesCounter.SER_TIME, System.currentTimeMillis() - startTime);
         }
     }
 
@@ -100,10 +102,8 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
     }
 
     public final void close(TaskAttemptContext context) throws IOException {
-        long startTime = System.currentTimeMillis();
         innerClose(context);
-        time += (System.currentTimeMillis() - startTime);
-        LOG.info(String.format("Spent %.3fs on deserialize.", (double) time / 1000.0));
+        LOG.info(String.format("Spent %s on serialize.", HerculesStatus.getStrValue(HerculesCounter.SER_TIME)));
     }
 
     protected final WrapperSetter<T> getWrapperSetter(DataType dataType) {

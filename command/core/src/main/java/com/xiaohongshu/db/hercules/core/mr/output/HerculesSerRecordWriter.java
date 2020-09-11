@@ -8,22 +8,19 @@ import com.xiaohongshu.db.hercules.core.serder.KVSer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
-import static com.xiaohongshu.db.hercules.core.mr.mapper.HerculesMapper.HERCULES_GROUP_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.VALUE_NAME;
 
 public class HerculesSerRecordWriter extends RecordWriter<NullWritable, HerculesWritable>
         implements DataSourceRoleGetter, InjectedClass {
-
-    public static final String SER_RECORDS_COUNTER_NAME = "Serialize records num";
-    public static final String SER_IGNORE_RECORDS_COUNTER_NAME = "Serialize ignored records num (missing key or value)";
-    public static final String SER_ACTUAL_RECORDS_COUNTER_NAME = "Serialize actual records num";
 
     private final KVSer<?> ser;
     private final HerculesRecordWriter<?> writer;
@@ -58,14 +55,14 @@ public class HerculesSerRecordWriter extends RecordWriter<NullWritable, Hercules
 
     @Override
     public void write(NullWritable key, HerculesWritable value) throws IOException, InterruptedException {
-        context.getCounter(HERCULES_GROUP_NAME, SER_RECORDS_COUNTER_NAME).increment(1L);
+        HerculesStatus.increase(context, HerculesCounter.SER_RECORDS);
         value = ser.write(value);
         // 如果ser返回null，则不写这行
         if (value != null) {
-            context.getCounter(HERCULES_GROUP_NAME, SER_ACTUAL_RECORDS_COUNTER_NAME).increment(1L);
+            HerculesStatus.increase(context, HerculesCounter.SER_ACTUAL_RECORDS);
             writer.write(key, value);
         } else {
-            context.getCounter(HERCULES_GROUP_NAME, SER_IGNORE_RECORDS_COUNTER_NAME).increment(1L);
+            HerculesStatus.increase(context, HerculesCounter.SER_IGNORE_RECORDS);
         }
     }
 

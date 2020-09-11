@@ -8,15 +8,25 @@ import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class HerculesSimpleColumnCalculateUDF extends HerculesUDF {
 
     private final List<ColumnCalculateInfo> columnCalculateInfoList;
+    private final List<String> deleteColumnList;
 
     protected HerculesSimpleColumnCalculateUDF() {
         this.columnCalculateInfoList = createColumnCalculateInfoList();
+        this.deleteColumnList = this.columnCalculateInfoList
+                .stream()
+                .filter(ColumnCalculateInfo::isDeleteSourceColumn)
+                .map(info -> Arrays.asList(info.getInColumnNames()))
+                .flatMap(Collection::stream)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -38,6 +48,9 @@ public abstract class HerculesSimpleColumnCalculateUDF extends HerculesUDF {
             );
             WritableUtils.put(rowWrapper, calculateInfo.getOutColumnName(), newColumn);
         }
+        for (String columnName : deleteColumnList) {
+            WritableUtils.remove(rowWrapper, columnName);
+        }
         return row;
     }
 
@@ -52,11 +65,17 @@ public abstract class HerculesSimpleColumnCalculateUDF extends HerculesUDF {
          * 入参个数==inColumnNames.length
          */
         private final Function<BaseWrapper<?>[], BaseWrapper<?>> calculator;
+        private final boolean deleteSourceColumn;
 
         public ColumnCalculateInfo(String[] inColumnNames, String outColumnName, Function<BaseWrapper<?>[], BaseWrapper<?>> calculator) {
+            this(inColumnNames, outColumnName, calculator, false);
+        }
+
+        public ColumnCalculateInfo(String[] inColumnNames, String outColumnName, Function<BaseWrapper<?>[], BaseWrapper<?>> calculator, boolean deleteSourceColumn) {
             this.inColumnNames = inColumnNames;
             this.outColumnName = outColumnName;
             this.calculator = calculator;
+            this.deleteSourceColumn = deleteSourceColumn;
         }
 
         public String[] getInColumnNames() {
@@ -69,6 +88,10 @@ public abstract class HerculesSimpleColumnCalculateUDF extends HerculesUDF {
 
         public Function<BaseWrapper<?>[], BaseWrapper<?>> getCalculator() {
             return calculator;
+        }
+
+        public boolean isDeleteSourceColumn() {
+            return deleteSourceColumn;
         }
     }
 
