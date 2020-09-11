@@ -11,6 +11,7 @@ import org.apache.commons.cli.*;
 
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.function.Function;
 
 public class CmdParser implements Parser<String[]> {
 
@@ -91,6 +92,10 @@ public class CmdParser implements Parser<String[]> {
 
             if (optionValue == null) {
                 continue;
+            }
+            Function<String, Void> validateFunction = optionConf.getValidateFunction();
+            if (validateFunction != null) {
+                validateFunction.apply(optionValue);
             }
             if (optionConf.isList()) {
                 options.set(paramName, optionValue.split(optionConf.getListDelimiter()));
