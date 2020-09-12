@@ -30,6 +30,7 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String FILTER = "filter";
     public static final String UDF = "udf";
     public static final String MAP_STATUS_LOG_INTERVAL = "map-status-log-interval";
+    public static final String WRITE_STRATEGY = "write-strategy";
 
     public static final int DEFAULT_NUM_MAPPER = 4;
     public static final Level DEFAULT_LOG_LEVEL = Level.INFO;
@@ -141,6 +142,11 @@ public class CommonOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .description(String.format("The interval map logging its status, use second value, default to: %ds.", DEFAULT_MAP_STATUS_LOG_INTERVAL))
                 .defaultStringValue(String.valueOf(DEFAULT_MAP_STATUS_LOG_INTERVAL))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(WRITE_STRATEGY)
+                .needArg(true)
+                .description("The write strategy and its trigger condition, format as {<strategy>: <condition>}, e.g.: {\"insert\": \"id > 10\"}.")
                 .build());
         return tmpList;
     }
