@@ -116,19 +116,26 @@ public class RDBMSBalanceSplitGetter implements SplitGetter {
     public List<InputSplit> getSplits(ResultSet minMaxCountResult, int numSplits, String splitBy,
                                       Map<String, DataType> columnTypeMap, String baseSql, BaseSplitter splitter,
                                       BigDecimal maxSampleRow, RDBMSManager manager) throws SQLException {
-        BigDecimal nullRowCount = BigDecimal.valueOf(minMaxCountResult.getLong(3));
-        BigDecimal sampleVariance = splitter.getVariance(sample(manager, splitBy,
-                MIN_MEANINGFUL_SAMPLE_NUM, nullRowCount, splitter, maxSampleRow, columnTypeMap, baseSql));
+        BigDecimal notNullRowCount = BigDecimal.valueOf(minMaxCountResult.getLong(3));
+        List firstSample = sample(manager, splitBy,
+                MIN_MEANINGFUL_SAMPLE_NUM, notNullRowCount, splitter, maxSampleRow, columnTypeMap, baseSql);
+        // 抽样出<=1的样本直接返回方差0
+        BigDecimal sampleVariance = firstSample.size() > 1 ? splitter.getVariance(firstSample) : BigDecimal.ZERO;
 
-        BigDecimal allowableError = splitter.getGap().divide(BigDecimal.valueOf(numSplits).pow(2),
-                8, BigDecimal.ROUND_UP);
-        BigDecimal sampleSize = Z.pow(2)
-                .multiply(sampleVariance)
-                .divide(allowableError.pow(2), 8, BigDecimal.ROUND_UP)
-                .max(MIN_MEANINGFUL_SAMPLE_NUM);
-
+        BigDecimal gap = splitter.getGap();
+        BigDecimal sampleSize;
+        if (gap.equals(BigDecimal.ZERO)) {
+            sampleSize = MIN_MEANINGFUL_SAMPLE_NUM;
+        } else {
+            BigDecimal allowableError = splitter.getGap().divide(BigDecimal.valueOf(numSplits).pow(2),
+                    8, BigDecimal.ROUND_UP);
+            sampleSize = Z.pow(2)
+                    .multiply(sampleVariance)
+                    .divide(allowableError.pow(2), 8, BigDecimal.ROUND_UP)
+                    .max(MIN_MEANINGFUL_SAMPLE_NUM);
+        }
         return splitter.getBalanceSplitPoint(splitBy,
-                sample(manager, splitBy, sampleSize, nullRowCount, splitter, maxSampleRow, columnTypeMap, baseSql),
+                sample(manager, splitBy, sampleSize, notNullRowCount, splitter, maxSampleRow, columnTypeMap, baseSql),
                 numSplits);
     }
 }

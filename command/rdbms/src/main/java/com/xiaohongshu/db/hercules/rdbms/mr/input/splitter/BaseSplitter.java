@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input.splitter;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputSplit;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import org.apache.commons.logging.Log;
@@ -73,9 +74,6 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
                 .map(this::convertToDecimal)
                 .collect(Collectors.toList());
         BigDecimal size = BigDecimal.valueOf(convertedList.size());
-        if (size.equals(BigDecimal.ONE) || size.equals(BigDecimal.ZERO)) {
-            return BigDecimal.ZERO;
-        }
         BigDecimal sum = BigDecimal.ZERO;
         for (BigDecimal item : convertedList) {
             sum = sum.add(item);
@@ -233,33 +231,44 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
     }
 
     public List<InputSplit> generateInputSplitList(String columnName, List<T> splitPoints) {
-        String lowClausePrefix = columnName + " >= ";
-        String highClausePrefix = columnName + " < ";
-        String endClausePrefix = columnName + " <= ";
+        if (splitPoints.size() == 0) {
+            return generateAllSplit();
+        } else if (splitPoints.size() == 1) {
+            return Lists.newArrayList(
+                    new RDBMSInputSplit(
+                            columnName + " = " + quotedValue(splitPoints.get(0).toString()),
+                            columnName + " = " + quotedValue(splitPoints.get(0).toString())
+                    )
+            );
+        } else {
+            String lowClausePrefix = columnName + " >= ";
+            String highClausePrefix = columnName + " < ";
+            String endClausePrefix = columnName + " <= ";
 
-        List<InputSplit> splits = new ArrayList<InputSplit>();
+            List<InputSplit> splits = new ArrayList<InputSplit>();
 
-        // Turn the split points into a set of intervals.
-        T start = splitPoints.get(0);
-        for (int i = 1; i < splitPoints.size(); i++) {
-            T end = splitPoints.get(i);
+            // Turn the split points into a set of intervals.
+            T start = splitPoints.get(0);
+            for (int i = 1; i < splitPoints.size(); i++) {
+                T end = splitPoints.get(i);
 
-            if (i == splitPoints.size() - 1) {
-                // This is the last one; use a closed interval.
-                splits.add(new RDBMSInputSplit(
-                        lowClausePrefix + quotedValue(start.toString()),
-                        endClausePrefix + quotedValue(end.toString())));
-            } else {
-                // Normal open-interval case.
-                splits.add(new RDBMSInputSplit(
-                        lowClausePrefix + quotedValue(start.toString()),
-                        highClausePrefix + quotedValue(end.toString())));
+                if (i == splitPoints.size() - 1) {
+                    // This is the last one; use a closed interval.
+                    splits.add(new RDBMSInputSplit(
+                            lowClausePrefix + quotedValue(start.toString()),
+                            endClausePrefix + quotedValue(end.toString())));
+                } else {
+                    // Normal open-interval case.
+                    splits.add(new RDBMSInputSplit(
+                            lowClausePrefix + quotedValue(start.toString()),
+                            highClausePrefix + quotedValue(end.toString())));
+                }
+
+                start = end;
             }
 
-            start = end;
+            return splits;
         }
-
-        return splits;
     }
 
     public static class Enclosing {
