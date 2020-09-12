@@ -73,6 +73,9 @@ public abstract class BaseSplitter<T extends Comparable<T>> {
                 .map(this::convertToDecimal)
                 .collect(Collectors.toList());
         BigDecimal size = BigDecimal.valueOf(convertedList.size());
+        if (size.equals(BigDecimal.ONE) || size.equals(BigDecimal.ZERO)) {
+            return BigDecimal.ZERO;
+        }
         BigDecimal sum = BigDecimal.ZERO;
         for (BigDecimal item : convertedList) {
             sum = sum.add(item);
