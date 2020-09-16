@@ -1,10 +1,13 @@
 package com.xiaohongshu.db.hercules.kafka.schema.manager;
 
+import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.kafka.KafkaKV;
 import com.xiaohongshu.db.hercules.kafka.option.KafkaOptionConf;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -13,8 +16,8 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 public class KafkaManager {
 
@@ -29,7 +32,28 @@ public class KafkaManager {
         this.options = options;
         this.topic = options.getString(KafkaOptionConf.TOPIC, "");
         this.producer = null;
+//        checkKafkaConn();
     }
+
+    // 检测kafka连接是否可以连通
+//    public void checkKafkaConn() {
+//        String bootstrapServers = options.getString(KafkaOptionConf.BOOTSTRAP_SERVERS, "");
+//
+//        Properties props = new Properties();
+//        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+//        AdminClient adminClient = AdminClient.create(props);
+//        Set<String> topicSet;
+//        try {
+//            topicSet = adminClient.listTopics().names().get();
+//        } catch (InterruptedException | ExecutionException e) {
+//            throw new RuntimeException("尝试从选定的connId获取topics，获取失败。");
+//        } finally {
+//            adminClient.close();
+//        }
+//        if (topicSet.size() == 0){
+//            throw new RuntimeException("Kafka connection is not valid, please check kafka connection and topics.");
+//        }
+//    }
 
     private Class<? extends Serializer<?>> getSerializer(DataType dataType) {
         // 如果将来有什么特殊类型可以写个isCustom的if逻辑里return
@@ -47,7 +71,7 @@ public class KafkaManager {
     private Map<String, Object> generateConfig(KafkaKV kv) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, options.getString(KafkaOptionConf.BOOTSTRAP_SERVERS, ""));
-        props.put(ProducerConfig.RETRIES_CONFIG, options.getString(KafkaOptionConf.RETRIES_CONFIG, ""));
+        props.put(ProducerConfig.RETRIES_CONFIG, options.getString(KafkaOptionConf.RETRIES_CONFIG, "2"));
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, options.getString(KafkaOptionConf.BATCH_SIZE_CONFIG, ""));
         props.put(ProducerConfig.LINGER_MS_CONFIG, options.getInteger(KafkaOptionConf.LINGER_MS_CONFIG, 5));
         // props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, bufferMemory);
