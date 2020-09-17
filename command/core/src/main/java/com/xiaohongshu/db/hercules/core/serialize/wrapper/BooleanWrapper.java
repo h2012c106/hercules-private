@@ -16,7 +16,7 @@ public class BooleanWrapper extends BaseWrapper<Boolean> {
     private final static BooleanWrapper TRUE_BOOLEAN_WRAPPER = new BooleanWrapper(true);
     private final static BooleanWrapper FALSE_BOOLEAN_WRAPPER = new BooleanWrapper(false);
 
-    private BooleanWrapper(Boolean value) {
+    protected BooleanWrapper(Boolean value) {
         super(value, DATA_TYPE, 1);
     }
 

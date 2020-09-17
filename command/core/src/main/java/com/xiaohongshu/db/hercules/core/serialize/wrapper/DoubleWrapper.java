@@ -13,20 +13,20 @@ import java.util.Date;
 
 public class DoubleWrapper extends BaseWrapper<BigDecimal> {
 
-    private DoubleWrapper(Float value) {
+    protected DoubleWrapper(Float value) {
         this(BigDecimal.valueOf(value), BaseDataType.FLOAT, 4);
     }
 
-    private DoubleWrapper(Double value) {
+    protected DoubleWrapper(Double value) {
         this(BigDecimal.valueOf(value), BaseDataType.DOUBLE, 8);
     }
 
-    private DoubleWrapper(BigDecimal value) {
+    protected DoubleWrapper(BigDecimal value) {
         // 仅仅粗略估计
         this(value, BaseDataType.DECIMAL, value.toBigInteger().toByteArray().length);
     }
 
-    private DoubleWrapper(BigDecimal value, DataType type, int byteSize) {
+    protected DoubleWrapper(BigDecimal value, DataType type, int byteSize) {
         super(value, type, byteSize);
     }
 
