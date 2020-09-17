@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.serder.canal.ser;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
@@ -14,6 +15,12 @@ import java.nio.charset.StandardCharsets;
  * 参阅{@see <a href="https://github.com/alibaba/canal/blob/master/parse/src/main/java/com/alibaba/otter/canal/parse/inbound/mysql/dbsync/LogEventConvert.java#L731">canal逻辑</a>}
  */
 public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEntry.Column.Builder> {
+
+    @Override
+    public DataSourceRole getRole() {
+        return DataSourceRole.SER;
+    }
+
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<CanalEntry.Column.Builder> getByteSetter() {
         return new BaseTypeWrapperSetter.ByteSetter<CanalEntry.Column.Builder>() {
