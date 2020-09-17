@@ -62,17 +62,11 @@ public class MongoOplogKVSer extends KVSer<Document> implements InjectedClass {
         if (schema.getColumnNameList().size() != 0) {
             in = new HerculesWritable(WritableUtils.copyColumn(in.getRow(), schema.getColumnNameList(), WritableUtils.FilterUnexistOption.IGNORE));
         }
-        if (!(in.get("_id") instanceof ObjectIdWrapper)) {
-            throw new RuntimeException("in");
-        }
         Document document;
         try {
             document = wrapperSetterFactory.writeMapWrapper(in.getRow(), new Document(), null);
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-        if (!(document.get("_id") instanceof ObjectId)) {
-            throw new RuntimeException("document");
         }
         String docJsonString = document.toJson();
         switch (format) {
