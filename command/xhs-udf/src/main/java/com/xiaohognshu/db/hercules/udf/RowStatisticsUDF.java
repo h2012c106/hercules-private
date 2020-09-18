@@ -6,13 +6,20 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.IntegerWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.StringWrapper;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RowStatisticsUDF extends HerculesUDF {
+
+    private final String HERCULES_UDF_STATISTIC_MODE = "hercules.udf.statisticMode";
+    private final String HERCULES_UDF_BYTESIZ_ELIMIT = "hercules.udf.byteSizeLimit";
+    private final String HERCULES_UDF_KEY_NAME = "hercules.udf.keyName";
 
     private StatisticMode mode;
     private long byteSizeLimit = Long.MAX_VALUE;
@@ -24,13 +31,16 @@ public class RowStatisticsUDF extends HerculesUDF {
 
     @Override
     public void initialize(Mapper.Context context) throws IOException, InterruptedException {
-        mode = StatisticMode.valueOfIgnoreCase(context.getConfiguration().get("hercules.udf.statisticMode"));
+        mode = StatisticMode.valueOfIgnoreCase(context.getConfiguration().get(HERCULES_UDF_STATISTIC_MODE));
         try {
-            byteSizeLimit = Long.parseLong(context.getConfiguration().get("hercules.udf.byteSizeLimit"));
+            byteSizeLimit = Long.parseLong(context.getConfiguration().get(HERCULES_UDF_BYTESIZ_ELIMIT));
         } catch (NumberFormatException e) {
             byteSizeLimit = defaultByteSizeLimit;
         }
-        keyName = context.getConfiguration().get("hercules.udf.keyName");
+        keyName = context.getConfiguration().get(HERCULES_UDF_KEY_NAME);
+        if (keyName == null) {
+            throw new RuntimeException("keyName should be provided with -D" + HERCULES_UDF_KEY_NAME);
+        }
     }
 
     // key totalLen {col: len}
@@ -43,13 +53,17 @@ public class RowStatisticsUDF extends HerculesUDF {
                     return null;
                 }
             case LEN:
-                output.put("total", IntegerWrapper.get(byteSize));
+                output.put("TOTAL_BYTES_COUNT", IntegerWrapper.get(byteSize));
                 addLenInfo(row, output);
                 break;
             default:
                 throw new RuntimeException("mode not supported.");
         }
-        output.put(keyName, row.get(keyName));
+        try {
+            output.put(keyName, StringWrapper.get(row.get(keyName).asString()));
+        } catch (Throwable e) {
+            throw new RuntimeException(row.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList()).toString());
+        }
         return output;
     }
 

@@ -44,6 +44,7 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
      */
     public static final String SCAN_BATCHSIZE = "scan-batchsize";
     public static final String KV_COLUMN = "kv-column";
+    public static final String IGNORE_COLUMN_SIZE_CHECK = "ignore-column-size-check";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -96,6 +97,11 @@ public class HBaseInputOptionsConf extends BaseOptionsConf {
                 .name(SCAN_BATCHSIZE)
                 .needArg(true)
                 .description("Set the maximum number of values to return for each call to next().")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(IGNORE_COLUMN_SIZE_CHECK)
+                .needArg(false)
+                .description("Provide no column list. Meaning pass all columns based on bytes wrappers.")
                 .build());
         return tmpList;
     }
