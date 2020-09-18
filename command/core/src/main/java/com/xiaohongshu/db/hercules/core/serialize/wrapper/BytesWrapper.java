@@ -22,7 +22,7 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
 
     private String encode;
 
-    private BytesWrapper(String value, String encode) {
+    protected BytesWrapper(String value, String encode) {
         this(new byte[0]);
         byte[] bytesValue = null;
         try {
@@ -35,12 +35,12 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
         this.encode = encode;
     }
 
-    private BytesWrapper(byte[] value, String encode) {
+    protected BytesWrapper(byte[] value, String encode) {
         this(value);
         this.encode = encode;
     }
 
-    private BytesWrapper(byte[] value) {
+    protected BytesWrapper(byte[] value) {
         super(value, DATA_TYPE, value.length);
     }
 

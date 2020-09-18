@@ -41,3 +41,7 @@ myhub:
 redis:
   jar: hercules-command-redis-dev.jar
   assemblyClass: com.xiaohongshu.db.hercules.redis.RedisAssemblySupplier
+
+nebula:
+  jar: hercules-command-nebula-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.nebula.NebulaAssemblySupplier

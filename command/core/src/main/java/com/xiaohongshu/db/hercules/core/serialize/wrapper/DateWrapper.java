@@ -18,7 +18,7 @@ public class DateWrapper extends BaseWrapper<ExtendedDate> {
 
     private static final long DATE_SIZE = 32;
 
-    private DateWrapper(ExtendedDate value, @NonNull DataType type) {
+    protected DateWrapper(ExtendedDate value, @NonNull DataType type) {
         super(value, type, DATE_SIZE);
     }
 

@@ -20,7 +20,7 @@ public class StringWrapper extends BaseWrapper<String> {
 
     private String encode = null;
 
-    private StringWrapper(byte[] value, String encode) {
+    protected StringWrapper(byte[] value, String encode) {
         this("");
         String strValue = null;
         try {
@@ -33,7 +33,7 @@ public class StringWrapper extends BaseWrapper<String> {
         this.encode = encode;
     }
 
-    private StringWrapper(String value) {
+    protected StringWrapper(String value) {
         super(value, DATA_TYPE, value.length());
     }
 

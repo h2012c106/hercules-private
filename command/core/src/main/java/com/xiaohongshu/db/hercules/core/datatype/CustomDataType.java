@@ -64,17 +64,17 @@ public abstract class CustomDataType<I, O, T> implements DataType {
     }
 
     @Override
-    public String getName() {
+    public final String getName() {
         return name;
     }
 
     @Override
-    public BaseDataType getBaseDataType() {
+    public final BaseDataType getBaseDataType() {
         return baseType;
     }
 
     @Override
-    public Class<?> getStorageClass() {
+    public final Class<?> getStorageClass() {
         return storageClass;
     }
 
@@ -83,7 +83,7 @@ public abstract class CustomDataType<I, O, T> implements DataType {
         return true;
     }
 
-    public T write(@NonNull BaseWrapper<?> wrapper) throws Exception {
+    public final T write(@NonNull BaseWrapper<?> wrapper) throws Exception {
         if (wrapper.getClass() == IntegerWrapper.class) {
             return innerWrite((IntegerWrapper) wrapper);
         } else if (wrapper.getClass() == BooleanWrapper.class) {
