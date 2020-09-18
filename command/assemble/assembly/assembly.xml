@@ -115,5 +115,12 @@
                 <include>**/hercules-xhs-serder-*.jar</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>../xhs-udf/target</directory>
+            <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>**/hercules-xhs-udf-*.jar</include>
+            </includes>
+        </fileSet>
     </fileSets>
 </assembly>

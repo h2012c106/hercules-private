@@ -27,6 +27,7 @@
         <module>kafka</module>
         <module>redis</module>
         <module>xhs-serder</module>
+        <module>xhs-udf</module>
         <module>assemble</module>
     </modules>
 
