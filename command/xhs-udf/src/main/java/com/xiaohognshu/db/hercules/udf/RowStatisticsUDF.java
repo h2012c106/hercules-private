@@ -18,13 +18,17 @@ import java.util.stream.Collectors;
 public class RowStatisticsUDF extends HerculesUDF {
 
     private final String HERCULES_UDF_STATISTIC_MODE = "hercules.udf.statisticMode";
-    private final String HERCULES_UDF_BYTESIZ_ELIMIT = "hercules.udf.byteSizeLimit";
+    private final String HERCULES_UDF_TOTAL_BYTESIZ_ELIMIT = "hercules.udf.totalByteSizeLimit";
+    private final String HERCULES_UDF_COLUMN_BYTESIZ_ELIMIT = "hercules.udf.columnByteSizeLimit";
     private final String HERCULES_UDF_KEY_NAME = "hercules.udf.keyName";
 
     private StatisticMode mode;
-    private long byteSizeLimit = Long.MAX_VALUE;
     private String keyName;
-    private long defaultByteSizeLimit = 1024 * 1025 * 5;
+    private long totalByteSizeLimit = Long.MAX_VALUE;
+    private long defaultTotalByteSizeLimit = 1024 * 1024 * 100;
+
+    private long columnByteSizeLimit = Long.MAX_VALUE;
+    private long defaultColumnByteSizeLimit = 1024 * 1024 * 100;
 
     @Options(type = OptionsType.SOURCE)
     private GenericOptions options;
@@ -32,10 +36,15 @@ public class RowStatisticsUDF extends HerculesUDF {
     @Override
     public void initialize(Mapper.Context context) throws IOException, InterruptedException {
         mode = StatisticMode.valueOfIgnoreCase(context.getConfiguration().get(HERCULES_UDF_STATISTIC_MODE));
-        try {
-            byteSizeLimit = Long.parseLong(context.getConfiguration().get(HERCULES_UDF_BYTESIZ_ELIMIT));
-        } catch (NumberFormatException e) {
-            byteSizeLimit = defaultByteSizeLimit;
+        try{
+            totalByteSizeLimit = Long.parseLong(context.getConfiguration().get(HERCULES_UDF_TOTAL_BYTESIZ_ELIMIT));
+        } catch (NumberFormatException e){
+            totalByteSizeLimit = defaultTotalByteSizeLimit;
+        }
+        try{
+            columnByteSizeLimit = Long.parseLong(context.getConfiguration().get(HERCULES_UDF_COLUMN_BYTESIZ_ELIMIT));
+        } catch (NumberFormatException e){
+            columnByteSizeLimit = defaultColumnByteSizeLimit;
         }
         keyName = context.getConfiguration().get(HERCULES_UDF_KEY_NAME);
         if (keyName == null) {
@@ -49,7 +58,7 @@ public class RowStatisticsUDF extends HerculesUDF {
         long byteSize = row.getByteSize();
         switch (mode) {
             case FILTER:
-                if (byteSize < byteSizeLimit) {
+                if (byteSize < totalByteSizeLimit) {
                     return null;
                 }
             case LEN:
@@ -68,7 +77,19 @@ public class RowStatisticsUDF extends HerculesUDF {
     }
 
     public void addLenInfo(HerculesWritable row, HerculesWritable output) {
-        row.entrySet().forEach(entry -> output.put(entry.getKey(), IntegerWrapper.get(entry.getValue().getByteSize())));
+        row.entrySet().forEach(entry -> {
+            switch (mode) {
+                case FILTER:
+                    if (entry.getValue().getByteSize() < columnByteSizeLimit) {
+                        return;
+                    }
+                case LEN:
+                    output.put(entry.getKey(), IntegerWrapper.get(entry.getValue().getByteSize()));
+                    break;
+                default:
+                    throw new RuntimeException("mode not supported.");
+            }
+        });
     }
 
     public void close() throws IOException, InterruptedException {
