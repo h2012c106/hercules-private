@@ -19,9 +19,7 @@ public class WritingRow {
     }
 
     public void putValue(String columnName, String columnValueStr) {
-        long startTime = System.currentTimeMillis();
         valueMap.put(columnName, columnValueStr);
-        NebulaRecordWriter.convertTime2 += (System.currentTimeMillis() - startTime);
     }
 
     public Map<String, Long> getKeyMap() {
