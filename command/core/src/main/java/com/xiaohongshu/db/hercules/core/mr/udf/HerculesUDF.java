@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.core.mr.udf;
 
-import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 

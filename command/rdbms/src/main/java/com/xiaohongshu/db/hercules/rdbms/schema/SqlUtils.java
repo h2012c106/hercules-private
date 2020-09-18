@@ -229,11 +229,11 @@ public final class SqlUtils {
 
     private static final Pattern BACKTICK_PATTERN = Pattern.compile("^`(.*)`$");
 
-    public static String unwrapBacktick(String s){
-        Matcher matcher=BACKTICK_PATTERN.matcher(s);
-        if(matcher.find()){
+    public static String unwrapBacktick(String s) {
+        Matcher matcher = BACKTICK_PATTERN.matcher(s);
+        if (matcher.find()) {
             return matcher.group(1);
-        }else{
+        } else {
             return s;
         }
     }

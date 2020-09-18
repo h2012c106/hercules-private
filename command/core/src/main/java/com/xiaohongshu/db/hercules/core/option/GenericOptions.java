@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.core.option;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.parser.Feature;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
@@ -126,7 +127,7 @@ public final class GenericOptions {
         return innerGet(key, defaultValue, new StringConverter<JSONObject>() {
             @Override
             public JSONObject convert(String sourceString) {
-                return JSON.parseObject(sourceString);
+                return JSON.parseObject(sourceString, Feature.OrderedField);
             }
         });
     }
