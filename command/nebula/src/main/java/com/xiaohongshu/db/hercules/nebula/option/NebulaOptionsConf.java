@@ -25,9 +25,9 @@ public class NebulaOptionsConf extends BaseOptionsConf {
     public static final String TABLE = "table";
 
     public static final String MODE = "mode";
-    public static final String VERTEX_ID_COLUMN = "vertex_id_column";
-    public static final String EDGE_SOURCE_ID_COLUMN = "edge_source_id_column";
-    public static final String EDGE_TARGET_ID_COLUMN = "edge_target_id_column";
+    public static final String VERTEX_ID_COLUMN = "vertex-id-column";
+    public static final String EDGE_SOURCE_ID_COLUMN = "edge-source-id-column";
+    public static final String EDGE_TARGET_ID_COLUMN = "edge-target-id-column";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
