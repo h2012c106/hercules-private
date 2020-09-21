@@ -1,0 +1,11 @@
+image: docker-reg.devops.xiaohongshu.com/data/maven-hercules:0.0.2
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    - cd hercules/command && mvn clean package -DskipTests
+    - scp -o StrictHostKeyChecking=false /build/hercules/command/assemble/target/hercules-command.tar.gz root@ops-nginx-midware-prod-sh4-qc01:/data/nginx/html/deploy/hercules-command-$CI_COMMIT_TAG.tar.gz
+  only:
+    - tags
