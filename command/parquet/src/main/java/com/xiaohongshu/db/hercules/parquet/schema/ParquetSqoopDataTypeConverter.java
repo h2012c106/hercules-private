@@ -47,7 +47,7 @@ public class ParquetSqoopDataTypeConverter extends ParquetDataTypeConverter {
             if (originalType == OriginalType.UTF8) {
                 return BaseDataType.STRING;
             } else {
-                LOG.warn(String.format("The annotation [%s] is not supported at present, it will be treated as [%s] normally.",
+                LOG.debug(String.format("The annotation [%s] is not supported at present, it will be treated as [%s] normally.",
                         getAnnotationName(annotation), getTypeName(type)));
             }
         }

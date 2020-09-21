@@ -96,7 +96,7 @@ public class ParquetHiveDataTypeConverter extends ParquetDataTypeConverter {
                 case DECIMAL:
                     return BaseDataType.DECIMAL;
                 default:
-                    LOG.warn(String.format("The annotation [%s] is not supported at present, it will be treated as [%s] normally.",
+                    LOG.debug(String.format("The annotation [%s] is not supported at present, it will be treated as [%s] normally.",
                             getAnnotationName(annotation), getTypeName(type)));
             }
         }

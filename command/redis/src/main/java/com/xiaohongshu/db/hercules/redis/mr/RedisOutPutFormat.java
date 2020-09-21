@@ -19,6 +19,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.util.List;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.VALUE_NAME;
@@ -71,7 +72,11 @@ class RedisRecordWriter extends HerculesKvRecordWriter<RedisKV> {
         } catch (Exception e) {
             throw new IOException(e);
         }
-        manager.set(kv);
+        List<String> strategyList = getStrategyList();
+        if(strategyList != null) {
+            manager.act(kv, strategyList);
+        } else
+            manager.set(kv);
     }
 
     @Override

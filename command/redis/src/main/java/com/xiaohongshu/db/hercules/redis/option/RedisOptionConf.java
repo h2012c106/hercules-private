@@ -16,6 +16,7 @@ public class RedisOptionConf extends BaseOptionsConf {
     public final static String REDIS_HOST = "redis_host";
     public final static String REDIS_PORT = "redis_port";
     public static final String REDIS_PIPE_SIZE = "pipe_size";
+    public  static final String REDIS_EXPIRE = "expire" ;
     public static final long DEFAULT_PIPE_SIZE = 5000;
 
     @Override
@@ -46,6 +47,11 @@ public class RedisOptionConf extends BaseOptionsConf {
                 .needArg(true)
                 .description("redis pipeline size submits.")
                 .defaultStringValue(String.valueOf(DEFAULT_PIPE_SIZE))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(REDIS_EXPIRE)
+                .needArg(true)
+                .description("redis expire time.")
                 .build());
 
         return tmpList;
