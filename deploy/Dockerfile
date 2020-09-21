@@ -6,4 +6,3 @@ RUN chmod 0600 /root/.ssh/id_rsa \
     && sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories \
     && apk add --no-cache openssh
 USER root
-ENV ANSIBLE_HOST_KEY_CHECKING=False
