@@ -1,9 +1,9 @@
-
-- hosts: SH4-Data-HDFS
+# 目前只有 SH4-Data-HDFS，后续需统一
+- hosts: "{{host}}"
   tasks:
     - name: deploy hercules jar
       unarchive:
         src: http://10.0.223.180:8000/deploy/hercules-command-{{tag}}.tar.gz
-        dest: /home/data/hercules_temp_test_oplogJson
+        dest: "{{dest}}"
         copy: no
-        owner: data
+        owner: "{{owner}}"
