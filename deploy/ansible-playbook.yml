@@ -1,5 +1,9 @@
 
-- hosts: all
+- hosts: SH4-Data-HDFS
   tasks:
     - name: deploy hercules jar
-      unarchive: src=./hercules/command/assemble/target/hercules-command.tar.gz dest=/home/data cpy=no
+      unarchive:
+        src: http://10.0.223.180:8000/deploy/hercules-command-{{tag}}.tar.gz
+        dest: /home/data/hercules_temp_test_oplogJson
+        copy: no
+        owner: data
