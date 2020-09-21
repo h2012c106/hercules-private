@@ -1,4 +1,3 @@
-# 目前只有 SH4-Data-HDFS，后续需统一
 - hosts: "{{host}}"
   tasks:
     - name: ensure {{dest}} directory exists
