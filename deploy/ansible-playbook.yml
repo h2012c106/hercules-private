@@ -1,6 +1,10 @@
 # 目前只有 SH4-Data-HDFS，后续需统一
 - hosts: "{{host}}"
   tasks:
+    - name: ensure {{dest}} directory exists
+      file:
+        path: "{{dest}}"
+        state: directory
     - name: deploy hercules jar
       unarchive:
         src: http://10.0.223.180:8000/deploy/hercules-command-{{tag}}.tar.gz
