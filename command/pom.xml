@@ -29,7 +29,7 @@
         <module>nebula</module>
 
         <module>xhs-serder</module>
-
+        <module>xhs-udf</module>
         <module>assemble</module>
     </modules>
 
