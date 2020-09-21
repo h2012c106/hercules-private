@@ -1,0 +1,5 @@
+
+- hosts: all
+  tasks:
+    - name: deploy hercules jar
+      unarchive: src=./hercules/command/assemble/target/hercules-command.tar.gz dest=/home/data cpy=no
