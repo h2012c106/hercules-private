@@ -1,13 +1,12 @@
 package com.xiaohongshu.db.hercules.kafka.schema.manager;
 
-import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.kafka.KafkaKV;
 import com.xiaohongshu.db.hercules.kafka.option.KafkaOptionConf;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -16,17 +15,19 @@ import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class KafkaManager {
 
+    private static final Log LOG = LogFactory.getLog(KafkaManager.class);
     private final GenericOptions options;
     private volatile Producer<Object, Object> producer;
     private final String topic;
 
     private DataType keyType;
     private DataType valueType;
+    private RuntimeException e = null;
 
     public KafkaManager(GenericOptions options) {
         this.options = options;
@@ -74,6 +75,7 @@ public class KafkaManager {
         props.put(ProducerConfig.RETRIES_CONFIG, options.getString(KafkaOptionConf.RETRIES_CONFIG, "2"));
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, options.getString(KafkaOptionConf.BATCH_SIZE_CONFIG, ""));
         props.put(ProducerConfig.LINGER_MS_CONFIG, options.getInteger(KafkaOptionConf.LINGER_MS_CONFIG, 5));
+        props.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, options.getInteger(KafkaOptionConf.MAX_REQUEST_SIZE_CONFIG, KafkaOptionConf.DEFAULT_MAX_REQUEST_SIZE_CONFIG));
         // props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, bufferMemory);
         props.put(ProducerConfig.ACKS_CONFIG, "all");
 
@@ -99,11 +101,23 @@ public class KafkaManager {
         if (!kv.getKey().getDataType().equals(keyType) || !kv.getValue().getDataType().equals(valueType)) {
             throw new RuntimeException("Kafka cannot support changing data type, as its serializer is fixed.");
         }
+        if (e != null) {
+            throw e;
+        }
         // 此处get出来的value存在为null的可能，现在没做处理，但是注意一下
-        producer.send(new ProducerRecord<>(topic, kv.getKey().getValue(), kv.getValue().getValue()));
+        producer.send(new ProducerRecord<>(topic, kv.getKey().getValue(), kv.getValue().getValue()), (recordMetadata, e) -> {
+            if (e != null) {
+                String logMsg = "Can't produce,getting error, key: " + kv.getKey() + " size: " + kv.getValue().getValue();
+                LOG.error(logMsg, e);
+                this.e = new RuntimeException(logMsg + e);
+            }
+        });
     }
 
     public void close() {
+        if (e != null) {
+            throw e;
+        }
         if (producer != null) {
             producer.flush();
             producer.close();

@@ -16,6 +16,8 @@ public class KafkaOptionConf extends BaseOptionsConf {
     public final static String RETRIES_CONFIG = "retries";
     public final static String BATCH_SIZE_CONFIG = "batch-size";
     public final static String LINGER_MS_CONFIG = "linger";
+    public final static String MAX_REQUEST_SIZE_CONFIG = "max-request-size";
+    public final static int DEFAULT_MAX_REQUEST_SIZE_CONFIG = 5000000;
 
     public final static String LINGER_MS_DEFAULT = "5";
     public final static String BATCH_SIZE_DEFAULT = "50000";
@@ -63,6 +65,11 @@ public class KafkaOptionConf extends BaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("Kafka topic to send message.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(MAX_REQUEST_SIZE_CONFIG)
+                .needArg(true)
+                .description("The maximum size of a request in bytes. The default is " + DEFAULT_MAX_REQUEST_SIZE_CONFIG + "bytes")
                 .build());
         return tmpList;
     }

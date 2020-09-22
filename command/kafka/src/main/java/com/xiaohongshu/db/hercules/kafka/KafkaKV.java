@@ -59,5 +59,14 @@ public class KafkaKV {
         public boolean isNull() {
             return isNull;
         }
+
+        @Override
+        public String toString() {
+            return "KafkaKVValue{" +
+                    "dataType=" + dataType +
+                    ", value=" + value +
+                    ", isNull=" + isNull +
+                    '}';
+        }
     }
 }
