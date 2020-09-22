@@ -12,4 +12,4 @@ fi
 
 # example
 # ./deploy.sh {{tag}} {{host}} {{dest}} {{owner}}
-# ./deploy.sh v0.0.5 SH4_Data_HDFS /home/data/hercules_temp_test_oplogJson data
+# ./deploy.sh v0.0.4 SH4_Data_HDFS /home/data/hercules_temp_test_oplogJson data
