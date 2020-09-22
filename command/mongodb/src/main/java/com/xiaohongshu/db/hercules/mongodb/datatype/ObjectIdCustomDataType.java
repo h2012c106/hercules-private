@@ -22,7 +22,7 @@ public class ObjectIdCustomDataType extends CustomDataType<Document, Document, O
 
     public static final ObjectIdCustomDataType INSTANCE = new ObjectIdCustomDataType();
 
-    public ObjectIdCustomDataType() {
+    protected ObjectIdCustomDataType() {
         super(NAME, BASE_DATA_TYPE, STORAGE_CLASS, new Function<Object, BaseWrapper<?>>() {
             @Override
             public BaseWrapper<?> apply(Object o) {

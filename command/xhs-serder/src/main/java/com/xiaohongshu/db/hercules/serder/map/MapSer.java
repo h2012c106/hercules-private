@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.serder.map;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serder.KVSer;
@@ -12,6 +13,12 @@ public class MapSer extends KVSer<Void> {
 
     public MapSer() {
         super(new WrapperSetterFactory<Void>() {
+
+            @Override
+            public DataSourceRole getRole() {
+                return DataSourceRole.SER;
+            }
+
             @Override
             protected BaseTypeWrapperSetter.ByteSetter<Void> getByteSetter() {
                 return null;

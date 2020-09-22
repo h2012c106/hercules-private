@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,18 +29,26 @@ public abstract class BaseCustomDataTypeManager<I, O> implements CustomDataTypeM
 
     public BaseCustomDataTypeManager() {
         for (Class<? extends CustomDataType<I, O, ?>> item : generateTypeList()) {
-            CustomDataType<I, O, ?> itemInstance;
-            try {
-                itemInstance = item.newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
+            CustomDataType<I, O, ?> itemInstance = construct(item);
             String typeName = itemInstance.getName();
             if (factory.containsKey(typeName)) {
                 throw new RuntimeException("Duplicate definition of custom type: " + typeName);
             } else {
                 factory.put(typeName, item);
             }
+        }
+    }
+
+    private CustomDataType<I, O, ?> construct(Class<? extends CustomDataType<I, O, ?>> clazz) {
+        CustomDataType<I, O, ?> itemInstance;
+        try {
+            Constructor<? extends CustomDataType<I, O, ?>> constructor = clazz.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            itemInstance = constructor.newInstance();
+            constructor.setAccessible(false);
+            return itemInstance;
+        } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -100,13 +110,9 @@ public abstract class BaseCustomDataTypeManager<I, O> implements CustomDataTypeM
         if (customDataTypeClass == null) {
             throw new RuntimeException("Cannot get special data type with name: " + name);
         }
-        try {
-            CustomDataType<I, O, ?> customDataType = customDataTypeClass.newInstance();
-            customDataType.initialize(params);
-            return customDataType;
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new RuntimeException("Exception when get special data type.", e);
-        }
+        CustomDataType<I, O, ?> customDataType = construct(customDataTypeClass);
+        customDataType.initialize(params);
+        return customDataType;
     }
 
     @Override
@@ -117,14 +123,9 @@ public abstract class BaseCustomDataTypeManager<I, O> implements CustomDataTypeM
 
         for (Map.Entry<String, Class<? extends CustomDataType<I, O, ?>>> entry : factory.entrySet()) {
             if (StringUtils.equalsIgnoreCase(dataTypeName, entry.getKey())) {
-                try {
-                    CustomDataType<I, O, ?> customDataType = entry.getValue().newInstance();
-                    customDataType.initialize(params);
-                    return customDataType;
-                } catch (InstantiationException | IllegalAccessException e) {
-                    LOG.error("Exception when get special data type, " + e.getMessage());
-                    break;
-                }
+                CustomDataType<I, O, ?> customDataType = construct(entry.getValue());
+                customDataType.initialize(params);
+                return customDataType;
             }
         }
         throw new RuntimeException("Cannot get special data type with case-ignored name: " + name);

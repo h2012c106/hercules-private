@@ -95,7 +95,11 @@ public class CmdParser implements Parser<String[]> {
             }
             Function<String, Void> validateFunction = optionConf.getValidateFunction();
             if (validateFunction != null) {
-                validateFunction.apply(optionValue);
+                try {
+                    validateFunction.apply(optionValue);
+                } catch (Exception e) {
+                    throw new RuntimeException("Uncorrect param value: " + paramName, e);
+                }
             }
             if (optionConf.isList()) {
                 options.set(paramName, optionValue.split(optionConf.getListDelimiter()));

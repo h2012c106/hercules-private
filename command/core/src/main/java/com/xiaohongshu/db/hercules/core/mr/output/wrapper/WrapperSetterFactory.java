@@ -40,7 +40,7 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
     }
 
     @Override
-    public final DataSourceRole getRole() {
+    public DataSourceRole getRole() {
         return DataSourceRole.TARGET;
     }
 

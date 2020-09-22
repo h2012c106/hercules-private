@@ -17,27 +17,27 @@ import java.util.Date;
  */
 public class IntegerWrapper extends BaseWrapper<BigInteger> {
 
-    private IntegerWrapper(Byte value) {
+    protected IntegerWrapper(Byte value) {
         this(BigInteger.valueOf(value), BaseDataType.BYTE, 1);
     }
 
-    private IntegerWrapper(Short value) {
+    protected IntegerWrapper(Short value) {
         this(BigInteger.valueOf(value), BaseDataType.SHORT, 2);
     }
 
-    private IntegerWrapper(Integer value) {
+    protected IntegerWrapper(Integer value) {
         this(BigInteger.valueOf(value), BaseDataType.INTEGER, 4);
     }
 
-    private IntegerWrapper(Long value) {
+    protected IntegerWrapper(Long value) {
         this(BigInteger.valueOf(value), BaseDataType.LONG, 8);
     }
 
-    private IntegerWrapper(BigInteger value) {
+    protected IntegerWrapper(BigInteger value) {
         this(value, BaseDataType.LONGLONG, value.toByteArray().length);
     }
 
-    private IntegerWrapper(BigInteger value, DataType type, int byteSize) {
+    protected IntegerWrapper(BigInteger value, DataType type, int byteSize) {
         super(value, type, byteSize);
     }
 

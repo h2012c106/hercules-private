@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.core.option;
 
+import org.apache.commons.lang.StringUtils;
+
 import javax.annotation.Nonnull;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -33,6 +35,15 @@ public final class SingleOptionConf {
 
     private Function<String, Void> validateFunction = null;
 
+    public static final Function<String, Void> NOT_EMPTY = new Function<String, Void>() {
+        @Override
+        public Void apply(String s) {
+            if (StringUtils.isEmpty(s)) {
+                throw new RuntimeException("Unallowed empty value: " + s);
+            }
+            return null;
+        }
+    };
     public static final Function<String, Void> NUMBER_AND_GT_ZERO = new Function<String, Void>() {
         @Override
         public Void apply(String s) {

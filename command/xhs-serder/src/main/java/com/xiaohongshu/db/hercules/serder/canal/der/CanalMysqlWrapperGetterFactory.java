@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.serder.canal.der;
 
 import com.alibaba.otter.canal.protocol.CanalEntry;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
@@ -16,6 +17,12 @@ import java.util.Date;
  * 参阅{@see <a href="https://github.com/alibaba/otter/blob/master/node/etl/src/main/java/com/alibaba/otter/node/etl/common/db/utils/SqlUtils.java#L130">otter逻辑</a>}
  */
 public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEntry.Column> {
+
+    @Override
+    public DataSourceRole getRole() {
+        return DataSourceRole.DER;
+    }
+
     @Override
     protected BaseTypeWrapperGetter.ByteGetter<CanalEntry.Column> getByteGetter() {
         return new BaseTypeWrapperGetter.ByteGetter<CanalEntry.Column>() {

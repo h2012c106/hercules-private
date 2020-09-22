@@ -12,6 +12,7 @@ import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import com.xiaohongshu.db.hercules.mongodb.datatype.ObjectIdWrapper;
 import com.xiaohongshu.db.hercules.mongodb.mr.output.MongoDBWrapperSetterManager;
 import com.xiaohongshu.db.xlog.core.codec.Codec;
 import com.xiaohongshu.db.xlog.core.exception.SerDeException;
@@ -21,15 +22,17 @@ import com.xiaohongshu.db.xlog.oplog.OplogSerDe;
 import org.bson.Document;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriterSettings;
+import org.bson.types.ObjectId;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 public class MongoOplogKVSer extends KVSer<Document> implements InjectedClass {
 
-    private static final JsonWriterSettings JSON_WRITER_SETTINGS = JsonWriterSettings.builder()
-            .outputMode(JsonMode.RELAXED)
-            .build();
+//    private static final JsonWriterSettings JSON_WRITER_SETTINGS = JsonWriterSettings.builder()
+//            .outputMode(JsonMode.RELAXED)
+//            .build();
 
     private MongoOplogOutputOptionConf.OplogFormat format;
 
@@ -40,7 +43,7 @@ public class MongoOplogKVSer extends KVSer<Document> implements InjectedClass {
     private Schema schema;
 
     public MongoOplogKVSer() {
-        super(new MongoDBWrapperSetterManager());
+        super(new MongoOplogWrapperSetterManager());
     }
 
     @Override
@@ -59,22 +62,20 @@ public class MongoOplogKVSer extends KVSer<Document> implements InjectedClass {
         if (schema.getColumnNameList().size() != 0) {
             in = new HerculesWritable(WritableUtils.copyColumn(in.getRow(), schema.getColumnNameList(), WritableUtils.FilterUnexistOption.IGNORE));
         }
-
         Document document;
         try {
             document = wrapperSetterFactory.writeMapWrapper(in.getRow(), new Document(), null);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        String docJsonString = document.toJson(JSON_WRITER_SETTINGS);
+        String docJsonString = document.toJson();
         switch (format) {
             case JSON:
                 OplogRecord oplogRecord = new OplogRecord();
                 oplogRecord.setDoc(docJsonString);
                 oplogRecord.setEventTime(LocalDateTime.now());
                 oplogRecord.setOptype("INSERT");
-                return BytesWrapper.get(JSON.toJSONString(oplogRecord).getBytes());
+                return BytesWrapper.get(JSON.toJSONString(oplogRecord).getBytes(StandardCharsets.UTF_8));
             case DEFAULT:
                 builder.setDoc(docJsonString);
                 try {
