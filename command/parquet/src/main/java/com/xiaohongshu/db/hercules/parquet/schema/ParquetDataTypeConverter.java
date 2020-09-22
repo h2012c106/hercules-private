@@ -134,4 +134,13 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
 
         return (MessageType) ParquetSchemaUtils.calculateTree(root, this);
     }
+
+    private final Set<String> loggedUnsupportedAnnotationName = new HashSet<>();
+
+    protected void logUnsupportedAnnotation(Log logger, String name) {
+        if (!loggedUnsupportedAnnotationName.contains(name)) {
+            loggedUnsupportedAnnotationName.add(name);
+            logger.warn(String.format("The annotation [%s] is not supported at present.", name));
+        }
+    }
 }

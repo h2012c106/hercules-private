@@ -1,6 +1,9 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
+import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
@@ -49,10 +52,13 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     @SchemaInfo
     private Schema schema;
 
+    public static ParquetRecordReader INSTANCE = null;
+
     public ParquetRecordReader(TaskAttemptContext context, ExampleInputFormat delegateInputFormat) {
         // 此时还没搞出columnTypeMap
         super(context);
         this.delegateInputFormat = delegateInputFormat;
+        INSTANCE = this;
     }
 
     /**
@@ -171,5 +177,9 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     @Override
     public void innerClose() throws IOException {
         delegate.close();
+    }
+
+    public WrapperGetter<GroupWithSchemaInfo> getMapWrapperGetter() {
+        return getWrapperGetter(BaseDataType.MAP);
     }
 }

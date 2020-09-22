@@ -1,6 +1,8 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
@@ -27,9 +29,12 @@ public class ParquetRecordWriter extends HerculesRecordWriter<Group> implements 
     @Options(type = OptionsType.TARGET)
     private GenericOptions options;
 
+    public static ParquetRecordWriter INSTANCE = null;
+
     public ParquetRecordWriter(TaskAttemptContext context, RecordWriter<Void, Group> delegate) {
         super(context);
         this.delegate = delegate;
+        INSTANCE = this;
     }
 
     @Override
@@ -56,5 +61,9 @@ public class ParquetRecordWriter extends HerculesRecordWriter<Group> implements 
     @Override
     protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
         delegate.close(context);
+    }
+
+    public WrapperSetter<Group> getMapWrapperSetter() {
+        return getWrapperSetter(BaseDataType.MAP);
     }
 }
