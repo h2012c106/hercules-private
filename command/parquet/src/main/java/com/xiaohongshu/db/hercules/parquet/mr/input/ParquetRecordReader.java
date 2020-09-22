@@ -52,13 +52,10 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     @SchemaInfo
     private Schema schema;
 
-    public static ParquetRecordReader INSTANCE = null;
-
     public ParquetRecordReader(TaskAttemptContext context, ExampleInputFormat delegateInputFormat) {
         // 此时还没搞出columnTypeMap
         super(context);
         this.delegateInputFormat = delegateInputFormat;
-        INSTANCE = this;
     }
 
     /**
@@ -177,9 +174,5 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
     @Override
     public void innerClose() throws IOException {
         delegate.close();
-    }
-
-    public WrapperGetter<GroupWithSchemaInfo> getMapWrapperGetter() {
-        return getWrapperGetter(BaseDataType.MAP);
     }
 }

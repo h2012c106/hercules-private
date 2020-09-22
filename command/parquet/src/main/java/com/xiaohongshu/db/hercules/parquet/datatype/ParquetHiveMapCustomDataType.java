@@ -4,16 +4,14 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
-import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
-import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.StringWrapper;
 import com.xiaohongshu.db.hercules.parquet.mr.input.GroupWithSchemaInfo;
-import com.xiaohongshu.db.hercules.parquet.mr.input.ParquetRecordReader;
-import com.xiaohongshu.db.hercules.parquet.mr.output.ParquetRecordWriter;
+import com.xiaohongshu.db.hercules.parquet.mr.input.ParquetInputWrapperManager;
+import com.xiaohongshu.db.hercules.parquet.mr.output.ParquetOutputWrapperManager;
 import org.apache.parquet.example.data.Group;
 
 import java.util.Map;
@@ -55,11 +53,10 @@ public class ParquetHiveMapCustomDataType extends CustomDataType<GroupWithSchema
 
     @Override
     protected BaseTypeWrapperGetter<MapWrapper, GroupWithSchemaInfo> createWrapperGetter(CustomDataType<GroupWithSchemaInfo, Group, MapWrapper> self) {
-        final WrapperGetter<GroupWithSchemaInfo> mapGetter = ParquetRecordReader.INSTANCE.getMapWrapperGetter();
         return new BaseTypeWrapperGetter<MapWrapper, GroupWithSchemaInfo>() {
             @Override
             protected MapWrapper getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return (MapWrapper) mapGetter.get(row, rowName, columnName, columnSeq);
+                return (MapWrapper) ParquetInputWrapperManager.MAP_GETTER.get(row, rowName, columnName, columnSeq);
             }
 
             @Override
@@ -76,7 +73,6 @@ public class ParquetHiveMapCustomDataType extends CustomDataType<GroupWithSchema
 
     @Override
     protected BaseTypeWrapperSetter<MapWrapper, Group> createWrapperSetter(CustomDataType<GroupWithSchemaInfo, Group, MapWrapper> self) {
-        final WrapperSetter<Group> mapSetter = ParquetRecordWriter.INSTANCE.getMapWrapperSetter();
         return new BaseTypeWrapperSetter<MapWrapper, Group>() {
             @Override
             protected DataType getType() {
@@ -85,7 +81,7 @@ public class ParquetHiveMapCustomDataType extends CustomDataType<GroupWithSchema
 
             @Override
             protected void setNonnullValue(MapWrapper value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                mapSetter.set(value, row, rowName, columnName, columnSeq);
+                ParquetOutputWrapperManager.MAP_SETTER.set(value, row, rowName, columnName, columnSeq);
             }
 
             @Override

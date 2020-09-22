@@ -29,12 +29,9 @@ public class ParquetRecordWriter extends HerculesRecordWriter<Group> implements 
     @Options(type = OptionsType.TARGET)
     private GenericOptions options;
 
-    public static ParquetRecordWriter INSTANCE = null;
-
     public ParquetRecordWriter(TaskAttemptContext context, RecordWriter<Void, Group> delegate) {
         super(context);
         this.delegate = delegate;
-        INSTANCE = this;
     }
 
     @Override
@@ -61,9 +58,5 @@ public class ParquetRecordWriter extends HerculesRecordWriter<Group> implements 
     @Override
     protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
         delegate.close(context);
-    }
-
-    public WrapperSetter<Group> getMapWrapperSetter() {
-        return getWrapperSetter(BaseDataType.MAP);
     }
 }
