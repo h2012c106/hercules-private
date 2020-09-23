@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.myhub.schema;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.myhub.MyhubUtils;
 import com.xiaohongshu.db.hercules.mysql.schema.MysqlSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
@@ -20,7 +20,7 @@ public class MyhubSchemaFetcher extends MysqlSchemaFetcher implements InjectedCl
 
     private boolean isShard;
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSManager manager;
 
     public MyhubSchemaFetcher(GenericOptions options) {

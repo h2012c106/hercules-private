@@ -1,10 +1,15 @@
 package com.xiaohongshu.db.hercules.kafka.mr;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.kafka.KafkaKV;
 
 public class KafkaOutputWrapperManager extends WrapperSetterFactory<KafkaKV> {
+
+    public KafkaOutputWrapperManager() {
+        super(DataSourceRole.TARGET);
+    }
 
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<KafkaKV> getByteSetter() {

@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.serder.json.ser;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
@@ -14,6 +15,7 @@ import org.bson.Document;
 public class JsonWrapperSetterManager extends MongoDBWrapperSetterManager {
 
     public JsonWrapperSetterManager() {
+        super(DataSourceRole.SER);
         setDecimalAsString(true);
     }
 

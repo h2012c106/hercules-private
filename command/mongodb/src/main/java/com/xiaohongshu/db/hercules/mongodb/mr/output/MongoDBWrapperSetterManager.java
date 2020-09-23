@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.mongodb.mr.output;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
@@ -23,6 +24,14 @@ import java.util.ArrayList;
 public class MongoDBWrapperSetterManager extends WrapperSetterFactory<Document> {
 
     private boolean decimalAsString;
+
+    public MongoDBWrapperSetterManager() {
+        super(DataSourceRole.TARGET);
+    }
+
+    public MongoDBWrapperSetterManager(DataSourceRole role) {
+        super(role);
+    }
 
     public void setDecimalAsString(boolean decimalAsString) {
         this.decimalAsString = decimalAsString;

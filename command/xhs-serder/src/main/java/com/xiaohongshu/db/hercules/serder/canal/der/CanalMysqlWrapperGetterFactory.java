@@ -18,9 +18,8 @@ import java.util.Date;
  */
 public class CanalMysqlWrapperGetterFactory extends WrapperGetterFactory<CanalEntry.Column> {
 
-    @Override
-    public DataSourceRole getRole() {
-        return DataSourceRole.DER;
+    public CanalMysqlWrapperGetterFactory() {
+        super(DataSourceRole.DER);
     }
 
     @Override

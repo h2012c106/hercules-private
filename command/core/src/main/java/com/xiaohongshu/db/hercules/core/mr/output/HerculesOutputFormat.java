@@ -8,8 +8,7 @@ import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serder.KVSer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -22,10 +21,10 @@ public abstract class HerculesOutputFormat<T> extends OutputFormat<NullWritable,
 
     private static final Log LOG = LogFactory.getLog(HerculesOutputFormat.class);
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @Assembly(role = DataSourceRole.TARGET)
     private DataSource dataSource;
 
-    @SerDerAssembly(role = DataSourceRole.SER)
+    @Assembly(role = DataSourceRole.SER)
     private KVSer<?> kvSer;
 
     public HerculesOutputFormat() {

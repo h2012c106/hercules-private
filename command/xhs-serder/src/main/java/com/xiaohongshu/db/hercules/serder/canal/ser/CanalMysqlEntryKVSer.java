@@ -9,9 +9,9 @@ import com.xiaohongshu.db.hercules.core.serder.KVSer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import com.xiaohongshu.db.hercules.serder.canal.CanalMysqlOutputOptionConf;
 import org.apache.commons.lang3.StringUtils;
@@ -31,7 +31,7 @@ public abstract class CanalMysqlEntryKVSer extends KVSer<CanalEntry.Column.Build
     @SchemaInfo
     private Schema schema;
 
-    @SerDerAssembly
+    @Assembly
     private RDBMSDataTypeConverter dataTypeConverter;
 
     public CanalMysqlEntryKVSer() {

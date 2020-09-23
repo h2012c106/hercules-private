@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.mysql.schema;
 
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaNegotiatorContext;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -17,7 +17,7 @@ public class MysqlSchemaNegotiatorContext extends BaseSchemaNegotiatorContext {
 
     private static final Log LOG = LogFactory.getLog(MysqlSchemaNegotiatorContext.class);
 
-    @GeneralAssembly
+    @Assembly
     private MysqlSchemaFetcher schemaFetcher;
 
     public MysqlSchemaNegotiatorContext(GenericOptions options) {

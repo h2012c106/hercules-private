@@ -13,10 +13,9 @@ import com.xiaohongshu.db.hercules.core.serder.KVDer;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Filter;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.NullWritable;
@@ -41,10 +40,10 @@ public abstract class HerculesInputFormat<T> extends InputFormat<NullWritable, H
     @Options(type = OptionsType.SOURCE)
     private GenericOptions sourceOptions;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private DataSource dataSource;
 
-    @SerDerAssembly(role = DataSourceRole.DER)
+    @Assembly(role = DataSourceRole.DER)
     private KVDer<?> kvDer;
 
     @Filter

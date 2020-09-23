@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.nebula.mr.output;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
@@ -14,6 +15,10 @@ public class NebulaWrapperSetterManager extends WrapperSetterFactory<WritingRow>
     private static final String DEFAULT_STRING_VALUE = "\"\"";
     private static final String DEFAULT_BOOL_VALUE = "false";
     private static final String DEFAULT_TIMESTAMP_VALUE = "0";
+
+    public NebulaWrapperSetterManager() {
+        super(DataSourceRole.TARGET);
+    }
 
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<WritingRow> getByteSetter() {

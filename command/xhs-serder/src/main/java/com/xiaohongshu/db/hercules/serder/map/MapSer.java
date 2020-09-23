@@ -12,12 +12,7 @@ import java.io.IOException;
 public class MapSer extends KVSer<Void> {
 
     public MapSer() {
-        super(new WrapperSetterFactory<Void>() {
-
-            @Override
-            public DataSourceRole getRole() {
-                return DataSourceRole.SER;
-            }
+        super(new WrapperSetterFactory<Void>(DataSourceRole.SER) {
 
             @Override
             protected BaseTypeWrapperSetter.ByteSetter<Void> getByteSetter() {

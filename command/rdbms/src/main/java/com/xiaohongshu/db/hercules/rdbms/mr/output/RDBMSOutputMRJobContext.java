@@ -7,7 +7,7 @@ import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.mr.context.BaseMRJobContext;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetterFactory;
@@ -31,7 +31,7 @@ public class RDBMSOutputMRJobContext extends BaseMRJobContext {
 
     private static final Log LOG = LogFactory.getLog(RDBMSOutputMRJobContext.class);
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSManager manager;
 
     public RDBMSOutputMRJobContext(GenericOptions options) {

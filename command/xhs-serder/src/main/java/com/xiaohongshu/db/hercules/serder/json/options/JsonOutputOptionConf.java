@@ -6,7 +6,6 @@ import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.serder.SerOptionsConf;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class JsonOutputOptionConf extends BaseOptionsConf {

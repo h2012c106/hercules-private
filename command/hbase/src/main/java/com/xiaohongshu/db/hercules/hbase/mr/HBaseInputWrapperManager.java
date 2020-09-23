@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -11,6 +12,10 @@ import java.math.BigDecimal;
  * 一般而言，行的数据结构一定是确定的，而列结构会因为不同的数据类型而变化。
  */
 public class HBaseInputWrapperManager extends WrapperGetterFactory<byte[]> {
+    public HBaseInputWrapperManager() {
+        super(DataSourceRole.SOURCE);
+    }
+
     @Override
     protected BaseTypeWrapperGetter.ByteGetter<byte[]> getByteGetter() {
         return null;

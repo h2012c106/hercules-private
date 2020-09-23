@@ -1,9 +1,10 @@
 package com.xiaohongshu.db.hercules.core.utils.context;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
-import com.xiaohongshu.db.hercules.core.supplier.AssemblySupplier;
-import com.xiaohongshu.db.hercules.core.supplier.KvSerDerSupplier;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.*;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Filter;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -18,30 +19,47 @@ import java.util.stream.Collectors;
 
 public enum HerculesContextElement {
     /**
-     * 数据源模块
+     * 模块
      */
-    GENERAL_ASSEMBLY(GeneralAssembly.class, new ContextReader<GeneralAssembly>() {
+    ASSEMBLY(Assembly.class, new ContextReader<Assembly>() {
         @SneakyThrows
         @Override
         public Object pulloutValueFromContext(HerculesContext context, final Field field,
-                                              GeneralAssembly annotation, DataSourceRole role) {
-            AssemblySupplier assemblySupplier = context.getAssemblySupplierPair().getDataSourceItem(getRole(annotation.role(), role));
+                                              Assembly annotation, DataSourceRole role) {
+            Object supplierObject;
+            role = getRole(annotation.role(), role);
+            switch (role) {
+                case SOURCE:
+                case TARGET:
+                    supplierObject = context.getAssemblySupplierPair().getItem(role);
+                    break;
+                case DER:
+                case SER:
+                    supplierObject = context.getKvSerDerSupplierPair().getItem(role);
+                    if (supplierObject == null) {
+                        LOG.debug(String.format("%s KvSerDerSupplier is null, inject the assembly field [%s] with null.", role, field));
+                        return null;
+                    }
+                    break;
+                default:
+                    throw new RuntimeException();
+            }
 
             // 如果用户给了方法名了，直接反射就完事儿了
             String annotatedMethodName = annotation.getMethodName();
             if (!StringUtils.isEmpty(annotatedMethodName)) {
-                Method method = assemblySupplier.getClass().getMethod(annotatedMethodName);
-                return method.invoke(assemblySupplier);
+                Method method = supplierObject.getClass().getMethod(annotatedMethodName);
+                return method.invoke(supplierObject);
             }
 
-            List<Method> supplierPublicMethodList = getGetMethodList(assemblySupplier.getClass(), Object.class);
+            List<Method> supplierPublicMethodList = getGetMethodList(supplierObject.getClass(), Object.class);
 
             // 根据返回类型来，必须得一摸一样
             List<Method> sameReturnClassMethodList = supplierPublicMethodList.stream()
                     .filter(method -> field.getType() == method.getReturnType())
                     .collect(Collectors.toList());
             if (sameReturnClassMethodList.size() == 1) {
-                return sameReturnClassMethodList.get(0).invoke(assemblySupplier);
+                return sameReturnClassMethodList.get(0).invoke(supplierObject);
             } else if (sameReturnClassMethodList.size() == 0) {
                 LOG.debug(String.format("Not find [%s]-return-class method for field.", field.getType().getCanonicalName()));
             } else {
@@ -54,65 +72,14 @@ public enum HerculesContextElement {
                     .filter(method -> StringUtils.equalsIgnoreCase(concatMethodName, method.getName()))
                     .collect(Collectors.toList());
             if (sameNameMethodList.size() == 1) {
-                return sameNameMethodList.get(0).invoke(assemblySupplier);
+                return sameNameMethodList.get(0).invoke(supplierObject);
             } else if (sameNameMethodList.size() == 0) {
                 LOG.debug(String.format("Not find [%s]-name (ignore-case) method for field.", concatMethodName));
             } else {
                 LOG.debug(String.format("Find more than one method that [%s]-name (ignore-case) method for field: %s.", concatMethodName, sameNameMethodList));
             }
 
-            throw new RuntimeException(String.format("Cannot inject the assembly into field [%s] from [%s].", field, assemblySupplier.getClass().getCanonicalName()));
-        }
-    }),
-    /**
-     * SerDer模块
-     */
-    SERDER_ASSEMBLY(SerDerAssembly.class, new ContextReader<SerDerAssembly>() {
-        @SneakyThrows
-        @Override
-        public Object pulloutValueFromContext(HerculesContext context, final Field field,
-                                              SerDerAssembly annotation, DataSourceRole role) {
-            KvSerDerSupplier serDerSupplier = context.getKvSerDerSupplierPair().getSerDerItem(getRole(annotation.role(), role));
-            if (serDerSupplier == null) {
-                LOG.debug(String.format("%s KvSerDerSupplier is null, inject the assembly field [%s] with null.", annotation.role(), field));
-                return null;
-            }
-
-            // 如果用户给了方法名了，直接反射就完事儿了
-            String annotatedMethodName = annotation.getMethodName();
-            if (!StringUtils.isEmpty(annotatedMethodName)) {
-                Method method = serDerSupplier.getClass().getMethod(annotatedMethodName);
-                return method.invoke(serDerSupplier);
-            }
-
-            List<Method> supplierPublicMethodList = getGetMethodList(serDerSupplier.getClass(), Object.class);
-
-            // 根据返回类型来，必须得一摸一样
-            List<Method> sameReturnClassMethodList = supplierPublicMethodList.stream()
-                    .filter(method -> field.getType() == method.getReturnType())
-                    .collect(Collectors.toList());
-            if (sameReturnClassMethodList.size() == 1) {
-                return sameReturnClassMethodList.get(0).invoke(serDerSupplier);
-            } else if (sameReturnClassMethodList.size() == 0) {
-                LOG.debug(String.format("Not find [%s]-return-class method for field.", field.getType().getCanonicalName()));
-            } else {
-                LOG.debug(String.format("Find more than one method that [%s]-return-class method for field: %s.", field.getType(), sameReturnClassMethodList));
-            }
-
-            // 最后根据field名和method名来，若field叫aaa，则会寻找getAaa() method
-            String concatMethodName = GET_METHOD_NAME_PREFIX + field.getName();
-            List<Method> sameNameMethodList = supplierPublicMethodList.stream()
-                    .filter(method -> StringUtils.equalsIgnoreCase(concatMethodName, method.getName()))
-                    .collect(Collectors.toList());
-            if (sameNameMethodList.size() == 1) {
-                return sameNameMethodList.get(0).invoke(serDerSupplier);
-            } else if (sameNameMethodList.size() == 0) {
-                LOG.debug(String.format("Not find [%s]-name (ignore-case) method for field.", concatMethodName));
-            } else {
-                LOG.debug(String.format("Find more than one method that [%s]-name (ignore-case) method for field: %s.", concatMethodName, sameNameMethodList));
-            }
-
-            throw new RuntimeException(String.format("Cannot inject the assembly into field [%s] from [%s].", field, serDerSupplier.getClass().getCanonicalName()));
+            throw new RuntimeException(String.format("Cannot inject the assembly into field [%s] from [%s].", field, supplierObject.getClass().getCanonicalName()));
         }
     }),
     /**

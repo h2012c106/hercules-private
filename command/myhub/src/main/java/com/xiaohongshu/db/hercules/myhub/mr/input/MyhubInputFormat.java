@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.myhub.mr.input;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.myhub.MyhubUtils;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSInputFormat;
@@ -30,7 +30,7 @@ public class MyhubInputFormat extends RDBMSInputFormat {
 
     private static final String IS_SHARD_PROPERTY_NAME = "hercules.myhub.table.shard";
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSManager manager;
 
     @Options(type = OptionsType.SOURCE)

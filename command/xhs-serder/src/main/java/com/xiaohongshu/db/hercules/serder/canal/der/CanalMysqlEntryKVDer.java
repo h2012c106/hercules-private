@@ -7,8 +7,8 @@ import com.xiaohongshu.db.hercules.core.serder.KVDer;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
 import com.xiaohongshu.db.hercules.rdbms.schema.ColumnInfo;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSDataTypeConverter;
 import org.apache.commons.collections.CollectionUtils;
@@ -24,7 +24,7 @@ public abstract class CanalMysqlEntryKVDer extends KVDer<CanalEntry.Column> impl
     @SchemaInfo
     private Schema schema;
 
-    @SerDerAssembly
+    @Assembly
     private RDBMSDataTypeConverter dataTypeConverter;
 
     private Set<String> columnNameSet;

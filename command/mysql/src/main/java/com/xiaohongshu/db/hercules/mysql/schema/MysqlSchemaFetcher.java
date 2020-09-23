@@ -11,7 +11,7 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.rdbms.schema.RDBMSSchemaFetcher;
 import com.xiaohongshu.db.hercules.rdbms.schema.ResultSetGetter;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
@@ -31,7 +31,7 @@ public class MysqlSchemaFetcher extends RDBMSSchemaFetcher {
 
     private static final Log LOG = LogFactory.getLog(MysqlSchemaFetcher.class);
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSManager manager;
 
     public MysqlSchemaFetcher(GenericOptions options) {

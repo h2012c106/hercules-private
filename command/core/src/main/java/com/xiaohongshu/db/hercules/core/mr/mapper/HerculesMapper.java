@@ -106,7 +106,7 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
         Long logInterval = commonOptions.getLong(MAP_STATUS_LOG_INTERVAL, null);
         if (logInterval > 0) {
-            final NumberFormat numberFormat=NumberFormat.getPercentInstance();
+            final NumberFormat numberFormat = NumberFormat.getPercentInstance();
             numberFormat.setMinimumFractionDigits(2);
             numberFormat.setRoundingMode(RoundingMode.HALF_UP);
             timingLoggerService.scheduleAtFixedRate(

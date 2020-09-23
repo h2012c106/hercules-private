@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.hbase.schema;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
 import lombok.SneakyThrows;
 
@@ -15,7 +15,7 @@ public class HBaseSchemaFetcher extends BaseSchemaFetcher {
     private final List<String> columnNameList = new ArrayList<>();
     private final Map<String, DataType> columnTypeMap = new HashMap<>();
 
-    @GeneralAssembly
+    @Assembly
     private HBaseDataTypeConverter dataTypeConverter;
 
     @SneakyThrows

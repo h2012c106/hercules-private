@@ -12,7 +12,7 @@ import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandExecutor;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandResult;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
 import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import org.apache.commons.lang3.StringUtils;
@@ -54,16 +54,16 @@ public class MRJob {
 
     private List<String> jarList;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private Class<? extends HerculesInputFormat<?>> inputFormatClass;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @Assembly(role = DataSourceRole.TARGET)
     private Class<? extends HerculesOutputFormat<?>> outputFormatClass;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private MRJobContext jobContextAsSource;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @Assembly(role = DataSourceRole.TARGET)
     private MRJobContext jobContextAsTarget;
 
     public MRJob(WrappingOptions options) {

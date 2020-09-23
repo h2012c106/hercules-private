@@ -5,7 +5,7 @@ import com.vesoft.nebula.client.graph.ResultSet;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.nebula.NebulaDataMode;
 import com.xiaohongshu.db.hercules.nebula.datatype.VidCustomDataType;
 import org.apache.commons.logging.Log;
@@ -20,7 +20,7 @@ public class NebulaSchemaFetcher extends BaseSchemaFetcher {
 
     private static final Log LOG = LogFactory.getLog(NebulaSchemaFetcher.class);
 
-    @GeneralAssembly
+    @Assembly
     private NebulaDataTypeConverter dataTypeConverter;
 
     private NebulaDataMode mode;

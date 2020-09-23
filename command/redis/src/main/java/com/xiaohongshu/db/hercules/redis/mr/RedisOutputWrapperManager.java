@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.redis.mr;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
@@ -17,6 +18,10 @@ import static com.xiaohongshu.db.hercules.redis.RedisKV.VALUE_SEQ;
  * Created by jamesqq on 2020/8/17.
  */
 public class RedisOutputWrapperManager extends WrapperSetterFactory<RedisKV> {
+
+    public RedisOutputWrapperManager() {
+        super(DataSourceRole.TARGET);
+    }
 
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<RedisKV> getByteSetter() {

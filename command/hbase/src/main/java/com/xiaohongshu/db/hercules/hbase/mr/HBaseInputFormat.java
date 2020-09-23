@@ -11,7 +11,7 @@ import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.core.utils.entity.StingyMap;
@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.stream.Collectors;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf.TABLE;
@@ -47,7 +46,7 @@ public class HBaseInputFormat extends HerculesInputFormat<byte[]> {
 
     private static final Log LOG = LogFactory.getLog(HBaseInputFormat.class);
 
-    @GeneralAssembly
+    @Assembly
     private HBaseManager manager;
 
     @Options(type = OptionsType.SOURCE)
@@ -237,7 +236,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> implements Injected
 
     private List<String> columnNameList;
 
-    @GeneralAssembly
+    @Assembly
     private final HBaseManager manager = null;
 
     @Options(type = OptionsType.SOURCE)

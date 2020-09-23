@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.serder.json.ser;
 
 import com.alibaba.fastjson.JSON;
-import com.mongodb.BasicDBObject;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
@@ -13,11 +12,8 @@ import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import org.bson.Document;
-import org.bson.json.JsonMode;
-import org.bson.json.JsonWriterSettings;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class JsonKVSer extends KVSer<Document> {
 

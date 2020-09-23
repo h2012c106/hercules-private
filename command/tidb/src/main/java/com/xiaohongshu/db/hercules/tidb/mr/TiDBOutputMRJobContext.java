@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSOutputMRJobContext;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.statement.StatementGetter;
@@ -26,7 +26,7 @@ public class TiDBOutputMRJobContext extends RDBMSOutputMRJobContext {
 
     private static final Log LOG = LogFactory.getLog(TiDBOutputMRJobContext.class);
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSManager manager;
 
     public TiDBOutputMRJobContext(GenericOptions options) {

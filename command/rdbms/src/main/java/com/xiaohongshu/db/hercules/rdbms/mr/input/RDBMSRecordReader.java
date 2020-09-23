@@ -7,7 +7,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.core.utils.entity.StingyMap;
@@ -40,7 +40,7 @@ public class RDBMSRecordReader extends HerculesRecordReader<ResultSet> {
     protected ResultSet resultSet = null;
     protected HerculesWritable value;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private RDBMSManager manager;
 
     @SchemaInfo(role = DataSourceRole.SOURCE)

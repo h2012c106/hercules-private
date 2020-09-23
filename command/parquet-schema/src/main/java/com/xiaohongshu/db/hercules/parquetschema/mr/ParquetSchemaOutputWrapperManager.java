@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.parquetschema.mr;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
@@ -44,6 +45,10 @@ public class ParquetSchemaOutputWrapperManager extends WrapperSetterFactory<Type
      * 利用setter方法最后一个参数传递是否repeated，实际是违规了，但反正方便
      */
     private static final int REPEATED = 0;
+
+    public ParquetSchemaOutputWrapperManager() {
+        super(DataSourceRole.TARGET);
+    }
 
     @Override
     public void afterInject() {

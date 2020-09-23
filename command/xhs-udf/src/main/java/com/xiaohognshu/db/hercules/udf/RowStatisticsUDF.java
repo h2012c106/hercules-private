@@ -36,14 +36,14 @@ public class RowStatisticsUDF extends HerculesUDF {
     @Override
     public void initialize(Mapper.Context context) throws IOException, InterruptedException {
         mode = StatisticMode.valueOfIgnoreCase(context.getConfiguration().get(HERCULES_UDF_STATISTIC_MODE));
-        try{
+        try {
             totalByteSizeLimit = Long.parseLong(context.getConfiguration().get(HERCULES_UDF_TOTAL_BYTESIZ_ELIMIT));
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             totalByteSizeLimit = defaultTotalByteSizeLimit;
         }
-        try{
+        try {
             columnByteSizeLimit = Long.parseLong(context.getConfiguration().get(HERCULES_UDF_COLUMN_BYTESIZ_ELIMIT));
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             columnByteSizeLimit = defaultColumnByteSizeLimit;
         }
         keyName = context.getConfiguration().get(HERCULES_UDF_KEY_NAME);
@@ -92,8 +92,8 @@ public class RowStatisticsUDF extends HerculesUDF {
         });
     }
 
+    @Override
     public void close() throws IOException, InterruptedException {
-
     }
 }
 

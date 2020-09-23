@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
@@ -10,6 +11,10 @@ import java.math.BigInteger;
 import java.sql.ResultSet;
 
 public class RDBMSWrapperGetterFactory extends WrapperGetterFactory<ResultSet> {
+
+    public RDBMSWrapperGetterFactory() {
+        super(DataSourceRole.SOURCE);
+    }
 
     @Override
     protected BaseTypeWrapperGetter.ByteGetter<ResultSet> getByteGetter() {

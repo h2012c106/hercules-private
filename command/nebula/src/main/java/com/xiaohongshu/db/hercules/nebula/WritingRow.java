@@ -1,7 +1,5 @@
 package com.xiaohongshu.db.hercules.nebula;
 
-import com.xiaohongshu.db.hercules.nebula.mr.output.NebulaRecordWriter;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 

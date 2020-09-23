@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.rdbms.mr.output;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
@@ -12,6 +13,10 @@ import java.sql.Timestamp;
 import java.sql.Types;
 
 public class RDBMSWrapperSetterFactory extends WrapperSetterFactory<PreparedStatement> {
+
+    public RDBMSWrapperSetterFactory() {
+        super(DataSourceRole.TARGET);
+    }
 
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<PreparedStatement> getByteSetter() {

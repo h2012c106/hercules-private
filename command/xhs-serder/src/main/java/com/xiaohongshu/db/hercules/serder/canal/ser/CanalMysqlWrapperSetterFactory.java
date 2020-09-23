@@ -16,9 +16,8 @@ import java.nio.charset.StandardCharsets;
  */
 public class CanalMysqlWrapperSetterFactory extends WrapperSetterFactory<CanalEntry.Column.Builder> {
 
-    @Override
-    public DataSourceRole getRole() {
-        return DataSourceRole.SER;
+    public CanalMysqlWrapperSetterFactory() {
+        super(DataSourceRole.SER);
     }
 
     @Override

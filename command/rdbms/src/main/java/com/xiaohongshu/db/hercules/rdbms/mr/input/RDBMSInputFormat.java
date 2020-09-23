@@ -8,7 +8,7 @@ import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.rdbms.filter.RDBMSFilterPushdownJudger;
@@ -32,10 +32,10 @@ public class RDBMSInputFormat extends HerculesInputFormat<ResultSet> {
 
     public static final String AVERAGE_MAP_ROW_NUM = "hercules.average.map.row.num";
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private RDBMSManager manager;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private RDBMSSchemaFetcher schemaFetcher;
 
     @SchemaInfo(role = DataSourceRole.SOURCE)
