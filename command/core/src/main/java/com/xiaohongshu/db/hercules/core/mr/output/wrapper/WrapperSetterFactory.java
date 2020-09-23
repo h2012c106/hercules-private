@@ -97,15 +97,14 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
         return wrapperSetterMap.containsKey(dataType);
     }
 
-    public final WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
-        return wrapperSetterMap.computeIfAbsent(dataType, key -> {
-            // 运行时赋
-            if (dataType.isCustom() && customDataTypeManager.contains(dataType.getName())) {
-                return customDataTypeManager.get(dataType.getName()).getWrapperSetter();
-            } else {
+    public final WrapperSetter<T> getWrapperSetter(@NonNull final DataType dataType) {
+        if (dataType.isCustom() && customDataTypeManager.contains(dataType.getName())) {
+            return wrapperSetterMap.computeIfAbsent(dataType, key -> customDataTypeManager.get(dataType.getName()).getWrapperSetter());
+        } else {
+            return wrapperSetterMap.computeIfAbsent(dataType.getBaseDataType(), key -> {
                 throw new MapReduceException("Unsupported data type: " + dataType.toString());
-            }
-        });
+            });
+        }
     }
 
     public static final int MAP_WRITE_COLUMN_SEQ = -1;

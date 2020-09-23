@@ -90,14 +90,13 @@ public abstract class WrapperGetterFactory<T> implements DataSourceRoleGetter {
     }
 
     public final WrapperGetter<T> getWrapperGetter(@NonNull final DataType dataType) {
-        return wrapperGetterMap.computeIfAbsent(dataType, key -> {
-            // 运行时赋
-            if (dataType.isCustom() && customDataTypeManager.contains(dataType.getName())) {
-                return customDataTypeManager.get(dataType.getName()).getWrapperGetter();
-            } else {
+        if (dataType.isCustom() && customDataTypeManager.contains(dataType.getName())) {
+            return wrapperGetterMap.computeIfAbsent(dataType, key -> customDataTypeManager.get(dataType.getName()).getWrapperGetter());
+        } else {
+            return wrapperGetterMap.computeIfAbsent(dataType.getBaseDataType(), key -> {
                 throw new MapReduceException("Unsupported data type: " + dataType.toString());
-            }
-        });
+            });
+        }
     }
 
     abstract protected BaseTypeWrapperGetter.ByteGetter<T> getByteGetter();
