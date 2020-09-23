@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.parquet;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
@@ -9,6 +10,7 @@ import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.schema.SchemaNegotiatorContext;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
+import com.xiaohongshu.db.hercules.parquet.datatype.ParquetHiveCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.parquet.mr.input.ParquetInputFormat;
 import com.xiaohongshu.db.hercules.parquet.mr.input.ParquetInputMRJobContext;
 import com.xiaohongshu.db.hercules.parquet.mr.output.ParquetOutputFormat;
@@ -78,6 +80,16 @@ public class ParquetAssemblySupplier extends BaseAssemblySupplier {
                 return ParquetHerculesDataTypeConverter.getInstance();
             default:
                 throw new RuntimeException();
+        }
+    }
+
+    @Override
+    protected CustomDataTypeManager<?, ?> innerGetCustomDataTypeManager() {
+        SchemaStyle schemaStyle = SchemaStyle.valueOfIgnoreCase(options.getString(SCHEMA_STYLE, null));
+        if (schemaStyle == SchemaStyle.HIVE) {
+            return new ParquetHiveCustomDataTypeManager();
+        }else {
+            return super.innerGetCustomDataTypeManager();
         }
     }
 }

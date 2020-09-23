@@ -76,15 +76,13 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
             res.put(fullColumnName, BaseDataType.LIST);
             return;
         }
-        if (type.isPrimitive()) {
-            res.put(fullColumnName, convertElementType(new ParquetType(type)));
-        } else {
+        if (!type.isPrimitive()) {
             GroupType groupType = (GroupType) type;
             for (Type child : groupType.getFields()) {
                 recursiveGetMessageType(res, child, fullColumnName);
             }
-            res.put(fullColumnName, BaseDataType.MAP);
         }
+        res.put(fullColumnName, convertElementType(new ParquetType(type)));
     }
 
     /**
@@ -133,5 +131,14 @@ public abstract class ParquetDataTypeConverter implements DataTypeConverter<Parq
         }
 
         return (MessageType) ParquetSchemaUtils.calculateTree(root, this);
+    }
+
+    private final Set<String> loggedUnsupportedAnnotationName = new HashSet<>();
+
+    protected void logUnsupportedAnnotation(Log logger, String name) {
+        if (!loggedUnsupportedAnnotationName.contains(name)) {
+            loggedUnsupportedAnnotationName.add(name);
+            logger.warn(String.format("The annotation [%s] is not supported at present.", name));
+        }
     }
 }
