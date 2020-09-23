@@ -199,9 +199,11 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
         };
     }
 
+    public static WrapperSetter<Group> MAP_SETTER = null;
+
     @Override
     protected WrapperSetter<Group> getMapSetter() {
-        return new WrapperSetter<Group>() {
+        MAP_SETTER = new WrapperSetter<Group>() {
             @Override
             protected void setNull(Group row, String rowName, String columnName, int columnSeq) throws Exception {
             }
@@ -214,5 +216,6 @@ public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<G
                 writeMapWrapper((MapWrapper) wrapper, newGroup, fullColumnName);
             }
         };
+        return MAP_SETTER;
     }
 }

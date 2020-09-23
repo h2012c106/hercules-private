@@ -11,9 +11,7 @@ import lombok.NonNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +21,7 @@ import java.util.stream.Collectors;
  * <p>
  * 同时作为{@link HerculesWritable}的内部存储类
  */
-public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> {
+public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> implements Map<String, BaseWrapper<?>> {
 
     private final static DataType DATA_TYPE = BaseDataType.MAP;
     private final static String UNSUPPORTED_MESSAGE = "Unsupported to convert map wrapper to any basic data type, except string.";
@@ -40,34 +38,78 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> {
 
     public static final NullWrapper NULL_INSTANCE = NullWrapper.get(DATA_TYPE);
 
-    public void put(String columnName, @NonNull BaseWrapper<?> value) {
-        BaseWrapper<?> prevValue = get(columnName);
+    @Override
+    public int size() {
+        return getValue().size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return getValue().isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return getValue().containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        return getValue().containsValue(value);
+    }
+
+    @Override
+    public BaseWrapper<?> get(Object key) {
+        return getValue().get(key);
+    }
+
+    @Override
+    public BaseWrapper<?> put(String columnName, @NonNull BaseWrapper<?> value) {
+        BaseWrapper<?> prevValue = getValue().put(columnName, value);
+        value.setParent(this);
         if (prevValue != null) {
             addByteSize(-1 * prevValue.getByteSize());
         }
-        value.setParent(this);
-        getValue().put(columnName, value);
         addByteSize(value.getByteSize());
+        return prevValue;
     }
 
-    public BaseWrapper<?> get(String columnName) {
-        return getValue().get(columnName);
-    }
-
-    public Set<Map.Entry<String, BaseWrapper<?>>> entrySet() {
-        return getValue().entrySet();
-    }
-
-    public boolean containsColumn(String columnName) {
-        return getValue().containsKey(columnName);
-    }
-
-    public BaseWrapper<?> remove(String columnName) {
-        BaseWrapper<?> removedValue = getValue().remove(columnName);
+    @Override
+    public BaseWrapper<?> remove(Object key) {
+        BaseWrapper<?> removedValue = getValue().remove(key);
         if (removedValue != null) {
             addByteSize(-1 * removedValue.getByteSize());
         }
         return removedValue;
+    }
+
+    @Override
+    public void putAll(Map<? extends String, ? extends BaseWrapper<?>> m) {
+        for (Map.Entry<? extends String, ? extends BaseWrapper<?>> entry : m.entrySet()) {
+            put(entry.getKey(), entry.getValue());
+        }
+    }
+
+    @Override
+    public void clear() {
+        for (String key : new HashSet<>(getValue().keySet())) {
+            remove(key);
+        }
+    }
+
+    @Override
+    public Set<String> keySet() {
+        return getValue().keySet();
+    }
+
+    @Override
+    public Collection<BaseWrapper<?>> values() {
+        return getValue().values();
+    }
+
+    @Override
+    public Set<Map.Entry<String, BaseWrapper<?>>> entrySet() {
+        return getValue().entrySet();
     }
 
     @Override

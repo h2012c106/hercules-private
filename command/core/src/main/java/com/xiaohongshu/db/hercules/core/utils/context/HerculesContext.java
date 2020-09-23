@@ -123,8 +123,6 @@ public final class HerculesContext {
         this.wrappingOptions = wrappingOptions;
         this.assemblySupplierPair = extractAssemblySupplierPair(wrappingOptions);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
-        this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
-        this.filter = extractFilter(wrappingOptions);
 
         // setOptions
         assemblySupplierPair.getSourceItem().setOptions(wrappingOptions.getSourceOptions());
@@ -135,6 +133,9 @@ public final class HerculesContext {
         if (hasSerDer(DataSourceRole.TARGET)) {
             kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SER));
         }
+
+        this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
+        this.filter = extractFilter(wrappingOptions);
     }
 
     private HerculesContext(WrappingOptions wrappingOptions, AssemblySupplier sourceSupplier, AssemblySupplier targetSupplier, Reflector reflector) {
@@ -146,8 +147,6 @@ public final class HerculesContext {
         this.wrappingOptions = wrappingOptions;
         this.assemblySupplierPair = Family.initializeDataSource(sourceSupplier, targetSupplier);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
-        this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
-        this.filter = extractFilter(wrappingOptions);
 
         // 把supplier计入options中
         assemblySupplierToOptions(sourceSupplier, wrappingOptions.getSourceOptions());
@@ -162,6 +161,9 @@ public final class HerculesContext {
         if (hasSerDer(DataSourceRole.TARGET)) {
             kvSerDerSupplierPair.getTargetItem().setOptions(wrappingOptions.getGenericOptions(OptionsType.SER));
         }
+
+        this.schemaFamily = extractSchemaFamily(wrappingOptions, this.assemblySupplierPair, this.kvSerDerSupplierPair);
+        this.filter = extractFilter(wrappingOptions);
     }
 
     public Reflector getReflector() {

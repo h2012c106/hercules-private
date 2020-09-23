@@ -44,11 +44,9 @@ public class ParquetSqoopDataTypeConverter extends ParquetDataTypeConverter {
         LogicalTypeAnnotation annotation = type.getLogicalTypeAnnotation();
         if (annotation != null) {
             OriginalType originalType = annotation.toOriginalType();
+            // sqoop应当只有这一种annotation类型
             if (originalType == OriginalType.UTF8) {
                 return BaseDataType.STRING;
-            } else {
-                LOG.debug(String.format("The annotation [%s] is not supported at present, it will be treated as [%s] normally.",
-                        getAnnotationName(annotation), getTypeName(type)));
             }
         }
 

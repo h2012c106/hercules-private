@@ -136,7 +136,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     private String getWritableColumnMask(HerculesWritable value) {
         StringBuilder sb = new StringBuilder();
         for (String columnName : schema.getColumnNameList()) {
-            sb.append(value.getRow().containsColumn(columnName) ? "1" : "0");
+            sb.append(value.getRow().containsKey(columnName) ? "1" : "0");
         }
         return sb.toString();
     }

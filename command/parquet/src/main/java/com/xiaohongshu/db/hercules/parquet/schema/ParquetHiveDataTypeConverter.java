@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.parquet.schema;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.parquet.datatype.ParquetHiveMapCustomDataType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.parquet.schema.*;
@@ -95,9 +96,10 @@ public class ParquetHiveDataTypeConverter extends ParquetDataTypeConverter {
                     return BaseDataType.DATE;
                 case DECIMAL:
                     return BaseDataType.DECIMAL;
+                case MAP:
+                    return ParquetHiveMapCustomDataType.INSTANCE;
                 default:
-                    LOG.debug(String.format("The annotation [%s] is not supported at present, it will be treated as [%s] normally.",
-                            getAnnotationName(annotation), getTypeName(type)));
+                    logUnsupportedAnnotation(LOG, getAnnotationName(annotation));
             }
         }
 
