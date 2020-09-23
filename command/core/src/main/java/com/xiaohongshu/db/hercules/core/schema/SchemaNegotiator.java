@@ -22,6 +22,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.UDF;
+
 /**
  * 负责对齐上下游列名List、列类型Map，并且把结果写入options中，在map阶段不需要二次对齐/获取，保证schema信息全局取一次。
  * 经过这个对象处理，所有schema信息均通过option取。
@@ -324,7 +326,7 @@ public final class SchemaNegotiator {
         sourceContext.afterReadColumnNameList(sourceColumnNameList);
         targetContext.afterReadColumnNameList(targetColumnNameList);
 
-        if (sourceColumnNameList.size() > 0 && targetColumnNameList.size() > 0) {
+        if (sourceColumnNameList.size() > 0 && targetColumnNameList.size() > 0 && !commonOptions.hasProperty(UDF)) {
             List<String> beforeChangedSourceColumnNameList = new ArrayList<>(sourceColumnNameList);
             List<String> beforeChangedTargetColumnNameList = new ArrayList<>(targetColumnNameList);
 
