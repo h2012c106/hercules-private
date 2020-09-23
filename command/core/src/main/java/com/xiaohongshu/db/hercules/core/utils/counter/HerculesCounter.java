@@ -2,7 +2,7 @@ package com.xiaohongshu.db.hercules.core.utils.counter;
 
 import java.util.function.Function;
 
-public enum HerculesCounter {
+public enum HerculesCounter implements Counter {
     /**
      * 行数计数器
      */
@@ -59,14 +59,17 @@ public enum HerculesCounter {
         this.toStringFunc = toStringFunc;
     }
 
+    @Override
     public String getCounterName() {
         return counterName;
     }
 
+    @Override
     public boolean isRecordToMRCounter() {
         return recordToMRCounter;
     }
 
+    @Override
     public Function<Long, String> getToStringFunc() {
         return toStringFunc;
     }

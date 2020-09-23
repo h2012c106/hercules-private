@@ -11,38 +11,38 @@ public class HerculesStatus {
 
     public static final String GROUP_NAME = "Hercules Counters";
 
-    private static final Map<HerculesCounter, AtomicLong> metrics = new ConcurrentHashMap<>();
+    private static final Map<Counter, AtomicLong> METRICS = new ConcurrentHashMap<>();
 
-    public static void increase(TaskAttemptContext context, HerculesCounter counter) {
+    public static void increase(TaskAttemptContext context, Counter counter) {
         add(context, counter, 1L);
     }
 
-    public static void add(TaskAttemptContext context, HerculesCounter counter, long value) {
-        metrics.computeIfAbsent(counter, key -> new AtomicLong(0L)).addAndGet(value);
+    public static void add(TaskAttemptContext context, Counter counter, long value) {
+        METRICS.computeIfAbsent(counter, key -> new AtomicLong(0L)).addAndGet(value);
         if (counter.isRecordToMRCounter()) {
             context.getCounter(GROUP_NAME, counter.getCounterName()).increment(value);
         }
     }
 
-    public static long getValue(HerculesCounter counter) {
-        return metrics.getOrDefault(counter, new AtomicLong(0L)).longValue();
+    public static long getValue(Counter counter) {
+        return METRICS.getOrDefault(counter, new AtomicLong(0L)).longValue();
     }
 
     public static Map<String, Long> getValues() {
         Map<String, Long> res = new TreeMap<>();
-        for (Map.Entry<HerculesCounter, AtomicLong> entry : metrics.entrySet()) {
+        for (Map.Entry<Counter, AtomicLong> entry : METRICS.entrySet()) {
             res.put(entry.getKey().getCounterName(), entry.getValue().longValue());
         }
         return res;
     }
 
-    public static String getStrValue(HerculesCounter counter) {
-        return counter.getToStringFunc().apply(metrics.getOrDefault(counter, new AtomicLong(0L)).longValue());
+    public static String getStrValue(Counter counter) {
+        return counter.getToStringFunc().apply(METRICS.getOrDefault(counter, new AtomicLong(0L)).longValue());
     }
 
     public static Map<String, String> getStrValues() {
         Map<String, String> res = new TreeMap<>();
-        for (Map.Entry<HerculesCounter, AtomicLong> entry : metrics.entrySet()) {
+        for (Map.Entry<Counter, AtomicLong> entry : METRICS.entrySet()) {
             res.put(entry.getKey().getCounterName(), entry.getKey().getToStringFunc().apply(entry.getValue().longValue()));
         }
         return res;
