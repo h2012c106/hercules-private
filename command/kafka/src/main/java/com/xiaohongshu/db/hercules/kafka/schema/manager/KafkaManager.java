@@ -33,28 +33,7 @@ public class KafkaManager {
         this.options = options;
         this.topic = options.getString(KafkaOptionConf.TOPIC, "");
         this.producer = null;
-//        checkKafkaConn();
     }
-
-    // 检测kafka连接是否可以连通
-//    public void checkKafkaConn() {
-//        String bootstrapServers = options.getString(KafkaOptionConf.BOOTSTRAP_SERVERS, "");
-//
-//        Properties props = new Properties();
-//        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-//        AdminClient adminClient = AdminClient.create(props);
-//        Set<String> topicSet;
-//        try {
-//            topicSet = adminClient.listTopics().names().get();
-//        } catch (InterruptedException | ExecutionException e) {
-//            throw new RuntimeException("尝试从选定的connId获取topics，获取失败。");
-//        } finally {
-//            adminClient.close();
-//        }
-//        if (topicSet.size() == 0){
-//            throw new RuntimeException("Kafka connection is not valid, please check kafka connection and topics.");
-//        }
-//    }
 
     private Class<? extends Serializer<?>> getSerializer(DataType dataType) {
         // 如果将来有什么特殊类型可以写个isCustom的if逻辑里return
