@@ -102,17 +102,17 @@ public final class ParquetUtils {
                 .toEpochDay();
     }
 
-    public static Date bytesToDatetime(Binary bytes) {
+    public static Date bytesToDatetime(Binary bytes, boolean skipConversion) {
         NanoTime nanoTime = NanoTime.fromBinary(bytes);
-        Timestamp timestamp = NanoTimeUtils.getTimestamp(nanoTime, false);
+        Timestamp timestamp = NanoTimeUtils.getTimestamp(nanoTime, skipConversion);
         return timestamp.toSqlTimestamp();
     }
 
-    public static Binary datetimeToBytes(Date date) {
+    public static Binary datetimeToBytes(Date date, boolean skipConversion) {
         Timestamp timestamp = Timestamp.ofEpochMilli(date.getTime());
         // 如果hive那侧发现读出来少8个小时，试试把hive.parquet.timestamp.skip.conversion置false，
         // 这样就会按照当前时区读出值，不然是按照UTC读
-        return NanoTimeUtils.getNanoTime(timestamp, false).toBinary();
+        return NanoTimeUtils.getNanoTime(timestamp, skipConversion).toBinary();
     }
 
     public static BigInteger longlongToBigInteger(Binary binary) {

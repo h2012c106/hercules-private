@@ -38,9 +38,7 @@ public abstract class HerculesKvRecordWriter<T> extends HerculesRecordWriter<T> 
         BaseWrapper<?> keyValue = value.get(keyName);
         BaseWrapper<?> valueValue = value.get(valueName);
         if (keyValue == null || valueValue == null) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug(String.format("Meaningless row: %s", value.toString()));
-            }
+            throw new RuntimeException(String.format("Meaningless row: %s", value.toString()));
         } else {
             innerWriteKV(keyValue, valueValue);
         }

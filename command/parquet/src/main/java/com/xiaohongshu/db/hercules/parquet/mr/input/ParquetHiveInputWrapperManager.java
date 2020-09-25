@@ -1,19 +1,35 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.parquet.ParquetUtils;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
 import org.apache.parquet.schema.Type;
 
 import java.math.BigDecimal;
 
-public class ParquetHiveInputWrapperManager extends ParquetInputWrapperManager {
+import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.TS_SKIP_CONVERSION;
+
+public class ParquetHiveInputWrapperManager extends ParquetInputWrapperManager implements InjectedClass {
+
+    @Options(type = OptionsType.SOURCE)
+    private GenericOptions sourceOptions;
+
+    private boolean skipConversion;
 
     @Override
     protected boolean emptyAsNull() {
         return true;
+    }
+
+    @Override
+    public void afterInject() {
+        skipConversion = sourceOptions.getBoolean(TS_SKIP_CONVERSION, false);
     }
 
     @Override
@@ -96,7 +112,7 @@ public class ParquetHiveInputWrapperManager extends ParquetInputWrapperManager {
         return new BaseTypeWrapperGetter.DatetimeGetter<GroupWithSchemaInfo>() {
             @Override
             protected ExtendedDate getNonnullValue(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return ExtendedDate.initialize(ParquetUtils.bytesToDatetime(row.getGroup().getInt96(columnName, row.getValueSeq())));
+                return ExtendedDate.initialize(ParquetUtils.bytesToDatetime(row.getGroup().getInt96(columnName, row.getValueSeq()), skipConversion));
             }
 
             @Override

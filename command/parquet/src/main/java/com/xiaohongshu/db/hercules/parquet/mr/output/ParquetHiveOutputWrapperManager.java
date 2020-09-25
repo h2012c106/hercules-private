@@ -1,7 +1,11 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.parquet.ParquetUtils;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.schema.LogicalTypeAnnotation;
@@ -9,7 +13,19 @@ import org.apache.parquet.schema.Type;
 
 import java.math.BigDecimal;
 
-public class ParquetHiveOutputWrapperManager extends ParquetOutputWrapperManager {
+import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.TS_SKIP_CONVERSION;
+
+public class ParquetHiveOutputWrapperManager extends ParquetOutputWrapperManager implements InjectedClass {
+
+    @Options(type = OptionsType.TARGET)
+    private GenericOptions targetOptions;
+
+    private boolean skipConversion;
+
+    @Override
+    public void afterInject() {
+        skipConversion = targetOptions.getBoolean(TS_SKIP_CONVERSION, false);
+    }
 
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<Group> getByteSetter() {
@@ -92,7 +108,7 @@ public class ParquetHiveOutputWrapperManager extends ParquetOutputWrapperManager
 
             @Override
             protected void setNonnullValue(ExtendedDate value, Group row, String rowName, String columnName, int columnSeq) throws Exception {
-                row.add(columnName, ParquetUtils.datetimeToBytes(value.getDate()));
+                row.add(columnName, ParquetUtils.datetimeToBytes(value.getDate(), skipConversion));
             }
         };
     }

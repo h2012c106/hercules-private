@@ -2,19 +2,19 @@ package com.xiaohongshu.db.hercules.core.utils.counter;
 
 import java.util.function.Function;
 
-public enum HerculesCounter {
+public enum HerculesCounter implements Counter {
     /**
      * 行数计数器
      */
     READ_RECORDS("Read records num", true, String::valueOf),
     WRITE_RECORDS("Write records num", true, String::valueOf),
     DER_RECORDS("Deserialize records num", true, String::valueOf),
-    DER_IGNORE_RECORDS("Deserialize ignored records num (missing key or value)", true, String::valueOf),
+    DER_IGNORE_RECORDS("Deserialize ignored records num", true, String::valueOf),
     DER_ACTUAL_RECORDS("Deserialize actual records num", true, String::valueOf),
     FILTERED_RECORDS("Filtered records num", true, String::valueOf),
     UDF_IGNORE_RECORDS("UDF ignored records num", true, String::valueOf),
     SER_RECORDS("Serialize records num", true, String::valueOf),
-    SER_ACTUAL_RECORDS("Serialize ignored records num (missing key or value)", true, String::valueOf),
+    SER_ACTUAL_RECORDS("Serialize ignored records num", true, String::valueOf),
     SER_IGNORE_RECORDS("Serialize actual records num", true, String::valueOf),
     /**
      * 空间计数器
@@ -59,14 +59,17 @@ public enum HerculesCounter {
         this.toStringFunc = toStringFunc;
     }
 
+    @Override
     public String getCounterName() {
         return counterName;
     }
 
+    @Override
     public boolean isRecordToMRCounter() {
         return recordToMRCounter;
     }
 
+    @Override
     public Function<Long, String> getToStringFunc() {
         return toStringFunc;
     }
