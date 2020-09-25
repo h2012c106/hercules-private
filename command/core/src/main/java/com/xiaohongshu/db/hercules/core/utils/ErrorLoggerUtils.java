@@ -18,7 +18,7 @@ public class ErrorLoggerUtils {
 
     private static final Log LOG = LogFactory.getLog(ErrorLoggerUtils.class);
 
-    private static final int MAX_LOG_LINE = 100;
+    private static final int MAX_LOG_LINE = 64;
 
     private static final Map<String, ErrorPool> POOL_POOL = new ConcurrentHashMap<>();
 
