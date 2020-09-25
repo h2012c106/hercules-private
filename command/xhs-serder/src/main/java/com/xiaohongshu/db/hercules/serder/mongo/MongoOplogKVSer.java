@@ -43,6 +43,7 @@ public class MongoOplogKVSer extends KVSer<Document> implements InjectedClass {
 
     @Override
     public void afterInject() {
+        super.afterInject();
         format = MongoOplogOutputOptionConf.OplogFormat.valueOfIgnoreCase(options.getString(MongoOplogOutputOptionConf.FORMAT, null));
     }
 

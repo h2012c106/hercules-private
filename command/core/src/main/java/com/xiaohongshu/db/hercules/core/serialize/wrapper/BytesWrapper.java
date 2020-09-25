@@ -129,4 +129,9 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
     public int compareTo(byte[] o) {
         return COMPARATOR.compare(getValue(), o);
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "<" + getType() + ">[" + Arrays.toString(getValue()) + "]";
+    }
 }

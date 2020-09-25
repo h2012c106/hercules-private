@@ -9,7 +9,6 @@ import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import lombok.NonNull;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -164,9 +163,6 @@ public abstract class BaseWrapper<T> implements Comparable<T> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this)
-                .append("value", value)
-                .append("type", type)
-                .toString();
+        return getClass().getSimpleName() + "<" + type + ">[" + value + "]";
     }
 }

@@ -83,7 +83,6 @@ public class HerculesDerRecordReader extends RecordReader<NullWritable, Hercules
     public boolean nextKeyValue() throws IOException, InterruptedException {
         boolean first = true;
         do {
-            HerculesStatus.increase(context, HerculesCounter.DER_RECORDS);
             while (CollectionUtils.isEmpty(derRes) || ++derResSeq >= derRes.size()) {
                 if (!reader.nextKeyValue()) {
                     return false;
@@ -91,6 +90,7 @@ public class HerculesDerRecordReader extends RecordReader<NullWritable, Hercules
                 derRes = der.read(reader.getCurrentValue());
                 derResSeq = SEQ_BEGIN;
             }
+            HerculesStatus.increase(context, HerculesCounter.DER_RECORDS);
             // 记录因为缺k或v导致返回null的数目
             if (first) {
                 first = false;
@@ -119,7 +119,6 @@ public class HerculesDerRecordReader extends RecordReader<NullWritable, Hercules
 
     @Override
     public void close() throws IOException {
-        HerculesStatus.add(context, HerculesCounter.DER_RECORDS, -1L);
         der.close();
         reader.close();
     }

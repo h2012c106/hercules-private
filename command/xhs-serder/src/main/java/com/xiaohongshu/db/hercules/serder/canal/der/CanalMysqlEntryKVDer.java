@@ -35,6 +35,7 @@ public abstract class CanalMysqlEntryKVDer extends KVDer<CanalEntry.Column> impl
 
     @Override
     public void afterInject() {
+        super.afterInject();
         columnNameSet = new HashSet<>(schema.getColumnNameList());
     }
 

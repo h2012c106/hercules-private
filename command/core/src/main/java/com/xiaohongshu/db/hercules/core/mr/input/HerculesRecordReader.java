@@ -113,11 +113,12 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     public final boolean nextKeyValue() throws IOException, InterruptedException {
         HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.READING);
 
-        HerculesStatus.increase(context, HerculesCounter.READ_RECORDS);
-
         long start = System.currentTimeMillis();
         boolean res = innerNextKeyValue();
         HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
+        if (res) {
+            HerculesStatus.increase(context, HerculesCounter.READ_RECORDS);
+        }
         return res;
     }
 
@@ -126,9 +127,6 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     @Override
     public final void close() throws IOException {
         if (!closed.getAndSet(true)) {
-            // 最后一个nextKeyValue会返回false
-            HerculesStatus.add(context, HerculesCounter.READ_RECORDS, -1L);
-
             long start = System.currentTimeMillis();
             innerClose();
             HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
