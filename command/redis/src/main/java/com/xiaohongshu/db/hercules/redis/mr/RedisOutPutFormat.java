@@ -43,7 +43,7 @@ public class RedisOutPutFormat extends HerculesOutputFormat<RedisKV> {
 
 class RedisRecordWriter extends HerculesKvRecordWriter<RedisKV> {
 
-    private static final Log LOG = LogFactory.getLog(RedisRecordWriter.class);
+    private static final Log log = LogFactory.getLog(RedisRecordWriter.class);
 
     @GeneralAssembly
     private final RedisManager manager = null;

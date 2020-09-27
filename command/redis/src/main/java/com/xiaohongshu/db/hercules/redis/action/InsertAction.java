@@ -1,9 +1,14 @@
 package com.xiaohongshu.db.hercules.redis.action;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.util.SafeEncoder;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -25,8 +30,9 @@ public class InsertAction implements WriteAction{
             case LIST:
                 throw new RuntimeException("The type List is not supported by redis.");
             case MAP:
-                Map<String, String> mapValue = (Map<String, String>) (value.getValue());
-                pipeline.hmset(key, mapValue);
+                byte[] key_byte = SafeEncoder.encode(key);
+                Map<byte[], byte[]> mapValue = (Map<byte[], byte[]>) (value.getValue());
+                pipeline.hmset(key_byte, mapValue);
                 break;
             default:
                 throw new RuntimeException(String.format("The type [%s] is not supported by redis.", value.getDataType().toString()));

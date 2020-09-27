@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.redis.schema.manager;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
 import com.xiaohongshu.db.hercules.redis.action.InsertAction;
 import com.xiaohongshu.db.hercules.redis.action.WriteAction;
@@ -31,18 +32,24 @@ public class RedisManager {
     private final static int timeout = 60000;//redis pool读取输入InputStream的超时时间,单位毫秒
 
     private final long pipeSize;
-    private final int expire;
+    private int expire;
     private final String packageName = "com.xiaohongshu.db.hercules.redis.action.";
     private Map<String, ReflectMethod> methodMap = new HashMap<>();
+    private int maxCount;
 
 
     public RedisManager(GenericOptions options) {
         this.options = options;
         this.jedisPool = getJedisPool();
+        if(jedis != null)
+            jedis.close();
         this.jedis = jedisPool.getResource();
+        log.warn(" jedis:" + jedis.toString());
+        Thread t = Thread.currentThread();
+        log.warn(" thread name:" + t.getName() + "thread id:" + t.getId());
         this.pipeline = jedis.pipelined();
         this.pipeSize = options.getLong(RedisOptionConf.REDIS_PIPE_SIZE, RedisOptionConf.DEFAULT_PIPE_SIZE);
-        this.expire = options.getInteger(RedisOptionConf.REDIS_EXPIRE, 0);
+        this.maxCount = options.getInteger(CommonOptionsConf.NUM_MAPPER, 200);
     }
 
     public JedisPool getJedisPool() {
@@ -50,6 +57,9 @@ public class RedisManager {
             synchronized (RedisManager.class) {
                 if (jedisPool == null) {
                     JedisPoolConfig poolConfig = new JedisPoolConfig();
+                    log.warn(" jedis pool maxcount:" + maxCount);
+                    poolConfig.setMaxIdle(maxCount+20);
+                    poolConfig.setMaxTotal(maxCount+20);
                     poolConfig.setTestOnBorrow(true);//向资源池借用连接时是否做连接有效性检测（ping）
                     poolConfig.setTestOnReturn(true);//向资源池归还连接时是否做连接有效性检测（ping）
                     return new JedisPool(poolConfig, options.getString(RedisOptionConf.REDIS_HOST, ""), Integer.valueOf(options.getString(RedisOptionConf.REDIS_PORT, "12345")), timeout);
@@ -79,8 +89,9 @@ public class RedisManager {
     public void initMethodMap(List<String> strategyList){
         try{
             for(String strategy : strategyList) {
-                if(strategy.equalsIgnoreCase("expire") && expire == 0){
-                    throw new RuntimeException(" expire act error: not set expire time");
+                if(strategy.matches("expire(.*)") || strategy.matches("Expire(.*)")) {
+                    expire = Integer.valueOf(strategy.substring(6));
+                    strategy = strategy.substring(0,6);
                 }
                 String className = packageName + captureFirstName(strategy) + "Action";
                 Class obj = Class.forName(className);
@@ -106,25 +117,39 @@ public class RedisManager {
         }
     }
 
-
     public void act(RedisKV kv, List<String> strategyList){
-        if(methodMap.size() == 0)
+        if(batchNum == 0)
+            validateJedis();
+        if (methodMap.size() == 0)
             initMethodMap(strategyList);
-        for(int i =0;i < strategyList.size();i++){
+        for (int i = 0; i < strategyList.size(); i++) {
             String strategy = strategyList.get(i);
             singleAct(strategy, kv);
         }
         if ((++batchNum) >= pipeSize) {
             pipeline.sync();
-            batchNum = 0L;
+            batchNum = 1L;
         }
     }
 
     public void set(RedisKV kv) {
+        if(batchNum == 0)
+            validateJedis();
         new InsertAction().act(pipeline, kv, expire);
         if ((++batchNum) >= pipeSize) {
             pipeline.sync();
-            batchNum = 0L;
+            batchNum = 1L;
+        }
+    }
+
+    //jedis多线程有坑 可能多个线程会用到同一个jedis且其里面可能有缓存的脏数据
+    private void validateJedis(){
+        try{
+            jedis.get("a");
+        } catch (Exception e) {
+            log.error(" jedis act error due to jedis:", e);
+            jedis.close();
+            jedis = getJedisPool().getResource();
         }
     }
 
