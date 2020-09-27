@@ -24,6 +24,8 @@ public class KafkaOptionConf extends BaseOptionsConf {
     public final static String RETRIES_DEFAULT = "3";
 
     public final static String TOPIC = "kafka-topic";
+    public final static String DELETE_BEFORE_RUN = "delete-topic-records";
+    public final static boolean DEFAULT_DELETE_BEFORE_RUN = false;
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -70,6 +72,11 @@ public class KafkaOptionConf extends BaseOptionsConf {
                 .name(MAX_REQUEST_SIZE_CONFIG)
                 .needArg(true)
                 .description("The maximum size of a request in bytes. The default is " + DEFAULT_MAX_REQUEST_SIZE_CONFIG + "bytes")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(DELETE_BEFORE_RUN)
+                .needArg(false)
+                .description("Whether delete topic records before run. The default is " + DEFAULT_DELETE_BEFORE_RUN)
                 .build());
         return tmpList;
     }
