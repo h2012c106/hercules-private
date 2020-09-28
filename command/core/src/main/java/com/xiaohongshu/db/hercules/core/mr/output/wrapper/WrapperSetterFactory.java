@@ -51,7 +51,7 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
 
     @Override
     public final DataSourceRole getRole() {
-        return DataSourceRole.TARGET;
+        return role;
     }
 
     private void setWrapperSetter(Map<DataType, WrapperSetter<T>> wrapperSetterMap,
