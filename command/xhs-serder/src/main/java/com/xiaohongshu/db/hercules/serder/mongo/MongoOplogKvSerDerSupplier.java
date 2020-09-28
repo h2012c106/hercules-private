@@ -1,8 +1,10 @@
 package com.xiaohongshu.db.hercules.serder.mongo;
 
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
 import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.supplier.BaseKvSerDerSupplier;
+import com.xiaohongshu.db.hercules.mongodb.datatype.MongoDBCustomDataTypeManager;
 import com.xiaohongshu.db.hercules.mongodb.schema.MongoDBDataTypeConverter;
 
 public class MongoOplogKvSerDerSupplier extends BaseKvSerDerSupplier {
@@ -30,5 +32,10 @@ public class MongoOplogKvSerDerSupplier extends BaseKvSerDerSupplier {
     @Override
     protected DataTypeConverter<?, ?> innerGetDataTypeConverter() {
         return new MongoDBDataTypeConverter();
+    }
+
+    @Override
+    protected CustomDataTypeManager<?, ?> innerGetCustomDataTypeManager() {
+        return new MongoDBCustomDataTypeManager();
     }
 }
