@@ -64,6 +64,9 @@ public class HerculesWritable implements Writable {
     public void addWriteStrategy(String strategy){
         writeStrategyList.add(strategy);
     }
+    public void addAllWriteStrategy(List<String> writeStrategyList){
+        this.writeStrategyList.addAll(writeStrategyList);
+    }
 
     public List<String> getWriteStrategyList() {
         return writeStrategyList;

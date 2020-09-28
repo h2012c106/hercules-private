@@ -166,6 +166,12 @@ public final class WritableUtils {
         return out;
     }
 
+    public static HerculesWritable copyColumn(HerculesWritable in, List<String> whiteNameList, @NonNull FilterUnexistOption option) {
+        HerculesWritable res = new HerculesWritable(copyColumn(in.getRow(), whiteNameList, option));
+        res.addAllWriteStrategy(in.getWriteStrategyList());
+        return res;
+    }
+
     public static void filterColumn(MapWrapper in, List<String> blackNameList) {
         for (String columnName : blackNameList) {
             remove(in, columnName);

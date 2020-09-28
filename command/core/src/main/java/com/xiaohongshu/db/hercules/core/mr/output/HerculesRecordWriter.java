@@ -144,7 +144,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         long start = System.currentTimeMillis();
         if (schema.getColumnNameList().size() != 0) {
             // TODO 此处使用copy新建了一个writable，可能在性能及垃圾回收上不友好，暂未想出更好的姿势
-            value = new HerculesWritable(WritableUtils.copyColumn(value.getRow(), schema.getColumnNameList(), getColumnUnexistOption()));
+            value = WritableUtils.copyColumn(value, schema.getColumnNameList(), getColumnUnexistOption());
         }
         innerWrite(value);
         HerculesStatus.add(context, HerculesCounter.WRITE_TIME, System.currentTimeMillis() - start);
