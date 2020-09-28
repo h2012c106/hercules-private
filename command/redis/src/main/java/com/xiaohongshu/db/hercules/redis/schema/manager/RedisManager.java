@@ -101,6 +101,8 @@ public class RedisManager {
                 rl.setObj(obj);
                 methodMap.put(strategy, rl);
             }
+            log.warn(" origin strategyList is:" + strategyList);
+            log.warn(" methodMap is:" + methodMap);
         } catch (Exception e){
             log.error(" redis strategy reflect error:", e);
         }
@@ -118,13 +120,18 @@ public class RedisManager {
     }
 
     public void act(RedisKV kv, List<String> strategyList){
-        if(batchNum == 0)
-            validateJedis();
         if (methodMap.size() == 0)
             initMethodMap(strategyList);
         for (int i = 0; i < strategyList.size(); i++) {
             String strategy = strategyList.get(i);
-            singleAct(strategy, kv);
+            try{
+                singleAct(strategy, kv);
+            } catch (Exception e){
+                log.error("redis act error:", e);
+                log.warn(" redis k:" + kv.getKey().getValue().toString());
+                jedis.close();
+                pipeline.close();
+            }
         }
         if ((++batchNum) >= pipeSize) {
             pipeline.sync();
@@ -133,23 +140,17 @@ public class RedisManager {
     }
 
     public void set(RedisKV kv) {
-        if(batchNum == 0)
-            validateJedis();
-        new InsertAction().act(pipeline, kv, expire);
+        try{
+            new InsertAction().act(pipeline, kv, expire);
+        } catch (Exception e){
+            log.error(" redis set error: e");
+            log.warn(" redis k:" + kv.getKey().getValue().toString());
+            jedis.close();
+            pipeline.close();
+        }
         if ((++batchNum) >= pipeSize) {
             pipeline.sync();
             batchNum = 1L;
-        }
-    }
-
-    //jedis多线程有坑 可能多个线程会用到同一个jedis且其里面可能有缓存的脏数据
-    private void validateJedis(){
-        try{
-            jedis.get("a");
-        } catch (Exception e) {
-            log.error(" jedis act error due to jedis:", e);
-            jedis.close();
-            jedis = getJedisPool().getResource();
         }
     }
 

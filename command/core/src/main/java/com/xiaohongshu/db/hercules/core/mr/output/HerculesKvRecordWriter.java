@@ -24,6 +24,8 @@ public abstract class HerculesKvRecordWriter<T> extends HerculesRecordWriter<T> 
 
     private List<String> strategyList = null;
 
+    private boolean flag = true;
+
     public HerculesKvRecordWriter(TaskAttemptContext context) {
         super(context);
     }
@@ -45,10 +47,22 @@ public abstract class HerculesKvRecordWriter<T> extends HerculesRecordWriter<T> 
                 LOG.debug(String.format("Meaningless row: %s", value.toString()));
             }
         } else {
-            if(value.getWriteStrategyList().size() != 0)
+            if(value.getWriteStrategyList().size() > 0){
+                logForStrategy(value.getWriteStrategyList());
                 strategyList = value.getWriteStrategyList();
+            } else {
+                if(flag)
+                    LOG.warn(" kv strategy is null");
+                flag = false;
+            }
             innerWriteKV(keyValue, valueValue);
         }
+    }
+
+    private void logForStrategy(List<String> list){
+        if(flag)
+            LOG.warn(" kv strategyList is:" + list);
+        flag = false;
     }
 
     public List<String> getStrategyList(){
