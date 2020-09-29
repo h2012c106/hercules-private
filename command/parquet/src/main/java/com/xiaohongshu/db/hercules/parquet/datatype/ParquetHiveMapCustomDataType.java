@@ -31,7 +31,7 @@ public class ParquetHiveMapCustomDataType extends CustomDataType<GroupWithSchema
 
     public static final ParquetHiveMapCustomDataType INSTANCE = new ParquetHiveMapCustomDataType();
 
-    private static final String MAP_NAME = "map";
+    private static final String MAP_NAME = "key_value";
     private static final String KEY_NAME = "key";
     private static final String VAL_NAME = "value";
 
@@ -40,7 +40,11 @@ public class ParquetHiveMapCustomDataType extends CustomDataType<GroupWithSchema
             @Override
             public BaseWrapper<?> apply(Object o) {
                 MapWrapper rawMap = (MapWrapper) o;
-                ListWrapper kvList = (ListWrapper) rawMap.get(MAP_NAME);
+                // 断言map一定只有一个子repeated group
+                if (rawMap.size() != 1) {
+                    throw new RuntimeException("Illegal hive map format for map column: " + o);
+                }
+                ListWrapper kvList = (ListWrapper) rawMap.values().iterator().next();
                 MapWrapper res = new MapWrapper(kvList.size());
                 for (BaseWrapper<?> wrapper : kvList) {
                     MapWrapper kv = (MapWrapper) wrapper;
