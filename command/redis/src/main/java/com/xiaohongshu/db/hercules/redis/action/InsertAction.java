@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public class InsertAction implements WriteAction{
 
-    public void act(Pipeline pipeline, RedisKV kv, int expire) {
+    public void act(Pipeline pipeline, RedisKV kv, Integer expire) {
         String key = String.valueOf(kv.getKey().getValue());
         RedisKV.RedisKVValue value = kv.getValue();
         if (key == null || value.getValue() == null) {

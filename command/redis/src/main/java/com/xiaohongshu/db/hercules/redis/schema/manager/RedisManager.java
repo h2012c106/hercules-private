@@ -36,6 +36,7 @@ public class RedisManager {
     private final String packageName = "com.xiaohongshu.db.hercules.redis.action.";
     private Map<String, ReflectMethod> methodMap = new HashMap<>();
     private int maxCount;
+    private final InsertAction insertAction;
 
 
     public RedisManager(GenericOptions options) {
@@ -50,6 +51,7 @@ public class RedisManager {
         this.pipeline = jedis.pipelined();
         this.pipeSize = options.getLong(RedisOptionConf.REDIS_PIPE_SIZE, RedisOptionConf.DEFAULT_PIPE_SIZE);
         this.maxCount = options.getInteger(CommonOptionsConf.NUM_MAPPER, 200);
+        this.insertAction = new InsertAction();
     }
 
     public JedisPool getJedisPool() {
@@ -95,7 +97,7 @@ public class RedisManager {
                 }
                 String className = packageName + captureFirstName(strategy) + "Action";
                 Class obj = Class.forName(className);
-                Method method = obj.getMethod("act");
+                Method method = obj.getMethod("act", Pipeline.class, RedisKV.class, Integer.class);
                 ReflectMethod rl = new ReflectMethod();
                 rl.setMethod(method);
                 rl.setObj(obj);
@@ -124,14 +126,9 @@ public class RedisManager {
             initMethodMap(strategyList);
         for (int i = 0; i < strategyList.size(); i++) {
             String strategy = strategyList.get(i);
-            try{
-                singleAct(strategy, kv);
-            } catch (Exception e){
-                log.error("redis act error:", e);
-                log.warn(" redis k:" + kv.getKey().getValue().toString());
-                jedis.close();
-                pipeline.close();
-            }
+            if(strategy.matches("expire(.*)") || strategy.matches("Expire(.*)"))
+                strategy = "expire";
+            singleAct(strategy, kv);
         }
         if ((++batchNum) >= pipeSize) {
             pipeline.sync();
@@ -140,14 +137,15 @@ public class RedisManager {
     }
 
     public void set(RedisKV kv) {
-        try{
-            new InsertAction().act(pipeline, kv, expire);
-        } catch (Exception e){
-            log.error(" redis set error: e");
-            log.warn(" redis k:" + kv.getKey().getValue().toString());
-            jedis.close();
-            pipeline.close();
-        }
+        this.insertAction.act(pipeline, kv, expire);
+//        try{
+//
+//        } catch (Exception e){
+//            log.error(" redis set error: e");
+//            log.warn(" redis k:" + kv.getKey().getValue().toString());
+//            jedis.close();
+//            pipeline.close();
+//        }
         if ((++batchNum) >= pipeSize) {
             pipeline.sync();
             batchNum = 1L;
