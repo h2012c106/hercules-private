@@ -44,7 +44,7 @@ public class DoubleWrapper extends BaseWrapper<BigDecimal> {
 
     @Override
     public Long asLong() {
-        return getValue().longValueExact();
+        return asBigInteger().longValueExact();
     }
 
     @Override

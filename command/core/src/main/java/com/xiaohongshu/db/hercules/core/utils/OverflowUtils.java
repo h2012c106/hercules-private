@@ -58,19 +58,19 @@ public final class OverflowUtils {
     }
 
     public static byte numberToByte(@NonNull Number number) {
-        return new BigDecimal(number.toString()).toBigIntegerExact().byteValueExact();
+        return new BigDecimal(number.toString()).toBigInteger().byteValueExact();
     }
 
     public static short numberToShort(@NonNull Number number) {
-        return new BigDecimal(number.toString()).toBigIntegerExact().shortValueExact();
+        return new BigDecimal(number.toString()).toBigInteger().shortValueExact();
     }
 
     public static int numberToInteger(@NonNull Number number) {
-        return new BigDecimal(number.toString()).toBigIntegerExact().intValueExact();
+        return new BigDecimal(number.toString()).toBigInteger().intValueExact();
     }
 
     public static long numberToLong(@NonNull Number number) {
-        return new BigDecimal(number.toString()).toBigIntegerExact().longValueExact();
+        return new BigDecimal(number.toString()).toBigInteger().longValueExact();
     }
 
     public static float numberToFloat(@NonNull BigDecimal number) {

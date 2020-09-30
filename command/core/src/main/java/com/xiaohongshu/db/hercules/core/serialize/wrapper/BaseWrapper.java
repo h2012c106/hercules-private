@@ -76,24 +76,8 @@ public abstract class BaseWrapper<T> implements Comparable<T> {
         addParentByteSize(byteSize);
     }
 
-    public Byte asByte() {
-        return asBigDecimal().byteValueExact();
-    }
-
-    public Short asShort() {
-        return asBigDecimal().shortValueExact();
-    }
-
-    public Integer asInteger() {
-        return asBigDecimal().intValueExact();
-    }
-
     public Long asLong() {
         return asBigInteger().longValueExact();
-    }
-
-    public Float asFloat() {
-        return OverflowUtils.numberToFloat(asBigDecimal());
     }
 
     public Double asDouble() {
