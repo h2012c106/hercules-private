@@ -12,6 +12,7 @@ import lombok.NonNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,7 +34,7 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> {
     }
 
     public MapWrapper(int size) {
-        super(new HashMap<>((int) ((float) size / 0.75F + 1.0F)),
+        super(new LinkedHashMap<>((int) ((float) size / 0.75F + 1.0F)),
                 DATA_TYPE,
                 0);
     }

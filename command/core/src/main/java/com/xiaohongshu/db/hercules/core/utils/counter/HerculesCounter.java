@@ -47,6 +47,12 @@ public enum HerculesCounter implements Counter {
     }),
     QPS_CONTROL_WAITING_TIME("Write time (ms)", false, aLong -> {
         return String.format("%.3fs", aLong.doubleValue() / 1000.0);
+    }),
+    ASYNC_WRITER_PUT_TIME("Async writer put time (ms)", false, aLong -> {
+        return String.format("%.3fs", aLong.doubleValue() / 1000.0);
+    }),
+    ASYNC_WRITER_TAKE_TIME("Async writer take time (ms)", false, aLong -> {
+        return String.format("%.3fs", aLong.doubleValue() / 1000.0);
     });
 
     private final String counterName;
