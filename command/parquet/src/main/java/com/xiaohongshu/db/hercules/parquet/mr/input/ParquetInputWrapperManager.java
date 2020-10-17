@@ -215,9 +215,11 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
         };
     }
 
+    public static WrapperGetter<GroupWithSchemaInfo> MAP_GETTER = null;
+
     @Override
     protected WrapperGetter<GroupWithSchemaInfo> getMapGetter() {
-        return new WrapperGetter<GroupWithSchemaInfo>() {
+        MAP_GETTER = new WrapperGetter<GroupWithSchemaInfo>() {
             @Override
             protected DataType getType() {
                 return BaseDataType.MAP;
@@ -236,5 +238,6 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
                 );
             }
         };
+        return MAP_GETTER;
     }
 }

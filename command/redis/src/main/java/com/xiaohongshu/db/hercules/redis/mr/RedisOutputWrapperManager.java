@@ -8,6 +8,7 @@ import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
+import redis.clients.jedis.util.SafeEncoder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -100,7 +101,17 @@ public class RedisOutputWrapperManager extends WrapperSetterFactory<RedisKV> {
 
     @Override
     protected BaseTypeWrapperSetter.BytesSetter<RedisKV> getBytesSetter() {
-        return null;
+        return new BaseTypeWrapperSetter.BytesSetter<RedisKV>() {
+            @Override
+            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
+            }
+
+            @Override
+            protected void setNonnullValue(byte[] value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+            }
+        };
     }
 
     @Override
@@ -119,11 +130,12 @@ public class RedisOutputWrapperManager extends WrapperSetterFactory<RedisKV> {
             @Override
             protected void setNonnull(BaseWrapper<?> value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
                 MapWrapper mapWrapper = (MapWrapper) value;
-                Map<String, String> map = new HashMap<>();
+                Map<byte[], byte[]> map = new HashMap<>();
                 for (Map.Entry<String, BaseWrapper<?>> entry : mapWrapper.entrySet()) {
                     RedisKV tmp = new RedisKV();
-                    getWrapperSetter(BaseDataType.STRING).set(entry.getValue(), tmp, null, null, VALUE_SEQ);
-                    map.put(entry.getKey(), String.valueOf(tmp.getValue().getValue()));
+                    //因为redis底层存的都是bytes，即使是string实际也是按照
+                    getWrapperSetter(BaseDataType.BYTES).set(entry.getValue(), tmp, null, null, VALUE_SEQ);
+                    map.put(SafeEncoder.encode(entry.getKey()), (byte[])(tmp.getValue().getValue()));
                 }
                 row.set(RedisKV.RedisKVValue.initialize(getType(), map), columnSeq);
             }

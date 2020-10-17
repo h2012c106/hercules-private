@@ -8,6 +8,8 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,6 +22,8 @@ public class HerculesWritable implements Writable {
     private final MapWrapper row;
 
     private long byteSize;
+
+    private final List<String> writeStrategyList = new LinkedList<>();
 
     public HerculesWritable() {
         this(1);
@@ -54,6 +58,17 @@ public class HerculesWritable implements Writable {
 
     public long getByteSize() {
         return byteSize;
+    }
+
+    public void addWriteStrategy(String strategy){
+        writeStrategyList.add(strategy);
+    }
+    public void addAllWriteStrategy(List<String> writeStrategyList){
+        this.writeStrategyList.addAll(writeStrategyList);
+    }
+
+    public List<String> getWriteStrategyList() {
+        return writeStrategyList;
     }
 
     @Override

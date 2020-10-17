@@ -91,6 +91,7 @@ public abstract class KVSer<T> implements DataSourceRoleGetter, InjectedClass {
         long startTime = System.currentTimeMillis();
         try {
             HerculesWritable out = new HerculesWritable(2);
+            out.addAllWriteStrategy(in.getWriteStrategyList());
             BaseWrapper<?> key = writeKey(in);
             // 如果序列化结构中不需要包含key值，则从行中拿走这列再序列化
             if (serOptions.getBoolean(NOT_CONTAINS_KEY, false)) {

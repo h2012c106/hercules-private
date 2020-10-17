@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.core.mr.mapper;
 import com.alibaba.fastjson.JSONObject;
 import com.cloudera.sqoop.mapreduce.AutoProgressMapper;
 import com.xiaohongshu.db.hercules.core.filter.expr.Expr;
+import com.xiaohongshu.db.hercules.core.filter.parser.Parser;
 import com.xiaohongshu.db.hercules.core.mr.udf.HerculesUDF;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
@@ -24,17 +25,13 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.MAP_STATUS_LOG_INTERVAL;
-import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.UDF;
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.*;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseInputOptionsConf.BLACK_COLUMN;
 
 public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWritable, NullWritable, HerculesWritable> {
@@ -61,6 +58,8 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
     private final List<HerculesUDF> udfList = new LinkedList<>();
 
     private final ScheduledExecutorService timingLoggerService = Executors.newSingleThreadScheduledExecutor();
+
+    private final Map<String, Expr> writeStrategyMap = new LinkedHashMap<>();
 
     public HerculesMapper() {
     }
@@ -101,6 +100,13 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
                 HerculesContext.instance().inject(tmpUDF);
                 tmpUDF.initialize(context);
                 udfList.add(tmpUDF);
+            }
+        }
+
+        if (commonOptions.hasProperty(WRITE_STRATEGY)) {
+            JSONObject jsonObject = commonOptions.getJson(WRITE_STRATEGY, null);
+            for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
+                writeStrategyMap.put(entry.getKey(), Parser.INSTANCE.parse((String) entry.getValue()));
             }
         }
 
@@ -154,6 +160,12 @@ public class HerculesMapper extends AutoProgressMapper<NullWritable, HerculesWri
 
         HerculesStatus.setHerculesMapStatus(HerculesStatus.HerculesMapStatus.UDF);
         start = System.currentTimeMillis();
+        // 先打write strategy
+        for (Map.Entry<String, Expr> entry : writeStrategyMap.entrySet()) {
+            if (entry.getValue().getResult(value).asBoolean()) {
+                value.addWriteStrategy(entry.getKey());
+            }
+        }
         for (HerculesUDF udf : udfList) {
             // 若udf返回null，这行不写
             if ((value = udf.evaluate(value)) == null) {

@@ -31,6 +31,7 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String UDF = "udf";
     public static final String MAP_STATUS_LOG_INTERVAL = "map-status-log-interval";
     public static final String ALLOW_SKIP = "allow-skip";
+    public static final String WRITE_STRATEGY = "write-strategy";
 
     public static final int DEFAULT_NUM_MAPPER = 4;
     public static final Level DEFAULT_LOG_LEVEL = Level.INFO;
@@ -147,6 +148,11 @@ public class CommonOptionsConf extends BaseOptionsConf {
                 .name(ALLOW_SKIP)
                 .needArg(false)
                 .description("Allow to skip the error line.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(WRITE_STRATEGY)
+                .needArg(true)
+                .description("The write strategy and its trigger condition, format as {<strategy>: <condition>}, e.g.: {\"insert\": \"id > 10\"}.")
                 .build());
         return tmpList;
     }

@@ -14,8 +14,8 @@ public enum HerculesCounter implements Counter {
     FILTERED_RECORDS("Filtered records num", true, String::valueOf),
     UDF_IGNORE_RECORDS("UDF ignored records num", true, String::valueOf),
     SER_RECORDS("Serialize records num", true, String::valueOf),
-    SER_ACTUAL_RECORDS("Serialize ignored records num", true, String::valueOf),
-    SER_IGNORE_RECORDS("Serialize actual records num", true, String::valueOf),
+    SER_ACTUAL_RECORDS("Serialize actual records num", true, String::valueOf),
+    SER_IGNORE_RECORDS("Serialize ignored records num", true, String::valueOf),
     /**
      * 空间计数器
      */

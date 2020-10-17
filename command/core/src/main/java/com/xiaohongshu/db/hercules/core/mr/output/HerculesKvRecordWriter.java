@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.util.List;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.VALUE_NAME;
@@ -20,6 +21,10 @@ public abstract class HerculesKvRecordWriter<T> extends HerculesRecordWriter<T> 
 
     @Options(type = OptionsType.TARGET)
     private GenericOptions options;
+
+    private List<String> strategyList = null;
+
+    private boolean flag = true;
 
     public HerculesKvRecordWriter(TaskAttemptContext context) {
         super(context);
@@ -40,7 +45,26 @@ public abstract class HerculesKvRecordWriter<T> extends HerculesRecordWriter<T> 
         if (keyValue == null || valueValue == null) {
             throw new RuntimeException(String.format("Meaningless row: %s", value.toString()));
         } else {
+            if(value.getWriteStrategyList().size() > 0){
+                logForStrategy(value.getWriteStrategyList());
+                strategyList = value.getWriteStrategyList();
+            } else {
+                if(flag)
+                    LOG.warn(" kv strategy is null");
+                flag = false;
+            }
             innerWriteKV(keyValue, valueValue);
         }
     }
+
+    private void logForStrategy(List<String> list){
+        if(flag)
+            LOG.warn(" kv strategyList is:" + list);
+        flag = false;
+    }
+
+    public List<String> getStrategyList(){
+        return strategyList;
+    }
+
 }
