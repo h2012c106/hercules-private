@@ -69,7 +69,10 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
             }
 
             String fullColumnName = WritableUtils.concatColumn(groupPosition, columnName);
-            DataType columnType = schema.getColumnTypeMap().getOrDefault(fullColumnName, dataTypeConverter.convertElementType(new ParquetType(type)));
+            DataType columnType = schema.getColumnTypeMap().get(fullColumnName);
+            if (columnType == null) {
+                columnType = dataTypeConverter.convertElementType(new ParquetType(type));
+            }
             // 先写一下这里无脑new出来GroupWithRepeatedInfo的理由，以防以后忘了：
             // 由于parquet schema里逻辑LIST与其他类型在同一层定义，所以会有不同（比如一个repeated int32既是一个LIST也是一个INTEGER）
             // 流程逻辑是如果读到其他类型，直接获得函数返回（一层）；如果读到LIST，调用ListGetter调用repeatedToListWrapper二次判断真正类型，然后根据这个类型获得的函数循环（valueSeq）获得每个元素的值（三层）。

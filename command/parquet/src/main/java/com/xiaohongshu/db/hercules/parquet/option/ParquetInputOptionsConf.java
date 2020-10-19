@@ -17,6 +17,7 @@ public final class ParquetInputOptionsConf extends BaseOptionsConf {
     public static final String TASK_SIDE_METADATA = "task-side-metadata";
     public static final String ORIGINAL_SPLIT = "original-split";
     public static final String EMPTY_AS_NULL = "empty-as-null";
+    public static final String ASYNC = "async";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -49,6 +50,11 @@ public final class ParquetInputOptionsConf extends BaseOptionsConf {
                 .description(String.format("The optional empty value handling mode, if specified, the empty value will be treated as null. " +
                         "e.g. If downstream is rdbms, null value will insert null; empty value will insert default. " +
                         "This switch will only be activated when choose '%s' schema style.", SchemaStyle.ORIGINAL))
+                .build());
+        res.add(SingleOptionConf.builder()
+                .name(ASYNC)
+                .needArg(false)
+                .description("Specify whether make read and process to be async, may be far slower with lack of cpu core.")
                 .build());
         return res;
     }

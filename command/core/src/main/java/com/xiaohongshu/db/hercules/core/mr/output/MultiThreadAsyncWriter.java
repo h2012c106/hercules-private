@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.core.mr.output;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.xiaohongshu.db.hercules.core.utils.counter.Counter;
 import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
 import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 /**
  * 接受一批缓存好的数据异步多线程写的范式
@@ -83,13 +85,34 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
                 @Override
                 public void run() {
                     LOG.info(String.format("Thread %s start.", Thread.currentThread().getName()));
+                    Counter takeCounter = new Counter() {
+
+                        private final String name = "Async writer worker " + Thread.currentThread().getName() + " take time (ms)";
+
+                        @Override
+                        public String getCounterName() {
+                            return name;
+                        }
+
+                        @Override
+                        public boolean isRecordToMRCounter() {
+                            return false;
+                        }
+
+                        @Override
+                        public Function<Long, String> getToStringFunc() {
+                            return aLong -> {
+                                return String.format("%.3fs", aLong.doubleValue() / 1000.0);
+                            };
+                        }
+                    };
                     while (true) {
                         // 从任务队列里阻塞取
                         M mission = null;
                         try {
                             long startTime = System.currentTimeMillis();
                             mission = missionQueue.take();
-                            HerculesStatus.add(null, HerculesCounter.ASYNC_WRITER_TAKE_TIME, System.currentTimeMillis() - startTime);
+                            HerculesStatus.add(null, takeCounter, System.currentTimeMillis() - startTime);
                         } catch (InterruptedException e) {
                             LOG.warn("Worker's taking mission interrupted: " + ExceptionUtils.getStackTrace(e));
                             continue;
@@ -122,7 +145,7 @@ public abstract class MultiThreadAsyncWriter<T, M extends MultiThreadAsyncWriter
                                 Thread.currentThread().getName(), ExceptionUtils.getStackTrace(e)));
                     }
                     LOG.info(String.format("Thread %s use %s for taking mission.",
-                            Thread.currentThread().getName(), HerculesStatus.getStrValue(HerculesCounter.ASYNC_WRITER_TAKE_TIME)));
+                            Thread.currentThread().getName(), HerculesStatus.getStrValue(takeCounter)));
                 }
             });
         }

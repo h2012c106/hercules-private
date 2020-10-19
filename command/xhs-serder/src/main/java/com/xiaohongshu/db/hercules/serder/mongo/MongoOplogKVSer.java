@@ -56,7 +56,7 @@ public class MongoOplogKVSer extends KVSer<Document> implements InjectedClass {
         builder.setFromMigrate(false);
 
         if (schema.getColumnNameList().size() != 0) {
-            in = WritableUtils.copyColumn(in, schema.getColumnNameList(), WritableUtils.FilterUnexistOption.IGNORE);
+            in = WritableUtils.retainColumn(in, schema.getColumnNameList(), WritableUtils.FilterUnexistOption.IGNORE);
         }
         Document document;
         try {

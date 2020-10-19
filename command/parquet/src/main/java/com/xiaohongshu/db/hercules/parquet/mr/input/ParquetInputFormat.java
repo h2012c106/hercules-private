@@ -23,8 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.EMPTY_AS_NULL;
-import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.ORIGINAL_SPLIT;
+import static com.xiaohongshu.db.hercules.parquet.option.ParquetInputOptionsConf.*;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.SCHEMA_STYLE;
 
 public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo> {
@@ -114,7 +113,11 @@ public class ParquetInputFormat extends HerculesInputFormat<GroupWithSchemaInfo>
 
     @Override
     protected HerculesRecordReader<GroupWithSchemaInfo> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        return new ParquetRecordReader(context, delegate);
+        if (options.getBoolean(ASYNC, false)) {
+            return new ParquetAsyncRecordReader(context, delegate);
+        } else {
+            return new ParquetSingleThreadRecordReader(context, delegate);
+        }
     }
 
     @Override

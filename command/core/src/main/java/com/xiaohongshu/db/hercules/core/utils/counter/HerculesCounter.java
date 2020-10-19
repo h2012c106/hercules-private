@@ -24,7 +24,10 @@ public enum HerculesCounter implements Counter {
     /**
      * 计时器（map间累加无意义）
      */
-    READ_TIME("Read time (ms)", false, aLong -> {
+    READ_NEXT_TIME("Read next time (ms)", false, aLong -> {
+        return String.format("%.3fs", aLong.doubleValue() / 1000.0);
+    }),
+    READ_VALUE_TIME("Read value time (ms)", false, aLong -> {
         return String.format("%.3fs", aLong.doubleValue() / 1000.0);
     }),
     WRITE_TIME("Write time (ms)", false, aLong -> {
@@ -36,7 +39,7 @@ public enum HerculesCounter implements Counter {
     UDF_TIME("UDF time (ms)", false, aLong -> {
         return String.format("%.3fs", aLong.doubleValue() / 1000.0);
     }),
-    ROW_PROCESS_TIME("Write time (ms)", false, aLong -> {
+    ROW_PROCESS_TIME("Row process time (ms)", false, aLong -> {
         return String.format("%.3fs", aLong.doubleValue() / 1000.0);
     }),
     DER_TIME("Deserialize time (ms)", false, aLong -> {
@@ -45,13 +48,10 @@ public enum HerculesCounter implements Counter {
     SER_TIME("Serialize time (ms)", false, aLong -> {
         return String.format("%.3fs", aLong.doubleValue() / 1000.0);
     }),
-    QPS_CONTROL_WAITING_TIME("Write time (ms)", false, aLong -> {
+    QPS_CONTROL_WAITING_TIME("QPS control time (ms)", false, aLong -> {
         return String.format("%.3fs", aLong.doubleValue() / 1000.0);
     }),
     ASYNC_WRITER_PUT_TIME("Async writer put time (ms)", false, aLong -> {
-        return String.format("%.3fs", aLong.doubleValue() / 1000.0);
-    }),
-    ASYNC_WRITER_TAKE_TIME("Async writer take time (ms)", false, aLong -> {
         return String.format("%.3fs", aLong.doubleValue() / 1000.0);
     });
 

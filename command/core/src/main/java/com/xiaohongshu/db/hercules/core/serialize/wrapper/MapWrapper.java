@@ -11,14 +11,7 @@ import lombok.NonNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-<<<<<<< HEAD
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-=======
 import java.util.*;
->>>>>>> redis-writer
 import java.util.stream.Collectors;
 
 /**

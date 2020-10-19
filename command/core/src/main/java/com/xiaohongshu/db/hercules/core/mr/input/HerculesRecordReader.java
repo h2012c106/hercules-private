@@ -86,10 +86,7 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     @Override
     public final void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
         this.context = context;
-
-        long start = System.currentTimeMillis();
         myInitialize(split, context);
-        HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
     }
 
     @Override
@@ -103,7 +100,7 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     public final HerculesWritable getCurrentValue() throws IOException, InterruptedException {
         long start = System.currentTimeMillis();
         HerculesWritable res = innerGetCurrentValue();
-        HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
+        HerculesStatus.add(context, HerculesCounter.READ_VALUE_TIME, System.currentTimeMillis() - start);
         return res;
     }
 
@@ -115,7 +112,7 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
 
         long start = System.currentTimeMillis();
         boolean res = innerNextKeyValue();
-        HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
+        HerculesStatus.add(context, HerculesCounter.READ_NEXT_TIME, System.currentTimeMillis() - start);
         if (res) {
             HerculesStatus.increase(context, HerculesCounter.READ_RECORDS);
         }
@@ -127,10 +124,10 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     @Override
     public final void close() throws IOException {
         if (!closed.getAndSet(true)) {
-            long start = System.currentTimeMillis();
             innerClose();
-            HerculesStatus.add(context, HerculesCounter.READ_TIME, System.currentTimeMillis() - start);
-            LOG.info(String.format("Spent %s on read.", HerculesStatus.getStrValue(HerculesCounter.READ_TIME)));
+            LOG.info(String.format("Spent %s on read next, and %s on read value.",
+                    HerculesStatus.getStrValue(HerculesCounter.READ_NEXT_TIME),
+                    HerculesStatus.getStrValue(HerculesCounter.READ_VALUE_TIME)));
         }
     }
 
