@@ -14,6 +14,7 @@ import com.xiaohongshu.db.hercules.core.utils.ConfigUtils;
 import com.xiaohongshu.db.hercules.core.utils.LogUtils;
 import com.xiaohongshu.db.hercules.core.utils.ParseUtils;
 import com.xiaohongshu.db.hercules.core.utils.config.ModuleConfig;
+import com.xiaohongshu.db.hercules.core.utils.context.Family;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import com.xiaohongshu.db.hercules.core.utils.reflect.Reflector;
@@ -26,6 +27,7 @@ import org.apache.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 public class Hercules {
 
@@ -96,24 +98,35 @@ public class Hercules {
 
         WrappingOptions wrappingOptions = new WrappingOptions(commonOptions, sourceOptions, targetOptions);
 
-        HerculesContext context = HerculesContext.initialize(wrappingOptions, sourceSupplier, targetSupplier, reflector);
-
-        KvSerDerSupplier sourceKvSerDerSupplier;
-        if ((sourceKvSerDerSupplier = context.getKvSerDerSupplierPair().getDerItem()) != null) {
-            wrappingOptions.add(new CmdParser(
-                    sourceKvSerDerSupplier.getInputOptionsConf(),
-                    sourceDataSource,
-                    OptionsType.DER
-            ).parse(args));
-        }
-        KvSerDerSupplier targetKvSerDerSupplier;
-        if ((targetKvSerDerSupplier = context.getKvSerDerSupplierPair().getSerItem()) != null) {
-            wrappingOptions.add(new CmdParser(
-                    targetKvSerDerSupplier.getOutputOptionsConf(),
-                    targetDataSource,
-                    OptionsType.SER
-            ).parse(args));
-        }
+        String[] finalArgs = args;
+        HerculesContext context = HerculesContext.initialize(
+                wrappingOptions,
+                sourceSupplier,
+                targetSupplier,
+                reflector,
+                new Function<Family<KvSerDerSupplier>, Void>() {
+                    @Override
+                    public Void apply(Family<KvSerDerSupplier> serDerSupplierFamily) {
+                        KvSerDerSupplier sourceKvSerDerSupplier;
+                        if ((sourceKvSerDerSupplier = serDerSupplierFamily.getDerItem()) != null) {
+                            wrappingOptions.add(new CmdParser(
+                                    sourceKvSerDerSupplier.getInputOptionsConf(),
+                                    sourceDataSource,
+                                    OptionsType.DER
+                            ).parse(finalArgs));
+                        }
+                        KvSerDerSupplier targetKvSerDerSupplier;
+                        if ((targetKvSerDerSupplier = serDerSupplierFamily.getSerItem()) != null) {
+                            wrappingOptions.add(new CmdParser(
+                                    targetKvSerDerSupplier.getOutputOptionsConf(),
+                                    targetDataSource,
+                                    OptionsType.SER
+                            ).parse(finalArgs));
+                        }
+                        return null;
+                    }
+                }
+        );
 
         // 处理log-level
         Logger.getRootLogger().setLevel(
