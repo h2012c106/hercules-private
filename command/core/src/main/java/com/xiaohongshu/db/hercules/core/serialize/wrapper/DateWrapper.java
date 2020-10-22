@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import lombok.NonNull;
 
@@ -39,23 +40,13 @@ public class DateWrapper extends BaseWrapper<ExtendedDate> {
     }
 
     @Override
-    public Long asLong() {
-        return asDate().getDate().getTime();
-    }
-
-    @Override
-    public Double asDouble() {
-        return asLong().doubleValue();
-    }
-
-    @Override
-    public BigDecimal asBigDecimal() {
-        return BigDecimal.valueOf(asDouble());
+    public InfinitableBigDecimal asBigDecimal() {
+        return InfinitableBigDecimal.valueOf(new BigDecimal(asBigInteger()));
     }
 
     @Override
     public BigInteger asBigInteger() {
-        return BigInteger.valueOf(asLong());
+        return BigInteger.valueOf(asDate().getDate().getTime());
     }
 
     @Override

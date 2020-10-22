@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import lombok.NonNull;
 
@@ -76,15 +77,7 @@ public abstract class BaseWrapper<T> implements Comparable<T> {
         addParentByteSize(byteSize);
     }
 
-    public Long asLong() {
-        return asBigInteger().longValueExact();
-    }
-
-    public Double asDouble() {
-        return OverflowUtils.numberToDouble(asBigDecimal());
-    }
-
-    abstract public BigDecimal asBigDecimal();
+    abstract public InfinitableBigDecimal asBigDecimal();
 
     abstract public BigInteger asBigInteger();
 

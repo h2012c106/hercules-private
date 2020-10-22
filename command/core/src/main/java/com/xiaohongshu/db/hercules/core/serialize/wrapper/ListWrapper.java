@@ -6,6 +6,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -189,17 +190,7 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper<?>>> implements Li
     }
 
     @Override
-    public Long asLong() {
-        throw new SerializeException(UNSUPPORTED_MESSAGE);
-    }
-
-    @Override
-    public Double asDouble() {
-        throw new SerializeException(UNSUPPORTED_MESSAGE);
-    }
-
-    @Override
-    public BigDecimal asBigDecimal() {
+    public InfinitableBigDecimal asBigDecimal() {
         throw new SerializeException(UNSUPPORTED_MESSAGE);
     }
 

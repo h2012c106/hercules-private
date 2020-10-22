@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -29,18 +30,8 @@ public class BooleanWrapper extends BaseWrapper<Boolean> {
     }
 
     @Override
-    public Long asLong() {
-        return getValue() ? 1L : 0L;
-    }
-
-    @Override
-    public Double asDouble() {
-        return getValue() ? 1d : 0d;
-    }
-
-    @Override
-    public BigDecimal asBigDecimal() {
-        return getValue() ? BigDecimal.ONE : BigDecimal.ZERO;
+    public InfinitableBigDecimal asBigDecimal() {
+        return getValue() ? InfinitableBigDecimal.ONE : InfinitableBigDecimal.ZERO;
     }
 
     @Override

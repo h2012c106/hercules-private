@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 
@@ -50,19 +51,8 @@ public class StringWrapper extends BaseWrapper<String> {
     }
 
     @Override
-    public Long asLong() {
-        return asBigInteger().longValueExact();
-    }
-
-    @Override
-    public Double asDouble() {
-        BigDecimal tmpDecimal = asBigDecimal();
-        return OverflowUtils.numberToDouble(tmpDecimal);
-    }
-
-    @Override
-    public BigDecimal asBigDecimal() {
-        return new BigDecimal(getValue());
+    public InfinitableBigDecimal asBigDecimal() {
+        return InfinitableBigDecimal.valueOf(new BigDecimal(getValue()));
     }
 
     @Override

@@ -60,17 +60,17 @@ public class VidCustomDataType extends CustomDataType<ResultSet.Result, WritingR
 
     @Override
     protected Long innerWrite(IntegerWrapper wrapper) throws Exception {
-        return wrapper.asLong();
+        return wrapper.asBigInteger().longValueExact();
     }
 
     @Override
     protected Long innerWrite(DoubleWrapper wrapper) throws Exception {
-        return wrapper.asLong();
+        return wrapper.asBigInteger().longValueExact();
     }
 
     @Override
     protected Long innerWrite(StringWrapper wrapper) throws Exception {
-        return wrapper.asLong();
+        return wrapper.asBigInteger().longValueExact();
     }
 
     @Override

@@ -75,7 +75,7 @@ public final class OverflowUtils {
 
     public static float numberToFloat(@NonNull BigDecimal number) {
         float res = number.floatValue();
-        if (Float.isInfinite(res) || isFloatOverFlow(number)) {
+        if (isFloatOverFlow(number)) {
             throw new ArithmeticException("Overflow float value: " + number.toString());
         }
         return res;
@@ -87,7 +87,7 @@ public final class OverflowUtils {
 
     public static double numberToDouble(@NonNull BigDecimal number) {
         double res = number.doubleValue();
-        if (Double.isInfinite(res) || isDoubleOverFlow(number)) {
+        if (isDoubleOverFlow(number)) {
             throw new ArithmeticException("Overflow double value: " + number.toString());
         }
         return res;
