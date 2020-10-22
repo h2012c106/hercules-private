@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 import lombok.NonNull;
 
 import java.math.BigDecimal;
@@ -113,17 +114,7 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> impleme
     }
 
     @Override
-    public Long asLong() {
-        throw new SerializeException(UNSUPPORTED_MESSAGE);
-    }
-
-    @Override
-    public Double asDouble() {
-        throw new SerializeException(UNSUPPORTED_MESSAGE);
-    }
-
-    @Override
-    public BigDecimal asBigDecimal() {
+    public InfinitableBigDecimal asBigDecimal() {
         throw new SerializeException(UNSUPPORTED_MESSAGE);
     }
 

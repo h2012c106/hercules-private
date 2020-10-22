@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.core.datatype;
 
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.*;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -56,22 +57,22 @@ public enum BaseDataType implements DataType {
             BaseWrapper::asBoolean
     ),
     FLOAT(
-            BigDecimal.class,
+            InfinitableBigDecimal.class,
             Float.class,
             obj -> DoubleWrapper.get((Float) obj),
-            wrapper -> OverflowUtils.numberToFloat(wrapper.asBigDecimal())
+            wrapper -> wrapper.asBigDecimal().getFloatValue()
     ),
     DOUBLE(
-            BigDecimal.class,
+            InfinitableBigDecimal.class,
             Double.class,
             obj -> DoubleWrapper.get((Double) obj),
-            wrapper -> OverflowUtils.numberToDouble(wrapper.asBigDecimal())
+            wrapper -> wrapper.asBigDecimal().getDoubleValue()
     ),
     DECIMAL(
-            BigDecimal.class,
+            InfinitableBigDecimal.class,
             BigDecimal.class,
             obj -> DoubleWrapper.get((BigDecimal) obj),
-            BaseWrapper::asBigDecimal
+            wrapper -> wrapper.asBigDecimal().getDecimalValue()
     ),
     STRING(
             String.class,

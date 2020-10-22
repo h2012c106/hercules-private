@@ -6,6 +6,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
@@ -61,30 +62,7 @@ public class BytesWrapper extends BaseWrapper<byte[]> {
     }
 
     @Override
-    public Long asLong() {
-        byte[] bytes = getValue();
-        if (bytes.length == 4) {
-            return (long) (bytes[3] & 0xFF |
-                    (bytes[2] & 0xFF) << 8 |
-                    (bytes[1] & 0xFF) << 16 |
-                    (bytes[0] & 0xFF) << 24);
-        } else if (bytes.length == 8) {
-            ByteBuffer buffer = ByteBuffer.allocate(8);
-            buffer.put(bytes, 0, bytes.length);
-            buffer.flip();
-            return buffer.getLong();
-        } else {
-            throw new SerializeException("Unable to convert bytes to long: " + Arrays.toString(bytes));
-        }
-    }
-
-    @Override
-    public Double asDouble() {
-        throw new SerializeException("Unsupported to convert bytes to double.");
-    }
-
-    @Override
-    public BigDecimal asBigDecimal() {
+    public InfinitableBigDecimal asBigDecimal() {
         throw new SerializeException("Unsupported to convert bytes to BigDecimal.");
     }
 
