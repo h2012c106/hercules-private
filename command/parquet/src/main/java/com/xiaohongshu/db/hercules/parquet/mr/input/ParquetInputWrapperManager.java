@@ -128,7 +128,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
 
             @Override
             protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return row.isEmpty();
+                return row.isEmpty() || Float.isNaN(row.getGroup().getFloat(columnName, row.getValueSeq()));
             }
         };
     }
@@ -143,7 +143,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
 
             @Override
             protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return row.isEmpty();
+                return row.isEmpty() || Double.isNaN(row.getGroup().getDouble(columnName, row.getValueSeq()));
             }
         };
     }
