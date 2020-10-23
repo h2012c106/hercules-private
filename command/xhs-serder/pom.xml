@@ -30,6 +30,10 @@
                                     <pattern>com.google.protobuf</pattern>
                                     <shadedPattern>hercules.shaded.com.google.protobuf</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>ch.qos.logback</pattern>
+                                    <shadedPattern>hercules.shaded.ch.qos.logback</shadedPattern>
+                                </relocation>
                             </relocations>
                             <minimizeJar>true</minimizeJar>
                             <filters>

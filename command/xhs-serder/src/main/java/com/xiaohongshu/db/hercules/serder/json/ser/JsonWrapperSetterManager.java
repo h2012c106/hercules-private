@@ -19,6 +19,11 @@ public class JsonWrapperSetterManager extends MongoDBWrapperSetterManager {
         setDecimalAsString(true);
     }
 
+    public JsonWrapperSetterManager(DataSourceRole role) {
+        super(role);
+        setDecimalAsString(true);
+    }
+
     @Override
     protected BaseTypeWrapperSetter.DateSetter<Document> getDateSetter() {
         return new BaseTypeWrapperSetter.DateSetter<Document>() {
