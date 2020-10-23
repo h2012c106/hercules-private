@@ -15,7 +15,6 @@ import com.xiaohongshu.db.hercules.elasticsearch.option.ElasticsearchOptionConf;
 import com.xiaohongshu.db.hercules.elasticsearch.option.ElasticsearchOutputOptionConf;
 import com.xiaohongshu.db.hercules.elasticsearch.schema.manager.DocRequest;
 import com.xiaohongshu.db.hercules.elasticsearch.schema.manager.ElasticsearchManager;
-import com.xiaohongshu.db.hercules.serder.json.ser.JsonKVSer;
 import com.xiaohongshu.db.hercules.serder.json.ser.JsonWrapperSetterManager;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;

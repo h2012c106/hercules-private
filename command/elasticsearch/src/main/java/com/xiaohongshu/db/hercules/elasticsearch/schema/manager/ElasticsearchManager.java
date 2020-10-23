@@ -7,7 +7,6 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.xcontent.XContentType;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,6 +22,7 @@ public class ElasticsearchManager {
         this.docType = docType;
     }
 
+    // 目前仅支持upsert语义，后续若有需求，再加。
     public void doUpsert(List<DocRequest> indexRequests) throws IOException {
         BulkRequest bulkRequest = new BulkRequest();
         for (DocRequest docRequest : indexRequests){
