@@ -34,14 +34,6 @@
                                     <pattern>org.apache.http</pattern>
                                     <shadedPattern>hercules.shaded.org.apache.http</shadedPattern>
                                 </relocation>
-                                <relocation>
-                                    <pattern>org.apache.httpcomponents</pattern>
-                                    <shadedPattern>hercules.shaded.org.apache.httpcomponents</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>org.elasticsearch.client</pattern>
-                                    <shadedPattern>hercules.shaded.org.elasticsearch.client</shadedPattern>
-                                </relocation>
                             </relocations>
                             <filters>
                                 <filter>
