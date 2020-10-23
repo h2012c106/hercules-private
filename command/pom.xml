@@ -27,6 +27,7 @@
         <module>kafka</module>
         <module>redis</module>
         <module>nebula</module>
+        <module>elasticsearch</module>
 
         <module>xhs-serder</module>
         <module>xhs-udf</module>

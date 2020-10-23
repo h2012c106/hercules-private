@@ -28,7 +28,7 @@ public class JsonKVSer extends KVSer<Document> {
     }
 
     @Override
-    protected BaseWrapper<?> writeValue(HerculesWritable in) throws IOException, InterruptedException {
+    public BaseWrapper<?> writeValue(HerculesWritable in) throws IOException, InterruptedException {
 
         if (schema.getColumnNameList().size() != 0) {
             in = WritableUtils.retainColumn(in, schema.getColumnNameList(), WritableUtils.FilterUnexistOption.IGNORE);

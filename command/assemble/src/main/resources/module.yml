@@ -45,3 +45,7 @@ redis:
 nebula:
   jar: hercules-command-nebula-dev.jar
   assemblyClass: com.xiaohongshu.db.hercules.nebula.NebulaAssemblySupplier
+
+elasticsearch:
+  jar: hercules-command-elasticsearch-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.elasticsearch.ElasticsearchAssemblySupplier

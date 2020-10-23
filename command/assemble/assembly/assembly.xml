@@ -114,6 +114,13 @@
                 <include>**/hercules-command-*.jar</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>../elasticsearch/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
 
         <fileSet>
             <directory>../xhs-serder/target</directory>
