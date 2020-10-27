@@ -84,10 +84,11 @@ public class KafkaManager {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, options.getString(KafkaOptionConf.BOOTSTRAP_SERVERS, ""));
         props.put(ProducerConfig.RETRIES_CONFIG, options.getString(KafkaOptionConf.RETRIES_CONFIG, "2"));
         props.put(ProducerConfig.BATCH_SIZE_CONFIG, options.getString(KafkaOptionConf.BATCH_SIZE_CONFIG, ""));
-        props.put(ProducerConfig.LINGER_MS_CONFIG, options.getInteger(KafkaOptionConf.LINGER_MS_CONFIG, 5));
+        props.put(ProducerConfig.LINGER_MS_CONFIG, options.getInteger(KafkaOptionConf.LINGER_MS_CONFIG, 200));
         props.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, options.getInteger(KafkaOptionConf.MAX_REQUEST_SIZE_CONFIG, KafkaOptionConf.DEFAULT_MAX_REQUEST_SIZE_CONFIG));
         // props.put(ProducerConfig.BUFFER_MEMORY_CONFIG, bufferMemory);
         props.put(ProducerConfig.ACKS_CONFIG, "all");
+        props.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
 
         // 设置类型
         // 由于producer只会被初始化一次，所以这里两个变量也只会被初始化一次
