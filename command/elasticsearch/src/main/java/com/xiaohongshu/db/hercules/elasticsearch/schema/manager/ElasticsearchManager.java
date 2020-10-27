@@ -23,9 +23,9 @@ public class ElasticsearchManager {
     }
 
     // 目前仅支持upsert语义，后续若有需求，再加。
-    public void doUpsert(List<DocRequest> indexRequests) throws IOException {
+    public void doUpsert(List<DocRequest> docRequests) throws IOException {
         BulkRequest bulkRequest = new BulkRequest();
-        for (DocRequest docRequest : indexRequests){
+        for (DocRequest docRequest : docRequests) {
             Map<String, Object> doc = docRequest.getDoc();
             IndexRequest indexRequest = new IndexRequest(docRequest.index, docRequest.type, docRequest.id).source(doc);
             UpdateRequest updateRequest = new UpdateRequest(indexRequest.index(), this.docType, indexRequest.id())
