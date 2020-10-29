@@ -71,7 +71,6 @@
             <artifactId>httpcore</artifactId>
             <version>4.4.5</version>
         </dependency>
-
         <dependency>
             <groupId>com.xiaohongshu.db</groupId>
             <artifactId>hercules-command-core</artifactId>

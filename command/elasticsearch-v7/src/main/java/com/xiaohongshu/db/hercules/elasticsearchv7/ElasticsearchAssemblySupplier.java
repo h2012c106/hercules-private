@@ -8,8 +8,8 @@ import com.xiaohongshu.db.hercules.core.schema.DataTypeConverter;
 import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.elasticsearchv7.mr.ElasticsearchOutputFormat;
-import com.xiaohongshu.db.hercules.elasticsearchv6.option.ElasticsearchOutputOptionConf;
-import com.xiaohongshu.db.hercules.elasticsearchv6.schema.ElasticsearchSchemaFetcher;
+import com.xiaohongshu.db.hercules.elasticsearchv7.option.ElasticsearchOutputOptionConf;
+import com.xiaohongshu.db.hercules.elasticsearchv7.schema.ElasticsearchSchemaFetcher;
 
 public class ElasticsearchAssemblySupplier extends BaseAssemblySupplier {
 
