@@ -39,7 +39,8 @@ public class ElasticsearchOutputFormat extends HerculesOutputFormat<Document> {
                 options.getInteger(ElasticsearchOptionConf.PORT, 0), options.getString(ElasticsearchOptionConf.DOCUMENT_TYPE, "doc"));
         return new ElasticsearchRecordWriter(context, options.getString(ElasticsearchOutputOptionConf.ID_COL_NAME, ""),
                 options.getString(ElasticsearchOptionConf.INDEX, ""), options.getString(ElasticsearchOptionConf.DOCUMENT_TYPE, ""), manager,
-                commonOptions.getBoolean(ALLOW_SKIP, false), options.getInteger(ElasticsearchOutputOptionConf.BUFFER_SIZE, 1000));
+                commonOptions.getBoolean(ALLOW_SKIP, false), options.getInteger(ElasticsearchOutputOptionConf.BUFFER_SIZE, 1000),
+                options.getBoolean(ElasticsearchOptionConf.KEEP_ID, false));
     }
 
     @Override
@@ -64,8 +65,9 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
     private final int bufferSizeLimit;
     private final ElasticsearchManager manager;
     private boolean allowSkip;
+    private final boolean keepId;
 
-    public ElasticsearchRecordWriter(TaskAttemptContext context, String keyName, String index, String docType, ElasticsearchManager manager, boolean allowSkip, int bufferSizeLimit) {
+    public ElasticsearchRecordWriter(TaskAttemptContext context, String keyName, String index, String docType, ElasticsearchManager manager, boolean allowSkip, int bufferSizeLimit, boolean keepId) {
         super(context);
         this.keyName = keyName;
         this.index = index;
@@ -73,6 +75,7 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
         this.manager = manager;
         this.allowSkip = allowSkip;
         this.bufferSizeLimit = bufferSizeLimit;
+        this.keepId = keepId;
     }
 
     @Override
@@ -87,7 +90,9 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
             // 显示指定可以skip后，则直接略过该行数据
             return;
         }
-        WritableUtils.remove(in.getRow(), keyName);
+        if (!keepId) {
+            WritableUtils.remove(in.getRow(), keyName);
+        }
         Document document;
         try {
             document = wrapperSetterFactory.writeMapWrapper(in.getRow(), new Document(), null);

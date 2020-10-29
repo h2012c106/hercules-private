@@ -13,6 +13,7 @@ public class ElasticsearchOptionConf extends BaseOptionsConf {
     public static final String PORT = "port";
     public static final String INDEX = "index";
     public static final String DOCUMENT_TYPE = "doc-type";
+    public static final String KEEP_ID = "keep-id";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -45,6 +46,11 @@ public class ElasticsearchOptionConf extends BaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("The document type.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(KEEP_ID)
+                .defaultStringValue("false")
+                .description("Whether keep id or not, default the id will not pass to values.")
                 .build());
         return tmpList;
     }
