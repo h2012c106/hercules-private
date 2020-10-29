@@ -49,6 +49,7 @@ public class ElasticsearchOptionConf extends BaseOptionsConf {
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(KEEP_ID)
+                .needArg(false)
                 .defaultStringValue("false")
                 .description("Whether keep id or not, default the id will not pass to values.")
                 .build());
