@@ -2,11 +2,13 @@ package com.xiaohongshu.db.hercules.elasticsearchv7.schema.manager;
 
 import com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager.DocRequest;
 import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 
 import java.io.IOException;
@@ -19,10 +21,19 @@ public class ElasticsearchManager {
     protected final String docType;
 
     public ElasticsearchManager(String endpoint, int port, String docType) {
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(endpoint, port, "http")));
+        client = new RestHighLevelClient(RestClient.builder(new HttpHost(endpoint, port, "http"))
+                .setRequestConfigCallback(
+                new RestClientBuilder.RequestConfigCallback() {
+                    @Override
+                    public RequestConfig.Builder customizeRequestConfig(
+                            RequestConfig.Builder requestConfigBuilder) {
+                        return requestConfigBuilder
+                                .setConnectTimeout(30000)
+                                .setSocketTimeout(60000*5);
+                    }
+                }));
         this.docType = docType;
     }
-
     // 目前仅支持upsert语义，后续若有需求，再加。
     public void doUpsert(List<DocRequest> docRequests) throws IOException {
         BulkRequest bulkRequest = new BulkRequest();

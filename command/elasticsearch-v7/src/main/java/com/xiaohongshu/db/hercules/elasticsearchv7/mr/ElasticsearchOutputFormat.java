@@ -14,7 +14,7 @@ import com.xiaohongshu.db.hercules.elasticsearchv6.mr.ElasticsearchJsonWrapperSe
 import com.xiaohongshu.db.hercules.elasticsearchv6.option.ElasticsearchOptionConf;
 import com.xiaohongshu.db.hercules.elasticsearchv6.option.ElasticsearchOutputOptionConf;
 import com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager.DocRequest;
-import com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager.ElasticsearchManager;
+import com.xiaohongshu.db.hercules.elasticsearchv7.schema.manager.ElasticsearchManager;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
 
@@ -34,7 +34,7 @@ public class ElasticsearchOutputFormat extends HerculesOutputFormat<Document> {
 
     @Override
     protected HerculesRecordWriter<Document> innerGetRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
-        com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager.ElasticsearchManager manager = new com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager.ElasticsearchManager(options.getString(ElasticsearchOptionConf.ENDPOINT, ""),
+        ElasticsearchManager manager = new ElasticsearchManager(options.getString(ElasticsearchOptionConf.ENDPOINT, ""),
                 options.getInteger(ElasticsearchOptionConf.PORT, 0), options.getString(ElasticsearchOptionConf.DOCUMENT_TYPE, "doc"));
         return new ElasticsearchRecordWriter(context, options.getString(ElasticsearchOutputOptionConf.ID_COL_NAME, ""),
                 options.getString(ElasticsearchOptionConf.INDEX, ""), manager,
@@ -50,12 +50,11 @@ public class ElasticsearchOutputFormat extends HerculesOutputFormat<Document> {
 
 class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
 
-
     private final List<DocRequest> indexBuffer = new LinkedList<>();
     private final String keyName;
     private final String index;
     private final int bufferSizeLimit;
-    private final com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager.ElasticsearchManager manager;
+    private final ElasticsearchManager manager;
     private boolean allowSkip;
     private final boolean keepId;
 
