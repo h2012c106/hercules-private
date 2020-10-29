@@ -115,13 +115,19 @@
             </includes>
         </fileSet>
         <fileSet>
-            <directory>../elasticsearch/target</directory>
+            <directory>../elasticsearch-v6/target</directory>
             <outputDirectory>module-lib</outputDirectory>
             <includes>
                 <include>**/hercules-command-*.jar</include>
             </includes>
         </fileSet>
-
+        <fileSet>
+            <directory>../elasticsearch-v7/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
         <fileSet>
             <directory>../xhs-serder/target</directory>
             <outputDirectory>lib</outputDirectory>

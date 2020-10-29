@@ -46,6 +46,10 @@ nebula:
   jar: hercules-command-nebula-dev.jar
   assemblyClass: com.xiaohongshu.db.hercules.nebula.NebulaAssemblySupplier
 
-elasticsearch:
-  jar: hercules-command-elasticsearch-dev.jar
-  assemblyClass: com.xiaohongshu.db.hercules.elasticsearch.ElasticsearchAssemblySupplier
+elasticsearchv6:
+  jar: hercules-command-elasticsearch-v6-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.elasticsearchv6.ElasticsearchAssemblySupplier
+
+elasticsearchv7:
+  jar: hercules-command-elasticsearch-v7-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.elasticsearchv7.ElasticsearchAssemblySupplier
