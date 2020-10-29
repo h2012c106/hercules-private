@@ -10,7 +10,6 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
-import com.xiaohongshu.db.hercules.elasticsearchv7.mr.ElasticsearchJsonWrapperSetterManager;
 import com.xiaohongshu.db.hercules.elasticsearchv7.option.ElasticsearchOptionConf;
 import com.xiaohongshu.db.hercules.elasticsearchv7.option.ElasticsearchOutputOptionConf;
 import com.xiaohongshu.db.hercules.elasticsearchv7.schema.manager.DocRequest;
