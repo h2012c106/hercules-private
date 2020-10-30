@@ -37,7 +37,7 @@ public class ElasticsearchOutputFormat extends HerculesOutputFormat<Document> {
                 options.getInteger(ElasticsearchOptionConf.PORT, 0), options.getString(ElasticsearchOptionConf.DOCUMENT_TYPE, "doc"));
         return new ElasticsearchRecordWriter(context, options.getString(ElasticsearchOutputOptionConf.ID_COL_NAME, ""),
                 options.getString(ElasticsearchOptionConf.INDEX, ""), manager,
-                commonOptions.getBoolean(ALLOW_SKIP, false), options.getInteger(ElasticsearchOutputOptionConf.BUFFER_SIZE, 1000),
+                commonOptions.getBoolean(ALLOW_SKIP, false),
                 options.getBoolean(ElasticsearchOptionConf.KEEP_ID, false));
     }
 
@@ -52,18 +52,18 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
     private final List<DocRequest> indexBuffer = new LinkedList<>();
     private final String keyName;
     private final String index;
-    private final int bufferSizeLimit;
     private final ElasticsearchManager manager;
     private boolean allowSkip;
     private final boolean keepId;
+    private int bufByteSize = 0;
+    private int bufByteSizeLimit = 100 *1024;
 
-    public ElasticsearchRecordWriter(TaskAttemptContext context, String keyName, String index, ElasticsearchManager manager, boolean allowSkip, int bufferSizeLimit, boolean keepId) {
+    public ElasticsearchRecordWriter(TaskAttemptContext context, String keyName, String index, ElasticsearchManager manager, boolean allowSkip, boolean keepId) {
         super(context);
         this.keyName = keyName;
         this.index = index;
         this.manager = manager;
         this.allowSkip = allowSkip;
-        this.bufferSizeLimit = bufferSizeLimit;
         this.keepId = keepId;
     }
 
@@ -90,8 +90,10 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
         }
         String doc = JSON.toJSONString(document);
         indexBuffer.add(new DocRequest(index, key.asString(), doc));
-        if (indexBuffer.size() >= bufferSizeLimit) {
+        bufByteSize += doc.getBytes().length;
+        if (bufByteSize >= bufByteSizeLimit) {
             manager.doUpsert(indexBuffer);
+            bufByteSize = 0;
             indexBuffer.clear();
         }
     }

@@ -1,6 +1,5 @@
 package com.xiaohongshu.db.hercules.elasticsearchv7.schema.manager;
 
-import com.xiaohongshu.db.hercules.elasticsearchv7.schema.manager.DocRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -44,7 +43,6 @@ public class ElasticsearchManager {
                     .doc(doc)
                     .upsert(indexRequest);
             bulkRequest.add(updateRequest);
-//            client.update(updateRequest, RequestOptions.DEFAULT);
         }
         client.bulk(bulkRequest, RequestOptions.DEFAULT);
     }

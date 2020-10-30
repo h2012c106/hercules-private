@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager;
 
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
+import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
@@ -20,6 +21,7 @@ public class ElasticsearchManager {
     protected final String docType;
 
     public ElasticsearchManager(String endpoint, int port, String docType) {
+//        BulkProcessor processor = BulkProcessor.builder().build()
         client = new RestHighLevelClient(RestClient.builder(new HttpHost(endpoint, port, "http"))
                 .setRequestConfigCallback(
                         new RestClientBuilder.RequestConfigCallback() {
@@ -39,8 +41,8 @@ public class ElasticsearchManager {
         BulkRequest bulkRequest = new BulkRequest();
         for (DocRequest docRequest : docRequests) {
             Map<String, Object> doc = docRequest.getDoc();
-            IndexRequest indexRequest = new IndexRequest(docRequest.index, this.docType, docRequest.id).source(doc);
-            UpdateRequest updateRequest = new UpdateRequest(docRequest.index, this.docType, indexRequest.id())
+            IndexRequest indexRequest = new IndexRequest().index(docRequest.index).type(this.docType).id(docRequest.id).source(doc);
+            UpdateRequest updateRequest = new UpdateRequest().index(docRequest.index).type(this.docType).id(docRequest.id)
                     .doc(doc)
                     .upsert(indexRequest);
             bulkRequest.add(updateRequest);
