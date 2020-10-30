@@ -8,7 +8,7 @@ import redis.clients.jedis.Pipeline;
  */
 public class DeleteAction implements WriteAction{
 
-    public void act(Pipeline pipeline, RedisKV redisKV, Integer expire){
+    public void act(Pipeline pipeline, RedisKV redisKV, Integer expire, String writeType){
         pipeline.del(redisKV.getKey().getValue().toString());
     }
 }
