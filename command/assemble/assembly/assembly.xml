@@ -129,6 +129,13 @@
             </includes>
         </fileSet>
         <fileSet>
+            <directory>../bson/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
             <directory>../xhs-serder/target</directory>
             <outputDirectory>lib</outputDirectory>
             <includes>

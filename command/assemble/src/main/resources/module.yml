@@ -53,3 +53,7 @@ elasticsearchv6:
 elasticsearchv7:
   jar: hercules-command-elasticsearch-v7-dev.jar
   assemblyClass: com.xiaohongshu.db.hercules.elasticsearchv7.ElasticsearchAssemblySupplier
+
+bson:
+  jar: hercules-command-bson-dev.jar
+  assemblyClass: com.xiaohongshu.db.hercules.bson.BsonAssemblySupplier
