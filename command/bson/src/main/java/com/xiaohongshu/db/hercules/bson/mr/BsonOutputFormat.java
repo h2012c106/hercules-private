@@ -1,7 +1,6 @@
 package com.xiaohongshu.db.hercules.bson.mr;
 
 import com.mongodb.BasicDBObject;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import com.mongodb.hadoop.io.BSONWritable;
 import com.mongodb.hadoop.splitter.BSONSplitter;
 import com.mongodb.hadoop.util.MongoConfigUtil;
@@ -18,9 +17,10 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
-import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.io.compress.SnappyCodec;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.bson.Document;
 
@@ -61,14 +61,12 @@ public class BsonOutputFormat extends HerculesOutputFormat<Document> {
             String extension = "";
             if (isCompressed) {
                 Class<? extends CompressionCodec> codecClass =
-                        getOutputCompressorClass(context, GzipCodec.class);
+                        getOutputCompressorClass(context, SnappyCodec.class);
                 codec = ReflectionUtils.newInstance(codecClass, context.getConfiguration());
                 extension = codec.getDefaultExtension();
             }
-
             Path path = getDefaultWorkFile(context, ".bson" + extension);
             Path outPath = new Path(outPathParent, path.getName());
-
             FileSystem fs = outPath.getFileSystem(context.getConfiguration());
             FSDataOutputStream outFile = fs.create(outPath);
             // 写splits的逻辑，暂时也保留下来
@@ -89,7 +87,7 @@ public class BsonOutputFormat extends HerculesOutputFormat<Document> {
 
 class BsonRecordWriter extends HerculesRecordWriter<Document> {
 
-    private RecordWriter<String, BSONWritable> delegate;
+    private final RecordWriter<String, BSONWritable> delegate;
 
     public BsonRecordWriter(TaskAttemptContext context, RecordWriter<String, BSONWritable> bsonFileRecordWriter) {
         super(context);

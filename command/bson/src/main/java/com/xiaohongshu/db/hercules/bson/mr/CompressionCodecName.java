@@ -6,10 +6,10 @@ public enum CompressionCodecName {
     NONE(""),
     SNAPPY("org.apache.hadoop.io.compress.SnappyCodec"),
     GZIP("org.apache.hadoop.io.compress.GzipCodec"),
-//    LZO("com.hadoop.compression.lzo.LzoCodec"),
+    //    LZO("com.hadoop.compression.lzo.LzoCodec"),
 //    BROTLI("org.apache.hadoop.io.compress.BrotliCodec"),
+//    ZSTD("hercules.shaded.org.apache.hadoop.io.compress.ZStandardCodec"),
     LZ4("org.apache.hadoop.io.compress.Lz4Codec");
-//    ZSTD("hercules.shaded.org.apache.hadoop.io.compress.ZStandardCodec");
 
     private final String hadoopCompressionCodecClass;
 

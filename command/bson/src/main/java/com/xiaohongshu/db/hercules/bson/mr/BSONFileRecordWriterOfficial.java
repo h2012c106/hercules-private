@@ -16,9 +16,7 @@
 
 package com.xiaohongshu.db.hercules.bson.mr;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
-import com.mongodb.DBObject;
 import com.mongodb.hadoop.io.BSONWritable;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.mapreduce.RecordWriter;
@@ -36,10 +34,10 @@ public class BSONFileRecordWriterOfficial extends RecordWriter<String, BSONWrita
     private final BSONEncoder bsonEnc = new BasicBSONEncoder();
     private final DataOutputStream outFile;
     private final FSDataOutputStream splitsFile;
+    private final long splitSize;
     private long bytesWritten = 0L;
     private long currentSplitLen = 0;
     private long currentSplitStart = 0;
-    private long splitSize;
 
     public BSONFileRecordWriterOfficial(final DataOutputStream outFile, final FSDataOutputStream splitsFile, final long splitSize) {
         this.outFile = outFile;
@@ -58,19 +56,8 @@ public class BSONFileRecordWriterOfficial extends RecordWriter<String, BSONWrita
     }
 
     public void write(final String key, final BSONWritable value) throws IOException {
-
-        BSONObject toEncode;
         byte[] outputByteBuf;
-
-        if (value != null) {
-            toEncode = ((BSONWritable) value).getDoc();
-        } else {
-            final DBObject o = new BasicDBObject();
-            o.put("value", BSONWritable.toBSON(value));
-            toEncode = o;
-        }
-
-        outputByteBuf = bsonEnc.encode(toEncode);
+        outputByteBuf = bsonEnc.encode(value.getDoc());
         outFile.write(outputByteBuf, 0, outputByteBuf.length);
         bytesWritten += outputByteBuf.length;
         writeSplitData(outputByteBuf.length, false);
