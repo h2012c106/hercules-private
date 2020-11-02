@@ -3,17 +3,20 @@ package com.xiaohongshu.db.hercules.parquet;
 import com.google.common.collect.Sets;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
+import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
 import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.hive.ql.io.parquet.convert.HiveSchemaConverter;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.parquet.schema.GroupType;
+import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.Type;
 import org.apache.parquet.schema.Types;
 
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class ParquetSchemaUtils {
 
@@ -170,4 +173,18 @@ public final class ParquetSchemaUtils {
             }
         }
     }
+
+    public static MessageType generateMessageTypeFromHiveMeta(Map<String, String> typeMap) {
+        List<String> columnList = new ArrayList<>(typeMap.size());
+        List<String> typeList = new ArrayList<>(typeMap.size());
+        for (Map.Entry<String, String> entry : typeMap.entrySet()) {
+            columnList.add(entry.getKey());
+            typeList.add(entry.getValue());
+        }
+        return HiveSchemaConverter.convert(
+                columnList,
+                TypeInfoUtils.getTypeInfosFromTypeString(StringUtils.join(typeList, ","))
+        );
+    }
+
 }

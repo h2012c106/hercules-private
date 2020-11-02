@@ -1,4 +1,4 @@
-package com.xiaohognshu.db.hercules.udf;
+package com.xiaohongshu.db.hercules.udf;
 
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.udf.HerculesUDF;

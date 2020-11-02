@@ -18,6 +18,7 @@ import com.xiaohongshu.db.hercules.core.utils.context.Family;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import com.xiaohongshu.db.hercules.core.utils.reflect.Reflector;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
@@ -44,7 +45,10 @@ public class Hercules {
         return res;
     }
 
+    @SneakyThrows
     public static void main(String[] args) {
+        Thread.sleep(10000);
+
         LogUtils.configureLog4J();
 
         ConfigUtils.printVersionInfo();

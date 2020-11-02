@@ -49,6 +49,11 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.xiaohongshu.db</groupId>
+            <artifactId>hercules-command-parquet</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

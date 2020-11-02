@@ -27,6 +27,10 @@ public class ErrorLoggerUtils {
         return key -> new PreciseFastErrorPool(MAX_LOG_LINE);
     }
 
+    /**
+     *
+     * @param seq 在总体数据集中的序号
+     */
     public static void add(String errorTag, HerculesWritable row, int seq) {
         POOL_POOL.computeIfAbsent(errorTag, newPoolFunc()).add(row, seq);
     }

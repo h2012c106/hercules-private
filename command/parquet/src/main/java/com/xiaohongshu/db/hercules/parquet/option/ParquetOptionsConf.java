@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.HiveMetaOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
 
@@ -23,7 +24,8 @@ public class ParquetOptionsConf extends BaseOptionsConf {
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
         return Lists.newArrayList(
-                new TableOptionsConf()
+                new TableOptionsConf(),
+                new HiveMetaOptionsConf()
         );
     }
 

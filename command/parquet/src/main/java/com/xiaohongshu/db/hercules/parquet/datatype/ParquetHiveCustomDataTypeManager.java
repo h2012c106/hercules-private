@@ -11,6 +11,9 @@ import java.util.List;
 public class ParquetHiveCustomDataTypeManager extends BaseCustomDataTypeManager<GroupWithSchemaInfo, Group> {
     @Override
     protected List<Class<? extends CustomDataType<GroupWithSchemaInfo, Group, ?>>> generateTypeList() {
-        return Lists.newArrayList(ParquetHiveMapCustomDataType.class);
+        return Lists.newArrayList(
+                ParquetHiveMapCustomDataType.class,
+                ParquetHiveListCustomDataType.class
+        );
     }
 }
