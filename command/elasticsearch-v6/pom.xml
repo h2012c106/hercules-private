@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>hercules-xhs-serder</artifactId>
+    <artifactId>hercules-command-elasticsearch-v6</artifactId>
 
     <build>
         <plugins>
@@ -27,15 +27,22 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.google.protobuf</pattern>
-                                    <shadedPattern>hercules.shaded.com.google.protobuf</shadedPattern>
+                                    <pattern>com.fasterxml.jackson.core</pattern>
+                                    <shadedPattern>hercules.shaded.com.fasterxml.jackson.core</shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>ch.qos.logback</pattern>
-                                    <shadedPattern>hercules.shaded.ch.qos.logback</shadedPattern>
+                                    <pattern>org.apache.http</pattern>
+                                    <shadedPattern>hercules.shaded.org.apache.http</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.elasticsearch</pattern>
+                                    <shadedPattern>hercules.shaded.org.elasticsearch</shadedPattern>
+                                </relocation>
+                                <relocation>
+                                    <pattern>org.elasticsearch.client</pattern>
+                                    <shadedPattern>hercules.shaded.org.elasticsearch.client</shadedPattern>
                                 </relocation>
                             </relocations>
-                            <minimizeJar>true</minimizeJar>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -55,6 +62,16 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore-nio</artifactId>
+            <version>4.4.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.4.5</version>
+        </dependency>
+        <dependency>
             <groupId>com.xiaohongshu.db</groupId>
             <artifactId>hercules-command-core</artifactId>
             <version>${project.version}</version>
@@ -62,43 +79,41 @@
         </dependency>
         <dependency>
             <groupId>com.xiaohongshu.db</groupId>
-            <artifactId>hercules-command-mysql</artifactId>
+            <artifactId>hercules-xhs-serder</artifactId>
             <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.xiaohongshu.db</groupId>
-            <artifactId>hercules-command-mongodb</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>3.12.1</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.alibaba.otter/canal.protocol -->
-        <dependency>
-            <groupId>com.alibaba.otter</groupId>
-            <artifactId>canal.protocol</artifactId>
-            <version>1.1.4</version>
-        </dependency>
-        <dependency>
-            <groupId>com.xiaohongshu.db</groupId>
-            <artifactId>xlog</artifactId>
-            <version>0.9.0-SNAPSHOT</version>
+            <scope>provided</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.kafka</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.alibaba</groupId>
-                    <artifactId>druid</artifactId>
+                    <artifactId>ch.qos.logback</artifactId>
+                    <groupId>logback-classic</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.logging.log4j/log4j-core -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>6.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch-x-content</artifactId>
+            <version>6.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>6.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>6.4.0</version>
+        </dependency>
     </dependencies>
-
 </project>
