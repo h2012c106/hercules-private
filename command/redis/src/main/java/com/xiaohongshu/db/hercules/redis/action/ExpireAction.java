@@ -8,7 +8,7 @@ import redis.clients.jedis.Pipeline;
  */
 public class ExpireAction implements WriteAction{
 
-    public void act(Pipeline pipeline, RedisKV kv, Integer expire) {
+    public void act(Pipeline pipeline, RedisKV kv, Integer expire, String writeType) {
         pipeline.expire(kv.getKey().getValue().toString(), expire);
     }
 }
