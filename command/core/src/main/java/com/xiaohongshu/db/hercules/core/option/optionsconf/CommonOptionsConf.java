@@ -23,7 +23,8 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String ALLOW_TARGET_MORE_COLUMN = "allow-target-more-column";
     public static final String COLUMN_MAP = "column-map";
     public static final String RELIABLE_COLUMN_MAP = "reliable-column-map";
-    public static final String MAX_WRITE_QPS = "max-write-qps";
+    public static final String
+            MAX_WRITE_QPS = "max-write-qps";
     public static final String ALLOW_COPY_COLUMN_NAME = "allow-copy-column-name";
     public static final String ALLOW_COPY_COLUMN_TYPE = "allow-copy-column-type";
     public static final String ALLOW_COPY_KEY = "allow-copy-key";
