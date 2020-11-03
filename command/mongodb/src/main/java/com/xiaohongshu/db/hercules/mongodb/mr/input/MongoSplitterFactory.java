@@ -15,9 +15,6 @@ import org.bson.Document;
 
 import java.util.List;
 
-/**
- * 所有相关代码核心逻辑抄自 https://github.com/mongodb/mongo-hadoop/blob/master/core/src/main/java/com/mongodb/hadoop/splitter
- */
 public final class MongoSplitterFactory {
 
     private static final Log LOG = LogFactory.getLog(MongoSplitterFactory.class);
