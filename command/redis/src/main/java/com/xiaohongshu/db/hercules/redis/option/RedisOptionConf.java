@@ -17,6 +17,7 @@ public class RedisOptionConf extends BaseOptionsConf {
     public final static String REDIS_PORT = "redis_port";
     public static final String REDIS_PIPE_SIZE = "pipe_size";
     public static final long DEFAULT_PIPE_SIZE = 5000;
+    public static final String REDIS_WRITE_TPYE = "write_type";
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -46,6 +47,11 @@ public class RedisOptionConf extends BaseOptionsConf {
                 .needArg(true)
                 .description("redis pipeline size submits.")
                 .defaultStringValue(String.valueOf(DEFAULT_PIPE_SIZE))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(REDIS_WRITE_TPYE)
+                .needArg(true)
+                .description("redis target write type.")
                 .build());
 
         return tmpList;

@@ -28,6 +28,7 @@ public class RedisManager {
     private JedisPool jedisPool;
     private Jedis jedis;
     private Pipeline pipeline;
+    private final String writeType;
     private long batchNum = 0L;
     private final static int timeout = 60000;//redis pool读取输入InputStream的超时时间,单位毫秒
 
@@ -37,7 +38,7 @@ public class RedisManager {
     private Map<String, ReflectMethod> methodMap = new HashMap<>();
     private int maxCount;
     private final InsertAction insertAction;
-
+    private int initCount=0;
 
     public RedisManager(GenericOptions options) {
         this.options = options;
@@ -52,6 +53,7 @@ public class RedisManager {
         this.pipeSize = options.getLong(RedisOptionConf.REDIS_PIPE_SIZE, RedisOptionConf.DEFAULT_PIPE_SIZE);
         this.maxCount = options.getInteger(CommonOptionsConf.NUM_MAPPER, 200);
         this.insertAction = new InsertAction();
+        this.writeType = options.getString(RedisOptionConf.REDIS_WRITE_TPYE, "string");
     }
 
     public JedisPool getJedisPool() {
@@ -97,7 +99,7 @@ public class RedisManager {
                 }
                 String className = packageName + captureFirstName(strategy) + "Action";
                 Class obj = Class.forName(className);
-                Method method = obj.getMethod("act", Pipeline.class, RedisKV.class, Integer.class);
+                Method method = obj.getMethod("act", Pipeline.class, RedisKV.class, Integer.class, String.class);
                 ReflectMethod rl = new ReflectMethod();
                 rl.setMethod(method);
                 rl.setObj(obj);
@@ -107,6 +109,7 @@ public class RedisManager {
             log.warn(" methodMap is:" + methodMap);
         } catch (Exception e){
             log.error(" redis strategy reflect error:", e);
+            initCount++;
         }
     }
 
@@ -115,14 +118,14 @@ public class RedisManager {
         Class obj = rl.getObj();
         Method method = rl.getMethod();
         try {
-            method.invoke(obj.newInstance(), pipeline, kv, expire);
+            method.invoke(obj.newInstance(), pipeline, kv, expire, writeType);
         } catch (Exception e){
             log.error(" redis strategy invoke error:", e);
         }
     }
 
     public void act(RedisKV kv, List<String> strategyList){
-        if (methodMap.size() == 0)
+        if (methodMap.size() == 0 && initCount < 3)
             initMethodMap(strategyList);
         for (int i = 0; i < strategyList.size(); i++) {
             String strategy = strategyList.get(i);
@@ -137,7 +140,7 @@ public class RedisManager {
     }
 
     public void set(RedisKV kv) {
-        this.insertAction.act(pipeline, kv, expire);
+        this.insertAction.act(pipeline, kv, expire, writeType);
 //        try{
 //
 //        } catch (Exception e){

@@ -6,6 +6,6 @@ import redis.clients.jedis.Pipeline;
 
 public interface WriteAction {
 
-   void act(Pipeline pipeline, RedisKV redisKV, Integer expire);
+   void act(Pipeline pipeline, RedisKV redisKV, Integer expire, String writeType);
 
 }

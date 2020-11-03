@@ -19,7 +19,7 @@ public class KafkaOptionConf extends BaseOptionsConf {
     public final static String MAX_REQUEST_SIZE_CONFIG = "max-request-size";
     public final static int DEFAULT_MAX_REQUEST_SIZE_CONFIG = 5000000;
 
-    public final static String LINGER_MS_DEFAULT = "5";
+    public final static String LINGER_MS_DEFAULT = "100";
     public final static String BATCH_SIZE_DEFAULT = "50000";
     public final static String RETRIES_DEFAULT = "3";
 
