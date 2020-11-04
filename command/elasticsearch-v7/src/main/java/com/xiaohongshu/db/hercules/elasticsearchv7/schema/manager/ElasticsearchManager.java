@@ -3,6 +3,7 @@ package com.xiaohongshu.db.hercules.elasticsearchv7.schema.manager;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
@@ -44,7 +45,10 @@ public class ElasticsearchManager {
                     .upsert(indexRequest);
             bulkRequest.add(updateRequest);
         }
-        client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        BulkResponse response = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        if (response.hasFailures()){
+            throw new RuntimeException("Bulk insert failed."+bulkRequest.getDescription());
+        }
     }
 
     public RestHighLevelClient getClient() {
