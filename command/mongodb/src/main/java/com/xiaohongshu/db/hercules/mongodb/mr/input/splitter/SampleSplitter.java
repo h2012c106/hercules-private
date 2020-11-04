@@ -15,15 +15,15 @@ import org.bson.Document;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SampleSplitter extends MongoSplitter {
+public class SampleSplitter extends MongoDBSplitter {
 
     private static final Log LOG = LogFactory.getLog(SampleSplitter.class);
 
-    public static final int DEFAULT_SAMPLES_PER_SPLIT = 10;
+    public static final int DEFAULT_SAMPLES_PER_SPLIT = 100;
     public static final int MEANINGFUL_SAMPLE_SIZE = 30;
 
     public SampleSplitter(GenericOptions options, MongoClient client, Document collStats) {
-        super(options, client,collStats);
+        super(options, client, collStats);
     }
 
     @Override
@@ -58,10 +58,12 @@ public class SampleSplitter extends MongoSplitter {
         while (iterator.hasNext()) {
             Document sample = iterator.next();
             Object sampleValue = sample.get(splitBy);
-            if (i++ % DEFAULT_SAMPLES_PER_SPLIT == 0) {
+            // 不拿头尾的两个元素
+            if (i != 0 && i % DEFAULT_SAMPLES_PER_SPLIT == 0) {
                 splits.add(createSplitFromBounds(previous, sampleValue, splitBy));
                 previous = sampleValue;
             }
+            ++i;
         }
         splits.add(createSplitFromBounds(previous, null, splitBy));
 

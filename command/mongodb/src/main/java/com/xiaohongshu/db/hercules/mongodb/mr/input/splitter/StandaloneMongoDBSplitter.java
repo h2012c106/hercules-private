@@ -12,11 +12,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class StandaloneMongoSplitter extends MongoSplitter {
+public class StandaloneMongoDBSplitter extends MongoDBSplitter {
 
-    private static final Log LOG = LogFactory.getLog(StandaloneMongoSplitter.class);
+    private static final Log LOG = LogFactory.getLog(StandaloneMongoDBSplitter.class);
 
-    public StandaloneMongoSplitter(GenericOptions options, MongoClient client, Document collStats) {
+    public StandaloneMongoDBSplitter(GenericOptions options, MongoClient client, Document collStats) {
         super(options, client, collStats);
     }
 

@@ -12,6 +12,8 @@ import com.xiaohongshu.db.hercules.core.utils.ErrorLoggerUtils;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.counter.Counter;
+import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import com.xiaohongshu.db.hercules.parquet.datatype.ParquetHiveListCustomDataType;
 import com.xiaohongshu.db.hercules.parquet.datatype.ParquetHiveMapCustomDataType;
@@ -19,19 +21,27 @@ import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetHiveDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.MessageTypeParser;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
+
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.HiveMetaOptionsConf.DEFAULT_HIVE_META_DRIVER;
 
 /**
  * 三种配置方式，直接给parquet schema/给options中提供schema的参数/给hive schema位置
  */
 public class RowSchemaCheckUDF extends HerculesUDF {
+
+    private static final Log LOG = LogFactory.getLog(RowSchemaCheckUDF.class);
 
     private static final String MESSAGE_TYPE_PROP = "hercules.schema.check.parquet.schema.udf";
     /**
@@ -56,6 +66,9 @@ public class RowSchemaCheckUDF extends HerculesUDF {
     private long seq = 0L;
     private long errorNum = 0L;
     private long errorTolerance;
+
+    private TaskAttemptContext context;
+    private Counter counter;
 
     Type convertParquetType(org.apache.parquet.schema.Type parquetType) {
         // 如果是MessageType，无脑转GroupType，继续递归
@@ -87,10 +100,29 @@ public class RowSchemaCheckUDF extends HerculesUDF {
     }
 
     @Override
-    public void initialize(Mapper.Context context) throws IOException, InterruptedException {
+    public void initialize(final Mapper.Context context) throws IOException, InterruptedException {
+        this.context = context;
+        this.counter = new Counter() {
+            @Override
+            public String getCounterName() {
+                return ERROR_TAG + " for " + context.getTaskAttemptID();
+            }
+
+            @Override
+            public boolean isRecordToMRCounter() {
+                return true;
+            }
+
+            @Override
+            public Function<Long, String> getToStringFunc() {
+                return String::valueOf;
+            }
+        };
+
         Configuration configuration = context.getConfiguration();
 
         errorTolerance = configuration.getLong(ALLOW_ERROR_TOLERANCE_PROP, Long.MAX_VALUE);
+        errorTolerance = errorTolerance < 0 ? Long.MAX_VALUE : errorTolerance;
 
         MessageType messageType = null;
         if (configuration.get(MESSAGE_TYPE_PROP) != null) {
@@ -124,7 +156,7 @@ public class RowSchemaCheckUDF extends HerculesUDF {
                     configuration.get(HIVE_META_CONNECTION_PROP),
                     configuration.get(HIVE_META_USER_PROP),
                     configuration.get(HIVE_META_PASSWORD_PROP),
-                    configuration.get(HIVE_META_DRIVER_PROP),
+                    configuration.get(HIVE_META_DRIVER_PROP, DEFAULT_HIVE_META_DRIVER),
                     configuration.get(HIVE_DATABASE_PROP),
                     configuration.get(HIVE_TABLE_PROP)
             );
@@ -139,6 +171,7 @@ public class RowSchemaCheckUDF extends HerculesUDF {
         if (messageType == null) {
             throw new NullPointerException("Empty message type.");
         }
+        LOG.info("The schema-check message type is: " + messageType);
         type = (MapType) convertParquetType(messageType);
     }
 
@@ -190,6 +223,7 @@ public class RowSchemaCheckUDF extends HerculesUDF {
         ++seq;
         if (!check(row.getRow(), type)) {
             ErrorLoggerUtils.add(ERROR_TAG, row, OverflowUtils.numberToInteger(seq));
+            HerculesStatus.increase(context, counter);
             if (++errorNum >= errorTolerance) {
                 throw new RuntimeException(String.format("More than <%d> row(s) are checked as illegal: %d.", errorTolerance, errorNum));
             }

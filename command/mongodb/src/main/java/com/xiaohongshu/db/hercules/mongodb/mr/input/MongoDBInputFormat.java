@@ -14,7 +14,7 @@ import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.mongodb.MongoDBUtils;
 import com.xiaohongshu.db.hercules.mongodb.filter.MongoDBFilterPushdownJudger;
-import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.MongoSplitter;
+import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.MongoDBSplitter;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -26,7 +26,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,13 +69,14 @@ public class MongoDBInputFormat extends HerculesInputFormat<Document> {
             }
             LOG.info("Use condition to get split min & max: " + findQuery);
 
-            MongoSplitter splitter = MongoSplitterFactory.getSplitter(client, sourceOptions);
+            MongoDBSplitter splitter = MongoDBSplitterFactory.getSplitter(client, sourceOptions);
             LOG.info("Using `" + splitter.getClass().getSimpleName() + "` to calculate splits.");
             List<InputSplit> res = splitter.calculateSplits(numSplits, splitBy, findQuery);
 
-            // docCount的值是全表值，有query时不准确，不过也就是颗糖，没必要耗费太多性能在这上面
-            context.getConfiguration().setLong(AVERAGE_MAP_ROW_NUM, splitter.getCount() / res.size());
-
+            if (res.size() > 0) {
+                // docCount的值是全表值，有query时不准确，不过也就是颗糖，没必要耗费太多性能在这上面
+                context.getConfiguration().setLong(AVERAGE_MAP_ROW_NUM, splitter.getCount() / res.size());
+            }
             return res;
         } finally {
             if (client != null) {

@@ -4,9 +4,9 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoDatabase;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.MongoSplitter;
+import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.MongoDBSplitter;
 import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.SampleSplitter;
-import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.StandaloneMongoSplitter;
+import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.StandaloneMongoDBSplitter;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import org.apache.commons.logging.Log;
@@ -15,18 +15,18 @@ import org.bson.Document;
 
 import java.util.List;
 
-public final class MongoSplitterFactory {
+public final class MongoDBSplitterFactory {
 
-    private static final Log LOG = LogFactory.getLog(MongoSplitterFactory.class);
+    private static final Log LOG = LogFactory.getLog(MongoDBSplitterFactory.class);
 
     private static final int MONGO_UNAUTHORIZED_ERR_CODE = 13;
     private static final int MONGO_ILLEGALOP_ERR_CODE = 20;
 
-    public static MongoSplitter getSplitter(final MongoClient client, GenericOptions options) {
+    public static MongoDBSplitter getSplitter(final MongoClient client, GenericOptions options) {
         /* Looks at the collection in mongo.input.uri
          * and choose an implementation based on what's in there.  */
 
-        MongoSplitter returnVal;
+        MongoDBSplitter returnVal;
 
         String splitBy = options.getString(MongoDBInputOptionsConf.SPLIT_BY, null);
         String databaseStr = options.getString(MongoDBOptionsConf.DATABASE, null);
@@ -36,7 +36,7 @@ public final class MongoSplitterFactory {
         Document stats = database.runCommand(new Document("collStats", collectionStr));
         Document buildInfo = database.runCommand(new Document("buildinfo", ""));
 
-        if (!stats.getBoolean("ok", false)) {
+        if (stats.getDouble("ok") == 0.0) {
             throw new RuntimeException("Unable to calculate input splits from collection stats: " + stats.getString("errmsg"));
         }
 
@@ -66,14 +66,14 @@ public final class MongoSplitterFactory {
                 returnVal = new SampleSplitter(options, client, stats);
             } else if (supportSplitVector) {
                 LOG.info("Unsharded mongo, use `StandaloneMongoSplitter`.");
-                returnVal = new StandaloneMongoSplitter(options, client, stats);
+                returnVal = new StandaloneMongoDBSplitter(options, client, stats);
             } else {
                 throw new UnsupportedOperationException("Not define the `SkipSplitter` yet.");
             }
         } else {
             if (supportSplitVector) {
                 LOG.info("Sharded mongo, use `StandaloneMongoSplitter`.");
-                returnVal = new StandaloneMongoSplitter(options, client, stats);
+                returnVal = new StandaloneMongoDBSplitter(options, client, stats);
             } else {
                 throw new UnsupportedOperationException("Not define the `SkipSplitter` yet.");
             }

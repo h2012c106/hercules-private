@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public abstract class MongoSplitter {
+public abstract class MongoDBSplitter {
 
-    private static final Log LOG = LogFactory.getLog(MongoSplitter.class);
+    private static final Log LOG = LogFactory.getLog(MongoDBSplitter.class);
 
     private final GenericOptions options;
     private final MongoClient client;
@@ -34,7 +34,7 @@ public abstract class MongoSplitter {
     public static final MinKey MIN_KEY_TYPE = new MinKey();
     public static final MaxKey MAX_KEY_TYPE = new MaxKey();
 
-    public MongoSplitter(GenericOptions options, MongoClient client, Document collStats) {
+    public MongoDBSplitter(GenericOptions options, MongoClient client, Document collStats) {
         this.options = options;
         this.client = client;
         this.database = client.getDatabase(options.getString(MongoDBOptionsConf.DATABASE, null));
@@ -81,17 +81,17 @@ public abstract class MongoSplitter {
         return splits.stream().filter(item -> {
             ArrayList<Document> filterList = new ArrayList<>(2);
             filterList.add(((MongoDBInputSplit) item).getSplitQuery());
-            if (findQuery != null) {
+            if (findQuery != null && findQuery.size() > 0) {
                 filterList.add(findQuery);
             }
             Document filter = filterList.size() == 1 ? filterList.get(0) : new Document("$and", filterList);
             LOG.info("Check the split emptyness: " + filter);
-            return MongoDBUtils.isEmpty(collection, filter);
+            return !MongoDBUtils.isEmpty(collection, filter);
         }).collect(Collectors.toList());
     }
 
     protected MongoDBInputSplit createSplitFromBounds(Object min, Object max, String splitBy) {
-        LOG.info("Created split: min=" + (min != null ? min.toString() : "null") + ", max= " + (max != null
+        LOG.info("Created split: min = " + (min != null ? min.toString() : "null") + ", max = " + (max != null
                 ? max.toString()
                 : "null"));
         // Objects to contain upper/lower bounds for each split

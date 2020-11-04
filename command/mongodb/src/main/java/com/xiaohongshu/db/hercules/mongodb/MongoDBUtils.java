@@ -56,6 +56,6 @@ public final class MongoDBUtils {
     }
 
     public static boolean isEmpty(MongoCollection<Document> collection, Document filter) {
-        return collection.countDocuments(new Document("$where", filter)) == 0;
+        return !collection.find(filter).limit(1).iterator().hasNext();
     }
 }
