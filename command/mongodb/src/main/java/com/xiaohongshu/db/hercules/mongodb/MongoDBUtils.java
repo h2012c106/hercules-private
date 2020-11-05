@@ -3,12 +3,14 @@ package com.xiaohongshu.db.hercules.mongodb;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoCollection;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.bson.Document;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -51,5 +53,9 @@ public final class MongoDBUtils {
             MongoCredential credential = MongoCredential.createCredential(user, authdb, password.toCharArray());
             return new MongoClient(getServerAddressList(options), Collections.singletonList(credential));
         }
+    }
+
+    public static boolean isEmpty(MongoCollection<Document> collection, Document filter) {
+        return !collection.find(filter).limit(1).iterator().hasNext();
     }
 }

@@ -10,6 +10,7 @@ import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.WrappingOptions;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
+import com.xiaohongshu.db.hercules.core.utils.StatUtils;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandExecutor;
 import com.xiaohongshu.db.hercules.core.utils.command.CommandResult;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
@@ -27,9 +28,12 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import java.io.IOException;
+import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -214,6 +218,54 @@ public class MRJob {
         this.jarList = jarList;
     }
 
+    private double calcEuclideanDistance(List<Double> x, List<Double> y) {
+        if (x.size() != y.size()) {
+            throw new RuntimeException(String.format("Unequal list for Euclidean distance calc: %d vs %d", x.size(), y.size()));
+        }
+        double powSum = 0.0d;
+        for (int i = 0; i < x.size(); ++i) {
+            powSum += Math.pow(x.get(i) - y.get(i), 2);
+        }
+        return Math.sqrt(powSum);
+    }
+
+    private List<Double> generateWorstSkewCase(double total, int listSize) {
+        List<Double> res = new ArrayList<>(listSize);
+        res.add(total);
+        for (int i = 1; i < listSize; ++i) {
+            res.add(0.0d);
+        }
+        return res;
+    }
+
+    private List<Double> generateBestSkewCase(double total, int listSize) {
+        double average = total / listSize;
+        List<Double> res = new ArrayList<>(listSize);
+        for (int i = 0; i < listSize; ++i) {
+            res.add(average);
+        }
+        return res;
+    }
+
+    private double calcSkew(List<Double> mapNumList) {
+        if (mapNumList.size() <= 1) {
+            return 0.0d;
+        }
+        double totalNum = mapNumList.stream().reduce(0.0d, Double::sum);
+
+        List<Double> worstSkewCase = generateWorstSkewCase(totalNum, mapNumList.size());
+        List<Double> bestSkewCase = generateBestSkewCase(totalNum, mapNumList.size());
+
+        double worstSkew = calcEuclideanDistance(worstSkewCase, bestSkewCase);
+        // 判断分母为0
+        if (Math.abs(worstSkew - 0.0d) < 1e-6) {
+            return 0.0d;
+        } else {
+            double currentSkew = calcEuclideanDistance(mapNumList, bestSkewCase);
+            return currentSkew / worstSkew;
+        }
+    }
+
     public void run(String... args) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration configuration = new Configuration();
 
@@ -265,6 +317,17 @@ public class MRJob {
 
         boolean success = job.waitForCompletion(true);
         double runMilliSec = (job.getFinishTime() - job.getStartTime()) / 1000.0;
+
+        Map<String, Map<String, String>> statMap = StatUtils.getAndClear(job);
+        LOG.info("Stats collected from map: " + statMap);
+        final NumberFormat numberFormat = NumberFormat.getPercentInstance();
+        numberFormat.setMinimumFractionDigits(2);
+        numberFormat.setRoundingMode(RoundingMode.HALF_UP);
+        List<Double> mapNumList = statMap.values()
+                .stream()
+                .map(map -> Double.parseDouble(map.getOrDefault(HerculesCounter.READ_RECORDS.getCounterName(), "0")))
+                .collect(Collectors.toList());
+        LOG.info(String.format("The skew rate for %d map(s) is: %s.", mapNumList.size(), numberFormat.format(calcSkew(mapNumList))));
 
         long readNum = getValue(job, HerculesCounter.READ_RECORDS);
         long writeNum = getValue(job, HerculesCounter.WRITE_RECORDS);

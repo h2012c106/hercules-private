@@ -23,7 +23,7 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper<?>>> implements Li
     private final static String UNSUPPORTED_MESSAGE = "Unsupported to convert list wrapper to any basic data type, except string.";
 
     public ListWrapper() {
-        super(new ArrayList<>(), DATA_TYPE, 0);
+        super(new LinkedList<>(), DATA_TYPE, 0);
     }
 
     public ListWrapper(int initialSize) {

@@ -7,6 +7,7 @@ import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetterFactory;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
+import com.xiaohongshu.db.hercules.core.utils.StatUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
 import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
@@ -125,6 +126,14 @@ public abstract class HerculesRecordReader<T> extends RecordReader<NullWritable,
     public final void close() throws IOException {
         if (!closed.getAndSet(true)) {
             innerClose();
+
+            // 记录一下这个map读了多少行
+            StatUtils.record(
+                    context,
+                    HerculesCounter.READ_RECORDS.getCounterName(),
+                    HerculesStatus.getStrValue(HerculesCounter.READ_RECORDS)
+            );
+
             LOG.info(String.format("Spent %s on read next, and %s on read value.",
                     HerculesStatus.getStrValue(HerculesCounter.READ_NEXT_TIME),
                     HerculesStatus.getStrValue(HerculesCounter.READ_VALUE_TIME)));

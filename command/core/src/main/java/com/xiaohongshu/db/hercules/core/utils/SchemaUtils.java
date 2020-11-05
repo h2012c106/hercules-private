@@ -6,12 +6,16 @@ import com.google.common.collect.HashBiMap;
 import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.datatype.NullCustomDataTypeManager;
+import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
+import java.sql.*;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.HiveMetaOptionsConf.*;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.datasource.BaseDataSourceOptionsConf.COLUMN_DELIMITER;
 
 public final class SchemaUtils {
@@ -111,5 +115,122 @@ public final class SchemaUtils {
             res.add(new LinkedHashSet<>(indexList.subList(0, i)));
         }
         return res;
+    }
+
+    private static void registerDriver(String driverClassName) {
+        try {
+            registerDriver((Class<? extends Driver>) Class.forName(driverClassName, true, Thread.currentThread().getContextClassLoader()));
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void registerDriver(Class<? extends Driver> driverClass) {
+        try {
+            DriverManager.registerDriver(new ClassLoaderLocalizedDriver(driverClass.newInstance()));
+        } catch (SQLException | InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Map<String, String> fetchHiveTableSchema(@NonNull String url,
+                                                           @NonNull String user, @NonNull String password,
+                                                           @NonNull String driver,
+                                                           @NonNull String database, @NonNull String table) {
+        String sql = "SELECT `COLUMN_NAME`, `TYPE_NAME` FROM `COLUMNS_V2` WHERE `CD_ID` = (SELECT `CD_ID` FROM `SDS` WHERE `SD_ID` = (SELECT `SD_ID` FROM `TBLS` WHERE `TBL_NAME` = ? AND `DB_ID` = (SELECT `DB_ID` FROM `DBS` WHERE `NAME` = ?))) ORDER BY `INTEGER_IDX`;";
+
+        registerDriver(driver);
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        try {
+            connection = DriverManager.getConnection(url, user, password);
+            statement = connection.prepareStatement(sql);
+            statement.setString(1, table);
+            statement.setString(2, database);
+            resultSet = statement.executeQuery();
+            Map<String, String> res = new LinkedHashMap<>();
+            while (resultSet.next()) {
+                res.put(resultSet.getString(1), resultSet.getString(2));
+            }
+            return res;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (resultSet != null) {
+                try {
+                    resultSet.close();
+                } catch (SQLException ignore) {
+                }
+            }
+            if (statement != null) {
+                try {
+                    statement.close();
+                } catch (SQLException ignore) {
+                }
+            }
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException ignore) {
+                }
+            }
+        }
+    }
+
+    public static Map<String, String> fetchHiveTableSchema(GenericOptions options) {
+        String url = options.getString(HIVE_META_CONNECTION, null);
+        String user = options.getString(HIVE_META_USER, null);
+        String password = options.getString(HIVE_META_PASSWORD, null);
+        String driver = options.getString(HIVE_META_DRIVER, null);
+        String database = options.getString(HIVE_DATABASE, null);
+        String table = options.getString(HIVE_TABLE, null);
+        return fetchHiveTableSchema(url, user, password, driver, database, table);
+    }
+
+    /**
+     * 由于DriverManager对非本类加载器注册的Driver不予以使用，这个类Localize一下
+     */
+    private static class ClassLoaderLocalizedDriver implements Driver {
+        private final Driver delegate;
+
+        private ClassLoaderLocalizedDriver(Driver delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Connection connect(String url, Properties info) throws SQLException {
+            return delegate.connect(url, info);
+        }
+
+        @Override
+        public boolean acceptsURL(String url) throws SQLException {
+            return delegate.acceptsURL(url);
+        }
+
+        @Override
+        public DriverPropertyInfo[] getPropertyInfo(String url, Properties info) throws SQLException {
+            return delegate.getPropertyInfo(url, info);
+        }
+
+        @Override
+        public int getMajorVersion() {
+            return delegate.getMajorVersion();
+        }
+
+        @Override
+        public int getMinorVersion() {
+            return delegate.getMinorVersion();
+        }
+
+        @Override
+        public boolean jdbcCompliant() {
+            return delegate.jdbcCompliant();
+        }
+
+        @Override
+        public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+            return delegate.getParentLogger();
+        }
     }
 }
