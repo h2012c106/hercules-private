@@ -45,7 +45,7 @@ public final class StatUtils {
         } catch (IOException e) {
             LOG.warn(String.format("Logging stat <%s> to %s failed: %s", value, dstFileName, e.getMessage()));
         } finally {
-            close(outputStream, fs);
+            close(outputStream);
         }
     }
 
@@ -100,8 +100,6 @@ public final class StatUtils {
                     fs.delete(srcDirPath, true);
                 } catch (IOException e) {
                     LOG.warn("Delete stat files failed: " + e.getMessage());
-                } finally {
-                    close(fs);
                 }
             }
         }

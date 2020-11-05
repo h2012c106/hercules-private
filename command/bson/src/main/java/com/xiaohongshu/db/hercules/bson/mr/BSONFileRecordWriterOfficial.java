@@ -45,6 +45,7 @@ public class BSONFileRecordWriterOfficial extends RecordWriter<String, BSONWrita
         this.splitSize = splitSize;
     }
 
+    @Override
     public void close(final TaskAttemptContext context) throws IOException {
         if (this.outFile != null) {
             this.outFile.close();
@@ -55,6 +56,7 @@ public class BSONFileRecordWriterOfficial extends RecordWriter<String, BSONWrita
         }
     }
 
+    @Override
     public void write(final String key, final BSONWritable value) throws IOException {
         byte[] outputByteBuf;
         outputByteBuf = bsonEnc.encode(value.getDoc());
