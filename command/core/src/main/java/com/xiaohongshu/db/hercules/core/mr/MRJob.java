@@ -248,7 +248,7 @@ public class MRJob {
     }
 
     private double calcSkew(List<Double> mapNumList) {
-        if (mapNumList.size() == 0) {
+        if (mapNumList.size() <= 1) {
             return 0.0d;
         }
         double totalNum = mapNumList.stream().reduce(0.0d, Double::sum);
@@ -257,9 +257,13 @@ public class MRJob {
         List<Double> bestSkewCase = generateBestSkewCase(totalNum, mapNumList.size());
 
         double worstSkew = calcEuclideanDistance(worstSkewCase, bestSkewCase);
-        double currentSkew = calcEuclideanDistance(mapNumList, bestSkewCase);
-
-        return currentSkew / worstSkew;
+        // 判断分母为0
+        if (Math.abs(worstSkew - 0.0d) < 1e-6) {
+            return 0.0d;
+        } else {
+            double currentSkew = calcEuclideanDistance(mapNumList, bestSkewCase);
+            return currentSkew / worstSkew;
+        }
     }
 
     public void run(String... args) throws IOException, ClassNotFoundException, InterruptedException {
@@ -323,7 +327,7 @@ public class MRJob {
                 .stream()
                 .map(map -> Double.parseDouble(map.getOrDefault(HerculesCounter.READ_RECORDS.getCounterName(), "0")))
                 .collect(Collectors.toList());
-        LOG.info(String.format("The skew rate is: %s.", numberFormat.format(calcSkew(mapNumList))));
+        LOG.info(String.format("The skew rate for %d map(s) is: %s.", mapNumList.size(), numberFormat.format(calcSkew(mapNumList))));
 
         long readNum = getValue(job, HerculesCounter.READ_RECORDS);
         long writeNum = getValue(job, HerculesCounter.WRITE_RECORDS);

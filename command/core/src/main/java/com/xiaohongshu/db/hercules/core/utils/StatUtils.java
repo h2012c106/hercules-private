@@ -32,17 +32,20 @@ public final class StatUtils {
         }
     }
 
-    public static void record(TaskAttemptContext context, String statName, String value) throws IOException {
+    public static void record(TaskAttemptContext context, String statName, String value) {
         String dstFileName = STAT_DIR + context.getJobID() + "/" + context.getTaskAttemptID() + "/" + statName;
         LOG.debug(String.format("Logging stat <%s> to: %s", value, dstFileName));
         Path dstFilePath = new Path(dstFileName);
-        FileSystem fs = dstFilePath.getFileSystem(context.getConfiguration());
+        FileSystem fs = null;
         FSDataOutputStream outputStream = null;
         try {
+            fs = dstFilePath.getFileSystem(context.getConfiguration());
             outputStream = fs.create(dstFilePath);
             outputStream.writeBytes(value);
+        } catch (IOException e) {
+            LOG.warn(String.format("Logging stat <%s> to %s failed: %s", value, dstFileName, e.getMessage()));
         } finally {
-            close(outputStream);
+            close(outputStream, fs);
         }
     }
 
@@ -65,7 +68,7 @@ public final class StatUtils {
         }
     }
 
-    public static Map<String, Map<String, String>> getAndClear(Job job) throws IOException {
+    public static Map<String, Map<String, String>> getAndClear(Job job) {
         Map<String, Map<String, String>> res = new LinkedHashMap<>();
         String srcDirName = STAT_DIR + job.getJobID() + "/";
         LOG.debug(String.format("Reading stat map from: %s", srcDirName));
@@ -88,9 +91,18 @@ public final class StatUtils {
             } else {
                 return Collections.emptyMap();
             }
+        } catch (IOException e) {
+            LOG.warn(String.format("Reading stat map from %s failed: %s", srcDirName, e.getMessage()));
+            return Collections.emptyMap();
         } finally {
             if (fs != null) {
-                fs.delete(srcDirPath, true);
+                try {
+                    fs.delete(srcDirPath, true);
+                } catch (IOException e) {
+                    LOG.warn("Delete stat files failed: " + e.getMessage());
+                } finally {
+                    close(fs);
+                }
             }
         }
     }
