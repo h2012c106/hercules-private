@@ -38,7 +38,6 @@ public class RedisManager {
     private Map<String, ReflectMethod> methodMap = new HashMap<>();
     private int maxCount;
     private final InsertAction insertAction;
-    private int initCount=0;
 
     public RedisManager(GenericOptions options) {
         this.options = options;
@@ -109,7 +108,7 @@ public class RedisManager {
             log.warn(" methodMap is:" + methodMap);
         } catch (Exception e){
             log.error(" redis strategy reflect error:", e);
-            initCount++;
+            throw new RuntimeException(e);
         }
     }
 
@@ -125,7 +124,7 @@ public class RedisManager {
     }
 
     public void act(RedisKV kv, List<String> strategyList){
-        if (methodMap.size() == 0 && initCount < 3)
+        if (methodMap.size() == 0)
             initMethodMap(strategyList);
         for (int i = 0; i < strategyList.size(); i++) {
             String strategy = strategyList.get(i);
