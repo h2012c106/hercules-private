@@ -226,9 +226,11 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper<?>>> implements Li
 
     @Override
     public Object asDefault() {
-        return getValue().stream()
-                .map(BaseWrapper::asDefault)
-                .collect(Collectors.toList());
+        List<Object> list = new ArrayList<>();
+        for(BaseWrapper<?> wrapper : getValue()){
+            list.add(wrapper.asDefault());
+        }
+        return list;
     }
 
     @Override
