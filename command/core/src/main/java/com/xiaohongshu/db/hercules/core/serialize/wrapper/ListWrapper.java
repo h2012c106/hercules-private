@@ -237,7 +237,7 @@ public class ListWrapper extends BaseWrapper<List<BaseWrapper<?>>> implements Li
     public Object asDefault() {
         List<Object> list = new ArrayList<>();
         for(BaseWrapper<?> wrapper : getValue()){
-            list.add(wrapper);
+            list.add(wrapper.asDefault());
         }
         return list;
     }
