@@ -133,10 +133,10 @@ public class RedisOutputWrapperManager extends WrapperSetterFactory<RedisKV> {
                 Map<byte[], byte[]> map = new HashMap<>();
                 for (Map.Entry<String, BaseWrapper<?>> entry : mapWrapper.entrySet()) {
                     RedisKV tmp = new RedisKV();
-                    //因为redis底层存的都是bytes，即使是string实际也是按照
+                    //因为redis底层存的都是bytes，即使是string实际也是按照bytes
                     getWrapperSetter(BaseDataType.BYTES).set(entry.getValue(), tmp, null, null, VALUE_SEQ);
-                    map.put(SafeEncoder.encode(entry.getKey()), (byte[])(tmp.getValue().getValue()));
-                }
+                map.put(SafeEncoder.encode(entry.getKey()), (byte[])(tmp.getValue().getValue()));
+            }
                 row.set(RedisKV.RedisKVValue.initialize(getType(), map), columnSeq);
             }
         };

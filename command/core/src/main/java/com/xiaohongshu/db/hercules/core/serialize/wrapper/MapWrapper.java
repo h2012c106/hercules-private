@@ -150,9 +150,13 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> impleme
 
     @Override
     public Object asDefault() {
-        return getValue().entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().asDefault()));
+        Map<String, Object> map = new HashMap();
+        for(Map.Entry<String, BaseWrapper<?>> entry : getValue().entrySet()){
+            String key = entry.getKey();
+            Object value = entry.getValue().asDefault();
+            map.put(key, value);
+        }
+        return map;
     }
 
     @Override
