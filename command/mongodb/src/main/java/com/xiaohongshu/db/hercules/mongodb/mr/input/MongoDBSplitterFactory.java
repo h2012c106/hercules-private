@@ -5,7 +5,8 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.client.MongoDatabase;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.MongoDBSplitter;
-import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.SampleSplitter;
+import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.SampleMongoDBSplitter;
+import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.SkipMongoDBSplitter;
 import com.xiaohongshu.db.hercules.mongodb.mr.input.splitter.StandaloneMongoDBSplitter;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBInputOptionsConf;
 import com.xiaohongshu.db.hercules.mongodb.option.MongoDBOptionsConf;
@@ -60,22 +61,27 @@ public final class MongoDBSplitterFactory {
                     (Integer) versionArray.get(0) > 3
                             || ((Integer) versionArray.get(0) == 3
                             && (Integer) versionArray.get(1) >= 2));
+            String versionStr = buildInfo.getString("version");
+            versionStr = versionStr == null ? "UNKNOWN" : versionStr.trim();
+            LOG.info("Mongo version is: " + versionStr);
 
             if (sampleOperatorSupported) {
-                LOG.info("Unsharded mongo, use `SampleSplitter`.");
-                returnVal = new SampleSplitter(options, client, stats);
+                LOG.info("Unsharded mongo, use `SampleMongoDBSplitter`.");
+                returnVal = new SampleMongoDBSplitter(options, client, stats);
             } else if (supportSplitVector) {
-                LOG.info("Unsharded mongo, use `StandaloneMongoSplitter`.");
+                LOG.info("Unsharded mongo, use `StandaloneMongoDBSplitter`.");
                 returnVal = new StandaloneMongoDBSplitter(options, client, stats);
             } else {
-                throw new UnsupportedOperationException("Not define the `SkipSplitter` yet.");
+                LOG.info("Unsharded mongo, use `SkipMongoDBSplitter`.");
+                returnVal = new SkipMongoDBSplitter(options, client, stats);
             }
         } else {
             if (supportSplitVector) {
-                LOG.info("Sharded mongo, use `StandaloneMongoSplitter`.");
+                LOG.info("Sharded mongo, use `StandaloneMongoDBSplitter`.");
                 returnVal = new StandaloneMongoDBSplitter(options, client, stats);
             } else {
-                throw new UnsupportedOperationException("Not define the `SkipSplitter` yet.");
+                LOG.info("Sharded mongo, use `SkipMongoDBSplitter`.");
+                returnVal = new SkipMongoDBSplitter(options, client, stats);
             }
         }
 
