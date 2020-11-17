@@ -98,7 +98,7 @@
         <dependency>
             <groupId>com.xiaohongshu.db</groupId>
             <artifactId>hercules-command-redis</artifactId>
-            <version>dev</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

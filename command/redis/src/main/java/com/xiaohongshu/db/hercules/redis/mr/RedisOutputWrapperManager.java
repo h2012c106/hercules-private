@@ -7,8 +7,11 @@ import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import redis.clients.jedis.util.SafeEncoder;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +21,8 @@ import static com.xiaohongshu.db.hercules.redis.RedisKV.VALUE_SEQ;
  * Created by jamesqq on 2020/8/17.
  */
 public class RedisOutputWrapperManager extends WrapperSetterFactory<RedisKV> {
+
+    private static final Log LOG = LogFactory.getLog(RedisOutputWrapperManager.class);
 
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<RedisKV> getByteSetter() {
@@ -31,17 +36,47 @@ public class RedisOutputWrapperManager extends WrapperSetterFactory<RedisKV> {
 
     @Override
     protected BaseTypeWrapperSetter.IntegerSetter<RedisKV> getIntegerSetter() {
-        return null;
+        return new BaseTypeWrapperSetter.IntegerSetter<RedisKV>() {
+            @Override
+            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
+            }
+
+            @Override
+            protected void setNonnullValue(Integer value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+            }
+        };
     }
 
     @Override
     protected BaseTypeWrapperSetter.LongSetter<RedisKV> getLongSetter() {
-        return null;
+        return new BaseTypeWrapperSetter.LongSetter<RedisKV>() {
+            @Override
+            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
+            }
+
+            @Override
+            protected void setNonnullValue(Long value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+            }
+        };
     }
 
     @Override
     protected BaseTypeWrapperSetter.LonglongSetter<RedisKV> getLonglongSetter() {
-        return null;
+        return new BaseTypeWrapperSetter.LonglongSetter<RedisKV>() {
+            @Override
+            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
+            }
+
+            @Override
+            protected void setNonnullValue(BigInteger value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+            }
+        };
     }
 
     @Override
@@ -51,7 +86,17 @@ public class RedisOutputWrapperManager extends WrapperSetterFactory<RedisKV> {
 
     @Override
     protected BaseTypeWrapperSetter.DoubleSetter<RedisKV> getDoubleSetter() {
-        return null;
+        return new BaseTypeWrapperSetter.DoubleSetter<RedisKV>() {
+            @Override
+            protected void setNull(RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), null), columnSeq);
+            }
+
+            @Override
+            protected void setNonnullValue(Double value, RedisKV row, String rowName, String columnName, int columnSeq) throws Exception {
+                row.set(RedisKV.RedisKVValue.initialize(getType(), value), columnSeq);
+            }
+        };
     }
 
     @Override

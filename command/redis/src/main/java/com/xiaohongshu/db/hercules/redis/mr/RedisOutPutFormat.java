@@ -7,12 +7,14 @@ import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
+import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
+import com.xiaohongshu.db.hercules.redis.option.RedisOptionConf;
 import com.xiaohongshu.db.hercules.redis.schema.manager.RedisManager;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,6 +26,7 @@ import java.util.List;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.KEY_NAME;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.VALUE_NAME;
 import static com.xiaohongshu.db.hercules.redis.RedisKV.KEY_SEQ;
+import static com.xiaohongshu.db.hercules.redis.RedisKV.SCORE_SEQ;
 import static com.xiaohongshu.db.hercules.redis.RedisKV.VALUE_SEQ;
 
 
@@ -41,9 +44,9 @@ public class RedisOutPutFormat extends HerculesOutputFormat<RedisKV> {
 
 }
 
-class RedisRecordWriter extends HerculesKvRecordWriter<RedisKV> {
+class RedisRecordWriter extends HerculesRecordWriter<RedisKV> {
 
-    private static final Log log = LogFactory.getLog(RedisRecordWriter.class);
+    private static final Log LOG = LogFactory.getLog(RedisRecordWriter.class);
 
     @GeneralAssembly
     private final RedisManager manager = null;
@@ -54,29 +57,59 @@ class RedisRecordWriter extends HerculesKvRecordWriter<RedisKV> {
     @SchemaInfo
     private Schema schema;
 
+    private List<String> strategyList = null;
+
     public RedisRecordWriter(TaskAttemptContext context) {
         super(context);
     }
 
     @Override
-    protected void innerWriteKV(BaseWrapper<?> key, BaseWrapper<?> value) throws IOException, InterruptedException {
+    protected final void innerWrite(HerculesWritable value) throws IOException, InterruptedException {
+
         String keyName = targetOptions.getString(KEY_NAME, null);
         String valueName = targetOptions.getString(VALUE_NAME, null);
 
-        RedisKV kv = new RedisKV();
-        try {
-            getWrapperSetter(schema.getColumnTypeMap().getOrDefault(keyName, key.getType()))
-                    .set(key, kv, null, null, KEY_SEQ);
-            getWrapperSetter(schema.getColumnTypeMap().getOrDefault(valueName, value.getType()))
-                    .set(value, kv, null, null, VALUE_SEQ);
-        } catch (Exception e) {
-            throw new IOException(e);
+        BaseWrapper<?> keyValue = value.get(keyName);
+        BaseWrapper<?> valueValue = value.get(valueName);
+
+        if (keyValue == null || valueValue == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format("Meaningless row: %s", value.toString()));
+            }
+        } else {
+            if(value.getWriteStrategyList().size() > 0){
+                strategyList = value.getWriteStrategyList();
+            } else {
+                LOG.warn(" kv strategy is null");
+            }
+            RedisKV kv = new RedisKV();
+            try {
+
+                if(targetOptions.getString(RedisOptionConf.REDIS_WRITE_TPYE, null).equalsIgnoreCase("zset")){
+                    String scoreName = targetOptions.getString(RedisOptionConf.REDIS_SCORE_NAME, null);
+                    BaseWrapper<?> scoreValue = value.get(scoreName);
+                    if(scoreValue == null){
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug(String.format("Meaningless row: %s", value.toString()));
+                        }
+                    } else {
+                        getWrapperSetter(schema.getColumnTypeMap().getOrDefault(scoreName, scoreValue.getType()))
+                                .set(scoreValue, kv, null, null, SCORE_SEQ);
+                    }
+                }
+
+                getWrapperSetter(schema.getColumnTypeMap().getOrDefault(keyName, keyValue.getType()))
+                        .set(keyValue, kv, null, null, KEY_SEQ);
+                getWrapperSetter(schema.getColumnTypeMap().getOrDefault(valueName, valueValue.getType()))
+                        .set(valueValue, kv, null, null, VALUE_SEQ);
+            } catch (Exception e) {
+                throw new IOException(e);
+            }
+            if(strategyList != null) {
+                manager.act(kv, strategyList);
+            } else
+                manager.set(kv);
         }
-        List<String> strategyList = getStrategyList();
-        if(strategyList != null) {
-            manager.act(kv, strategyList);
-        } else
-            manager.set(kv);
     }
 
     @Override
