@@ -10,11 +10,14 @@ import redis.clients.jedis.util.SafeEncoder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by jamesqq on 2020/9/19.
  */
 public class InsertAction implements WriteAction{
+
+    private static final Log LOG = LogFactory.getLog(InsertAction.class);
 
     public void act(Pipeline pipeline, RedisKV kv, Integer expire, String writeType) {
         String key = String.valueOf(kv.getKey().getValue());
@@ -43,7 +46,17 @@ public class InsertAction implements WriteAction{
                 pipeline.sadd(key_byte_set, value_byte_set);
                 break;
             case "zset":
-                throw new RuntimeException("The type zset is not supported yet.");
+                RedisKV.RedisKVValue score = kv.getScore();
+                double score_value;
+                try{
+                    score_value = Double.valueOf(String.valueOf(score.getValue()));
+                } catch(NumberFormatException ex){
+                    throw new RuntimeException("redis score column parse long error:" + ex.toString());
+                }
+                byte[] key_byte_zset = SafeEncoder.encode(key);
+                byte[] value_byte_zset = SafeEncoder.encode(String.valueOf(value.getValue()));
+                pipeline.zadd(key_byte_zset, score_value, value_byte_zset);
+                break;
             default:
                 throw new RuntimeException(String.format("The type [%s] is not supported by redis.", value.getDataType().toString()));
         }
