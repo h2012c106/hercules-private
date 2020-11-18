@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.parquetschema.mr;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.context.BaseMRJobContext;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
@@ -36,7 +36,7 @@ public class ParquetSchemaOutputMRJobContext extends BaseMRJobContext {
 
     private static final String GENERATED_FILE_NAME = "HERCULES_GENERATED_SCHEMA";
 
-    @GeneralAssembly
+    @Assembly
     private ParquetDataTypeConverter dataTypeConverter;
 
     public ParquetSchemaOutputMRJobContext(GenericOptions options) {

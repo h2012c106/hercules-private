@@ -61,6 +61,22 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>pl.project13.maven</groupId>
+                <artifactId>git-commit-id-plugin</artifactId>
+                <version>4.0.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>revision</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <dateFormat>yyyy-MM-dd'T'HH:mm:ssZ</dateFormat>
+                    <dateFormatTimeZone>UTC</dateFormatTimeZone>
+                </configuration>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -69,6 +85,11 @@
             </resource>
         </resources>
     </build>
+
+    <properties>
+        <timestamp>${maven.build.timestamp}</timestamp>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:59Z</maven.build.timestamp.format>
+    </properties>
 
     <dependencies>
 

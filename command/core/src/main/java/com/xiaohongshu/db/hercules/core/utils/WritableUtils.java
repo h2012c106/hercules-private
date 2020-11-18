@@ -172,6 +172,29 @@ public final class WritableUtils {
         return res;
     }
 
+    public static HerculesWritable retainColumn(HerculesWritable in, List<String> whiteNameList, @NonNull FilterUnexistOption option) {
+        retainColumn(in.getRow(), whiteNameList, option);
+        return in;
+    }
+
+    public static MapWrapper retainColumn(MapWrapper in, List<String> whiteNameList, @NonNull FilterUnexistOption option) {
+        in.keySet().retainAll(whiteNameList);
+        for (String columnName : whiteNameList) {
+            BaseWrapper<?> value = get(in, columnName);
+            // MapWrapper里不可能存null值，所以null一定代表不存在
+            if (value == null) {
+                if (option == FilterUnexistOption.IGNORE) {
+                    continue;
+                } else if (option == FilterUnexistOption.EXCEPTION) {
+                    throw new RuntimeException(String.format("Column [%s] must exist in the data map: %s", columnName, in));
+                } else if (option == FilterUnexistOption.DEFAULT_NULL_VALUE) {
+                    put(in, columnName, NullWrapper.INSTANCE);
+                }
+            }
+        }
+        return in;
+    }
+
     public static void filterColumn(MapWrapper in, List<String> blackNameList) {
         for (String columnName : blackNameList) {
             remove(in, columnName);

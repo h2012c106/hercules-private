@@ -5,6 +5,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -62,8 +63,8 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
     }
 
     @Override
-    public BigDecimal asBigDecimal() {
-        return new BigDecimal(getValue());
+    public InfinitableBigDecimal asBigDecimal() {
+        return InfinitableBigDecimal.valueOf(new BigDecimal(getValue()));
     }
 
     @Override
@@ -78,7 +79,7 @@ public class IntegerWrapper extends BaseWrapper<BigInteger> {
 
     @Override
     public ExtendedDate asDate() {
-        return ExtendedDate.initialize(new Date(asLong()));
+        return ExtendedDate.initialize(new Date(asBigInteger().longValueExact()));
     }
 
     @Override

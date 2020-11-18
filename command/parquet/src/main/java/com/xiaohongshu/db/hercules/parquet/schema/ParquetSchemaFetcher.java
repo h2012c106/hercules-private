@@ -4,7 +4,9 @@ import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
+import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -22,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.HiveMetaOptionsConf.HIVE_META_CONNECTION;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.DIR;
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
 
@@ -34,9 +37,9 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher {
      */
     private final Configuration tmpConfiguration;
 
-    private MessageType messageType;
+    private MessageType messageType = null;
 
-    @GeneralAssembly
+    @Assembly
     private ParquetDataTypeConverter dataTypeConverter;
 
     /**
@@ -112,7 +115,6 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher {
             if (res == null) {
                 throw new RuntimeException("Unable to fetch the column type from parquet file.");
             } else {
-                LOG.info("The schema fetched from parquet file is: " + res.toString());
                 return res;
             }
         } catch (IOException e) {
@@ -131,11 +133,21 @@ public class ParquetSchemaFetcher extends BaseSchemaFetcher {
         // 获得parquet schema
         if (getOptions().hasProperty(MESSAGE_TYPE)) {
             messageType = MessageTypeParser.parseMessageType(getOptions().getString(MESSAGE_TYPE, null));
-        } else if (options.getOptionsType().isSource()) {
-            // 如果作为目标，自动从原文件取schema可能不太合适，毕竟万一上游动了schema，下游感知不到，故仅在作为上游时取
-            messageType = fetchMessageType();
+        } else {
+            if (getOptions().hasProperty(HIVE_META_CONNECTION)) {
+                Map<String, String> typeMap = SchemaUtils.fetchHiveTableSchema(getOptions());
+                messageType = ParquetSchemaUtils.generateMessageTypeFromHiveMeta(typeMap);
+                LOG.info("The schema converted from hive schema is: " + messageType.toString());
+            } else if (options.getOptionsType().isSource()) {
+                // 如果作为目标，自动从原文件取schema可能不太合适，毕竟万一上游动了schema，下游感知不到，故仅在作为上游时取
+                messageType = fetchMessageType();
+                LOG.info("The schema fetched from parquet file is: " + messageType.toString());
+            }
+
             // 顺便偷摸把取出来的parquet message type塞到options里，因为之后还有用，不用屡次取了
-            getOptions().set(MESSAGE_TYPE, messageType.toString());
+            if (messageType != null) {
+                getOptions().set(MESSAGE_TYPE, messageType.toString());
+            }
         }
     }
 

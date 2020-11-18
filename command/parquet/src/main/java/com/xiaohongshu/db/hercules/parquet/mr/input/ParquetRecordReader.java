@@ -1,9 +1,6 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
-import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
-import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
-import com.xiaohongshu.db.hercules.core.mr.input.wrapper.WrapperGetter;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
@@ -11,6 +8,7 @@ import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
+import lombok.SneakyThrows;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -27,14 +25,15 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.*;
 
 import static com.xiaohongshu.db.hercules.parquet.option.ParquetOptionsConf.MESSAGE_TYPE;
 
-public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInfo> {
+public abstract class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInfo> {
 
     private static final Log LOG = LogFactory.getLog(ParquetRecordReader.class);
 
-    private RecordReader<Void, Group> delegate = null;
+    protected RecordReader<Void, Group> delegate = null;
     /**
      * 负责生成delegate reader
      */
@@ -137,27 +136,17 @@ public class ParquetRecordReader extends HerculesRecordReader<GroupWithSchemaInf
         initializeDelegate();
     }
 
-    @Override
-    public boolean innerNextKeyValue() throws IOException, InterruptedException {
+    protected boolean myNextKeyValue() throws IOException, InterruptedException {
         if (delegate.nextKeyValue()) {
             return true;
         } else {
             if (++combinedSplitSeq < combinedSplitList.size()) {
                 initializeDelegate();
                 // 防止下一个split无数据
-                return innerNextKeyValue();
+                return myNextKeyValue();
             } else {
                 return false;
             }
-        }
-    }
-
-    @Override
-    public HerculesWritable innerGetCurrentValue() throws IOException, InterruptedException {
-        try {
-            return new HerculesWritable(((ParquetInputWrapperManager) wrapperGetterFactory).groupToMapWrapper(delegate.getCurrentValue(), null));
-        } catch (Exception e) {
-            throw new IOException(e);
         }
     }
 

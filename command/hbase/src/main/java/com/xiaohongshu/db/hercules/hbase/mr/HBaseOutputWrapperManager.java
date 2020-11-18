@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
 import org.apache.hadoop.hbase.client.Put;
@@ -8,6 +9,10 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.math.BigDecimal;
 
 public class HBaseOutputWrapperManager extends WrapperSetterFactory<Put> {
+    public HBaseOutputWrapperManager() {
+        super(DataSourceRole.TARGET);
+    }
+
     @Override
     protected BaseTypeWrapperSetter.ByteSetter<Put> getByteSetter() {
         return null;

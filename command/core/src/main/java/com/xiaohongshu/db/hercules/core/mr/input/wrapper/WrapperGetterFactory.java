@@ -3,9 +3,10 @@ package com.xiaohongshu.db.hercules.core.mr.input.wrapper;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
-import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -29,13 +30,22 @@ public abstract class WrapperGetterFactory<T> implements DataSourceRoleGetter {
 
     private Map<DataType, WrapperGetter<T>> wrapperGetterMap;
 
-    public WrapperGetterFactory() {
+    private final DataSourceRole role;
+
+    @Assembly
+    private final CustomDataTypeManager<T, ?> customDataTypeManager = null;
+
+    public WrapperGetterFactory(DataSourceRole role) {
+        if (role == DataSourceRole.SER || role == DataSourceRole.TARGET) {
+            throw new RuntimeException("Unallowed to set wrapper getter to target module.");
+        }
+        this.role = role;
         initializeWrapperGetterMap();
     }
 
     @Override
-    public DataSourceRole getRole() {
-        return DataSourceRole.SOURCE;
+    public final DataSourceRole getRole() {
+        return role;
     }
 
     private void setWrapperGetter(Map<DataType, WrapperGetter<T>> wrapperGetterMap,
@@ -79,19 +89,14 @@ public abstract class WrapperGetterFactory<T> implements DataSourceRoleGetter {
         return wrapperGetterMap.containsKey(dataType);
     }
 
-    public final WrapperGetter<T> getWrapperGetter(@NonNull DataType dataType) {
-        WrapperGetter<T> res;
-        if (dataType.isCustom()) {
-            final CustomDataType<T, ?, ?> customDataType = (CustomDataType<T, ?, ?>) dataType;
-            // 运行时赋
-            res = wrapperGetterMap.computeIfAbsent(customDataType, key -> customDataType.getWrapperGetter());
+    public final WrapperGetter<T> getWrapperGetter(@NonNull final DataType dataType) {
+        if (dataType.isCustom() && customDataTypeManager.contains(dataType.getName())) {
+            return wrapperGetterMap.computeIfAbsent(dataType, key -> customDataTypeManager.get(dataType.getName()).getWrapperGetter());
         } else {
-            res = wrapperGetterMap.get(dataType);
-            if (res == null) {
+            return wrapperGetterMap.computeIfAbsent(dataType.getBaseDataType(), key -> {
                 throw new MapReduceException("Unsupported data type: " + dataType.toString());
-            }
+            });
         }
-        return res;
     }
 
     abstract protected BaseTypeWrapperGetter.ByteGetter<T> getByteGetter();

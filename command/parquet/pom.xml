@@ -56,6 +56,13 @@
             <artifactId>parquet-hadoop</artifactId>
             <version>1.11.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.jodd/jodd-core -->
+        <!-- hive-exec NanoTimeUtils引用了这个包，然而core当中没打进去这个代码，也没写在他的maven依赖中，只能自己来 -->
+        <dependency>
+            <groupId>org.jodd</groupId>
+            <artifactId>jodd-core</artifactId>
+            <version>3.5</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.hive/hive-exec -->
         <!-- 一定要注明core，不然拿进来一个fatjar，class冲突地狱 -->
         <dependency>

@@ -27,9 +27,12 @@
         <module>kafka</module>
         <module>redis</module>
         <module>nebula</module>
+        <module>elasticsearch-v6</module>
+        <module>elasticsearch-v7</module>
+        <module>bson</module>
 
         <module>xhs-serder</module>
-
+        <module>xhs-udf</module>
         <module>assemble</module>
     </modules>
 

@@ -5,7 +5,7 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSBalanceSplitGetter;
@@ -35,10 +35,10 @@ public class TiDBRecordReader extends RDBMSRecordReader {
     private Long totalSize;
     private Iterator<String> querySqlIterator;
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSManager manager;
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSSchemaFetcher schemaFetcher;
 
     @Options(type = OptionsType.SOURCE)

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.FILTER;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.SERDER_SUPPLIER;
@@ -87,13 +88,14 @@ public final class HerculesContext {
     public static HerculesContext initialize(WrappingOptions wrappingOptions,
                                              AssemblySupplier sourceSupplier,
                                              AssemblySupplier targetSupplier,
-                                             Reflector reflector) {
+                                             Reflector reflector,
+                                             Function<Family<KvSerDerSupplier>, Void> parseSerDerFunc) {
         if (INITIALIZED.getAndSet(true)) {
             LOG.debug("Initialize HerculesContext repeatedly, ignore this init.");
         } else {
             LOCK.writeLock().lock();
             try {
-                INSTANCE = new HerculesContext(wrappingOptions, sourceSupplier, targetSupplier, reflector);
+                INSTANCE = new HerculesContext(wrappingOptions, sourceSupplier, targetSupplier, reflector, parseSerDerFunc);
             } finally {
                 LOCK.writeLock().unlock();
             }
@@ -138,7 +140,9 @@ public final class HerculesContext {
         this.filter = extractFilter(wrappingOptions);
     }
 
-    private HerculesContext(WrappingOptions wrappingOptions, AssemblySupplier sourceSupplier, AssemblySupplier targetSupplier, Reflector reflector) {
+    private HerculesContext(WrappingOptions wrappingOptions,
+                            AssemblySupplier sourceSupplier, AssemblySupplier targetSupplier,
+                            Reflector reflector, Function<Family<KvSerDerSupplier>, Void> parseSerDerFunc) {
         this.reflector = reflector;
 
         // 注册时间格式，先放在这，不太美观就是
@@ -147,6 +151,9 @@ public final class HerculesContext {
         this.wrappingOptions = wrappingOptions;
         this.assemblySupplierPair = Family.initializeDataSource(sourceSupplier, targetSupplier);
         this.kvSerDerSupplierPair = extractKvSerDerSupplierPair(wrappingOptions);
+        if (parseSerDerFunc != null) {
+            parseSerDerFunc.apply(kvSerDerSupplierPair);
+        }
 
         // 把supplier计入options中
         assemblySupplierToOptions(sourceSupplier, wrappingOptions.getSourceOptions());

@@ -12,17 +12,12 @@ import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
-import com.xiaohongshu.db.hercules.mongodb.datatype.ObjectIdWrapper;
-import com.xiaohongshu.db.hercules.mongodb.mr.output.MongoDBWrapperSetterManager;
 import com.xiaohongshu.db.xlog.core.codec.Codec;
 import com.xiaohongshu.db.xlog.core.exception.SerDeException;
 import com.xiaohongshu.db.xlog.oplog.OperatorPB;
 import com.xiaohongshu.db.xlog.oplog.OplogManagerPB;
 import com.xiaohongshu.db.xlog.oplog.OplogSerDe;
 import org.bson.Document;
-import org.bson.json.JsonMode;
-import org.bson.json.JsonWriterSettings;
-import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +43,7 @@ public class MongoOplogKVSer extends KVSer<Document> implements InjectedClass {
 
     @Override
     public void afterInject() {
+        super.afterInject();
         format = MongoOplogOutputOptionConf.OplogFormat.valueOfIgnoreCase(options.getString(MongoOplogOutputOptionConf.FORMAT, null));
     }
 
@@ -60,7 +56,7 @@ public class MongoOplogKVSer extends KVSer<Document> implements InjectedClass {
         builder.setFromMigrate(false);
 
         if (schema.getColumnNameList().size() != 0) {
-            in = WritableUtils.copyColumn(in, schema.getColumnNameList(), WritableUtils.FilterUnexistOption.IGNORE);
+            in = WritableUtils.retainColumn(in, schema.getColumnNameList(), WritableUtils.FilterUnexistOption.IGNORE);
         }
         Document document;
         try {

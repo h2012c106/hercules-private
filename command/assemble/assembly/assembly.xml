@@ -3,8 +3,8 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.1.0.xsd">
     <id>package</id>
     <formats>
-        <format>tar.gz</format>
         <format>dir</format>
+        <format>tar.gz</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
     <fileSets>
@@ -114,12 +114,46 @@
                 <include>**/hercules-command-*.jar</include>
             </includes>
         </fileSet>
-
+        <fileSet>
+            <directory>../elasticsearch-v6/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../elasticsearch-v7/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../bson/target</directory>
+            <outputDirectory>module-lib</outputDirectory>
+            <includes>
+                <include>**/hercules-command-*.jar</include>
+            </includes>
+        </fileSet>
         <fileSet>
             <directory>../xhs-serder/target</directory>
             <outputDirectory>lib</outputDirectory>
             <includes>
                 <include>**/hercules-xhs-serder-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../xhs-udf/target</directory>
+            <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>**/hercules-xhs-udf-*.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>lib</directory>
+            <outputDirectory>lib</outputDirectory>
+            <includes>
+                <include>*.jar</include>
             </includes>
         </fileSet>
     </fileSets>

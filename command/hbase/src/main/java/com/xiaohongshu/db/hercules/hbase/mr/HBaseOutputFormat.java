@@ -10,7 +10,7 @@ import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.hbase.option.HBaseOptionsConf;
@@ -34,7 +34,7 @@ import static com.xiaohongshu.db.hercules.core.option.optionsconf.KVOptionsConf.
 
 public class HBaseOutputFormat extends HerculesOutputFormat<Put> {
 
-    @GeneralAssembly
+    @Assembly
     private HBaseManager manager;
 
     /**

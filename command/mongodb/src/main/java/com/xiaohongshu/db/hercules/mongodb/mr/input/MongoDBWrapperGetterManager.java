@@ -13,7 +13,7 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import org.bson.Document;
 import org.bson.types.Binary;
@@ -27,13 +27,17 @@ import java.util.Map;
 
 public class MongoDBWrapperGetterManager extends WrapperGetterFactory<Document> {
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly
     private DataTypeConverter<Object, Document> converter;
 
-    @SchemaInfo(role = DataSourceRole.SOURCE)
+    @SchemaInfo
     private Schema schema;
 
     private final Document fakeDocument = new Document(WritableUtils.FAKE_COLUMN_NAME_USED_BY_LIST, 0);
+
+    public MongoDBWrapperGetterManager() {
+        super(DataSourceRole.SOURCE);
+    }
 
     public MapWrapper documentToMapWrapper(Document document, String documentPosition)
             throws Exception {

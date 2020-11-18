@@ -58,24 +58,24 @@ public final class OverflowUtils {
     }
 
     public static byte numberToByte(@NonNull Number number) {
-        return new BigDecimal(number.toString()).toBigIntegerExact().byteValueExact();
+        return new BigDecimal(number.toString()).toBigInteger().byteValueExact();
     }
 
     public static short numberToShort(@NonNull Number number) {
-        return new BigDecimal(number.toString()).toBigIntegerExact().shortValueExact();
+        return new BigDecimal(number.toString()).toBigInteger().shortValueExact();
     }
 
     public static int numberToInteger(@NonNull Number number) {
-        return new BigDecimal(number.toString()).toBigIntegerExact().intValueExact();
+        return new BigDecimal(number.toString()).toBigInteger().intValueExact();
     }
 
     public static long numberToLong(@NonNull Number number) {
-        return new BigDecimal(number.toString()).toBigIntegerExact().longValueExact();
+        return new BigDecimal(number.toString()).toBigInteger().longValueExact();
     }
 
     public static float numberToFloat(@NonNull BigDecimal number) {
         float res = number.floatValue();
-        if (Float.isInfinite(res) || isFloatOverFlow(number)) {
+        if (isFloatOverFlow(number)) {
             throw new ArithmeticException("Overflow float value: " + number.toString());
         }
         return res;
@@ -87,7 +87,7 @@ public final class OverflowUtils {
 
     public static double numberToDouble(@NonNull BigDecimal number) {
         double res = number.doubleValue();
-        if (Double.isInfinite(res) || isDoubleOverFlow(number)) {
+        if (isDoubleOverFlow(number)) {
             throw new ArithmeticException("Overflow double value: " + number.toString());
         }
         return res;

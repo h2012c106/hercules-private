@@ -41,8 +41,11 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    @SchemaInfo(role = DataSourceRole.SOURCE)
+    private Schema sourceSchema;
+
     @SchemaInfo(role = DataSourceRole.TARGET)
-    private Schema schema;
+    private Schema targetSchema;
 
     @Options(type = OptionsType.COMMON)
     private GenericOptions commonOptions;
@@ -50,6 +53,8 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
     private RateLimiter rateLimiter = null;
 
     private final TaskAttemptContext context;
+
+    private boolean needRetainColumns;
 
     public HerculesRecordWriter(TaskAttemptContext context) {
         this.context = context;
@@ -70,6 +75,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
             LOG.info("The map max qps is limited to: " + qps);
             rateLimiter = RateLimiter.create(qps);
         }
+        needRetainColumns = sourceSchema.getColumnNameList().size() == 0 && targetSchema.getColumnNameList().size() != 0;
         innerAfterInject();
     }
 
@@ -84,7 +90,7 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
         if (wrapperSetterFactory != null) {
             // 检查column type里是否有不支持的类型
             Map<String, DataType> errorMap = new HashMap<>();
-            for (Map.Entry<String, DataType> entry : schema.getColumnTypeMap().entrySet()) {
+            for (Map.Entry<String, DataType> entry : targetSchema.getColumnTypeMap().entrySet()) {
                 String columnName = entry.getKey();
                 DataType dataType = entry.getValue();
                 if (!dataType.isCustom() && !wrapperSetterFactory.contains(dataType)) {
@@ -142,9 +148,8 @@ public abstract class HerculesRecordWriter<T> extends RecordWriter<NullWritable,
             HerculesStatus.add(context, HerculesCounter.QPS_CONTROL_WAITING_TIME, new Double(acquireTimeSecond * 1000).longValue());
         }
         long start = System.currentTimeMillis();
-        if (schema.getColumnNameList().size() != 0) {
-            // TODO 此处使用copy新建了一个writable，可能在性能及垃圾回收上不友好，暂未想出更好的姿势
-            value = WritableUtils.copyColumn(value, schema.getColumnNameList(), getColumnUnexistOption());
+        if (needRetainColumns) {
+            value = WritableUtils.retainColumn(value, targetSchema.getColumnNameList(), getColumnUnexistOption());
         }
         innerWrite(value);
         HerculesStatus.add(context, HerculesCounter.WRITE_TIME, System.currentTimeMillis() - start);

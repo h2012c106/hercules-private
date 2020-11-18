@@ -16,12 +16,16 @@ public class KafkaOptionConf extends BaseOptionsConf {
     public final static String RETRIES_CONFIG = "retries";
     public final static String BATCH_SIZE_CONFIG = "batch-size";
     public final static String LINGER_MS_CONFIG = "linger";
+    public final static String MAX_REQUEST_SIZE_CONFIG = "max-request-size";
+    public final static int DEFAULT_MAX_REQUEST_SIZE_CONFIG = 5000000;
 
-    public final static String LINGER_MS_DEFAULT = "5";
+    public final static String LINGER_MS_DEFAULT = "100";
     public final static String BATCH_SIZE_DEFAULT = "50000";
     public final static String RETRIES_DEFAULT = "3";
 
     public final static String TOPIC = "kafka-topic";
+    public final static String DELETE_BEFORE_RUN = "delete-topic-records";
+    public final static boolean DEFAULT_DELETE_BEFORE_RUN = false;
 
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
@@ -63,6 +67,16 @@ public class KafkaOptionConf extends BaseOptionsConf {
                 .needArg(true)
                 .necessary(true)
                 .description("Kafka topic to send message.")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(MAX_REQUEST_SIZE_CONFIG)
+                .needArg(true)
+                .description("The maximum size of a request in bytes. The default is " + DEFAULT_MAX_REQUEST_SIZE_CONFIG + "bytes")
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(DELETE_BEFORE_RUN)
+                .needArg(false)
+                .description("Whether delete topic records before run. The default is " + DEFAULT_DELETE_BEFORE_RUN)
                 .build());
         return tmpList;
     }

@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.mongodb.datatype;
 
 import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.NullWrapper;
 import lombok.NonNull;
@@ -21,8 +22,8 @@ public class ObjectIdWrapper extends BaseWrapper<ObjectId> {
     }
 
     @Override
-    public BigDecimal asBigDecimal() {
-        return new BigDecimal(asBigInteger());
+    public InfinitableBigDecimal asBigDecimal() {
+        return InfinitableBigDecimal.valueOf(new BigDecimal(asBigInteger()));
     }
 
     @Override

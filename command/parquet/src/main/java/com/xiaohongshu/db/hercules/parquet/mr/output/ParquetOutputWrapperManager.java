@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.parquet.mr.output;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
@@ -9,7 +10,7 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
 import lombok.NonNull;
@@ -24,8 +25,12 @@ import static com.xiaohongshu.db.hercules.core.utils.WritableUtils.FAKE_PARENT_N
  */
 public abstract class ParquetOutputWrapperManager extends WrapperSetterFactory<Group> {
 
-    @GeneralAssembly
+    @Assembly
     private final ParquetDataTypeConverter dataTypeConverter = null;
+
+    public ParquetOutputWrapperManager() {
+        super(DataSourceRole.TARGET);
+    }
 
     /**
      * 当上游不是list时，做一个singleton list

@@ -5,28 +5,28 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
-import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
-public class DoubleWrapper extends BaseWrapper<BigDecimal> {
+public class DoubleWrapper extends BaseWrapper<InfinitableBigDecimal> {
 
     protected DoubleWrapper(Float value) {
-        this(BigDecimal.valueOf(value), BaseDataType.FLOAT, 4);
+        this(InfinitableBigDecimal.valueOf(value), BaseDataType.FLOAT, 4);
     }
 
     protected DoubleWrapper(Double value) {
-        this(BigDecimal.valueOf(value), BaseDataType.DOUBLE, 8);
+        this(InfinitableBigDecimal.valueOf(value), BaseDataType.DOUBLE, 8);
     }
 
     protected DoubleWrapper(BigDecimal value) {
         // 仅仅粗略估计
-        this(value, BaseDataType.DECIMAL, value.toBigInteger().toByteArray().length);
+        this(InfinitableBigDecimal.valueOf(value), BaseDataType.DECIMAL, value.toBigInteger().toByteArray().length);
     }
 
-    protected DoubleWrapper(BigDecimal value, DataType type, int byteSize) {
+    protected DoubleWrapper(InfinitableBigDecimal value, DataType type, int byteSize) {
         super(value, type, byteSize);
     }
 
@@ -43,38 +43,28 @@ public class DoubleWrapper extends BaseWrapper<BigDecimal> {
     }
 
     @Override
-    public Long asLong() {
-        return getValue().longValueExact();
-    }
-
-    @Override
-    public Double asDouble() {
-        return OverflowUtils.numberToDouble(getValue());
-    }
-
-    @Override
-    public BigDecimal asBigDecimal() {
+    public InfinitableBigDecimal asBigDecimal() {
         return getValue();
     }
 
     @Override
     public BigInteger asBigInteger() {
-        return getValue().toBigInteger();
+        return asBigDecimal().getDecimalValue().toBigInteger();
     }
 
     @Override
     public Boolean asBoolean() {
-        return getValue().compareTo(BigDecimal.ZERO) != 0;
+        return asBigDecimal().getDecimalValue().compareTo(BigDecimal.ZERO) != 0;
     }
 
     @Override
     public ExtendedDate asDate() {
-        return ExtendedDate.initialize(new Date(asLong()));
+        return ExtendedDate.initialize(new Date(asBigInteger().longValueExact()));
     }
 
     @Override
     public String asString() {
-        return getValue().toPlainString();
+        return getValue().toString();
     }
 
     @Override
@@ -97,7 +87,7 @@ public class DoubleWrapper extends BaseWrapper<BigDecimal> {
     }
 
     @Override
-    public int compareTo(BigDecimal o) {
+    public int compareTo(InfinitableBigDecimal o) {
         return getValue().compareTo(o);
     }
 }

@@ -23,13 +23,15 @@ public class CommonOptionsConf extends BaseOptionsConf {
     public static final String ALLOW_TARGET_MORE_COLUMN = "allow-target-more-column";
     public static final String COLUMN_MAP = "column-map";
     public static final String RELIABLE_COLUMN_MAP = "reliable-column-map";
-    public static final String MAX_WRITE_QPS = "max-write-qps";
+    public static final String
+            MAX_WRITE_QPS = "max-write-qps";
     public static final String ALLOW_COPY_COLUMN_NAME = "allow-copy-column-name";
     public static final String ALLOW_COPY_COLUMN_TYPE = "allow-copy-column-type";
     public static final String ALLOW_COPY_KEY = "allow-copy-key";
     public static final String FILTER = "filter";
     public static final String UDF = "udf";
     public static final String MAP_STATUS_LOG_INTERVAL = "map-status-log-interval";
+    public static final String ALLOW_SKIP = "allow-skip";
     public static final String WRITE_STRATEGY = "write-strategy";
 
     public static final int DEFAULT_NUM_MAPPER = 4;
@@ -142,6 +144,11 @@ public class CommonOptionsConf extends BaseOptionsConf {
                 .needArg(true)
                 .description(String.format("The interval map logging its status, use second value, default to: %ds.", DEFAULT_MAP_STATUS_LOG_INTERVAL))
                 .defaultStringValue(String.valueOf(DEFAULT_MAP_STATUS_LOG_INTERVAL))
+                .build());
+        tmpList.add(SingleOptionConf.builder()
+                .name(ALLOW_SKIP)
+                .needArg(false)
+                .description("Allow to skip the error line.")
                 .build());
         tmpList.add(SingleOptionConf.builder()
                 .name(WRITE_STRATEGY)

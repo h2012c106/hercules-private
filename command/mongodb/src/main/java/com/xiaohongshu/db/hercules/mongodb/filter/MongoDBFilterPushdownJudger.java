@@ -165,7 +165,7 @@ public class MongoDBFilterPushdownJudger extends FilterPushdownJudger<MongoDBFil
                     if (baseDataType.isInteger()) {
                         res = valueExpr.getResult().asBigInteger().longValueExact();
                     } else if (baseDataType.isFloat()) {
-                        res = OverflowUtils.numberToDouble(valueExpr.getResult().asBigDecimal());
+                        res = valueExpr.getResult().asBigDecimal().getFloatValue();
                     } else if (baseDataType.isBoolean() || baseDataType.isNull() || baseDataType.isString() || baseDataType.isDate()) {
                         res = valueExpr.getValue();
                     }

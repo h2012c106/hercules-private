@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -34,37 +35,7 @@ public class NullWrapper extends BaseWrapper<String> {
     }
 
     @Override
-    public Byte asByte() {
-        return null;
-    }
-
-    @Override
-    public Short asShort() {
-        return null;
-    }
-
-    @Override
-    public Integer asInteger() {
-        return null;
-    }
-
-    @Override
-    public Long asLong() {
-        return null;
-    }
-
-    @Override
-    public Float asFloat() {
-        return null;
-    }
-
-    @Override
-    public Double asDouble() {
-        return null;
-    }
-
-    @Override
-    public BigDecimal asBigDecimal() {
+    public InfinitableBigDecimal asBigDecimal() {
         return null;
     }
 

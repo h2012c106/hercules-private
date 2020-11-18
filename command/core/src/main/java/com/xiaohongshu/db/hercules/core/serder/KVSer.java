@@ -9,8 +9,10 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.utils.ErrorLoggerUtils;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
+import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.counter.HerculesCounter;
 import com.xiaohongshu.db.hercules.core.utils.counter.HerculesStatus;
@@ -20,6 +22,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.ALLOW_SKIP;
 import static com.xiaohongshu.db.hercules.core.option.optionsconf.serder.SerDerOptionsConf.NOT_CONTAINS_KEY;
 
 /**
@@ -27,7 +30,7 @@ import static com.xiaohongshu.db.hercules.core.option.optionsconf.serder.SerDerO
  *
  * @param <T>
  */
-public abstract class KVSer<T> implements DataSourceRoleGetter {
+public abstract class KVSer<T> implements DataSourceRoleGetter, InjectedClass {
 
     private static final Log LOG = LogFactory.getLog(KVSer.class);
 
@@ -37,11 +40,23 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
     private String valueName;
 
     @Options(type = OptionsType.SER)
-    private GenericOptions options;
+    private GenericOptions serOptions;
+
+    @Options(type = OptionsType.COMMON)
+    private GenericOptions commonOptions;
+
+    private static final String MISS_KV_TAG = "Ser miss key/value";
+    private boolean allowSkip;
+    private int seq = 0;
 
     public KVSer(WrapperSetterFactory<T> wrapperSetterFactory) {
         this.wrapperSetterFactory = wrapperSetterFactory;
         HerculesContext.instance().inject(wrapperSetterFactory);
+    }
+
+    @Override
+    public void afterInject() {
+        allowSkip = commonOptions.getBoolean(ALLOW_SKIP, false);
     }
 
     @Override
@@ -79,22 +94,25 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
             out.addAllWriteStrategy(in.getWriteStrategyList());
             BaseWrapper<?> key = writeKey(in);
             // 如果序列化结构中不需要包含key值，则从行中拿走这列再序列化
-            if (options.getBoolean(NOT_CONTAINS_KEY, false)) {
+            if (serOptions.getBoolean(NOT_CONTAINS_KEY, false)) {
                 WritableUtils.remove(in.getRow(), keyName);
             }
             BaseWrapper<?> value = writeValue(in);
             // 转出一对kv，其中有一个值不存在，则认为这行没意义，不予写下游
             if (key == null || value == null) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug(String.format("Meaningless serialize row: %s", in.toString()));
+                if (allowSkip) {
+                    ErrorLoggerUtils.add(MISS_KV_TAG, in, seq);
+                    return null;
+                } else {
+                    throw new RuntimeException(String.format("Meaningless serialize row: %s", in.toString()));
                 }
-                return null;
             } else {
                 out.put(keyName, key);
                 out.put(valueName, value);
                 return out;
             }
         } finally {
+            ++seq;
             HerculesStatus.add(null, HerculesCounter.SER_TIME, System.currentTimeMillis() - startTime);
         }
     }
@@ -105,6 +123,11 @@ public abstract class KVSer<T> implements DataSourceRoleGetter {
     public final void close(TaskAttemptContext context) throws IOException {
         innerClose(context);
         LOG.info(String.format("Spent %s on serialize.", HerculesStatus.getStrValue(HerculesCounter.SER_TIME)));
+        try {
+            ErrorLoggerUtils.print(MISS_KV_TAG, LOG);
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
     }
 
     protected final WrapperSetter<T> getWrapperSetter(DataType dataType) {

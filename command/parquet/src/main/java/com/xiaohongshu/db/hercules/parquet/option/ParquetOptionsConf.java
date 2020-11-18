@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.SingleOptionConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.BaseOptionsConf;
+import com.xiaohongshu.db.hercules.core.option.optionsconf.HiveMetaOptionsConf;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.TableOptionsConf;
 import com.xiaohongshu.db.hercules.parquet.SchemaStyle;
 
@@ -18,10 +19,13 @@ public class ParquetOptionsConf extends BaseOptionsConf {
     public static final String MESSAGE_TYPE = "message-type";
     public static final String SCHEMA_STYLE = "schema-style";
 
+    public static final String TS_SKIP_CONVERSION = "ts-skip-conversion";
+
     @Override
     protected List<BaseOptionsConf> generateAncestorList() {
         return Lists.newArrayList(
-                new TableOptionsConf()
+                new TableOptionsConf(),
+                new HiveMetaOptionsConf()
         );
     }
 
@@ -46,6 +50,11 @@ public class ParquetOptionsConf extends BaseOptionsConf {
                 .necessary(true)
                 .description(String.format("The parquet files' schema style according to the logic type (column type): %s.",
                         Arrays.stream(SchemaStyle.values()).map(SchemaStyle::name).collect(Collectors.joining(" / "))))
+                .build());
+        res.add(SingleOptionConf.builder()
+                .name(TS_SKIP_CONVERSION)
+                .needArg(false)
+                .description(String.format("Whether to convert ts to temp timezone, only affected when using <%s> schema style.", SchemaStyle.HIVE))
                 .build());
         return res;
     }

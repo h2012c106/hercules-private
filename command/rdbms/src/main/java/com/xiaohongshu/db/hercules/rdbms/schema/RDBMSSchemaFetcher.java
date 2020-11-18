@@ -6,7 +6,7 @@ import com.xiaohongshu.db.hercules.core.exception.SchemaException;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaFetcher;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -25,10 +25,10 @@ public class RDBMSSchemaFetcher extends BaseSchemaFetcher implements InjectedCla
 
     private static final int YEAR_TYPE = Types.SMALLINT;
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSManager manager;
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSDataTypeConverter dataTypeConverter;
 
     protected String baseSql;

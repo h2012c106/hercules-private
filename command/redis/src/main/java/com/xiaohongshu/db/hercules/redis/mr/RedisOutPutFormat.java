@@ -10,7 +10,7 @@ import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.redis.RedisKV;
@@ -48,7 +48,7 @@ class RedisRecordWriter extends HerculesRecordWriter<RedisKV> {
 
     private static final Log LOG = LogFactory.getLog(RedisRecordWriter.class);
 
-    @GeneralAssembly
+    @Assembly
     private final RedisManager manager = null;
 
     @Options(type = OptionsType.TARGET)

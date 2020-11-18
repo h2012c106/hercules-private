@@ -4,7 +4,7 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.parquet.ParquetSchemaUtils;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.TypeBuilderTreeNode;
@@ -33,7 +33,7 @@ public class ParquetSchemaRecordWriter extends HerculesRecordWriter<TypeBuilderT
      */
     private boolean written = false;
 
-    @GeneralAssembly
+    @Assembly
     private ParquetDataTypeConverter dataTypeConverter;
 
     public ParquetSchemaRecordWriter(TaskAttemptContext context, RecordWriter<NullWritable, Text> delegate) {

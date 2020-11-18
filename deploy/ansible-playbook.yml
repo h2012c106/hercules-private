@@ -1,0 +1,15 @@
+- hosts: "{{host}}"
+  tasks:
+    - name: ensure {{dest}} directory exists
+      file:
+        path: "{{dest}}"
+        state: directory
+        owner: "{{owner}}"
+    - name: deploy hercules jar
+      unarchive:
+        src: http://10.0.223.180:8000/deploy/hercules-command-{{tag}}.tar.gz
+        dest: "{{dest}}"
+        copy: no
+        owner: "{{owner}}"
+    - name: ensure mode
+      file: dest={{dest}} owner={{owner}} mode=u=rwX,g=rX,o=rX recurse=yes

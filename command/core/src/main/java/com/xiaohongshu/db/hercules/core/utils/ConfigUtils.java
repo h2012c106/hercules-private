@@ -34,7 +34,13 @@ public final class ConfigUtils {
         }
         String version = properties.getProperty("hercules.version");
         String buildTime = properties.getProperty("hercules.build.time");
-        LOG.info(String.format("Current HERCULES version is [%s], built at [%s]", version, buildTime));
+        String gitBranch = properties.getProperty("hercules.git.branch");
+        String gitCommitTime = properties.getProperty("hercules.git.commit.time");
+        String gitCommitId = properties.getProperty("hercules.git.commit.id");
+        String gitCommitUser = properties.getProperty("hercules.git.commit.user.name");
+        boolean gitDirty = Boolean.parseBoolean(properties.getProperty("hercules.git.dirty"));
+        LOG.fatal(String.format("Current HERCULES version is [%s], maven built at [%s], git branch [%s], commit id [%s%s] at [%s] by [%s]",
+                version, buildTime, gitBranch, gitCommitId, gitDirty ? "-dirty" : "", gitCommitTime, gitCommitUser));
     }
 
     private static final String HERCULES_PATH = System.getenv("HERCULES_PATH");

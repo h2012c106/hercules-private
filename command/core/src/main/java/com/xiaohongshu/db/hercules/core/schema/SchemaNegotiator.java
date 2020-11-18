@@ -11,10 +11,9 @@ import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf;
 import com.xiaohongshu.db.hercules.core.utils.SchemaUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.SerDerAssembly;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -22,6 +21,8 @@ import org.apache.commons.logging.LogFactory;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.xiaohongshu.db.hercules.core.option.optionsconf.CommonOptionsConf.UDF;
 
 /**
  * 负责对齐上下游列名List、列类型Map，并且把结果写入options中，在map阶段不需要二次对齐/获取，保证schema信息全局取一次。
@@ -31,10 +32,10 @@ import java.util.stream.Collectors;
  */
 public final class SchemaNegotiator {
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private DataSource sourceDataSource;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @Assembly(role = DataSourceRole.TARGET)
     private DataSource targetDataSource;
 
     @Options(type = OptionsType.COMMON)
@@ -52,28 +53,28 @@ public final class SchemaNegotiator {
     @Options(type = OptionsType.SER)
     private GenericOptions serOptions;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private SchemaFetcher sourceSchemaFetcher;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @Assembly(role = DataSourceRole.TARGET)
     private SchemaFetcher targetSchemaFetcher;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE)
+    @Assembly(role = DataSourceRole.SOURCE)
     private CustomDataTypeManager<?, ?> sourceDataTypeManager;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @Assembly(role = DataSourceRole.TARGET)
     private CustomDataTypeManager<?, ?> targetDataTypeManager;
 
-    @GeneralAssembly(role = DataSourceRole.SOURCE, getMethodName = "getSchemaNegotiatorContextAsSource")
+    @Assembly(role = DataSourceRole.SOURCE, getMethodName = "getSchemaNegotiatorContextAsSource")
     private SchemaNegotiatorContext sourceContext;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET, getMethodName = "getSchemaNegotiatorContextAsTarget")
+    @Assembly(role = DataSourceRole.TARGET, getMethodName = "getSchemaNegotiatorContextAsTarget")
     private SchemaNegotiatorContext targetContext;
 
-    @SerDerAssembly(role = DataSourceRole.DER, getMethodName = "getSchemaNegotiatorContextAsSource")
+    @Assembly(role = DataSourceRole.DER, getMethodName = "getSchemaNegotiatorContextAsSource")
     private SchemaNegotiatorContext derContext;
 
-    @SerDerAssembly(role = DataSourceRole.SER, getMethodName = "getSchemaNegotiatorContextAsTarget")
+    @Assembly(role = DataSourceRole.SER, getMethodName = "getSchemaNegotiatorContextAsTarget")
     private SchemaNegotiatorContext serContext;
 
     @SchemaInfo(role = DataSourceRole.SOURCE)
@@ -325,7 +326,7 @@ public final class SchemaNegotiator {
         sourceContext.afterReadColumnNameList(sourceColumnNameList);
         targetContext.afterReadColumnNameList(targetColumnNameList);
 
-        if (sourceColumnNameList.size() > 0 && targetColumnNameList.size() > 0) {
+        if (sourceColumnNameList.size() > 0 && targetColumnNameList.size() > 0 && !commonOptions.hasProperty(UDF)) {
             List<String> beforeChangedSourceColumnNameList = new ArrayList<>(sourceColumnNameList);
             List<String> beforeChangedTargetColumnNameList = new ArrayList<>(targetColumnNameList);
 

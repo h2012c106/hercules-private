@@ -23,7 +23,7 @@ public class DruidFilterTest {
         row.put("id", IntegerWrapper.get(1000));
         row.put("date", DateWrapper.getDate(ExtendedDate.initialize("2020-09-01")));
         HerculesWritable herculesWritable = new HerculesWritable(row);
-        Expr expr = parser.parse("id > 0 and date >= kast('2020-08-24', 'date') and id = 1000 and id > 0 and (1 > 0 or x in (2,3,4,5)) and random() > -1");
+        Expr expr = parser.parse("id > 0 and date >= kast('2020-08-24', 'date') and id = 1000 and id > 0 and (1 > 0 or x in (2,3,4,5)) and 1 > -1");
         Assertions.assertEquals(expr.getResult(herculesWritable).asBoolean(), true);
     }
 

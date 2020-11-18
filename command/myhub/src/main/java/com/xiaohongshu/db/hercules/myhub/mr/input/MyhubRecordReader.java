@@ -1,6 +1,6 @@
 package com.xiaohongshu.db.hercules.myhub.mr.input;
 
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.rdbms.mr.input.RDBMSRecordReader;
 import com.xiaohongshu.db.hercules.rdbms.schema.SqlUtils;
 import com.xiaohongshu.db.hercules.rdbms.schema.manager.RDBMSManager;
@@ -15,7 +15,7 @@ public class MyhubRecordReader extends RDBMSRecordReader {
 
     private static final Log LOG = LogFactory.getLog(RDBMSRecordReader.class);
 
-    @GeneralAssembly
+    @Assembly
     private RDBMSManager manager;
 
     public MyhubRecordReader(TaskAttemptContext context) {

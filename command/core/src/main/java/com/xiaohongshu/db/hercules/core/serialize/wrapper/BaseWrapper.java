@@ -7,9 +7,9 @@ import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.SerializeException;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.entity.InfinitableBigDecimal;
 import com.xiaohongshu.db.hercules.core.utils.OverflowUtils;
 import lombok.NonNull;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -77,31 +77,7 @@ public abstract class BaseWrapper<T> implements Comparable<T> {
         addParentByteSize(byteSize);
     }
 
-    public Byte asByte() {
-        return asBigDecimal().byteValueExact();
-    }
-
-    public Short asShort() {
-        return asBigDecimal().shortValueExact();
-    }
-
-    public Integer asInteger() {
-        return asBigDecimal().intValueExact();
-    }
-
-    public Long asLong() {
-        return asBigInteger().longValueExact();
-    }
-
-    public Float asFloat() {
-        return OverflowUtils.numberToFloat(asBigDecimal());
-    }
-
-    public Double asDouble() {
-        return OverflowUtils.numberToDouble(asBigDecimal());
-    }
-
-    abstract public BigDecimal asBigDecimal();
+    abstract public InfinitableBigDecimal asBigDecimal();
 
     abstract public BigInteger asBigInteger();
 
@@ -164,9 +140,6 @@ public abstract class BaseWrapper<T> implements Comparable<T> {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this)
-                .append("value", value)
-                .append("type", type)
-                .toString();
+        return getClass().getSimpleName() + "<" + type + ">[" + value + "]";
     }
 }

@@ -4,7 +4,7 @@ import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.option.OptionsType;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.rdbms.ExportType;
 import com.xiaohongshu.db.hercules.rdbms.option.RDBMSOptionsConf;
@@ -21,7 +21,7 @@ public class RDBMSOutputFormat extends HerculesOutputFormat<PreparedStatement> {
     @Options(type = OptionsType.TARGET)
     private GenericOptions targetOptions;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @Assembly(role = DataSourceRole.TARGET)
     private RDBMSManager manager;
 
     @Override

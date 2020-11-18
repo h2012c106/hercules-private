@@ -3,7 +3,7 @@ package com.xiaohongshu.db.hercules.parquet.schema;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.option.GenericOptions;
 import com.xiaohongshu.db.hercules.core.schema.BaseSchemaNegotiatorContext;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,7 +18,7 @@ public class ParquetSchemaNegotiatorContext extends BaseSchemaNegotiatorContext 
 
     private static final Log LOG = LogFactory.getLog(ParquetSchemaNegotiatorContext.class);
 
-    @GeneralAssembly
+    @Assembly
     private ParquetDataTypeConverter dataTypeConverter;
 
     public ParquetSchemaNegotiatorContext(GenericOptions options) {

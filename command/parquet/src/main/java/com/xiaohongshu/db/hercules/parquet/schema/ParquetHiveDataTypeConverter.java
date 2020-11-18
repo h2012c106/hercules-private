@@ -2,6 +2,7 @@ package com.xiaohongshu.db.hercules.parquet.schema;
 
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
+import com.xiaohongshu.db.hercules.parquet.datatype.ParquetHiveListCustomDataType;
 import com.xiaohongshu.db.hercules.parquet.datatype.ParquetHiveMapCustomDataType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -76,11 +77,12 @@ public class ParquetHiveDataTypeConverter extends ParquetDataTypeConverter {
     @Override
     public DataType convertElementType(ParquetType standard) {
         Type type = standard.getType();
-        boolean careRepeated = standard.careRepeated();
+         boolean careRepeated = standard.careRepeated();
 
-        if (careRepeated && type.isRepetition(Type.Repetition.REPEATED)) {
-            return BaseDataType.LIST;
-        }
+         // 其实没有LIST，但是为了复用ListWrapperGetter/Setter
+         if (careRepeated && type.isRepetition(Type.Repetition.REPEATED)) {
+             return BaseDataType.LIST;
+         }
 
         LogicalTypeAnnotation annotation = type.getLogicalTypeAnnotation();
         if (annotation != null) {
@@ -98,6 +100,8 @@ public class ParquetHiveDataTypeConverter extends ParquetDataTypeConverter {
                     return BaseDataType.DECIMAL;
                 case MAP:
                     return ParquetHiveMapCustomDataType.INSTANCE;
+                case LIST:
+                    return ParquetHiveListCustomDataType.INSTANCE;
                 default:
                     logUnsupportedAnnotation(LOG, getAnnotationName(annotation));
             }

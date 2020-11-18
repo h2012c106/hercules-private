@@ -1,6 +1,7 @@
 package com.xiaohongshu.db.hercules.kafka;
 
 import com.xiaohongshu.db.hercules.core.datasource.DataSource;
+import com.xiaohongshu.db.hercules.core.mr.context.MRJobContext;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.option.optionsconf.OptionsConf;
@@ -9,6 +10,7 @@ import com.xiaohongshu.db.hercules.core.schema.SchemaFetcher;
 import com.xiaohongshu.db.hercules.core.supplier.BaseAssemblySupplier;
 import com.xiaohongshu.db.hercules.core.utils.context.HerculesContext;
 import com.xiaohongshu.db.hercules.kafka.mr.KafkaOutPutFormat;
+import com.xiaohongshu.db.hercules.kafka.mr.KafkaOutputMRJobContext;
 import com.xiaohongshu.db.hercules.kafka.option.KafkaOptionConf;
 import com.xiaohongshu.db.hercules.kafka.schema.KafkaDataTypeConverter;
 import com.xiaohongshu.db.hercules.kafka.schema.KafkaSchemaFetcher;
@@ -48,6 +50,11 @@ public class KafkaAssemblySupplier extends BaseAssemblySupplier {
     @Override
     protected SchemaFetcher innerGetSchemaFetcher() {
         return new KafkaSchemaFetcher(options);
+    }
+
+    @Override
+    protected MRJobContext innerGetJobContextAsTarget() {
+        return new KafkaOutputMRJobContext(options);
     }
 
     @Override

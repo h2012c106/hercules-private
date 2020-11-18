@@ -9,7 +9,7 @@ import com.xiaohongshu.db.hercules.core.option.OptionsType;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.core.utils.entity.StingyMap;
@@ -57,7 +57,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     @SchemaInfo(role = DataSourceRole.TARGET)
     private Schema schema;
 
-    @GeneralAssembly(role = DataSourceRole.TARGET)
+    @Assembly(role = DataSourceRole.TARGET)
     private RDBMSManager manager;
 
     @Options(type = OptionsType.TARGET)

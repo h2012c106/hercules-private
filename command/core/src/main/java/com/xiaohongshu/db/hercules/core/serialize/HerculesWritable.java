@@ -3,7 +3,6 @@ package com.xiaohongshu.db.hercules.core.serialize;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import lombok.NonNull;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.hadoop.io.Writable;
 
 import java.io.DataInput;
@@ -84,8 +83,6 @@ public class HerculesWritable implements Writable {
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this)
-                .append("row", row)
-                .toString();
+        return row.toString();
     }
 }

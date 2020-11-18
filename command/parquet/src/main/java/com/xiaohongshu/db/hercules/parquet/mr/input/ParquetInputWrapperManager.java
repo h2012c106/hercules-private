@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.parquet.mr.input;
 
+import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.mr.input.wrapper.BaseTypeWrapperGetter;
@@ -10,7 +11,7 @@ import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetDataTypeConverter;
 import com.xiaohongshu.db.hercules.parquet.schema.ParquetType;
@@ -29,8 +30,12 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
     @SchemaInfo
     private Schema schema;
 
-    @GeneralAssembly
+    @Assembly
     private final ParquetDataTypeConverter dataTypeConverter = null;
+
+    public ParquetInputWrapperManager() {
+        super(DataSourceRole.SOURCE);
+    }
 
     /**
      * 注意！由于parquet没有null值，所以一个无值的optional类型有两种语义：null/无值。这个很matter，打个比方，
@@ -64,7 +69,10 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
             }
 
             String fullColumnName = WritableUtils.concatColumn(groupPosition, columnName);
-            DataType columnType = schema.getColumnTypeMap().getOrDefault(fullColumnName, dataTypeConverter.convertElementType(new ParquetType(type)));
+            DataType columnType = schema.getColumnTypeMap().get(fullColumnName);
+            if (columnType == null) {
+                columnType = dataTypeConverter.convertElementType(new ParquetType(type));
+            }
             // 先写一下这里无脑new出来GroupWithRepeatedInfo的理由，以防以后忘了：
             // 由于parquet schema里逻辑LIST与其他类型在同一层定义，所以会有不同（比如一个repeated int32既是一个LIST也是一个INTEGER）
             // 流程逻辑是如果读到其他类型，直接获得函数返回（一层）；如果读到LIST，调用ListGetter调用repeatedToListWrapper二次判断真正类型，然后根据这个类型获得的函数循环（valueSeq）获得每个元素的值（三层）。
@@ -120,7 +128,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
 
             @Override
             protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return row.isEmpty();
+                return row.isEmpty() || Float.isNaN(row.getGroup().getFloat(columnName, row.getValueSeq()));
             }
         };
     }
@@ -135,7 +143,7 @@ public abstract class ParquetInputWrapperManager extends WrapperGetterFactory<Gr
 
             @Override
             protected boolean isNull(GroupWithSchemaInfo row, String rowName, String columnName, int columnSeq) throws Exception {
-                return row.isEmpty();
+                return row.isEmpty() || Double.isNaN(row.getGroup().getDouble(columnName, row.getValueSeq()));
             }
         };
     }

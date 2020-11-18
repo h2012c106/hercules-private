@@ -1,5 +1,6 @@
 package com.xiaohongshu.db.hercules.hbase.mr;
 
+import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
 import com.xiaohongshu.db.hercules.core.exception.ParseException;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesInputFormat;
 import com.xiaohongshu.db.hercules.core.mr.input.HerculesRecordReader;
@@ -10,7 +11,7 @@ import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.HerculesWritable;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BytesWrapper;
 import com.xiaohongshu.db.hercules.core.utils.context.InjectedClass;
-import com.xiaohongshu.db.hercules.core.utils.context.annotation.GeneralAssembly;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.Options;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.core.utils.entity.StingyMap;
@@ -45,7 +46,7 @@ public class HBaseInputFormat extends HerculesInputFormat<byte[]> {
 
     private static final Log LOG = LogFactory.getLog(HBaseInputFormat.class);
 
-    @GeneralAssembly
+    @Assembly
     private HBaseManager manager;
 
     @Options(type = OptionsType.SOURCE)
@@ -153,9 +154,6 @@ public class HBaseInputFormat extends HerculesInputFormat<byte[]> {
     @Override
     protected HerculesRecordReader<byte[]> innerCreateRecordReader(InputSplit split, TaskAttemptContext context) {
         String rowKeyCol = sourceOptions.getString(KEY_NAME, null);
-        if (rowKeyCol != null && !schema.getColumnNameList().contains(rowKeyCol)) {
-            rowKeyCol = null;
-        }
         if (rowKeyCol != null) {
             LOG.info("rowKeyCol name has been set to: " + rowKeyCol);
         } else {
@@ -238,7 +236,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> implements Injected
 
     private List<String> columnNameList;
 
-    @GeneralAssembly
+    @Assembly
     private final HBaseManager manager = null;
 
     @Options(type = OptionsType.SOURCE)
@@ -273,7 +271,7 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> implements Injected
         List<String> temp = new ArrayList<>(schema.getColumnNameList());
         temp.remove(rowKeyCol);
         columnNameList = temp;
-        if (columnNameList.size() == 0) {
+        if (columnNameList.size() == 0 && !options.getBoolean(HBaseInputOptionsConf.IGNORE_COLUMN_SIZE_CHECK, false)) {
             throw new RuntimeException("Column name list failed to fetch(no column name found).");
         }
     }
@@ -329,13 +327,18 @@ class HBaseRecordReader extends HerculesRecordReader<byte[]> implements Injected
         NavigableMap<byte[], NavigableMap<byte[], byte[]>> familyColMap = value.getNoVersionMap();
         for (byte[] family : familyColMap.keySet()) {
             NavigableMap<byte[], byte[]> colValMap = familyColMap.get(family);
-            for (int i = 0; i < columnNum; i++) {
-                String qualifier = columnNameList.get(i);
-                byte[] val = colValMap.get(Bytes.toBytes(qualifier));
-//                if (LOG.isDebugEnabled()) {
-//                    LOG.debug("QUALIFIER: " + qualifier);
-//                }
-                record.put(qualifier, getWrapperGetter(schema.getColumnTypeMap().get(qualifier)).get(val, null, null, 0));
+            // HBase 没有schema，也没有从下游获得schema
+            // TODO 更好的逻辑？
+            if (columnNum == 0) {
+                for (Map.Entry<byte[], byte[]> entry : colValMap.entrySet()) {
+                    record.put(new String(entry.getKey()), getWrapperGetter(BaseDataType.BYTES).get(entry.getValue(), null, null, 0));
+                }
+            } else {
+                for (int i = 0; i < columnNum; i++) {
+                    String qualifier = columnNameList.get(i);
+                    byte[] val = colValMap.get(Bytes.toBytes(qualifier));
+                    record.put(qualifier, getWrapperGetter(schema.getColumnTypeMap().get(qualifier)).get(val, null, null, 0));
+                }
             }
         }
     }

@@ -3,13 +3,14 @@ package com.xiaohongshu.db.hercules.core.mr.output.wrapper;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.datasource.DataSourceRoleGetter;
 import com.xiaohongshu.db.hercules.core.datatype.BaseDataType;
-import com.xiaohongshu.db.hercules.core.datatype.CustomDataType;
+import com.xiaohongshu.db.hercules.core.datatype.CustomDataTypeManager;
 import com.xiaohongshu.db.hercules.core.datatype.DataType;
 import com.xiaohongshu.db.hercules.core.exception.MapReduceException;
 import com.xiaohongshu.db.hercules.core.schema.Schema;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
 import com.xiaohongshu.db.hercules.core.serialize.wrapper.MapWrapper;
 import com.xiaohongshu.db.hercules.core.utils.WritableUtils;
+import com.xiaohongshu.db.hercules.core.utils.context.annotation.Assembly;
 import com.xiaohongshu.db.hercules.core.utils.context.annotation.SchemaInfo;
 import com.xiaohongshu.db.hercules.core.utils.reflect.ReflectUtils;
 import lombok.NonNull;
@@ -35,13 +36,22 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
     @SchemaInfo
     private Schema schema;
 
-    public WrapperSetterFactory() {
+    private final DataSourceRole role;
+
+    @Assembly
+    private final CustomDataTypeManager<?, T> customDataTypeManager = null;
+
+    public WrapperSetterFactory(DataSourceRole role) {
+        if (role == DataSourceRole.DER || role == DataSourceRole.SOURCE) {
+            throw new RuntimeException("Unallowed to set wrapper setter to source module.");
+        }
+        this.role = role;
         initializeWrapperSetterMap();
     }
 
     @Override
-    public DataSourceRole getRole() {
-        return DataSourceRole.TARGET;
+    public final DataSourceRole getRole() {
+        return role;
     }
 
     private void setWrapperSetter(Map<DataType, WrapperSetter<T>> wrapperSetterMap,
@@ -87,18 +97,14 @@ public abstract class WrapperSetterFactory<T> implements DataSourceRoleGetter {
         return wrapperSetterMap.containsKey(dataType);
     }
 
-    public final WrapperSetter<T> getWrapperSetter(@NonNull DataType dataType) {
-        WrapperSetter<T> res;
-        if (dataType.isCustom()) {
-            final CustomDataType<?, T, ?> customDataType = (CustomDataType<?, T, ?>) dataType;
-            res = wrapperSetterMap.computeIfAbsent(customDataType, key -> customDataType.getWrapperSetter());
+    public final WrapperSetter<T> getWrapperSetter(@NonNull final DataType dataType) {
+        if (dataType.isCustom() && customDataTypeManager.contains(dataType.getName())) {
+            return wrapperSetterMap.computeIfAbsent(dataType, key -> customDataTypeManager.get(dataType.getName()).getWrapperSetter());
         } else {
-            res = wrapperSetterMap.get(dataType);
-            if (res == null) {
-                throw new MapReduceException("Unknown data type: " + dataType.toString());
-            }
+            return wrapperSetterMap.computeIfAbsent(dataType.getBaseDataType(), key -> {
+                throw new MapReduceException("Unsupported data type: " + dataType.toString());
+            });
         }
-        return res;
     }
 
     public static final int MAP_WRITE_COLUMN_SEQ = -1;
