@@ -140,14 +140,6 @@ public class RedisManager {
 
     public void set(RedisKV kv) {
         this.insertAction.act(pipeline, kv, expire, writeType);
-//        try{
-//
-//        } catch (Exception e){
-//            log.error(" redis set error: e");
-//            log.warn(" redis k:" + kv.getKey().getValue().toString());
-//            jedis.close();
-//            pipeline.close();
-//        }
         if ((++batchNum) >= pipeSize) {
             pipeline.sync();
             batchNum = 1L;

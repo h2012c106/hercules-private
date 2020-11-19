@@ -46,7 +46,6 @@ public abstract class HerculesKvRecordWriter<T> extends HerculesRecordWriter<T> 
             throw new RuntimeException(String.format("Meaningless row: %s", value.toString()));
         } else {
             if(value.getWriteStrategyList().size() > 0){
-                logForStrategy(value.getWriteStrategyList());
                 strategyList = value.getWriteStrategyList();
             } else {
                 if(flag)
@@ -55,16 +54,6 @@ public abstract class HerculesKvRecordWriter<T> extends HerculesRecordWriter<T> 
             }
             innerWriteKV(keyValue, valueValue);
         }
-    }
-
-    private void logForStrategy(List<String> list){
-        if(flag)
-            LOG.warn(" kv strategyList is:" + list);
-        flag = false;
-    }
-
-    public List<String> getStrategyList(){
-        return strategyList;
     }
 
 }

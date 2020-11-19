@@ -26,6 +26,7 @@ public class StandaloneMongoDBSplitter extends MongoDBSplitter {
         if (docCount == 0) {
             return Collections.emptyList();
         }
+        LOG.info("Total size without query is: " + docCount);
         int avgObjSize = 1;
         Object avgObjSizeObj = getCollStats().get("avgObjSize");
         if (avgObjSizeObj instanceof Integer) {

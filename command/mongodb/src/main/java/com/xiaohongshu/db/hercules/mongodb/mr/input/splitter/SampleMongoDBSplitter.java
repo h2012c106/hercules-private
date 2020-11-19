@@ -15,14 +15,14 @@ import org.bson.Document;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SampleSplitter extends MongoDBSplitter {
+public class SampleMongoDBSplitter extends MongoDBSplitter {
 
-    private static final Log LOG = LogFactory.getLog(SampleSplitter.class);
+    private static final Log LOG = LogFactory.getLog(SampleMongoDBSplitter.class);
 
     public static final int DEFAULT_SAMPLES_PER_SPLIT = 100;
     public static final int MEANINGFUL_SAMPLE_SIZE = 30;
 
-    public SampleSplitter(GenericOptions options, MongoClient client, Document collStats) {
+    public SampleMongoDBSplitter(GenericOptions options, MongoClient client, Document collStats) {
         super(options, client, collStats);
     }
 
