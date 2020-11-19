@@ -1,3 +1,6 @@
+import com.alibaba.fastjson.JSONObject;
+import org.junit.jupiter.api.Test;
+
 public class ElasticsearchManagerTest {
 
 //    @Test
@@ -19,4 +22,10 @@ public class ElasticsearchManagerTest {
 //            System.out.println(response);
 //        }
 //    }
+    @Test
+    public void testJsonParse(){
+        String data = "{\"a\":1.231242}";
+        JSONObject json = JSONObject.parseObject(data);
+        json.forEach((k, v)->System.out.println(v.getClass()));
+    }
 }

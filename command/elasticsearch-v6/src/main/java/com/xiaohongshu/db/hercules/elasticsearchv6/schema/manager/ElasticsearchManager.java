@@ -22,7 +22,6 @@ public class ElasticsearchManager {
     protected final String docType;
 
     public ElasticsearchManager(String endpoint, int port, String docType) {
-//        BulkProcessor processor = BulkProcessor.builder().build()
         client = new RestHighLevelClient(RestClient.builder(new HttpHost(endpoint, port, "http"))
                 .setRequestConfigCallback(
                         new RestClientBuilder.RequestConfigCallback() {
