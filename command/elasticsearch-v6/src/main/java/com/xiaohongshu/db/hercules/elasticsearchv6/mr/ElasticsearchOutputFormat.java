@@ -1,7 +1,5 @@
 package com.xiaohongshu.db.hercules.elasticsearchv6.mr;
 
-import com.alibaba.fastjson.JSON;
-import com.xiaohongshu.db.hercules.core.datasource.DataSourceRole;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesOutputFormat;
 import com.xiaohongshu.db.hercules.core.mr.output.HerculesRecordWriter;
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetterFactory;
@@ -15,7 +13,6 @@ import com.xiaohongshu.db.hercules.elasticsearchv6.option.ElasticsearchOptionCon
 import com.xiaohongshu.db.hercules.elasticsearchv6.option.ElasticsearchOutputOptionConf;
 import com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager.DocRequest;
 import com.xiaohongshu.db.hercules.elasticsearchv6.schema.manager.ElasticsearchManager;
-import com.xiaohongshu.db.hercules.serder.json.ser.JsonWrapperSetterManager;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.bson.Document;
 
@@ -50,7 +47,6 @@ public class ElasticsearchOutputFormat extends HerculesOutputFormat<Document> {
 }
 
 class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
-
 
     private final List<DocRequest> indexBuffer = new LinkedList<>();
     private final String keyName;
@@ -91,9 +87,8 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
         } catch (Exception e) {
             throw new RuntimeException();
         }
-        String doc = JSON.toJSONString(document);
-        indexBuffer.add(new DocRequest(index, key.asString(), doc));
-        bufByteSize += doc.getBytes().length;
+        indexBuffer.add(new DocRequest(index, key.asString(), document));
+        bufByteSize += document.toString().getBytes().length;
         if (bufByteSize >= bufByteSizeLimit) {
             manager.doUpsert(indexBuffer);
             bufByteSize = 0;

@@ -88,9 +88,8 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
         } catch (Exception e) {
             throw new RuntimeException();
         }
-        String doc = JSON.toJSONString(document);
-        indexBuffer.add(new DocRequest(index, key.asString(), doc));
-        bufByteSize += doc.getBytes().length;
+        indexBuffer.add(new DocRequest(index, key.asString(), document));
+        bufByteSize += document.toString().getBytes().length;
         if (bufByteSize >= bufByteSizeLimit) {
             manager.doUpsert(indexBuffer);
             bufByteSize = 0;

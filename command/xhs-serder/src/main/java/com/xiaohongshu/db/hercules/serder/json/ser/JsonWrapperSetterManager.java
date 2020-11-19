@@ -6,6 +6,9 @@ import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.mongodb.mr.output.MongoDBWrapperSetterManager;
 import org.bson.Document;
+import org.bson.types.Decimal128;
+
+import java.math.BigDecimal;
 
 
 /**

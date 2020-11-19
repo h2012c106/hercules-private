@@ -1,21 +1,21 @@
 package com.xiaohongshu.db.hercules.elasticsearchv7.schema.manager;
 
-import com.alibaba.fastjson.JSONObject;
+import org.bson.Document;
 
 import java.util.Map;
 
 public class DocRequest {
     public String index;
     public String id;
-    public String doc;
+    public Document doc;
 
-    public DocRequest(String index, String id, String doc) {
+    public DocRequest(String index, String id, Document doc) {
         this.index = index;
         this.id = id;
         this.doc = doc;
     }
 
     public Map<String, Object> getDoc() {
-        return JSONObject.parseObject(doc).getInnerMap();
+        return doc;
     }
 }
