@@ -50,14 +50,14 @@ public class RedisStringKVSer extends KVSer<RedisKV> implements InjectedClass {
         MapWrapper mapWrapper = in.getRow();
 
         switch (format) {
-            case JSONSTRING:
+            case JSONTOSTRING:
                 StringBuilder sBulider = new StringBuilder();
                 for (Map.Entry<String, BaseWrapper<?>> entry : mapWrapper.entrySet()) {
                     BaseWrapper baseWrapper = entry.getValue();
                     sBulider.append(baseWrapper.asString());
                 }
                 return StringWrapper.get(sBulider.toString());
-            case JSONMAP:
+            case JSONTOMAP:
                 try{
                     return StringWrapper.get(mapWrapper.asString());
                 } catch (Exception e){
