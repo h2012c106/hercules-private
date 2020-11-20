@@ -19,8 +19,8 @@ public class RedisStringKVOutputOptionConf extends BaseOptionsConf {
     public final static String FORMAT = "string-format";
 
     public enum StringKVFormat {
-        JSONSTRING,
-        JSONMAP;
+        JSONTOSTRING,
+        JSONTOMAP;
 
         public static StringKVFormat valueOfIgnoreCase(String value) {
             for (StringKVFormat format : StringKVFormat.values()) {
