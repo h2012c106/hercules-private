@@ -90,7 +90,7 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
         indexBuffer.add(new DocRequest(index, key.asString(), document));
         bufByteSize += document.toString().getBytes().length;
         if (bufByteSize >= bufByteSizeLimit) {
-            manager.doUpsert(indexBuffer);
+            manager.doUpsert(indexBuffer, 5);
             bufByteSize = 0;
             indexBuffer.clear();
         }
@@ -104,7 +104,7 @@ class ElasticsearchRecordWriter extends HerculesRecordWriter<Document> {
     @Override
     protected void innerClose(TaskAttemptContext context) throws IOException, InterruptedException {
         if (indexBuffer.size() != 0) {
-            manager.doUpsert(indexBuffer);
+            manager.doUpsert(indexBuffer, 5);
             indexBuffer.clear();
         }
     }
