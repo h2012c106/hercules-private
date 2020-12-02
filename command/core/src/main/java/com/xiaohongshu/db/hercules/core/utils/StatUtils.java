@@ -10,15 +10,19 @@ import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.*;
 
 public final class StatUtils {
 
     private static final Log LOG = LogFactory.getLog(StatUtils.class);
 
     private static final String STAT_DIR = "/tmp/hercules-stat/";
+
+    private static final Duration TIME_OUT = Duration.ofSeconds(60);
 
     private static void close(Closeable... closeables) {
         for (Closeable closeable : closeables) {
@@ -32,7 +36,7 @@ public final class StatUtils {
         }
     }
 
-    public static void record(TaskAttemptContext context, String statName, String value) {
+    private static void innerRecord(TaskAttemptContext context, String statName, String value) {
         String dstFileName = STAT_DIR + context.getJobID() + "/" + context.getTaskAttemptID() + "/" + statName;
         LOG.debug(String.format("Logging stat <%s> to: %s", value, dstFileName));
         Path dstFilePath = new Path(dstFileName);
@@ -46,6 +50,24 @@ public final class StatUtils {
             LOG.warn(String.format("Logging stat <%s> to %s failed: %s", value, dstFileName, e.getMessage()));
         } finally {
             close(outputStream);
+        }
+    }
+
+    public static void record(TaskAttemptContext context, String statName, String value) {
+        FutureTask<Void> recordTask = new FutureTask<>(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                innerRecord(context, statName, value);
+                return null;
+            }
+        });
+        new Thread(recordTask).start();
+        try {
+            recordTask.get(TIME_OUT.getSeconds(), TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException e) {
+            LOG.warn(String.format("Logging stat <%s> failed: %s", value, e.getMessage()));
+        } catch (TimeoutException e) {
+            LOG.warn(String.format("Logging stat <%s> timeout: %s", value, TIME_OUT.toString()));
         }
     }
 
@@ -68,7 +90,7 @@ public final class StatUtils {
         }
     }
 
-    public static Map<String, Map<String, String>> getAndClear(Job job) {
+    private static Map<String, Map<String, String>> innerGetAndClear(Job job) {
         Map<String, Map<String, String>> res = new LinkedHashMap<>();
         String srcDirName = STAT_DIR + job.getJobID() + "/";
         LOG.debug(String.format("Reading stat map from: %s", srcDirName));
@@ -102,6 +124,25 @@ public final class StatUtils {
                     LOG.warn("Delete stat files failed: " + e.getMessage());
                 }
             }
+        }
+    }
+
+    public static Map<String, Map<String, String>> getAndClear(Job job) {
+        FutureTask<Map<String, Map<String, String>>> recordTask = new FutureTask<>(new Callable<Map<String, Map<String, String>>>() {
+            @Override
+            public Map<String, Map<String, String>> call() throws Exception {
+                return innerGetAndClear(job);
+            }
+        });
+        new Thread(recordTask).start();
+        try {
+            return recordTask.get(TIME_OUT.getSeconds(), TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException e) {
+            LOG.warn(String.format("Reading stat map failed: %s", e.getMessage()));
+            return Collections.emptyMap();
+        } catch (TimeoutException e) {
+            LOG.warn(String.format("Reading stat map timeout: %s", TIME_OUT.toString()));
+            return Collections.emptyMap();
         }
     }
 

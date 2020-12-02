@@ -42,11 +42,11 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
     protected String tableName;
 
     private boolean autocommit;
-    private TransactionManager transactionManager;
-    private Long statementPerCommit;
-    private boolean unlimitedStatementPerCommit;
+    protected TransactionManager transactionManager;
+    protected Long statementPerCommit;
+    protected boolean unlimitedStatementPerCommit;
 
-    private RDBMSMultiThreadAsyncWriter writer;
+    protected RDBMSMultiThreadAsyncWriter writer;
 
     /**
      * 键为列mask，上游有可能送来残缺的信息（各种缺列），对不同方式缺列的record做归并
@@ -74,6 +74,10 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         this.statementGetter = StatementGetterFactory.get(exportType);
     }
 
+    protected RDBMSMultiThreadAsyncWriter generateWriter(int threadNum) {
+        return new RDBMSMultiThreadAsyncWriter(threadNum);
+    }
+
     @Override
     public void innerAfterInject() {
         schema.setColumnTypeMap(new StingyMap<>(schema.getColumnTypeMap()));
@@ -91,7 +95,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
 
         int threadNum = targetOptions.getInteger(RDBMSOutputOptionsConf.EXECUTE_THREAD_NUM,
                 RDBMSOutputOptionsConf.DEFAULT_EXECUTE_THREAD_NUM);
-        writer = new RDBMSMultiThreadAsyncWriter(threadNum);
+        writer = generateWriter(threadNum);
         try {
             writer.run();
         } catch (Exception e) {
@@ -166,7 +170,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         writer.done();
     }
 
-    private class RDBMSMultiThreadAsyncWriter extends MultiThreadAsyncWriter<RDBMSMultiThreadAsyncWriter.ThreadContext, RDBMSWorkerMission> {
+    protected class RDBMSMultiThreadAsyncWriter extends MultiThreadAsyncWriter<RDBMSMultiThreadAsyncWriter.ThreadContext, RDBMSWorkerMission> {
 
         public RDBMSMultiThreadAsyncWriter(int threadNum) {
             super(threadNum);
@@ -234,7 +238,7 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
             return new RDBMSWorkerMission(null, true, null);
         }
 
-        private class ThreadContext {
+        protected class ThreadContext {
             private Connection connection;
             private long tmpStatementPerCommit = 0L;
             private long recordNum = 0L;
@@ -327,31 +331,31 @@ abstract public class RDBMSRecordWriter extends HerculesRecordWriter<PreparedSta
         }
     }
 
-    abstract private static class TransactionManager {
+    abstract protected static class TransactionManager {
         public static final TransactionManager NORMAL = new TransactionManager() {
             @Override
-            void commit(Connection connection) throws SQLException {
+            public void commit(Connection connection) throws SQLException {
                 connection.commit();
             }
 
             @Override
-            void rollback(Connection connection) throws SQLException {
+            public void rollback(Connection connection) throws SQLException {
                 connection.rollback();
             }
         };
         public static final TransactionManager NULL = new TransactionManager() {
             @Override
-            void commit(Connection connection) throws SQLException {
+            public void commit(Connection connection) throws SQLException {
             }
 
             @Override
-            void rollback(Connection connection) throws SQLException {
+            public void rollback(Connection connection) throws SQLException {
             }
         };
 
-        abstract void commit(Connection connection) throws SQLException;
+        abstract public void commit(Connection connection) throws SQLException;
 
-        abstract void rollback(Connection connection) throws SQLException;
+        abstract public void rollback(Connection connection) throws SQLException;
     }
 
     /**

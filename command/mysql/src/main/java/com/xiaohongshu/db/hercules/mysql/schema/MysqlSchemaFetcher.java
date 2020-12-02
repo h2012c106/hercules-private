@@ -69,8 +69,7 @@ public class MysqlSchemaFetcher extends RDBMSSchemaFetcher {
                     .stream()
                     .filter(ele -> ele instanceof SQLColumnDefinition)
                     .map(ele -> (SQLColumnDefinition) ele)
-                    // source时，所有列，target时，过滤generated列
-                    .filter(ele -> getOptions().getOptionsType().isSource() || ele.getGeneratedAlawsAs() == null)
+                    .filter(ele -> ele.getGeneratedAlawsAs() != null)
                     .map(ele -> SqlUtils.unwrapBacktick(ele.getColumnName()))
                     .collect(Collectors.toList());
             List<String> res = new LinkedList<>();

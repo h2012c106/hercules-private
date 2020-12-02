@@ -23,6 +23,7 @@ public final class MyhubOutputOptionsConf extends BaseOptionsConf {
     @Override
     protected List<String> deleteOptions() {
         return Lists.newArrayList(
+                BATCH,
                 AUTOCOMMIT,
                 STATEMENT_PER_COMMIT,
                 STAGING_TABLE,
