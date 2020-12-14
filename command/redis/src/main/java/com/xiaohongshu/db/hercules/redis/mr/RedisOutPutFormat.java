@@ -59,6 +59,8 @@ class RedisRecordWriter extends HerculesRecordWriter<RedisKV> {
 
     private List<String> strategyList = null;
 
+    private int retry_count = 0;
+
     public RedisRecordWriter(TaskAttemptContext context) {
         super(context);
     }
@@ -105,10 +107,29 @@ class RedisRecordWriter extends HerculesRecordWriter<RedisKV> {
             } catch (Exception e) {
                 throw new IOException(e);
             }
+            try{
+                write(kv);
+            } finally {
+                if(retry_count > 0)
+                    retry_count = 0;
+            }
+        }
+    }
+
+    private void write(RedisKV kv) throws InterruptedException{
+        if(retry_count > 2){
+            throw new RuntimeException(" write redis failed.");
+        }
+        try{
             if(strategyList != null) {
                 manager.act(kv, strategyList);
             } else
                 manager.set(kv);
+        } catch (Exception e){
+            LOG.error(" write redis error:", e);
+            retry_count++;
+            Thread.sleep(30 * 1000);
+            write(kv);
         }
     }
 
