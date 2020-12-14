@@ -318,16 +318,20 @@ public class MRJob {
         boolean success = job.waitForCompletion(true);
         double runMilliSec = (job.getFinishTime() - job.getStartTime()) / 1000.0;
 
-        Map<String, Map<String, String>> statMap = StatUtils.getAndClear(job);
-        LOG.info("Stats collected from map: " + statMap);
-        final NumberFormat numberFormat = NumberFormat.getPercentInstance();
-        numberFormat.setMinimumFractionDigits(2);
-        numberFormat.setRoundingMode(RoundingMode.HALF_UP);
-        List<Double> mapNumList = statMap.values()
-                .stream()
-                .map(map -> Double.parseDouble(map.getOrDefault(HerculesCounter.READ_RECORDS.getCounterName(), "0")))
-                .collect(Collectors.toList());
-        LOG.info(String.format("The skew rate for %d map(s) is: %s.", mapNumList.size(), numberFormat.format(calcSkew(mapNumList))));
+        try {
+            Map<String, Map<String, String>> statMap = StatUtils.getAndClear(job);
+            LOG.info("Stats collected from map: " + statMap);
+            final NumberFormat numberFormat = NumberFormat.getPercentInstance();
+            numberFormat.setMinimumFractionDigits(2);
+            numberFormat.setRoundingMode(RoundingMode.HALF_UP);
+            List<Double> mapNumList = statMap.values()
+                    .stream()
+                    .map(map -> Double.parseDouble(map.getOrDefault(HerculesCounter.READ_RECORDS.getCounterName(), "0")))
+                    .collect(Collectors.toList());
+            LOG.info(String.format("The skew rate for %d map(s) is: %s.", mapNumList.size(), numberFormat.format(calcSkew(mapNumList))));
+        } catch (Exception e) {
+            LOG.info(String.format("The skew rate fetch failed: %s", e.getMessage()));
+        }
 
         long readNum = getValue(job, HerculesCounter.READ_RECORDS);
         long writeNum = getValue(job, HerculesCounter.WRITE_RECORDS);
