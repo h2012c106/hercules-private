@@ -7,7 +7,8 @@ elif [ -z "$3" ] ;then
 elif [ -z "$4" ] ;then
     echo "please input a valid owner"
 else
-    ansible-playbook -i hosts ansible-playbook.yml --extra-vars="tag=$1 host=$2 dest=$3 owner=$4"
+    /bin/cp -f ./.ssh/id_rsa ~/.ssh/id_rsa_to_emrs
+    ansible-playbook -i hosts ansible-playbook.yml --extra-vars="tag=$1 host=$2 dest=$3 owner=$4" --key-file ~/.ssh/id_rsa_to_emrs
 fi
 
 # example
