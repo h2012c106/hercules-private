@@ -146,4 +146,13 @@ public class RedisManager {
         }
     }
 
+    public void acquireNewRedisSource() {
+        if(pipeline != null)
+            pipeline.close();
+        if(jedis != null)
+            jedis.close();
+        this.jedis = jedisPool.getResource();
+        this.pipeline = jedis.pipelined();
+    }
+
 }
