@@ -1,5 +1,7 @@
 package com.xiaohongshu.db.hercules.rdbms.schema;
 
+import java.util.StringJoiner;
+
 public class ColumnInfo {
     private final boolean signed;
     private final int precision;
@@ -41,5 +43,16 @@ public class ColumnInfo {
 
     public String getColumnTypeName() {
         return columnTypeName;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", ColumnInfo.class.getSimpleName() + "[", "]")
+                .add("signed=" + signed)
+                .add("precision=" + precision)
+                .add("scale=" + scale)
+                .add("sqlType=" + sqlType)
+                .add("columnTypeName='" + columnTypeName + "'")
+                .toString();
     }
 }

@@ -85,6 +85,8 @@ public class RDBMSDataTypeConverter implements DataTypeConverter<ColumnInfo, Res
             case Types.BLOB:
             case Types.LONGVARBINARY:
                 return BaseDataType.BYTES;
+            case Types.ARRAY:
+                return BaseDataType.LIST;
             default:
                 throw new SchemaException("Unsupported sql type, type code: " + standard);
         }
@@ -139,6 +141,9 @@ public class RDBMSDataTypeConverter implements DataTypeConverter<ColumnInfo, Res
                 break;
             case DATETIME:
                 sqlType = Types.TIMESTAMP;
+                break;
+            case LIST:
+                sqlType = Types.ARRAY;
                 break;
             default:
                 throw new RuntimeException("Unknown column type: " + type.getBaseDataType().name());

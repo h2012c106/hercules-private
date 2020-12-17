@@ -1,12 +1,17 @@
 package com.xiaohongshu.db.hercules.clickhouse.mr;
 
 import com.xiaohongshu.db.hercules.core.mr.output.wrapper.BaseTypeWrapperSetter;
+import com.xiaohongshu.db.hercules.core.mr.output.wrapper.WrapperSetter;
 import com.xiaohongshu.db.hercules.core.serialize.entity.ExtendedDate;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.BaseWrapper;
+import com.xiaohongshu.db.hercules.core.serialize.wrapper.ListWrapper;
 import com.xiaohongshu.db.hercules.core.utils.DateUtils;
 import com.xiaohongshu.db.hercules.rdbms.mr.output.RDBMSWrapperSetterFactory;
+import lombok.NonNull;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
+import java.util.Collections;
 
 public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
 
@@ -245,5 +250,50 @@ public class ClickhouseWrapperSetterFactory extends RDBMSWrapperSetterFactory {
     @Override
     protected BaseTypeWrapperSetter.BytesSetter<PreparedStatement> getBytesSetter() {
         return null;
+    }
+
+    @Override
+    protected WrapperSetter<PreparedStatement> getListSetter() {
+        if (enableNull) {
+            return new WrapperSetter<PreparedStatement>() {
+                @Override
+                protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                    row.setObject(columnSeq, null);
+                }
+
+                @Override
+                protected void setNonnull(@NonNull BaseWrapper<?> wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                    ListWrapper list;
+                    if (wrapper instanceof ListWrapper) {
+                        list = (ListWrapper) wrapper;
+                    } else {
+                        list = new ListWrapper(1);
+                        list.add(wrapper);
+                    }
+                    // 参考https://github.com/ClickHouse/clickhouse-jdbc/blob/master/src/test/java/ru/yandex/clickhouse/integration/ArrayTest.java#L125
+                    row.setObject(columnSeq, list.asDefault());
+                }
+            };
+        } else {
+            return new WrapperSetter<PreparedStatement>() {
+                @Override
+                protected void setNull(PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                    row.setObject(columnSeq, Collections.emptyList());
+                }
+
+                @Override
+                protected void setNonnull(@NonNull BaseWrapper<?> wrapper, PreparedStatement row, String rowName, String columnName, int columnSeq) throws Exception {
+                    ListWrapper list;
+                    if (wrapper instanceof ListWrapper) {
+                        list = (ListWrapper) wrapper;
+                    } else {
+                        list = new ListWrapper(1);
+                        list.add(wrapper);
+                    }
+                    // 参考https://github.com/ClickHouse/clickhouse-jdbc/blob/master/src/test/java/ru/yandex/clickhouse/integration/ArrayTest.java#L125
+                    row.setObject(columnSeq, list.asDefault());
+                }
+            };
+        }
     }
 }

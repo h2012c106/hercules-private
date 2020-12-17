@@ -150,7 +150,7 @@ public class MapWrapper extends BaseWrapper<Map<String, BaseWrapper<?>>> impleme
 
     @Override
     public Object asDefault() {
-        Map<String, Object> map = new HashMap();
+        Map<String, Object> map = new HashMap<>(size());
         for(Map.Entry<String, BaseWrapper<?>> entry : getValue().entrySet()){
             String key = entry.getKey();
             Object value = entry.getValue().asDefault();
