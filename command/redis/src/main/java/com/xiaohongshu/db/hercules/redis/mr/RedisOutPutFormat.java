@@ -107,30 +107,31 @@ class RedisRecordWriter extends HerculesRecordWriter<RedisKV> {
             } catch (Exception e) {
                 throw new IOException(e);
             }
-            try{
-                write(kv);
-            } finally {
-                if(retry_count > 0)
-                    retry_count = 0;
+            int retry_count = 0;
+            boolean write_success = false;
+            while (!write_success){
+                try{
+                    write_success = write(kv);
+                } catch (Exception ex){
+                    LOG.error(" write redis error:", ex);
+                    retry_count++;
+                    if(retry_count > 3) {
+                        throw new IOException(" write redis failed.");
+                    } else {
+                        manager.acquireNewRedisSource();//连接池获取一个新的连接
+                        Thread.sleep(30 * 1000);
+                    }
+                }
             }
         }
     }
 
-    private void write(RedisKV kv) throws InterruptedException{
-        if(retry_count > 2){
-            throw new RuntimeException(" write redis failed.");
-        }
-        try{
-            if(strategyList != null) {
-                manager.act(kv, strategyList);
-            } else
-                manager.set(kv);
-        } catch (Exception e){
-            LOG.error(" write redis error:", e);
-            retry_count++;
-            Thread.sleep(30 * 1000);
-            write(kv);
-        }
+    private boolean write(RedisKV kv) throws InterruptedException{
+        if(strategyList != null) {
+            manager.act(kv, strategyList);
+        } else
+            manager.set(kv);
+        return true;
     }
 
     @Override
